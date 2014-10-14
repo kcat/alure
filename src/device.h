@@ -31,6 +31,8 @@ public:
     virtual ALCuint getALCVersion() final;
     virtual ALCuint getEFXVersion() final;
 
+    virtual ALCuint getFrequency() final;
+
     virtual Context *createContext(ALCint *attribs=0) final;
 
     virtual void close() final;

@@ -69,6 +69,15 @@ ALCuint ALDevice::getEFXVersion()
     return MakeVersion((ALCushort)major, (ALCushort)minor);
 }
 
+ALCuint ALDevice::getFrequency()
+{
+    ALCint freq = -1;
+    alcGetIntegerv(mDevice, ALC_FREQUENCY, 1, &freq);
+    if(freq < 0)
+        throw std::runtime_error("Frequency error");
+    return freq;
+}
+
 Context *ALDevice::createContext(ALCint *attribs)
 {
     ALCcontext *ctx = alcCreateContext(mDevice, attribs);
