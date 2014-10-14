@@ -55,10 +55,10 @@ class ALContext : public Context {
     static __thread ALContext *sThreadCurrentCtx;
 #endif
 public:
-    static bool MakeCurrent(ALContext *context);
+    static void MakeCurrent(ALContext *context);
     static ALContext *GetCurrent() { return sCurrentCtx; }
 
-    static bool MakeThreadCurrent(ALContext *context);
+    static void MakeThreadCurrent(ALContext *context);
     static ALContext *GetThreadCurrent() { return sThreadCurrentCtx; }
 
 private:

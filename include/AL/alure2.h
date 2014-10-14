@@ -73,10 +73,10 @@ protected:
     virtual ~Context() { }
 
 public:
-    static bool MakeCurrent(Context *context);
+    static void MakeCurrent(Context *context);
     static Context *GetCurrent();
 
-    static bool MakeThreadCurrent(Context *context);
+    static void MakeThreadCurrent(Context *context);
     static Context *GetThreadCurrent();
 
     virtual void destroy() = 0;
