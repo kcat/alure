@@ -19,11 +19,9 @@ ALContext::~ALContext()
 
 void ALContext::destroy()
 {
-    if(this == sCurrentCtx)
-    {
-        alcMakeContextCurrent(0);
-        sCurrentCtx = 0;
-    }
+    if(mRefs.load() != 0)
+        throw std::runtime_error("Context is in use");
+
     alcDestroyContext(mContext);
     mContext = 0;
     delete this;
@@ -37,8 +35,12 @@ Device *ALContext::getDevice()
 
 bool ALContext::MakeCurrent(ALContext *context)
 {
-    if(alcMakeContextCurrent(context->getContext()) == ALC_FALSE)
+    if(alcMakeContextCurrent(context ? context->getContext() : 0) == ALC_FALSE)
         return false;
+    if(context)
+        context->addRef();
+    if(sCurrentCtx)
+        sCurrentCtx->decRef();
     sCurrentCtx = context;
     return true;
 }
@@ -46,8 +48,12 @@ bool ALContext::MakeCurrent(ALContext *context)
 
 bool Context::MakeCurrent(Context *context)
 {
-    ALContext *ctx = dynamic_cast<ALContext*>(context);
-    if(!ctx) throw std::runtime_error("Invalid context pointer");
+    ALContext *ctx = 0;
+    if(context)
+    {
+        ctx = dynamic_cast<ALContext*>(context);
+        if(!ctx) throw std::runtime_error("Invalid context pointer");
+    }
     return ALContext::MakeCurrent(ctx);
 }
 
