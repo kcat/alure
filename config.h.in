@@ -1,0 +1,2 @@
+/* Define if we have libsndfile support */
+#cmakedefine HAVE_LIBSNDFILE
