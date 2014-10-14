@@ -47,9 +47,19 @@ typedef atomic<LONG> RefCount;
 
 class ALContext : public Context {
     static ALContext *sCurrentCtx;
+#if __cplusplus >= 201103L
+    static thread_local ALContext *sThreadCurrentCtx;
+#elif defined(_WIN32)
+    static __declspec(thread) ALContext *sThreadCurrentCtx;
+#else
+    static __thread ALContext *sThreadCurrentCtx;
+#endif
 public:
     static bool MakeCurrent(ALContext *context);
     static ALContext *GetCurrent() { return sCurrentCtx; }
+
+    static bool MakeThreadCurrent(ALContext *context);
+    static ALContext *GetThreadCurrent() { return sThreadCurrentCtx; }
 
 private:
     ALCcontext *mContext;

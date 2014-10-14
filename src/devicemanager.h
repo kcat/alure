@@ -11,6 +11,9 @@ namespace alure {
 
 class ALDeviceManager : public DeviceManager {
 public:
+    static ALCboolean (ALC_APIENTRY*SetThreadContext)(ALCcontext*);
+
+    ALDeviceManager();
     virtual ~ALDeviceManager() { }
 
     virtual bool queryExtension(const char *extname) final;

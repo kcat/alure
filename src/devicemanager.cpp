@@ -16,10 +16,23 @@
 namespace alure
 {
 
+template<typename T>
+static inline void GetDeviceProc(T **func, ALCdevice *device, const char *name)
+{ *func = reinterpret_cast<T*>(alcGetProcAddress(device, name)); }
+
+
+ALCboolean (ALC_APIENTRY*ALDeviceManager::SetThreadContext)(ALCcontext*);
+
 DeviceManager *DeviceManager::get()
 {
     static ALDeviceManager singleton;
     return &singleton;
+}
+
+ALDeviceManager::ALDeviceManager()
+{
+    if(alcIsExtensionPresent(0, "ALC_EXT_thread_local_context"))
+        GetDeviceProc(&SetThreadContext, 0, "alcSetThreadContext");
 }
 
 bool ALDeviceManager::queryExtension(const char *extname)

@@ -76,6 +76,9 @@ public:
     static bool MakeCurrent(Context *context);
     static Context *GetCurrent();
 
+    static bool MakeThreadCurrent(Context *context);
+    static Context *GetThreadCurrent();
+
     virtual void destroy() = 0;
 
     virtual Device *getDevice() = 0;
