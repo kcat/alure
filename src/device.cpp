@@ -4,8 +4,11 @@
 #include <string.h>
 
 #include <stdexcept>
+#include <algorithm>
 
 #include "alc.h"
+
+#include "context.h"
 
 #if __cplusplus < 201103L
 #define final
@@ -13,6 +16,14 @@
 
 namespace alure
 {
+
+void ALDevice::removeContext(ALContext *ctx)
+{
+    std::vector<ALContext*>::iterator iter;
+    iter = std::find(mContexts.begin(), mContexts.end(), ctx);
+    if(iter != mContexts.end())
+        mContexts.erase(iter);
+}
 
 std::string ALDevice::getName(PlaybackDeviceName type)
 {
@@ -30,8 +41,21 @@ bool ALDevice::queryExtension(const char *extname)
     return alcIsExtensionPresent(mDevice, extname);
 }
 
+Context *ALDevice::createContext(ALCint *attribs)
+{
+    ALCcontext *ctx = alcCreateContext(mDevice, attribs);
+    if(!ctx) throw std::runtime_error("Failed to create context");
+
+    ALContext *ret = new ALContext(ctx, this);
+    mContexts.push_back(ret);
+    return ret;
+}
+
 void ALDevice::close()
 {
+    if(!mContexts.empty())
+        throw std::runtime_error("Trying to close device with contexts");
+
     if(alcCloseDevice(mDevice) == ALC_FALSE)
         throw std::runtime_error("Failed to close device");
     mDevice = 0;

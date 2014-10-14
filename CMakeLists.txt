@@ -14,6 +14,7 @@ include_directories(${alure_SOURCE_DIR}/include/AL ${OPENAL_INCLUDE_DIR})
 
 set(alure_srcs src/devicemanager.cpp
                src/device.cpp
+               src/context.cpp
 )
 
 add_library(alure SHARED ${alure_srcs})

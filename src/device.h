@@ -11,16 +11,24 @@
 
 namespace alure {
 
+class ALContext;
+
 class ALDevice : public Device {
     ALCdevice *mDevice;
+
+    std::vector<ALContext*> mContexts;
 
     virtual ~ALDevice() { }
 public:
     ALDevice(ALCdevice *device) : mDevice(device) { }
 
-    virtual std::string getName(PlaybackDeviceName type) final;
+    ALCdevice *getDevice() const { return mDevice; }
+    void removeContext(ALContext *ctx);
 
+    virtual std::string getName(PlaybackDeviceName type) final;
     virtual bool queryExtension(const char *extname) final;
+
+    virtual Context *createContext(ALCint *attribs=0) final;
 
     virtual void close() final;
 };
