@@ -9,24 +9,10 @@
 
 namespace alure {
 
-enum DeviceEnumeration {
-    DevEnum_Basic = ALC_DEVICE_SPECIFIER,
-    DevEnum_Complete = ALC_ALL_DEVICES_SPECIFIER,
-    DevEnum_Capture = ALC_CAPTURE_DEVICE_SPECIFIER
-};
-
-enum DefaultDeviceType {
-    DefaultDevType_Basic = ALC_DEFAULT_DEVICE_SPECIFIER,
-    DefaultDevType_Complete = ALC_DEFAULT_ALL_DEVICES_SPECIFIER,
-    DefaultDevType_Capture = ALC_CAPTURE_DEFAULT_DEVICE_SPECIFIER
-};
-
-enum PlaybackDeviceType {
-    PlaybackDevType_Basic = ALC_DEVICE_SPECIFIER,
-    PlaybackDevType_Complete = ALC_ALL_DEVICES_SPECIFIER
-};
-
 class Device;
+class Context;
+class DeviceManager;
+
 
 class Context {
 protected:
@@ -40,6 +26,12 @@ public:
     static bool MakeCurrent(Context *context);
 };
 
+
+enum PlaybackDeviceType {
+    PlaybackDevType_Basic = ALC_DEVICE_SPECIFIER,
+    PlaybackDevType_Complete = ALC_ALL_DEVICES_SPECIFIER
+};
+
 class Device {
 protected:
     virtual ~Device() { }
@@ -51,6 +43,19 @@ public:
     virtual Context *createContext(ALCint *attribs=0) = 0;
 
     virtual void close() = 0;
+};
+
+
+enum DeviceEnumeration {
+    DevEnum_Basic = ALC_DEVICE_SPECIFIER,
+    DevEnum_Complete = ALC_ALL_DEVICES_SPECIFIER,
+    DevEnum_Capture = ALC_CAPTURE_DEVICE_SPECIFIER
+};
+
+enum DefaultDeviceType {
+    DefaultDevType_Basic = ALC_DEFAULT_DEVICE_SPECIFIER,
+    DefaultDevType_Complete = ALC_DEFAULT_ALL_DEVICES_SPECIFIER,
+    DefaultDevType_Capture = ALC_CAPTURE_DEFAULT_DEVICE_SPECIFIER
 };
 
 class DeviceManager {
