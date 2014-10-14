@@ -28,6 +28,9 @@ public:
     virtual std::string getName(PlaybackDeviceType type) final;
     virtual bool queryExtension(const char *extname) final;
 
+    virtual ALCuint getALCVersion() final;
+    virtual ALCuint getEFXVersion() final;
+
     virtual Context *createContext(ALCint *attribs=0) final;
 
     virtual void close() final;

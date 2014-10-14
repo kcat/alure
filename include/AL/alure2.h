@@ -14,6 +14,10 @@ class Context;
 class DeviceManager;
 
 
+inline ALCuint MakeVersion(ALCushort major, ALCushort minor)
+{ return (major<<16) | minor; }
+
+
 enum DeviceEnumeration {
     DevEnum_Basic = ALC_DEVICE_SPECIFIER,
     DevEnum_Complete = ALC_ALL_DEVICES_SPECIFIER,
@@ -54,6 +58,9 @@ protected:
 public:
     virtual std::string getName(PlaybackDeviceType type) = 0;
     virtual bool queryExtension(const char *extname) = 0;
+
+    virtual ALCuint getALCVersion() = 0;
+    virtual ALCuint getEFXVersion() = 0;
 
     virtual Context *createContext(ALCint *attribs=0) = 0;
 

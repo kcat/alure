@@ -7,6 +7,7 @@
 #include <algorithm>
 
 #include "alc.h"
+#include "alext.h"
 
 #include "context.h"
 
@@ -39,6 +40,33 @@ std::string ALDevice::getName(PlaybackDeviceType type)
 bool ALDevice::queryExtension(const char *extname)
 {
     return alcIsExtensionPresent(mDevice, extname);
+}
+
+ALCuint ALDevice::getALCVersion()
+{
+    ALCint major=-1, minor=-1;
+    alcGetIntegerv(mDevice, ALC_MAJOR_VERSION, 1, &major);
+    alcGetIntegerv(mDevice, ALC_MINOR_VERSION, 1, &minor);
+    if(major < 0 || minor < 0)
+        throw std::runtime_error("ALC version error");
+    major = std::min<ALCint>(major, std::numeric_limits<ALCushort>::max());
+    minor = std::min<ALCint>(minor, std::numeric_limits<ALCushort>::max());
+    return MakeVersion((ALCushort)major, (ALCushort)minor);
+}
+
+ALCuint ALDevice::getEFXVersion()
+{
+    if(!alcIsExtensionPresent(mDevice, "ALC_EXT_EFX"))
+        return 0;
+
+    ALCint major=-1, minor=-1;
+    alcGetIntegerv(mDevice, ALC_EFX_MAJOR_VERSION, 1, &major);
+    alcGetIntegerv(mDevice, ALC_EFX_MINOR_VERSION, 1, &minor);
+    if(major < 0 || minor < 0)
+        throw std::runtime_error("EFX version error");
+    major = std::min<ALCint>(major, std::numeric_limits<ALCushort>::max());
+    minor = std::min<ALCint>(minor, std::numeric_limits<ALCushort>::max());
+    return MakeVersion((ALCushort)major, (ALCushort)minor);
 }
 
 Context *ALDevice::createContext(ALCint *attribs)
