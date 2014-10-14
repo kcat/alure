@@ -18,6 +18,8 @@ class ALDevice : public Device {
 public:
     ALDevice(ALCdevice *device) : mDevice(device) { }
 
+    virtual std::string getName(PlaybackDeviceName type) final;
+
     virtual bool queryExtension(const char *extname) final;
 
     virtual void close() final;

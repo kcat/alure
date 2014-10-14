@@ -14,6 +14,17 @@
 namespace alure
 {
 
+std::string ALDevice::getName(PlaybackDeviceName type)
+{
+    if(type == PlaybackDevName_Complete && !alcIsExtensionPresent(mDevice, "ALC_ENUMERATE_ALL_EXT"))
+        type = PlaybackDevName_Basic;
+    alcGetError(mDevice);
+    const ALCchar *name = alcGetString(mDevice, type);
+    if(alcGetError(mDevice) != ALC_NO_ERROR || !name)
+        name = alcGetString(mDevice, PlaybackDevName_Basic);
+    return std::string(name);
+}
+
 bool ALDevice::queryExtension(const char *extname)
 {
     return alcIsExtensionPresent(mDevice, extname);

@@ -15,14 +15,21 @@ enum DeviceEnumeration {
     DevEnum_Capture = ALC_CAPTURE_DEVICE_SPECIFIER
 };
 
+enum PlaybackDeviceName {
+    PlaybackDevName_Basic = ALC_DEVICE_SPECIFIER,
+    PlaybackDevName_Complete = ALC_ALL_DEVICES_SPECIFIER
+};
+
 class Device {
 protected:
     virtual ~Device() { }
 
 public:
-    virtual void close() = 0;
+    virtual std::string getName(PlaybackDeviceName type) = 0;
 
     virtual bool queryExtension(const char *extname) = 0;
+
+    virtual void close() = 0;
 };
 
 class DeviceManager {
