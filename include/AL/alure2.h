@@ -9,9 +9,10 @@
 
 namespace alure {
 
+class DeviceManager;
 class Device;
 class Context;
-class DeviceManager;
+class Decoder;
 
 
 inline ALCuint MakeVersion(ALCushort major, ALCushort minor)
@@ -84,6 +85,34 @@ public:
     virtual void destroy() = 0;
 
     virtual Device *getDevice() = 0;
+};
+
+
+enum SampleType {
+    SampleType_UInt8,
+    SampleType_Int16,
+    SampleType_Float32
+};
+
+enum SampleConfig {
+    SampleConfig_Mono,
+    SampleConfig_Stereo,
+    SampleConfig_Rear,
+    SampleConfig_Quad,
+    SampleConfig_X51,
+    SampleConfig_X61,
+    SampleConfig_X71
+};
+
+class Decoder {
+public:
+    virtual void getFormat(ALuint *srate, SampleConfig *chans, SampleType *type) = 0;
+
+    virtual ALuint getLength() = 0;
+    virtual ALuint getPosition() = 0;
+    virtual bool seek(ALuint pos) = 0;
+
+    virtual ALsizei read(ALvoid *ptr, ALsizei count) = 0;
 };
 
 } // namespace alure
