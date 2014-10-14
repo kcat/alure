@@ -25,7 +25,7 @@ public:
     ALCdevice *getDevice() const { return mDevice; }
     void removeContext(ALContext *ctx);
 
-    virtual std::string getName(PlaybackDeviceName type) final;
+    virtual std::string getName(PlaybackDeviceType type) final;
     virtual bool queryExtension(const char *extname) final;
 
     virtual Context *createContext(ALCint *attribs=0) final;

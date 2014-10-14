@@ -16,6 +16,7 @@ public:
     virtual bool queryExtension(const char *extname) final;
 
     virtual std::vector<std::string> enumerate(DeviceEnumeration type) final;
+    virtual std::string defaultDeviceName(DefaultDeviceType type) final;
 
     virtual Device *openPlayback(const std::string &name) final;
 };

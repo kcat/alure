@@ -41,6 +41,14 @@ std::vector<std::string> ALDeviceManager::enumerate(DeviceEnumeration type)
     return list;
 }
 
+std::string ALDeviceManager::defaultDeviceName(DefaultDeviceType type)
+{
+    if(type == DefaultDevType_Complete && !alcIsExtensionPresent(0, "ALC_ENUMERATE_ALL_EXT"))
+        type = DefaultDevType_Basic;
+    const ALCchar *name = alcGetString(0, type);
+    return std::string(name ? name : "");
+}
+
 Device *ALDeviceManager::openPlayback(const std::string &name)
 {
     ALCdevice *dev = alcOpenDevice(name.c_str());

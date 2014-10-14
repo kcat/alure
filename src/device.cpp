@@ -25,15 +25,15 @@ void ALDevice::removeContext(ALContext *ctx)
         mContexts.erase(iter);
 }
 
-std::string ALDevice::getName(PlaybackDeviceName type)
+std::string ALDevice::getName(PlaybackDeviceType type)
 {
-    if(type == PlaybackDevName_Complete && !alcIsExtensionPresent(mDevice, "ALC_ENUMERATE_ALL_EXT"))
-        type = PlaybackDevName_Basic;
+    if(type == PlaybackDevType_Complete && !alcIsExtensionPresent(mDevice, "ALC_ENUMERATE_ALL_EXT"))
+        type = PlaybackDevType_Basic;
     alcGetError(mDevice);
     const ALCchar *name = alcGetString(mDevice, type);
     if(alcGetError(mDevice) != ALC_NO_ERROR || !name)
-        name = alcGetString(mDevice, PlaybackDevName_Basic);
-    return std::string(name);
+        name = alcGetString(mDevice, PlaybackDevType_Basic);
+    return std::string(name ? name : "");
 }
 
 bool ALDevice::queryExtension(const char *extname)

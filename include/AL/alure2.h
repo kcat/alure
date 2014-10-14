@@ -15,9 +15,15 @@ enum DeviceEnumeration {
     DevEnum_Capture = ALC_CAPTURE_DEVICE_SPECIFIER
 };
 
-enum PlaybackDeviceName {
-    PlaybackDevName_Basic = ALC_DEVICE_SPECIFIER,
-    PlaybackDevName_Complete = ALC_ALL_DEVICES_SPECIFIER
+enum DefaultDeviceType {
+    DefaultDevType_Basic = ALC_DEFAULT_DEVICE_SPECIFIER,
+    DefaultDevType_Complete = ALC_DEFAULT_ALL_DEVICES_SPECIFIER,
+    DefaultDevType_Capture = ALC_CAPTURE_DEFAULT_DEVICE_SPECIFIER
+};
+
+enum PlaybackDeviceType {
+    PlaybackDevType_Basic = ALC_DEVICE_SPECIFIER,
+    PlaybackDevType_Complete = ALC_ALL_DEVICES_SPECIFIER
 };
 
 class Device;
@@ -39,7 +45,7 @@ protected:
     virtual ~Device() { }
 
 public:
-    virtual std::string getName(PlaybackDeviceName type) = 0;
+    virtual std::string getName(PlaybackDeviceType type) = 0;
     virtual bool queryExtension(const char *extname) = 0;
 
     virtual Context *createContext(ALCint *attribs=0) = 0;
@@ -57,6 +63,7 @@ public:
     virtual bool queryExtension(const char *extname) = 0;
 
     virtual std::vector<std::string> enumerate(DeviceEnumeration type) = 0;
+    virtual std::string defaultDeviceName(DefaultDeviceType type) = 0;
 
     virtual Device *openPlayback(const std::string &name=std::string()) = 0;
 };
