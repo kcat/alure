@@ -20,7 +20,10 @@ ALContext::~ALContext()
 void ALContext::destroy()
 {
     if(this == sCurrentCtx)
+    {
+        alcMakeContextCurrent(0);
         sCurrentCtx = 0;
+    }
     alcDestroyContext(mContext);
     mContext = 0;
     delete this;
@@ -46,6 +49,11 @@ bool Context::MakeCurrent(Context *context)
     ALContext *ctx = dynamic_cast<ALContext*>(context);
     if(!ctx) throw std::runtime_error("Invalid context pointer");
     return ALContext::MakeCurrent(ctx);
+}
+
+Context *Context::GetCurrent()
+{
+    return ALContext::GetCurrent();
 }
 
 }

@@ -13,9 +13,18 @@ namespace alure {
 
 class ALDevice;
 
+#define CHECK_ACTIVE_CONTEXT(ctx) do {                                        \
+    if((ctx) != ALContext::GetCurrent())                                      \
+        throw std::runtime_error("Called context is not current");            \
+} while(0)
+
 class ALContext : public Context {
     static ALContext *sCurrentCtx;
+public:
+    static bool MakeCurrent(ALContext *context);
+    static ALContext *GetCurrent() { return sCurrentCtx; }
 
+private:
     ALCcontext *mContext;
 
     ALDevice *mDevice;
@@ -29,8 +38,6 @@ public:
     virtual Device *getDevice() final;
 
     virtual void destroy() final;
-
-    static bool MakeCurrent(ALContext *context);
 };
 
 } // namespace alure

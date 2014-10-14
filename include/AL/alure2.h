@@ -19,11 +19,12 @@ protected:
     virtual ~Context() { }
 
 public:
+    static bool MakeCurrent(Context *context);
+    static Context *GetCurrent();
+
     virtual void destroy() = 0;
 
     virtual Device *getDevice() = 0;
-
-    static bool MakeCurrent(Context *context);
 };
 
 
