@@ -14,18 +14,34 @@ int main()
     std::cout<< "Available basic devices:" <<std::endl;
     for(const auto &name : list)
         std::cout<< "  "<<name<<((defname==name)?"  [DEFAULT]":"") <<std::endl;
+    std::cout<<std::endl;
 
     defname = devMgr->defaultDeviceName(alure::DefaultDevType_Complete);
     list = devMgr->enumerate(alure::DevEnum_Complete);
-    std::cout<< std::endl<<"Available devices:" <<std::endl;
+    std::cout<< "Available devices:" <<std::endl;
     for(const auto &name : list)
         std::cout<< "  "<<name<<((defname==name)?"  [DEFAULT]":"") <<std::endl;
+    std::cout<<std::endl;
 
     list = devMgr->enumerate(alure::DevEnum_Capture);
     defname = devMgr->defaultDeviceName(alure::DefaultDevType_Capture);
-    std::cout<< std::endl<<"Available capture devices:" <<std::endl;
+    std::cout<< "Available capture devices:" <<std::endl;
     for(const auto &name : list)
         std::cout<< "  "<<name<<((defname==name)?"  [DEFAULT]":"") <<std::endl;
+    std::cout<<std::endl;
+
+    ALCuint version;
+    alure::Device *dev = devMgr->openPlayback();
+    std::cout<< "Info for device \""<<dev->getName(alure::PlaybackDevType_Complete)<<"\":" <<std::endl;
+    version = dev->getALCVersion();
+    std::cout<< "ALC version: "<<(version>>16)<<"."<<(version&65535) <<std::endl;
+    version = dev->getEFXVersion();
+    if(version)
+        std::cout<< "EFX version: "<<(version>>16)<<"."<<(version&65535) <<std::endl;
+    else
+        std::cout<< "EFX not supported" <<std::endl;
+    dev->close();
+    dev = 0;
 
     return 0;
 }
