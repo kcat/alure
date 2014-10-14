@@ -50,6 +50,9 @@ void ALContext::MakeCurrent(ALContext *context)
     if(sCurrentCtx)
         sCurrentCtx->decRef();
     sCurrentCtx = context;
+    if(sThreadCurrentCtx)
+        sThreadCurrentCtx->decRef();
+    sThreadCurrentCtx = 0;
 }
 
 void ALContext::MakeThreadCurrent(ALContext *context)
