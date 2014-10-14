@@ -16,8 +16,8 @@ int main()
         std::cout<< "  "<<name<<((defname==name)?"  [DEFAULT]":"") <<std::endl;
     std::cout<<std::endl;
 
-    defname = devMgr->defaultDeviceName(alure::DefaultDevType_Complete);
     list = devMgr->enumerate(alure::DevEnum_Complete);
+    defname = devMgr->defaultDeviceName(alure::DefaultDevType_Complete);
     std::cout<< "Available devices:" <<std::endl;
     for(const auto &name : list)
         std::cout<< "  "<<name<<((defname==name)?"  [DEFAULT]":"") <<std::endl;
