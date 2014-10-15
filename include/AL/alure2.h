@@ -148,6 +148,8 @@ public:
     virtual void stop() = 0;
 
     virtual bool isPlaying() const = 0;
+
+    virtual void update() = 0;
 };
 
 } // namespace alure

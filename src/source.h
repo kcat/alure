@@ -30,6 +30,8 @@ public:
     virtual void stop() final;
 
     virtual bool isPlaying() const final;
+
+    virtual void update() final;
 };
 
 } // namespace alure

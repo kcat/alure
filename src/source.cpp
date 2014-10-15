@@ -92,4 +92,8 @@ bool ALSource::isPlaying() const
     return state == AL_PLAYING;
 }
 
+void ALSource::update()
+{
+}
+
 }
