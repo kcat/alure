@@ -252,14 +252,21 @@ Source *ALContext::getSource()
     CheckContext(this);
 
     ALSource *source = 0;
-    if(mSources.empty())
+    if(mFreeSources.empty())
         source = new ALSource(this);
     else
     {
-        source = mSources.back();
-        mSources.pop();
+        source = mFreeSources.back();
+        mFreeSources.pop();
     }
+    mUsedSources.insert(source);
     return source;
+}
+
+void ALContext::freeSource(ALSource *source)
+{
+    mUsedSources.erase(source);
+    mFreeSources.push(source);
 }
 
 void ALContext::finalize(Source *source)

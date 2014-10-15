@@ -6,6 +6,7 @@
 #include <stdexcept>
 #include <stack>
 #include <queue>
+#include <set>
 
 #include "alc.h"
 
@@ -42,7 +43,8 @@ private:
     std::stack<ALuint> mSourceIds;
 
     ALDevice *mDevice;
-    std::queue<ALSource*> mSources;
+    std::queue<ALSource*> mFreeSources;
+    std::set<ALSource*> mUsedSources;
 
     RefCount mRefs;
 
@@ -58,7 +60,8 @@ public:
 
     ALuint getSourceId();
     void insertSourceId(ALuint id) { mSourceIds.push(id); }
-    void insertSource(ALSource *source) { mSources.push(source); }
+
+    void freeSource(ALSource *source);
 
     virtual Device *getDevice() final;
 

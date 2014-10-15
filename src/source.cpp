@@ -31,7 +31,7 @@ void ALSource::finalize()
         alSourcei(mId, AL_BUFFER, 0);
         mId = 0;
     }
-    mContext->insertSource(this);
+    mContext->freeSource(this);
     if(mBuffer)
         mBuffer->decRef();
     mBuffer = 0;
