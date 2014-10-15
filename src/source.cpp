@@ -52,16 +52,26 @@ public:
         mSilence = (type == SampleType_UInt8) ? 0x80 : 0x00;
     }
 
-    bool streamMoreData(ALuint srcid)
+    bool streamMoreData(ALuint srcid, bool loop)
     {
         if(mDone) return false;
         ALuint frames = mDecoder->read(&mData[0], mUpdateLen);
         if(frames < mUpdateLen)
         {
-            mDone = true;
-            if(frames == 0)
-                return false;
-            memset(&mData[frames*mFrameSize], mSilence, (mUpdateLen-frames)*mFrameSize);
+            if(loop)
+            {
+                do {
+                    mDecoder->seek(0);
+                    frames += mDecoder->read(&mData[frames*mFrameSize], mUpdateLen-frames);
+                } while(frames < mUpdateLen);
+            }
+            else
+            {
+                mDone = true;
+                if(frames == 0)
+                    return false;
+                memset(&mData[frames*mFrameSize], mSilence, (mUpdateLen-frames)*mFrameSize);
+            }
         }
 
         ALuint buf = 0;
@@ -104,6 +114,8 @@ void ALSource::finalize()
 
     mContext->freeSource(this);
 
+    mLooping = false;
+
     if(mBuffer)
         mBuffer->decRef();
     mBuffer = 0;
@@ -113,12 +125,25 @@ void ALSource::finalize()
 }
 
 
-void ALSource::play(Buffer *buffer, float volume)
+void ALSource::setLooping(bool looping)
+{
+    CheckContext(mContext);
+
+    if(mId && !mStream)
+        alSourcei(mId, AL_LOOPING, looping ? AL_TRUE : AL_FALSE);
+    mLooping = looping;
+}
+
+bool ALSource::getLooping() const
+{
+    return mLooping;
+}
+
+
+void ALSource::play(Buffer *buffer)
 {
     ALBuffer *albuf = dynamic_cast<ALBuffer*>(buffer);
     if(!albuf) throw std::runtime_error("Buffer is not valid");
-    if(volume < 0.0f || volume > 1.0f)
-        throw std::runtime_error("Volume out of range");
     CheckContext(mContext);
     CheckContextDevice(albuf->getDevice());
 
@@ -134,15 +159,14 @@ void ALSource::play(Buffer *buffer, float volume)
         mBuffer->decRef();
     mBuffer = albuf;
 
+    alSourcei(mId, AL_LOOPING, mLooping ? AL_TRUE : AL_FALSE);
+
     alSourcei(mId, AL_BUFFER, mBuffer->getId());
-    alSourcef(mId, AL_GAIN, volume);
     alSourcePlay(mId);
 }
 
-void ALSource::play(Decoder *decoder, ALuint updatelen, ALuint queuesize, float volume)
+void ALSource::play(Decoder *decoder, ALuint updatelen, ALuint queuesize)
 {
-    if(volume < 0.0f || volume > 1.0f)
-        throw std::runtime_error("Volume out of range");
     CheckContext(mContext);
 
     std::auto_ptr<ALBufferStream> stream(new ALBufferStream(decoder, updatelen, queuesize));
@@ -159,12 +183,13 @@ void ALSource::play(Decoder *decoder, ALuint updatelen, ALuint queuesize, float 
     delete mStream;
     mStream = stream.release();
 
+    alSourcei(mId, AL_LOOPING, AL_FALSE);
+
     for(ALuint i = 0;i < mStream->getNumUpdates();i++)
     {
-        if(!mStream->streamMoreData(mId))
+        if(!mStream->streamMoreData(mId, mLooping))
             break;
     }
-    alSourcef(mId, AL_GAIN, volume);
     alSourcePlay(mId);
 }
 
@@ -220,7 +245,7 @@ void ALSource::update()
         alGetSourcei(mId, AL_BUFFERS_QUEUED, &queued);
         for(;(ALuint)queued < mStream->getNumUpdates();queued++)
         {
-            if(!mStream->streamMoreData(mId))
+            if(!mStream->streamMoreData(mId, mLooping))
                 break;
         }
 

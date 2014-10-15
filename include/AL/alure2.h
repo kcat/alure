@@ -150,8 +150,11 @@ protected:
     virtual ~Source() { }
 
 public:
-    virtual void play(Buffer *buffer, float volume=1.0f) = 0;
-    virtual void play(Decoder *decoder, ALuint updatelen, ALuint queuesize, float volume=1.0f) = 0;
+    virtual void setLooping(bool looping) = 0;
+    virtual bool getLooping() const = 0;
+
+    virtual void play(Buffer *buffer) = 0;
+    virtual void play(Decoder *decoder, ALuint updatelen, ALuint queuesize) = 0;
     virtual void stop() = 0;
 
     virtual bool isPlaying() const = 0;

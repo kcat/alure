@@ -22,17 +22,22 @@ class ALSource : public Source {
     ALBuffer *mBuffer;
     ALBufferStream *mStream;
 
+    bool mLooping;
+
     void reset();
 
 public:
     ALSource(ALContext *context)
-      : mContext(context), mId(0), mBuffer(0), mStream(0)
+      : mContext(context), mId(0), mBuffer(0), mStream(0), mLooping(0)
     { }
 
     void finalize();
 
-    virtual void play(Buffer *buffer, float volume) final;
-    virtual void play(Decoder *decoder, ALuint updatelen, ALuint queuesize, float volume) final;
+    virtual void setLooping(bool looping) final;
+    virtual bool getLooping() const final;
+
+    virtual void play(Buffer *buffer) final;
+    virtual void play(Decoder *decoder, ALuint updatelen, ALuint queuesize) final;
     virtual void stop() final;
 
     virtual bool isPlaying() const final;
