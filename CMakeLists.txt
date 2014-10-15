@@ -17,6 +17,7 @@ endif()
 set(alure_srcs src/devicemanager.cpp
                src/device.cpp
                src/context.cpp
+               src/buffer.cpp
 )
 set(alure_libs ${OPENAL_LIBRARY})
 

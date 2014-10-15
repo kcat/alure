@@ -3,14 +3,12 @@
 
 #include "alure2.h"
 
+#include <stdexcept>
+#include <map>
+
 #include "alc.h"
 
-#if __cplusplus >= 201103L
-#include <atomic>
-#elif defined(_WIN32)
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-#endif
+#include "refcount.h"
 
 #if __cplusplus < 201103L
 #define final
@@ -19,31 +17,7 @@
 namespace alure {
 
 class ALDevice;
-
-#if __cplusplus >= 201103L
-typedef std::atomic<long> RefCount;
-#elif defined(_WIN32)
-template<typename T>
-class atomic {
-    T mValue;
-
-public:
-    atomic() { }
-    atomic(T value) : mValue(value) { }
-
-    T operator++() volatile { return InterlockedIncrement(&mValues); }
-    T operator--() volatile { return InterlockedDecrement(&mValues); }
-
-    void store(const T &value) volatile { mValue = value; }
-    T load() const volatile { return mValue; }
-};
-typedef atomic<LONG> RefCount;
-#endif
-
-#define CHECK_ACTIVE_CONTEXT(ctx) do {                                        \
-    if((ctx) != ALContext::GetCurrent())                                      \
-        throw std::runtime_error("Called context is not current");            \
-} while(0)
+class ALBuffer;
 
 class ALContext : public Context {
     static ALContext *sCurrentCtx;
@@ -81,7 +55,19 @@ public:
     virtual Device *getDevice() final;
 
     virtual void destroy() final;
+
+    virtual Buffer *getBuffer(const std::string &name) final;
+    virtual void removeBuffer(const std::string &name) final;
+    virtual void removeBuffer(Buffer *buffer) final;
 };
+
+
+inline void CheckContext(ALContext *ctx)
+{
+    ALContext *thrdctx = ALContext::GetThreadCurrent();
+    if((thrdctx && ctx != thrdctx) || (!thrdctx && ctx != ALContext::GetCurrent()))
+        throw std::runtime_error("Called context is not current");
+}
 
 } // namespace alure
 

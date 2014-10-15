@@ -23,7 +23,7 @@ public:
 
     virtual ALsizei read(ALvoid *ptr, ALsizei count) final;
 
-    static Decoder *openFile(const char *name);
+    static Decoder *openFile(const std::string &name);
 };
 
 } // namespace alure

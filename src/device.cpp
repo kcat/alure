@@ -10,6 +10,7 @@
 #include "alext.h"
 
 #include "context.h"
+#include "buffer.h"
 
 #if __cplusplus < 201103L
 #define final
@@ -25,6 +26,48 @@ void ALDevice::removeContext(ALContext *ctx)
     if(iter != mContexts.end())
         mContexts.erase(iter);
 }
+
+
+Buffer *ALDevice::getBuffer(const std::string &name)
+{
+    BufferMap::const_iterator iter = mBuffers.find(name);
+    if(iter == mBuffers.end()) return 0;
+    return iter->second;
+}
+
+Buffer *ALDevice::addBuffer(const std::string &name, ALBuffer *buffer)
+{
+    mBuffers.insert(std::make_pair(name, buffer));
+    return buffer;
+}
+
+void ALDevice::removeBuffer(const std::string &name)
+{
+    BufferMap::iterator iter = mBuffers.find(name);
+    if(iter != mBuffers.end())
+    {
+        ALBuffer *albuf = iter->second;
+        albuf->cleanup();
+        mBuffers.erase(iter);
+    }
+}
+
+void ALDevice::removeBuffer(Buffer *buffer)
+{
+    BufferMap::iterator iter = mBuffers.begin();
+    while(iter != mBuffers.end())
+    {
+        ALBuffer *albuf = iter->second;
+        if(albuf == buffer)
+        {
+            albuf->cleanup();
+            mBuffers.erase(iter);
+            break;
+        }
+        ++iter;
+    }
+}
+
 
 std::string ALDevice::getName(PlaybackDeviceType type)
 {
@@ -92,6 +135,8 @@ void ALDevice::close()
 {
     if(!mContexts.empty())
         throw std::runtime_error("Trying to close device with contexts");
+    if(!mBuffers.empty())
+        throw std::runtime_error("Trying to close device with buffers");
 
     if(alcCloseDevice(mDevice) == ALC_FALSE)
         throw std::runtime_error("Failed to close device");

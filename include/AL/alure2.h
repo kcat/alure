@@ -12,6 +12,7 @@ namespace alure {
 class DeviceManager;
 class Device;
 class Context;
+class Buffer;
 class Decoder;
 
 
@@ -85,6 +86,20 @@ public:
     virtual void destroy() = 0;
 
     virtual Device *getDevice() = 0;
+
+    // Functions below require the context to be current
+    virtual Buffer *getBuffer(const std::string &name) = 0;
+    virtual void removeBuffer(const std::string &name) = 0;
+    virtual void removeBuffer(Buffer *buffer) = 0;
+};
+
+
+class Buffer {
+protected:
+    virtual ~Buffer() { }
+
+public:
+    virtual ALuint getSize() = 0;
 };
 
 
