@@ -55,6 +55,9 @@ set_property(TARGET alure_s APPEND PROPERTY COMPILE_DEFINITIONS ALURE_STATIC_LIB
 add_executable(alure-enum examples/alure-enum.cpp)
 target_link_libraries(alure-enum alure)
 
+add_executable(alure-play examples/alure-play.cpp)
+target_link_libraries(alure-play alure)
+
 
 if(NOT DEFINED LIB_SUFFIX)
     set(LIB_SUFFIX "")
