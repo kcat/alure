@@ -64,6 +64,9 @@ public:
 
     virtual void destroy() final;
 
+    virtual void startBatch() final;
+    virtual void endBatch() final;
+
     virtual Buffer *getBuffer(const std::string &name) final;
     virtual void removeBuffer(const std::string &name) final;
     virtual void removeBuffer(Buffer *buffer) final;

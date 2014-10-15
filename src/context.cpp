@@ -87,6 +87,17 @@ void ALContext::destroy()
 }
 
 
+void ALContext::startBatch()
+{
+    alcSuspendContext(mContext);
+}
+
+void ALContext::endBatch()
+{
+    alcProcessContext(mContext);
+}
+
+
 static ALuint FramesToBytes(ALuint size, SampleConfig chans, SampleType type)
 {
     switch(chans)
