@@ -31,10 +31,10 @@ int main(int argc, char *argv[])
 
     for(int i = 1;i < argc;i++)
     {
-        alure::Buffer *buffer = ctx->getBuffer(argv[i]);
+        alure::Decoder *decoder = ctx->createDecoder(argv[i]);
         alure::Source *source = ctx->getSource();
-        source->play(buffer);
-        std::cout<< "Playing "<<argv[i]<<" ("<<buffer->getFrequency()<<"hz)" <<std::endl;
+        source->play(decoder, 32768, 4);
+        std::cout<< "Playing "<<argv[i]<<" ("<<decoder->getFrequency()<<"hz)" <<std::endl;
 
         while(source->isPlaying())
         {
@@ -44,8 +44,8 @@ int main(int argc, char *argv[])
 
         ctx->finalize(source);
         source = 0;
-        ctx->removeBuffer(buffer);
-        buffer = 0;
+        delete decoder;
+        decoder = 0;
     }
 
     alure::Context::MakeCurrent(0);

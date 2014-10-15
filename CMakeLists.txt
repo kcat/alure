@@ -58,6 +58,9 @@ target_link_libraries(alure-enum alure)
 add_executable(alure-play examples/alure-play.cpp)
 target_link_libraries(alure-play alure)
 
+add_executable(alure-stream examples/alure-stream.cpp)
+target_link_libraries(alure-stream alure)
+
 
 if(NOT DEFINED LIB_SUFFIX)
     set(LIB_SUFFIX "")
