@@ -36,9 +36,6 @@ public:
         mDone(false)
     { }
 
-    ALenum getFormat() const { return mFormat; }
-    ALuint getFrequency() const { return mFrequency; }
-
     ALuint getNumUpdates() const { return mNumUpdates; }
 
     void prepare()
@@ -56,16 +53,23 @@ public:
         mSilence = (type == SampleType_UInt8) ? 0x80 : 0x00;
     }
 
-    const std::vector<ALbyte> *getNextData()
+    bool streamMoreData(ALuint srcid)
     {
-        if(mDone) return 0;
+        if(mDone) return false;
         ALuint frames = mDecoder->read(&mData[0], mUpdateLen);
         if(frames < mUpdateLen)
         {
             mDone = true;
+            if(frames == 0)
+                return false;
             memset(&mData[frames*mFrameSize], mSilence, (mUpdateLen-frames)*mFrameSize);
         }
-        return (frames > 0) ? &mData : 0;
+
+        ALuint buf = 0;
+        alGenBuffers(1, &buf);
+        alBufferData(buf, mFormat, &mData[0], mData.size(), mFrequency);
+        alSourceQueueBuffers(srcid, 1, &buf);
+        return true;
     }
 };
 
@@ -158,13 +162,8 @@ void ALSource::play(Decoder *decoder, ALuint updatelen, ALuint queuesize, float 
 
     for(ALuint i = 0;i < mStream->getNumUpdates();i++)
     {
-        const std::vector<ALbyte> *data = mStream->getNextData();
-        if(!data) break;
-
-        ALuint buf = 0;
-        alGenBuffers(1, &buf);
-        alBufferData(buf, mStream->getFormat(), &(*data)[0], data->size(), mStream->getFrequency());
-        alSourceQueueBuffers(mId, 1, &buf);
+        if(!mStream->streamMoreData(mId))
+            break;
     }
     alSourcef(mId, AL_GAIN, volume);
     alSourcePlay(mId);
@@ -222,13 +221,8 @@ void ALSource::update()
         alGetSourcei(mId, AL_BUFFERS_QUEUED, &queued);
         for(;(ALuint)queued < mStream->getNumUpdates();queued++)
         {
-            const std::vector<ALbyte> *data = mStream->getNextData();
-            if(!data) break;
-
-            ALuint buf = 0;
-            alGenBuffers(1, &buf);
-            alBufferData(buf, mStream->getFormat(), &(*data)[0], data->size(), mStream->getFrequency());
-            alSourceQueueBuffers(mId, 1, &buf);
+            if(!mStream->streamMoreData(mId))
+                break;
         }
 
         if(queued == 0)
