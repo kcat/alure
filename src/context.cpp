@@ -107,11 +107,6 @@ static ALuint FramesToBytes(ALuint size, SampleConfig chans, SampleType type)
     return size;
 }
 
-static ALuint BytesToFrames(ALuint bytes, SampleConfig chans, SampleType type)
-{
-    return bytes / FramesToBytes(1, chans, type);
-}
-
 static ALenum GetFormat(SampleConfig chans, SampleType type)
 {
     ALenum format = AL_NONE;
@@ -217,7 +212,7 @@ void ALContext::removeBuffer(Buffer *buffer)
 }
 
 
-Source *ALContext::playSound(Buffer *buffer, float volume)
+Source *ALContext::playSound(Buffer */*buffer*/, float /*volume*/)
 {
     CheckContext(this);
     throw std::runtime_error("Cannot play sound");

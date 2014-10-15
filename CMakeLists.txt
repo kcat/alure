@@ -14,6 +14,15 @@ if(HAVE_STD_CXX11)
     set(CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS}")
 endif()
 
+check_cxx_compiler_flag(-Wall HAVE_WALL_SWITCH)
+if(HAVE_WALL_SWITCH)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
+endif()
+check_cxx_compiler_flag(-Wextra HAVE_WEXTRA_SWITCH)
+if(HAVE_WEXTRA_SWITCH)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wextra")
+endif()
+
 set(alure_srcs src/devicemanager.cpp
                src/device.cpp
                src/context.cpp
