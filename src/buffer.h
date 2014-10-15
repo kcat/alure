@@ -15,6 +15,11 @@ namespace alure {
 
 class ALDevice;
 
+
+ALuint FramesToBytes(ALuint size, SampleConfig chans, SampleType type);
+ALenum GetFormat(SampleConfig chans, SampleType type);
+
+
 class ALBuffer : public Buffer {
     ALDevice *const mDevice;
     ALuint mId;

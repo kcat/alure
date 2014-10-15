@@ -91,6 +91,8 @@ public:
     virtual void startBatch() = 0;
     virtual void endBatch() = 0;
 
+    virtual Decoder *createDecoder(const std::string &name) = 0;
+
     // Functions below require the context to be current
     virtual Buffer *getBuffer(const std::string &name) = 0;
     virtual void removeBuffer(const std::string &name) = 0;
@@ -129,6 +131,8 @@ enum SampleConfig {
 
 class Decoder {
 public:
+    virtual ~Decoder() { }
+
     virtual void getFormat(ALuint *srate, SampleConfig *chans, SampleType *type) = 0;
 
     virtual ALuint getLength() = 0;
@@ -145,6 +149,7 @@ protected:
 
 public:
     virtual void play(Buffer *buffer, float volume=1.0f) = 0;
+    virtual void play(Decoder *decoder, ALuint updatelen, ALuint queuesize, float volume=1.0f) = 0;
     virtual void stop() = 0;
 
     virtual bool isPlaying() const = 0;
