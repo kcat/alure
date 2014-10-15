@@ -14,6 +14,7 @@ class Device;
 class Context;
 class Buffer;
 class Decoder;
+class Source;
 
 
 inline ALCuint MakeVersion(ALCushort major, ALCushort minor)
@@ -91,6 +92,8 @@ public:
     virtual Buffer *getBuffer(const std::string &name) = 0;
     virtual void removeBuffer(const std::string &name) = 0;
     virtual void removeBuffer(Buffer *buffer) = 0;
+
+    virtual Source *playSound(Buffer *buffer, float volume) = 0;
 };
 
 
@@ -128,6 +131,15 @@ public:
     virtual bool seek(ALuint pos) = 0;
 
     virtual ALsizei read(ALvoid *ptr, ALsizei count) = 0;
+};
+
+
+class Source {
+protected:
+    virtual ~Source() { }
+
+public:
+    virtual void stop() = 0;
 };
 
 } // namespace alure

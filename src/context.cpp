@@ -207,6 +207,12 @@ void ALContext::removeBuffer(Buffer *buffer)
 }
 
 
+Source *ALContext::playSound(Buffer *buffer, float volume)
+{
+    throw std::runtime_error("Cannot play sound");
+}
+
+
 void Context::MakeCurrent(Context *context)
 {
     ALContext *ctx = 0;

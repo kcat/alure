@@ -18,6 +18,7 @@ namespace alure {
 
 class ALDevice;
 class ALBuffer;
+class ALSource;
 
 class ALContext : public Context {
     static ALContext *sCurrentCtx;
@@ -59,6 +60,8 @@ public:
     virtual Buffer *getBuffer(const std::string &name) final;
     virtual void removeBuffer(const std::string &name) final;
     virtual void removeBuffer(Buffer *buffer) final;
+
+    virtual Source *playSound(Buffer *buffer, float volume) final;
 };
 
 
