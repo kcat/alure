@@ -26,7 +26,7 @@ void ALBuffer::cleanup()
 
 ALuint ALBuffer::getSize()
 {
-    CheckContext(mContext);
+    CheckContextDevice(mDevice);
 
     ALint size = -1;
     alGetBufferi(mId, AL_SIZE, &size);

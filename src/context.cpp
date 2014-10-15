@@ -19,6 +19,14 @@
 namespace alure
 {
 
+void CheckContextDevice(ALDevice *device)
+{
+    ALContext *thrdctx = ALContext::GetThreadCurrent();
+    ALContext *globctx = ALContext::GetCurrent();
+    if((thrdctx && device != thrdctx->getDevice()) || (!thrdctx && !globctx) || (!thrdctx && device != globctx->getDevice()))
+        throw std::runtime_error("Called context is not current");
+}
+
 ALContext *ALContext::sCurrentCtx = 0;
 #if __cplusplus >= 201103L
 thread_local ALContext *ALContext::sThreadCurrentCtx;
@@ -185,7 +193,7 @@ Buffer *ALContext::getBuffer(const std::string &name)
         if(alGetError() != AL_NO_ERROR)
             throw std::runtime_error("Failed to buffer data");
 
-        return mDevice->addBuffer(name, new ALBuffer(this, bid));
+        return mDevice->addBuffer(name, new ALBuffer(mDevice, bid));
     }
     catch(...) {
         alDeleteBuffers(1, &bid);
@@ -198,17 +206,20 @@ Buffer *ALContext::getBuffer(const std::string &name)
 
 void ALContext::removeBuffer(const std::string &name)
 {
+    CheckContext(this);
     mDevice->removeBuffer(name);
 }
 
 void ALContext::removeBuffer(Buffer *buffer)
 {
+    CheckContext(this);
     mDevice->removeBuffer(buffer);
 }
 
 
 Source *ALContext::playSound(Buffer *buffer, float volume)
 {
+    CheckContext(this);
     throw std::runtime_error("Cannot play sound");
 }
 

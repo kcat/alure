@@ -13,17 +13,17 @@
 
 namespace alure {
 
-class ALContext;
+class ALDevice;
 
 class ALBuffer : public Buffer {
-    ALContext *const mContext;
+    ALDevice *const mDevice;
     ALuint mId;
 
     RefCount mRefs;
 
 public:
-    ALBuffer(ALContext *context, ALuint id)
-      : mContext(context), mId(id), mRefs(0)
+    ALBuffer(ALDevice *device, ALuint id)
+      : mDevice(device), mId(id), mRefs(0)
     { }
 
     void cleanup();
