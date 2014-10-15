@@ -29,9 +29,10 @@ public:
     void cleanup();
 
     long addRef() { return ++mRefs; }
-    long decRef() { return ++mRefs; }
+    long decRef() { return --mRefs; }
     long getRef() { return mRefs.load(); }
 
+    ALDevice *getDevice() { return mDevice; }
     const ALuint &getId() const { return mId; }
 
     virtual ALuint getSize() final;

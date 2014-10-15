@@ -93,7 +93,8 @@ public:
     virtual void removeBuffer(const std::string &name) = 0;
     virtual void removeBuffer(Buffer *buffer) = 0;
 
-    virtual Source *playSound(Buffer *buffer, float volume) = 0;
+    virtual Source *getSource() = 0;
+    virtual void finalize(Source *source) = 0;
 };
 
 
@@ -139,6 +140,7 @@ protected:
     virtual ~Source() { }
 
 public:
+    virtual void play(Buffer *buffer, float volume) = 0;
     virtual void stop() = 0;
 };
 

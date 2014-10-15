@@ -9,12 +9,14 @@
 #include "alc.h"
 #include "alext.h"
 
-#include "devicemanager.h"
-#include "device.h"
-#include "buffer.h"
 #ifdef HAVE_LIBSNDFILE
 #include "decoders/sndfile1.h"
 #endif
+
+#include "devicemanager.h"
+#include "device.h"
+#include "buffer.h"
+#include "source.h"
 
 namespace alure
 {
@@ -212,10 +214,48 @@ void ALContext::removeBuffer(Buffer *buffer)
 }
 
 
-Source *ALContext::playSound(Buffer */*buffer*/, float /*volume*/)
+ALuint ALContext::getSourceId()
+{
+    ALuint id = 0;
+    if(!mSourceIds.empty())
+    {
+        id = mSourceIds.top();
+        mSourceIds.pop();
+    }
+    else
+    {
+        alGetError();
+        alGenSources(1, &id);
+        if(alGetError() != AL_NO_ERROR)
+        {
+            // FIXME: Steal from an ALSource
+            throw std::runtime_error("No source IDs");
+        }
+    }
+    return id;
+}
+
+
+Source *ALContext::getSource()
 {
     CheckContext(this);
-    throw std::runtime_error("Cannot play sound");
+
+    ALSource *source = 0;
+    if(mSources.empty())
+        source = new ALSource(this);
+    else
+    {
+        source = mSources.back();
+        mSources.pop();
+    }
+    return source;
+}
+
+void ALContext::finalize(Source *source)
+{
+    ALSource *alsrc = dynamic_cast<ALSource*>(source);
+    if(!alsrc) throw std::runtime_error("Invalid source");
+    alsrc->finalize();
 }
 
 

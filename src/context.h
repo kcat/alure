@@ -4,7 +4,8 @@
 #include "alure2.h"
 
 #include <stdexcept>
-#include <map>
+#include <stack>
+#include <queue>
 
 #include "alc.h"
 
@@ -38,8 +39,10 @@ public:
 
 private:
     ALCcontext *mContext;
+    std::stack<ALuint> mSourceIds;
 
     ALDevice *mDevice;
+    std::queue<ALSource*> mSources;
 
     RefCount mRefs;
 
@@ -53,6 +56,10 @@ public:
     long addRef() { return ++mRefs; }
     long decRef() { return --mRefs; }
 
+    ALuint getSourceId();
+    void insertSourceId(ALuint id) { mSourceIds.push(id); }
+    void insertSource(ALSource *source) { mSources.push(source); }
+
     virtual Device *getDevice() final;
 
     virtual void destroy() final;
@@ -61,7 +68,8 @@ public:
     virtual void removeBuffer(const std::string &name) final;
     virtual void removeBuffer(Buffer *buffer) final;
 
-    virtual Source *playSound(Buffer *buffer, float volume) final;
+    virtual Source *getSource() final;
+    virtual void finalize(Source *source) final;
 };
 
 

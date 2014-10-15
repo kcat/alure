@@ -21,10 +21,12 @@ class ALSource : public Source {
     ALBuffer *mBuffer;
 
 public:
-    ALSource(ALContext *context, ALuint id, ALBuffer *buffer)
-      : mContext(context), mId(id), mBuffer(buffer)
-    { }
+    ALSource(ALContext *context) : mContext(context), mId(0), mBuffer(0) { }
+    virtual ~ALSource();
 
+    void finalize();
+
+    virtual void play(Buffer *buffer, float volume) final;
     virtual void stop() final;
 };
 
