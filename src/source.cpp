@@ -21,6 +21,22 @@ ALSource::~ALSource()
     mBuffer = 0;
 }
 
+void ALSource::finalize()
+{
+    CheckContext(mContext);
+    if(mId)
+    {
+        mContext->insertSourceId(mId);
+        alSourceStop(mId);
+        alSourcei(mId, AL_BUFFER, 0);
+        mId = 0;
+    }
+    mContext->insertSource(this);
+    if(mBuffer)
+        mBuffer->decRef();
+    mBuffer = 0;
+}
+
 
 void ALSource::play(Buffer *buffer, float volume)
 {
@@ -64,20 +80,16 @@ void ALSource::stop()
     mBuffer = 0;
 }
 
-void ALSource::finalize()
+bool ALSource::isPlaying() const
 {
     CheckContext(mContext);
-    if(mId)
-    {
-        mContext->insertSourceId(mId);
-        alSourceStop(mId);
-        alSourcei(mId, AL_BUFFER, 0);
-        mId = 0;
-    }
-    mContext->insertSource(this);
-    if(mBuffer)
-        mBuffer->decRef();
-    mBuffer = 0;
+    if(!mId) return false;
+
+    ALint state = -1;
+    alGetSourcei(mId, AL_SOURCE_STATE, &state);
+    if(state == -1)
+        throw std::runtime_error("Source state error");
+    return state == AL_PLAYING;
 }
 
 }

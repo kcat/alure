@@ -140,8 +140,10 @@ protected:
     virtual ~Source() { }
 
 public:
-    virtual void play(Buffer *buffer, float volume) = 0;
+    virtual void play(Buffer *buffer, float volume=1.0f) = 0;
     virtual void stop() = 0;
+
+    virtual bool isPlaying() const = 0;
 };
 
 } // namespace alure

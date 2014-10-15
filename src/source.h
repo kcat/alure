@@ -28,6 +28,8 @@ public:
 
     virtual void play(Buffer *buffer, float volume) final;
     virtual void stop() final;
+
+    virtual bool isPlaying() const final;
 };
 
 } // namespace alure
