@@ -23,7 +23,7 @@ public:
     virtual ALuint getPosition() final;
     virtual bool seek(ALuint pos) final;
 
-    virtual ALsizei read(ALvoid *ptr, ALsizei count) final;
+    virtual ALuint read(ALvoid *ptr, ALuint count) final;
 
     static Decoder *openFile(const std::string &name);
 };

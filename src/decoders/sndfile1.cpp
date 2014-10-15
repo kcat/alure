@@ -66,9 +66,10 @@ bool SndFileDecoder::seek(ALuint pos)
     return true;
 }
 
-ALsizei SndFileDecoder::read(ALvoid *ptr, ALsizei count)
+ALuint SndFileDecoder::read(ALvoid *ptr, ALuint count)
 {
-    return sf_readf_short(mSndFile, static_cast<short*>(ptr), count);
+    sf_count_t got = sf_readf_short(mSndFile, static_cast<short*>(ptr), count);
+    return (ALuint)std::max<sf_count_t>(got, 0);
 }
 
 }

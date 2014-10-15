@@ -141,7 +141,7 @@ public:
     virtual ALuint getPosition() = 0;
     virtual bool seek(ALuint pos) = 0;
 
-    virtual ALsizei read(ALvoid *ptr, ALsizei count) = 0;
+    virtual ALuint read(ALvoid *ptr, ALuint count) = 0;
 };
 
 
