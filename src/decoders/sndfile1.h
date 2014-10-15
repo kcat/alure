@@ -15,7 +15,9 @@ public:
     SndFileDecoder(SNDFILE *sndfile, const SF_INFO &info);
     virtual ~SndFileDecoder();
 
-    virtual void getFormat(ALuint *srate, SampleConfig *chans, SampleType *type) final;
+    virtual ALuint getFrequency() final;
+    virtual SampleConfig getSampleConfig() final;
+    virtual SampleType getSampleType() final;
 
     virtual ALuint getLength() final;
     virtual ALuint getPosition() final;

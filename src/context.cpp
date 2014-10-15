@@ -114,13 +114,11 @@ Buffer *ALContext::getBuffer(const std::string &name)
     if(buffer) return buffer;
 
     std::auto_ptr<Decoder> decoder(createDecoder(name.c_str()));
-
-    ALuint srate;
-    SampleConfig chans;
-    SampleType type;
-    decoder->getFormat(&srate, &chans, &type);
-
+    ALuint srate = decoder->getFrequency();
+    SampleConfig chans = decoder->getSampleConfig();
+    SampleType type = decoder->getSampleType();
     ALuint frames = decoder->getLength();
+
     std::vector<ALbyte> data(FramesToBytes(frames, chans, type));
     frames = decoder->read(&data[0], frames);
     data.resize(FramesToBytes(frames, chans, type));

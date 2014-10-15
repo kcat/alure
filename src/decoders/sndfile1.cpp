@@ -25,17 +25,26 @@ SndFileDecoder::~SndFileDecoder()
     mSndFile = 0;
 }
 
-void SndFileDecoder::getFormat(ALuint *srate, SampleConfig *chans, SampleType *type)
+
+ALuint SndFileDecoder::getFrequency()
 {
-    *srate = mSndInfo.samplerate;
-    if(mSndInfo.channels == 1)
-        *chans = SampleConfig_Mono;
-    else if(mSndInfo.channels == 2)
-        *chans = SampleConfig_Stereo;
-    else
-        throw std::runtime_error("Unsupported sample configuration");
-    *type = SampleType_Int16;
+    return mSndInfo.samplerate;
 }
+
+SampleConfig SndFileDecoder::getSampleConfig()
+{
+    if(mSndInfo.channels == 1)
+        return SampleConfig_Mono;
+    if(mSndInfo.channels == 2)
+        return SampleConfig_Stereo;
+    throw std::runtime_error("Unsupported sample configuration");
+}
+
+SampleType SndFileDecoder::getSampleType()
+{
+    return SampleType_Int16;
+}
+
 
 ALuint SndFileDecoder::getLength()
 {

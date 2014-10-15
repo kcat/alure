@@ -40,10 +40,9 @@ public:
 
     void prepare()
     {
-        ALuint srate;
-        SampleConfig chans;
-        SampleType type;
-        mDecoder->getFormat(&srate, &chans, &type);
+        ALuint srate = mDecoder->getFrequency();
+        SampleConfig chans = mDecoder->getSampleConfig();
+        SampleType type = mDecoder->getSampleType();
 
         mFormat = GetFormat(chans, type);
         mFrequency = srate;

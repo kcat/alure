@@ -133,7 +133,9 @@ class Decoder {
 public:
     virtual ~Decoder() { }
 
-    virtual void getFormat(ALuint *srate, SampleConfig *chans, SampleType *type) = 0;
+    virtual ALuint getFrequency() = 0;
+    virtual SampleConfig getSampleConfig() = 0;
+    virtual SampleType getSampleType() = 0;
 
     virtual ALuint getLength() = 0;
     virtual ALuint getPosition() = 0;
