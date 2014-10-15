@@ -103,6 +103,7 @@ protected:
     virtual ~Buffer() { }
 
 public:
+    virtual ALuint getFrequency() = 0;
     virtual ALuint getSize() = 0;
 };
 

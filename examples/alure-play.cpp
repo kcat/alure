@@ -31,10 +31,10 @@ int main(int argc, char *argv[])
 
     for(int i = 1;i < argc;i++)
     {
-        std::cout<< "Playing "<<argv[i] <<std::endl;
         alure::Buffer *buffer = ctx->getBuffer(argv[i]);
         alure::Source *source = ctx->getSource();
         source->play(buffer);
+        std::cout<< "Playing "<<argv[i]<<" ("<<buffer->getFrequency()<<"hz)" <<std::endl;
 
         while(source->isPlaying())
             Sleep(25);

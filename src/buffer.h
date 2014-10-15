@@ -35,6 +35,7 @@ public:
     ALDevice *getDevice() { return mDevice; }
     const ALuint &getId() const { return mId; }
 
+    virtual ALuint getFrequency() final;
     virtual ALuint getSize() final;
 };
 

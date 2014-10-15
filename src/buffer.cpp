@@ -24,6 +24,17 @@ void ALBuffer::cleanup()
     delete this;
 }
 
+ALuint ALBuffer::getFrequency()
+{
+    CheckContextDevice(mDevice);
+
+    ALint freq = -1;
+    alGetBufferi(mId, AL_FREQUENCY, &freq);
+    if(freq < 0)
+        throw std::runtime_error("Buffer frequency error");
+    return freq;
+}
+
 ALuint ALBuffer::getSize()
 {
     CheckContextDevice(mDevice);
