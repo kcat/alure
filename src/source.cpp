@@ -27,14 +27,25 @@ class ALBufferStream {
     std::vector<ALbyte> mData;
     ALuint mSilence;
 
+    std::vector<ALuint> mBufferIds;
+    ALuint mCurrentIdx;
+
     bool mDone;
 
 public:
     ALBufferStream(Decoder *decoder, ALuint updatelen, ALuint numupdates)
       : mDecoder(decoder), mUpdateLen(updatelen), mNumUpdates(numupdates),
         mFormat(AL_NONE), mFrequency(0), mFrameSize(0), mSilence(0),
-        mDone(false)
+        mCurrentIdx(0), mDone(false)
     { }
+    virtual ~ALBufferStream()
+    {
+        if(!mBufferIds.empty())
+        {
+            alDeleteBuffers(mBufferIds.size(), &mBufferIds[0]);
+            mBufferIds.clear();
+        }
+    }
 
     ALuint getNumUpdates() const { return mNumUpdates; }
 
@@ -50,6 +61,9 @@ public:
 
         mData.resize(mUpdateLen * mFrameSize);
         mSilence = (type == SampleType_UInt8) ? 0x80 : 0x00;
+
+        mBufferIds.assign(mNumUpdates, 0);
+        alGenBuffers(mBufferIds.size(), &mBufferIds[0]);
     }
 
     bool hasMoreData() const { return mDone; }
@@ -75,43 +89,25 @@ public:
             }
         }
 
-        ALuint buf = 0;
-        alGenBuffers(1, &buf);
-        alBufferData(buf, mFormat, &mData[0], mData.size(), mFrequency);
-        alSourceQueueBuffers(srcid, 1, &buf);
+        alBufferData(mBufferIds[mCurrentIdx], mFormat, &mData[0], mData.size(), mFrequency);
+        alSourceQueueBuffers(srcid, 1, &mBufferIds[mCurrentIdx]);
+        mCurrentIdx = (mCurrentIdx+1) % mBufferIds.size();
         return true;
     }
 };
 
 
-void ALSource::reset()
-{
-    if(mId == 0)
-        return;
-    alSourceStop(mId);
-    if(mStream)
-    {
-        ALint processed = 0;
-        alGetSourcei(mId, AL_BUFFERS_PROCESSED, &processed);
-        if(processed > 0)
-        {
-            ALuint bufs[processed];
-            alSourceUnqueueBuffers(mId, processed, bufs);
-            alDeleteBuffers(processed, bufs);
-        }
-    }
-    alSourcei(mId, AL_BUFFER, 0);
-}
-
 void ALSource::finalize()
 {
     CheckContext(mContext);
 
-    reset();
-
     if(mId != 0)
+    {
+        alSourceRewind(mId);
+        alSourcei(mId, AL_BUFFER, 0);
         mContext->insertSourceId(mId);
-    mId = 0;
+        mId = 0;
+    }
 
     mContext->freeSource(this);
 
@@ -148,9 +144,13 @@ void ALSource::play(Buffer *buffer)
     CheckContext(mContext);
     CheckContextDevice(albuf->getDevice());
 
-    reset();
     if(mId == 0)
         mId = mContext->getSourceId();
+    else
+    {
+        alSourceRewind(mId);
+        alSourcei(mId, AL_BUFFER, 0);
+    }
 
     delete mStream;
     mStream = 0;
@@ -177,9 +177,13 @@ void ALSource::play(Decoder *decoder, ALuint updatelen, ALuint queuesize)
     std::auto_ptr<ALBufferStream> stream(new ALBufferStream(decoder, updatelen, queuesize));
     stream->prepare();
 
-    reset();
     if(mId == 0)
         mId = mContext->getSourceId();
+    else
+    {
+        alSourceRewind(mId);
+        alSourcei(mId, AL_BUFFER, 0);
+    }
 
     if(mBuffer)
         mBuffer->decRef();
@@ -203,11 +207,13 @@ void ALSource::stop()
 {
     CheckContext(mContext);
 
-    reset();
-
     if(mId != 0)
+    {
+        alSourceRewind(mId);
+        alSourcei(mId, AL_BUFFER, 0);
         mContext->insertSourceId(mId);
-    mId = 0;
+        mId = 0;
+    }
 
     if(mBuffer)
         mBuffer->decRef();
@@ -252,7 +258,6 @@ void ALSource::update()
         {
             ALuint bufs[processed];
             alSourceUnqueueBuffers(mId, processed, bufs);
-            alDeleteBuffers(processed, bufs);
         }
 
         ALint queued;

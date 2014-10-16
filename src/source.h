@@ -24,8 +24,6 @@ class ALSource : public Source {
 
     bool mLooping;
 
-    void reset();
-
 public:
     ALSource(ALContext *context)
       : mContext(context), mId(0), mBuffer(0), mStream(0), mLooping(0)
