@@ -247,7 +247,13 @@ bool ALSource::isPlaying() const
 void ALSource::update()
 {
     CheckContext(mContext);
-    if(mId == 0) return;
+    updateNoCtxCheck();
+}
+
+void ALSource::updateNoCtxCheck()
+{
+    if(mId == 0)
+        return;
 
     if(mStream)
     {

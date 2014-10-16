@@ -39,7 +39,7 @@ int main(int argc, char *argv[])
         while(source->isPlaying())
         {
             Sleep(25);
-            source->update();
+            ctx->update();
         }
 
         ctx->finalize(source);

@@ -4,6 +4,7 @@
 #include "context.h"
 
 #include <stdexcept>
+#include <algorithm>
 #include <memory>
 
 #include "alc.h"
@@ -205,6 +206,12 @@ void ALContext::finalize(Source *source)
     ALSource *alsrc = dynamic_cast<ALSource*>(source);
     if(!alsrc) throw std::runtime_error("Invalid source");
     alsrc->finalize();
+}
+
+
+void ALContext::update()
+{
+    std::for_each(mUsedSources.begin(), mUsedSources.end(), std::mem_fun(&ALSource::updateNoCtxCheck));
 }
 
 

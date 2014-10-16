@@ -29,6 +29,7 @@ public:
       : mContext(context), mId(0), mBuffer(0), mStream(0), mLooping(0)
     { }
 
+    void updateNoCtxCheck();
     void finalize();
 
     virtual void setLooping(bool looping) final;

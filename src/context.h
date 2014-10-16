@@ -78,6 +78,8 @@ public:
 
     virtual Source *getSource() final;
     virtual void finalize(Source *source) final;
+
+    virtual void update() final;
 };
 
 

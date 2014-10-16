@@ -100,6 +100,8 @@ public:
 
     virtual Source *getSource() = 0;
     virtual void finalize(Source *source) = 0;
+
+    virtual void update() = 0;
 };
 
 
