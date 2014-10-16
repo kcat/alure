@@ -52,6 +52,7 @@ public:
         mSilence = (type == SampleType_UInt8) ? 0x80 : 0x00;
     }
 
+    bool hasMoreData() const { return mDone; }
     bool streamMoreData(ALuint srcid, bool loop)
     {
         if(mDone) return false;
@@ -220,6 +221,15 @@ bool ALSource::isPlaying() const
 {
     CheckContext(mContext);
     if(mId == 0) return false;
+
+    if(mStream)
+    {
+        ALint state = -1;
+        alGetSourcei(mId, AL_SOURCE_STATE, &state);
+        if(state == -1)
+            throw std::runtime_error("Source state error");
+        return state == AL_PLAYING || (state != AL_PAUSED && mStream->hasMoreData());
+    }
 
     ALint state = -1;
     alGetSourcei(mId, AL_SOURCE_STATE, &state);
