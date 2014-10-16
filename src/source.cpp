@@ -71,22 +71,21 @@ public:
     {
         if(mDone) return false;
         ALuint frames = mDecoder->read(&mData[0], mUpdateLen);
+        if(loop && frames < mUpdateLen)
+        {
+            do {
+                if(!mDecoder->seek(0)) break;
+                ALuint got = mDecoder->read(&mData[frames*mFrameSize], mUpdateLen-frames);
+                if(got == 0) break;
+                frames += got;
+            } while(frames < mUpdateLen);
+        }
         if(frames < mUpdateLen)
         {
-            if(loop)
-            {
-                do {
-                    mDecoder->seek(0);
-                    frames += mDecoder->read(&mData[frames*mFrameSize], mUpdateLen-frames);
-                } while(frames < mUpdateLen);
-            }
-            else
-            {
-                mDone = true;
-                if(frames == 0)
-                    return false;
-                memset(&mData[frames*mFrameSize], mSilence, (mUpdateLen-frames)*mFrameSize);
-            }
+            mDone = true;
+            if(frames == 0)
+                return false;
+            memset(&mData[frames*mFrameSize], mSilence, (mUpdateLen-frames)*mFrameSize);
         }
 
         alBufferData(mBufferIds[mCurrentIdx], mFormat, &mData[0], mData.size(), mFrequency);
