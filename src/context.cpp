@@ -57,7 +57,7 @@ void ALContext::MakeThreadCurrent(ALContext *context)
     if(!ALDeviceManager::SetThreadContext)
         throw std::runtime_error("Thread-local contexts unsupported");
     if(ALDeviceManager::SetThreadContext(context ? context->getContext() : 0) == ALC_FALSE)
-        throw std::runtime_error("Call too alcSetThreadContext failed");
+        throw std::runtime_error("Call to alcSetThreadContext failed");
     if(context)
         context->addRef();
     if(sThreadCurrentCtx)
