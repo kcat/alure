@@ -41,7 +41,7 @@ public:
 
     virtual bool isPlaying() const final;
 
-    virtual ALuint getPosition() final;
+    virtual ALuint getOffset() const final;
 
     virtual void update() final;
 };

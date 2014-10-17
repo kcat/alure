@@ -176,7 +176,7 @@ public:
 
     virtual bool isPlaying() const = 0;
 
-    virtual ALuint getPosition() = 0;
+    virtual ALuint getOffset() const = 0;
 
     virtual void update() = 0;
 };

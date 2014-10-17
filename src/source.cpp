@@ -310,7 +310,7 @@ void ALSource::updateNoCtxCheck()
     }
 }
 
-ALuint ALSource::getPosition()
+ALuint ALSource::getOffset() const
 {
     CheckContext(mContext);
     if(mId == 0)
