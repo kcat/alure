@@ -11,6 +11,7 @@
 #include "alc.h"
 
 #include "refcount.h"
+#include "device.h"
 
 #if __cplusplus < 201103L
 #define final
@@ -33,7 +34,7 @@ class ALContext : public Context {
 #endif
 public:
     static void MakeCurrent(ALContext *context);
-    static ALContext *GetCurrent() { return sCurrentCtx; }
+    static ALContext *GetCurrent() { return sThreadCurrentCtx ? sThreadCurrentCtx : sCurrentCtx; }
 
     static void MakeThreadCurrent(ALContext *context);
     static ALContext *GetThreadCurrent() { return sThreadCurrentCtx; }
@@ -88,12 +89,16 @@ public:
 
 inline void CheckContext(ALContext *ctx)
 {
-    ALContext *thrdctx = ALContext::GetThreadCurrent();
-    if((thrdctx && ctx != thrdctx) || (!thrdctx && ctx != ALContext::GetCurrent()))
+    if(ctx != ALContext::GetCurrent())
         throw std::runtime_error("Called context is not current");
 }
 
-void CheckContextDevice(ALDevice *device);
+inline void CheckContextDevice(ALDevice *device)
+{
+    ALContext *ctx = ALContext::GetCurrent();
+    if(!ctx || device != ctx->getDevice())
+        throw std::runtime_error("Called device is not current");
+}
 
 } // namespace alure
 

@@ -21,14 +21,6 @@
 namespace alure
 {
 
-void CheckContextDevice(ALDevice *device)
-{
-    ALContext *thrdctx = ALContext::GetThreadCurrent();
-    ALContext *globctx = ALContext::GetCurrent();
-    if((!thrdctx && !globctx) || (thrdctx && device != thrdctx->getDevice()) || (!thrdctx && device != globctx->getDevice()))
-        throw std::runtime_error("Called context is not current");
-}
-
 ALContext *ALContext::sCurrentCtx = 0;
 #if __cplusplus >= 201103L
 thread_local ALContext *ALContext::sThreadCurrentCtx;
