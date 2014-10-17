@@ -115,6 +115,8 @@ public:
 
     virtual ALuint getFrequency() = 0;
     virtual ALuint getSize() = 0;
+
+    virtual bool isRemovable() const = 0;
 };
 
 

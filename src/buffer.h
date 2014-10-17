@@ -44,6 +44,8 @@ public:
 
     virtual ALuint getFrequency() final;
     virtual ALuint getSize() final;
+
+    virtual bool isRemovable() const final;
 };
 
 } // namespace alure
