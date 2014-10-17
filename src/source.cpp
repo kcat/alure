@@ -115,6 +115,9 @@ void ALSource::finalize()
     mContext->freeSource(this);
 
     mLooping = false;
+    mPosition[0] = mPosition[1] = mPosition[2] = 0.0f;
+    mVelocity[0] = mVelocity[1] = mVelocity[2] = 0.0f;
+    mDirection[0] = mDirection[1] = mDirection[2] = 0.0f;
 
     if(mBuffer)
         mBuffer->decRef();
@@ -148,7 +151,12 @@ void ALSource::play(Buffer *buffer)
     CheckContextDevice(albuf->getDevice());
 
     if(mId == 0)
+    {
         mId = mContext->getSourceId();
+        alSourcefv(mId, AL_POSITION, mPosition);
+        alSourcefv(mId, AL_VELOCITY, mVelocity);
+        alSourcefv(mId, AL_DIRECTION, mDirection);
+    }
     else
     {
         alSourceRewind(mId);
@@ -181,7 +189,12 @@ void ALSource::play(Decoder *decoder, ALuint updatelen, ALuint queuesize)
     stream->prepare();
 
     if(mId == 0)
+    {
         mId = mContext->getSourceId();
+        alSourcefv(mId, AL_POSITION, mPosition);
+        alSourcefv(mId, AL_VELOCITY, mVelocity);
+        alSourcefv(mId, AL_DIRECTION, mDirection);
+    }
     else
     {
         alSourceRewind(mId);
@@ -351,6 +364,67 @@ ALuint ALSource::getOffset() const
     ALint srcpos = 0;
     alGetSourcei(mId, AL_SAMPLE_OFFSET, &srcpos);
     return srcpos;
+}
+
+
+void ALSource::setPosition(ALfloat x, ALfloat y, ALfloat z)
+{
+    CheckContext(mContext);
+    if(mId != 0)
+        alSource3f(mId, AL_POSITION, x, y, z);
+    mPosition[0] = x;
+    mPosition[1] = y;
+    mPosition[2] = z;
+}
+
+void ALSource::setPosition(const ALfloat *pos)
+{
+    CheckContext(mContext);
+    if(mId != 0)
+        alSourcefv(mId, AL_POSITION, pos);
+    mPosition[0] = pos[0];
+    mPosition[1] = pos[1];
+    mPosition[2] = pos[2];
+}
+
+void ALSource::setVelocity(ALfloat x, ALfloat y, ALfloat z)
+{
+    CheckContext(mContext);
+    if(mId != 0)
+        alSource3f(mId, AL_VELOCITY, x, y, z);
+    mVelocity[0] = x;
+    mVelocity[1] = y;
+    mVelocity[2] = z;
+}
+
+void ALSource::setVelocity(const ALfloat *vel)
+{
+    CheckContext(mContext);
+    if(mId != 0)
+        alSourcefv(mId, AL_VELOCITY, vel);
+    mVelocity[0] = vel[0];
+    mVelocity[1] = vel[1];
+    mVelocity[2] = vel[2];
+}
+
+void ALSource::setDirection(ALfloat x, ALfloat y, ALfloat z)
+{
+    CheckContext(mContext);
+    if(mId != 0)
+        alSource3f(mId, AL_DIRECTION, x, y, z);
+    mDirection[0] = x;
+    mDirection[1] = y;
+    mDirection[2] = z;
+}
+
+void ALSource::setDirection(const ALfloat *dir)
+{
+    CheckContext(mContext);
+    if(mId != 0)
+        alSourcefv(mId, AL_DIRECTION, dir);
+    mDirection[0] = dir[0];
+    mDirection[1] = dir[1];
+    mDirection[2] = dir[2];
 }
 
 }

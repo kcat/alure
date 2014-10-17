@@ -178,6 +178,15 @@ public:
 
     virtual ALuint getOffset() const = 0;
 
+    virtual void setPosition(ALfloat x, ALfloat y, ALfloat z) = 0;
+    virtual void setPosition(const ALfloat *pos) = 0;
+
+    virtual void setVelocity(ALfloat x, ALfloat y, ALfloat z) = 0;
+    virtual void setVelocity(const ALfloat *vel) = 0;
+
+    virtual void setDirection(ALfloat x, ALfloat y, ALfloat z) = 0;
+    virtual void setDirection(const ALfloat *dir) = 0;
+
     virtual void update() = 0;
 };
 
