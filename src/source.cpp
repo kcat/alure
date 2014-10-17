@@ -47,7 +47,11 @@ public:
         }
     }
 
+    ALuint getLength() const { return mDecoder->getLength(); }
+    ALuint getPosition() const { return mDecoder->getPosition(); }
+
     ALuint getNumUpdates() const { return mNumUpdates; }
+    ALuint getUpdateLength() const { return mUpdateLen; }
 
     void prepare()
     {
@@ -256,8 +260,7 @@ void ALSource::updateNoCtxCheck()
 
     if(mStream)
     {
-        ALint processed, state;
-        alGetSourcei(mId, AL_SOURCE_STATE, &state);
+        ALint processed;
         alGetSourcei(mId, AL_BUFFERS_PROCESSED, &processed);
         if(processed > 0)
         {
@@ -275,8 +278,28 @@ void ALSource::updateNoCtxCheck()
 
         if(queued == 0)
             stop();
-        else if(state != AL_PLAYING && state != AL_PAUSED)
-            alSourcePlay(mId);
+        else
+        {
+            ALint state = -1;
+            alGetSourcei(mId, AL_SOURCE_STATE, &state);
+            if(state != AL_PLAYING && state != AL_PAUSED)
+            {
+                alGetSourcei(mId, AL_BUFFERS_PROCESSED, &processed);
+                if(processed > 0)
+                {
+                    ALuint bufs[processed];
+                    alSourceUnqueueBuffers(mId, processed, bufs);
+                }
+
+                alGetSourcei(mId, AL_BUFFERS_QUEUED, &queued);
+                for(;(ALuint)queued < mStream->getNumUpdates();queued++)
+                {
+                    if(!mStream->streamMoreData(mId, mLooping))
+                        break;
+                }
+                alSourcePlay(mId);
+            }
+        }
     }
     else
     {
@@ -285,6 +308,49 @@ void ALSource::updateNoCtxCheck()
         if(state != AL_PLAYING && state != AL_PAUSED)
             stop();
     }
+}
+
+ALuint ALSource::getPosition()
+{
+    CheckContext(mContext);
+    if(mId == 0)
+        return 0;
+
+    if(mStream)
+    {
+        ALint queued = 0, state = -1, srcpos = 0;
+        alGetSourcei(mId, AL_BUFFERS_QUEUED, &queued);
+        alGetSourcei(mId, AL_SAMPLE_OFFSET, &srcpos);
+        alGetSourcei(mId, AL_SOURCE_STATE, &state);
+
+        ALuint pos = mStream->getPosition();
+        if(state == AL_PLAYING || state == AL_PAUSED)
+        {
+            ALuint queuelen = queued * mStream->getUpdateLength();
+            if(pos >= queuelen)
+                pos -= queuelen;
+            else
+            {
+                if(mLooping)
+                {
+                    ALuint streamlen = mStream->getLength();
+                    if(streamlen+pos >= queuelen)
+                        pos = streamlen + pos - queuelen;
+                    else
+                        pos = 0;
+                }
+                else
+                    pos = 0;
+            }
+            pos += srcpos;
+        }
+
+        return pos;
+    }
+
+    ALint srcpos = 0;
+    alGetSourcei(mId, AL_SAMPLE_OFFSET, &srcpos);
+    return srcpos;
 }
 
 }

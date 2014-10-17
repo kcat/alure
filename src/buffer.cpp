@@ -25,6 +25,19 @@ void ALBuffer::cleanup()
     delete this;
 }
 
+ALuint ALBuffer::getLength()
+{
+    CheckContextDevice(mDevice);
+
+    ALint size=-1, bits=-1, chans=-1;
+    alGetBufferi(mId, AL_SIZE, &size);
+    alGetBufferi(mId, AL_BITS, &bits);
+    alGetBufferi(mId, AL_CHANNELS, &chans);
+    if(size < 0 || bits < 0 || chans < 0)
+        throw std::runtime_error("Buffer format error");
+    return size / chans * 8 / bits;
+}
+
 ALuint ALBuffer::getFrequency()
 {
     CheckContextDevice(mDevice);

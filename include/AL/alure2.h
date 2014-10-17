@@ -110,6 +110,8 @@ protected:
     virtual ~Buffer() { }
 
 public:
+    virtual ALuint getLength() = 0;
+
     virtual ALuint getFrequency() = 0;
     virtual ALuint getSize() = 0;
 };
@@ -160,6 +162,8 @@ public:
     virtual void stop() = 0;
 
     virtual bool isPlaying() const = 0;
+
+    virtual ALuint getPosition() = 0;
 
     virtual void update() = 0;
 };
