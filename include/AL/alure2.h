@@ -95,6 +95,7 @@ public:
 
     // Functions below require the context to be current
     virtual Buffer *getBuffer(const std::string &name) = 0;
+    virtual Buffer *getBuffer(Decoder *decoder) = 0;
     virtual void removeBuffer(const std::string &name) = 0;
     virtual void removeBuffer(Buffer *buffer) = 0;
 

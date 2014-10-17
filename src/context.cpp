@@ -107,14 +107,8 @@ Decoder *ALContext::createDecoder(const std::string &name)
 }
 
 
-Buffer *ALContext::getBuffer(const std::string &name)
+Buffer *ALContext::fillBuffer(const std::string &name, Decoder *decoder)
 {
-    CheckContext(this);
-
-    Buffer *buffer = mDevice->getBuffer(name);
-    if(buffer) return buffer;
-
-    std::auto_ptr<Decoder> decoder(createDecoder(name.c_str()));
     ALuint srate = decoder->getFrequency();
     SampleConfig chans = decoder->getSampleConfig();
     SampleType type = decoder->getSampleType();
@@ -122,8 +116,8 @@ Buffer *ALContext::getBuffer(const std::string &name)
 
     std::vector<ALbyte> data(FramesToBytes(frames, chans, type));
     frames = decoder->read(&data[0], frames);
+    if(!frames) throw std::runtime_error("No samples for buffer");
     data.resize(FramesToBytes(frames, chans, type));
-    decoder.reset();
 
     alGetError();
     ALuint bid = 0;
@@ -133,6 +127,7 @@ Buffer *ALContext::getBuffer(const std::string &name)
         if(alGetError() != AL_NO_ERROR)
             throw std::runtime_error("Failed to buffer data");
 
+        if(name.empty()) return new ALBuffer(mDevice, bid);
         return mDevice->addBuffer(name, new ALBuffer(mDevice, bid));
     }
     catch(...) {
@@ -140,6 +135,26 @@ Buffer *ALContext::getBuffer(const std::string &name)
         throw;
     }
 }
+
+Buffer *ALContext::getBuffer(const std::string &name)
+{
+    CheckContext(this);
+
+    Buffer *buffer = mDevice->getBuffer(name);
+    if(buffer) return buffer;
+
+    std::auto_ptr<Decoder> decoder(createDecoder(name.c_str()));
+    return fillBuffer(name, decoder.get());
+}
+
+Buffer *ALContext::getBuffer(Decoder *decoder)
+{
+    CheckContext(this);
+
+    decoder->seek(0);
+    return fillBuffer(std::string(), decoder);
+}
+
 
 void ALContext::removeBuffer(const std::string &name)
 {
