@@ -126,12 +126,9 @@ Buffer *ALContext::getBuffer(const std::string &name)
     decoder.reset();
 
     alGetError();
-
     ALuint bid = 0;
-    alGenBuffers(1, &bid);
-    if(alGetError() != AL_NO_ERROR || bid == 0)
-        throw std::runtime_error("Failed to get buffer ID");
     try {
+        alGenBuffers(1, &bid);
         alBufferData(bid, GetFormat(chans, type), &data[0], data.size(), srate);
         if(alGetError() != AL_NO_ERROR)
             throw std::runtime_error("Failed to buffer data");
