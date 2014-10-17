@@ -1,5 +1,5 @@
-#ifndef AL_ALURE_H
-#define AL_ALURE_H
+#ifndef AL_ALURE2_H
+#define AL_ALURE2_H
 
 #include <vector>
 #include <string>
@@ -171,4 +171,4 @@ public:
 
 } // namespace alure
 
-#endif /* AL_ALURE_H */
+#endif /* AL_ALURE2_H */

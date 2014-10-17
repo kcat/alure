@@ -45,28 +45,28 @@ CONFIGURE_FILE(
     "${alure_BINARY_DIR}/config.h")
 
 
-add_library(alure SHARED ${alure_srcs})
-target_link_libraries(alure ${alure_libs})
+add_library(alure2 SHARED ${alure_srcs})
+target_link_libraries(alure2 ${alure_libs})
 
-add_library(alure_s STATIC ${alure_srcs})
-set_property(TARGET alure_s APPEND PROPERTY COMPILE_DEFINITIONS ALURE_STATIC_LIB)
+add_library(alure2_s STATIC ${alure_srcs})
+set_property(TARGET alure2_s APPEND PROPERTY COMPILE_DEFINITIONS ALURE_STATIC_LIB)
 
 
 add_executable(alure-enum examples/alure-enum.cpp)
-target_link_libraries(alure-enum alure)
+target_link_libraries(alure-enum alure2)
 
 add_executable(alure-play examples/alure-play.cpp)
-target_link_libraries(alure-play alure)
+target_link_libraries(alure-play alure2)
 
 add_executable(alure-stream examples/alure-stream.cpp)
-target_link_libraries(alure-stream alure)
+target_link_libraries(alure-stream alure2)
 
 
 if(NOT DEFINED LIB_SUFFIX)
     set(LIB_SUFFIX "")
 endif()
 
-install(TARGETS alure
+install(TARGETS alure2 alure2_s
         RUNTIME DESTINATION bin
         LIBRARY DESTINATION "lib${LIB_SUFFIX}"
         ARCHIVE DESTINATION "lib${LIB_SUFFIX}"
