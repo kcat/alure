@@ -171,6 +171,8 @@ void ALContext::removeBuffer(Buffer *buffer)
 
 ALuint ALContext::getSourceId()
 {
+    CheckContext(this);
+
     ALuint id = 0;
     if(!mSourceIds.empty())
     {
@@ -217,12 +219,14 @@ void ALContext::finalize(Source *source)
 {
     ALSource *alsrc = dynamic_cast<ALSource*>(source);
     if(!alsrc) throw std::runtime_error("Invalid source");
+    CheckContext(this);
     alsrc->finalize();
 }
 
 
 void ALContext::update()
 {
+    CheckContext(this);
     std::for_each(mUsedSources.begin(), mUsedSources.end(), std::mem_fun(&ALSource::updateNoCtxCheck));
 }
 
