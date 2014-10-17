@@ -70,7 +70,7 @@ public:
         alGenBuffers(mBufferIds.size(), &mBufferIds[0]);
     }
 
-    bool hasMoreData() const { return mDone; }
+    bool hasMoreData() const { return !mDone; }
     bool streamMoreData(ALuint srcid, bool loop)
     {
         if(mDone) return false;
