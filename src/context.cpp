@@ -25,7 +25,7 @@ void CheckContextDevice(ALDevice *device)
 {
     ALContext *thrdctx = ALContext::GetThreadCurrent();
     ALContext *globctx = ALContext::GetCurrent();
-    if((thrdctx && device != thrdctx->getDevice()) || (!thrdctx && !globctx) || (!thrdctx && device != globctx->getDevice()))
+    if((!thrdctx && !globctx) || (thrdctx && device != thrdctx->getDevice()) || (!thrdctx && device != globctx->getDevice()))
         throw std::runtime_error("Called context is not current");
 }
 
