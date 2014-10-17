@@ -216,6 +216,51 @@ void ALContext::finalize(Source *source)
 }
 
 
+void ALContext::setPosition(ALfloat x, ALfloat y, ALfloat z)
+{
+    CheckContext(this);
+    alListener3f(AL_POSITION, x, y, z);
+}
+
+void ALContext::setPosition(const ALfloat *pos)
+{
+    CheckContext(this);
+    alListenerfv(AL_POSITION, pos);
+}
+
+void ALContext::setVelocity(ALfloat x, ALfloat y, ALfloat z)
+{
+    CheckContext(this);
+    alListener3f(AL_VELOCITY, x, y, z);
+}
+
+void ALContext::setVelocity(const ALfloat *vel)
+{
+    CheckContext(this);
+    alListenerfv(AL_VELOCITY, vel);
+}
+
+void ALContext::setOrientation(ALfloat x1, ALfloat y1, ALfloat z1, ALfloat x2, ALfloat y2, ALfloat z2)
+{
+    CheckContext(this);
+    ALfloat ori[6] = { x1, y1, z1, x2, y2, z2 };
+    alListenerfv(AL_ORIENTATION, ori);
+}
+
+void ALContext::setOrientation(const ALfloat *at, const ALfloat *up)
+{
+    CheckContext(this);
+    ALfloat ori[6] = { at[0], at[1], at[2], up[0], up[1], up[2] };
+    alListenerfv(AL_ORIENTATION, ori);
+}
+
+void ALContext::setOrientation(const ALfloat *ori)
+{
+    CheckContext(this);
+    alListenerfv(AL_ORIENTATION, ori);
+}
+
+
 void ALContext::update()
 {
     CheckContext(this);

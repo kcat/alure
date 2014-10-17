@@ -83,6 +83,16 @@ public:
     virtual Source *getSource() final;
     virtual void finalize(Source *source) final;
 
+    virtual void setPosition(ALfloat x, ALfloat y, ALfloat z) final;
+    virtual void setPosition(const ALfloat *pos) final;
+
+    virtual void setVelocity(ALfloat x, ALfloat y, ALfloat z) final;
+    virtual void setVelocity(const ALfloat *vel) final;
+
+    virtual void setOrientation(ALfloat x1, ALfloat y1, ALfloat z1, ALfloat x2, ALfloat y2, ALfloat z2) final;
+    virtual void setOrientation(const ALfloat *at, const ALfloat *up) final;
+    virtual void setOrientation(const ALfloat *ori) final;
+
     virtual void update() final;
 };
 
