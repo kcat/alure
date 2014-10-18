@@ -9,7 +9,7 @@ inline void Sleep(uint32_t ms)
 {
     struct timespec ts, rem;
     ts.tv_sec = ms / 1000;
-    ts.tv_nsec = (ms & 1000) * 1000000;
+    ts.tv_nsec = (ms % 1000) * 1000000;
     while(nanosleep(&ts, &rem) == -1 && errno == EINTR)
         ts = rem;
 }
