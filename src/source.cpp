@@ -322,23 +322,28 @@ ALuint ALSource::getOffset() const
         ALuint pos = mStream->getPosition();
         if(state == AL_PLAYING || state == AL_PAUSED)
         {
-            ALuint queuelen = queued * mStream->getUpdateLength();
-            if(pos >= queuelen)
-                pos -= queuelen;
+            // The amount of samples in the queue waiting to play
+            ALuint inqueue = queued*mStream->getUpdateLength() - srcpos;
+
+            if(pos >= inqueue)
+                pos -= inqueue;
+            else if(!mLooping)
+            {
+                // A non-looping stream should never have more samples queued
+                // than have been read...
+                pos = 0;
+            }
             else
             {
-                if(mLooping)
+                ALuint streamlen = mStream->getLength();
+                if(streamlen == 0)
                 {
-                    ALuint streamlen = mStream->getLength();
-                    if(streamlen+pos >= queuelen)
-                        pos = streamlen + pos - queuelen;
-                    else
-                        pos = 0;
-                }
-                else
+                    // A looped stream that doesn't know its own length?
                     pos = 0;
+                }
+                else while((ALint)pos < 0)
+                    pos += streamlen;
             }
-            pos += srcpos;
         }
 
         return pos;
