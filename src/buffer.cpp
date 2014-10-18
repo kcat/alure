@@ -77,6 +77,8 @@ ALuint FramesToBytes(ALuint size, SampleConfig chans, SampleType type)
         case SampleConfig_X51: size *= 6; break;
         case SampleConfig_X61: size *= 7; break;
         case SampleConfig_X71: size *= 8; break;
+        case SampleConfig_BFmt_WXY: size *= 3; break;
+        case SampleConfig_BFmt_WXYZ: size *= 4; break;
     }
     switch(type)
     {
@@ -90,51 +92,68 @@ ALuint FramesToBytes(ALuint size, SampleConfig chans, SampleType type)
 
 ALenum GetFormat(SampleConfig chans, SampleType type)
 {
-    ALenum format = AL_NONE;
-
+#define RETURN_FMT(x) do {                \
+    ALenum fmt = alGetEnumValue(x);       \
+    if(fmt != AL_NONE && fmt != -1)       \
+        return fmt;                       \
+} while(0)
     if(type == SampleType_UInt8)
     {
-        if(chans == SampleConfig_Mono) format = AL_FORMAT_MONO8;
-        else if(chans == SampleConfig_Stereo) format = AL_FORMAT_STEREO8;
-        else if(alIsExtensionPresent("AL_EXT_MCFORMATS"))
+        if(chans == SampleConfig_Mono) return AL_FORMAT_MONO8;
+        if(chans == SampleConfig_Stereo) return AL_FORMAT_STEREO8;
+        if(alIsExtensionPresent("AL_EXT_MCFORMATS"))
         {
-            if(chans == SampleConfig_Rear) format = alGetEnumValue("AL_FORMAT_REAR8");
-            else if(chans == SampleConfig_Quad) format = alGetEnumValue("AL_FORMAT_QUAD8");
-            else if(chans == SampleConfig_X51) format = alGetEnumValue("AL_FORMAT_51CHN8");
-            else if(chans == SampleConfig_X61) format = alGetEnumValue("AL_FORMAT_61CHN8");
-            else if(chans == SampleConfig_X71) format = alGetEnumValue("AL_FORMAT_71CHN8");
+            if(chans == SampleConfig_Rear) RETURN_FMT("AL_FORMAT_REAR8");
+            if(chans == SampleConfig_Quad) RETURN_FMT("AL_FORMAT_QUAD8");
+            if(chans == SampleConfig_X51) RETURN_FMT("AL_FORMAT_51CHN8");
+            if(chans == SampleConfig_X61) RETURN_FMT("AL_FORMAT_61CHN8");
+            if(chans == SampleConfig_X71) RETURN_FMT("AL_FORMAT_71CHN8");
+        }
+        if(alIsExtensionPresent("AL_EXT_BFORMAT"))
+        {
+            if(chans == SampleConfig_BFmt_WXY) RETURN_FMT("AL_FORMAT_BFORMAT2D_8");
+            if(chans == SampleConfig_BFmt_WXYZ) RETURN_FMT("AL_FORMAT_BFORMAT3D_8");
         }
     }
     else if(type == SampleType_Int16)
     {
-        if(chans == SampleConfig_Mono) format = AL_FORMAT_MONO16;
-        else if(chans == SampleConfig_Stereo) format = AL_FORMAT_STEREO16;
-        else if(alIsExtensionPresent("AL_EXT_MCFORMATS"))
+        if(chans == SampleConfig_Mono) return AL_FORMAT_MONO16;
+        if(chans == SampleConfig_Stereo) return AL_FORMAT_STEREO16;
+        if(alIsExtensionPresent("AL_EXT_MCFORMATS"))
         {
-            if(chans == SampleConfig_Rear) format = alGetEnumValue("AL_FORMAT_REAR16");
-            else if(chans == SampleConfig_Quad) format = alGetEnumValue("AL_FORMAT_QUAD16");
-            else if(chans == SampleConfig_X51) format = alGetEnumValue("AL_FORMAT_51CHN16");
-            else if(chans == SampleConfig_X61) format = alGetEnumValue("AL_FORMAT_61CHN16");
-            else if(chans == SampleConfig_X71) format = alGetEnumValue("AL_FORMAT_71CHN16");
+            if(chans == SampleConfig_Rear) RETURN_FMT("AL_FORMAT_REAR16");
+            if(chans == SampleConfig_Quad) RETURN_FMT("AL_FORMAT_QUAD16");
+            if(chans == SampleConfig_X51) RETURN_FMT("AL_FORMAT_51CHN16");
+            if(chans == SampleConfig_X61) RETURN_FMT("AL_FORMAT_61CHN16");
+            if(chans == SampleConfig_X71) RETURN_FMT("AL_FORMAT_71CHN16");
+        }
+        if(alIsExtensionPresent("AL_EXT_BFORMAT"))
+        {
+            if(chans == SampleConfig_BFmt_WXY) RETURN_FMT("AL_FORMAT_BFORMAT2D_16");
+            if(chans == SampleConfig_BFmt_WXYZ) RETURN_FMT("AL_FORMAT_BFORMAT3D_16");
         }
     }
     else if(type == SampleType_Float32 && alIsExtensionPresent("AL_EXT_float32"))
     {
-        if(chans == SampleConfig_Mono) format = AL_FORMAT_MONO_FLOAT32;
-        else if(chans == SampleConfig_Stereo) format = AL_FORMAT_STEREO_FLOAT32;
-        else if(alIsExtensionPresent("AL_EXT_MCFORMATS"))
+        if(chans == SampleConfig_Mono) return AL_FORMAT_MONO_FLOAT32;
+        if(chans == SampleConfig_Stereo) return AL_FORMAT_STEREO_FLOAT32;
+        if(alIsExtensionPresent("AL_EXT_MCFORMATS"))
         {
-            if(chans == SampleConfig_Rear) format = alGetEnumValue("AL_FORMAT_REAR32");
-            else if(chans == SampleConfig_Quad) format = alGetEnumValue("AL_FORMAT_QUAD32");
-            else if(chans == SampleConfig_X51) format = alGetEnumValue("AL_FORMAT_51CHN32");
-            else if(chans == SampleConfig_X61) format = alGetEnumValue("AL_FORMAT_61CHN32");
-            else if(chans == SampleConfig_X71) format = alGetEnumValue("AL_FORMAT_71CHN32");
+            if(chans == SampleConfig_Rear) RETURN_FMT("AL_FORMAT_REAR32");
+            if(chans == SampleConfig_Quad) RETURN_FMT("AL_FORMAT_QUAD32");
+            if(chans == SampleConfig_X51) RETURN_FMT("AL_FORMAT_51CHN32");
+            if(chans == SampleConfig_X61) RETURN_FMT("AL_FORMAT_61CHN32");
+            if(chans == SampleConfig_X71) RETURN_FMT("AL_FORMAT_71CHN32");
+        }
+        if(alIsExtensionPresent("AL_EXT_BFORMAT"))
+        {
+            if(chans == SampleConfig_BFmt_WXY) RETURN_FMT("AL_FORMAT_BFORMAT2D_FLOAT32");
+            if(chans == SampleConfig_BFmt_WXYZ) RETURN_FMT("AL_FORMAT_BFORMAT3D_FLOAT32");
         }
     }
+#undef RETURN_FMT
 
-    if(format == AL_NONE || format == -1)
-        throw std::runtime_error("Format not supported");
-    return format;
+    throw std::runtime_error("Format not supported");
 }
 
 }

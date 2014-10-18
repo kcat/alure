@@ -143,7 +143,9 @@ enum SampleConfig {
     SampleConfig_Quad,
     SampleConfig_X51,
     SampleConfig_X61,
-    SampleConfig_X71
+    SampleConfig_X71,
+    SampleConfig_BFmt_WXY,
+    SampleConfig_BFmt_WXYZ
 };
 
 class Decoder {
