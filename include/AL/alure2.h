@@ -107,6 +107,8 @@ public:
     virtual Source *getSource() = 0;
     virtual void finalize(Source *source) = 0;
 
+    virtual void setGain(ALfloat gain) = 0;
+
     virtual void setPosition(ALfloat x, ALfloat y, ALfloat z) = 0;
     virtual void setPosition(const ALfloat *pos) = 0;
 
@@ -185,6 +187,8 @@ public:
     virtual bool isPlaying() const = 0;
 
     virtual ALuint getOffset() const = 0;
+
+    virtual void setGain(ALfloat gain) = 0;
 
     virtual void setPosition(ALfloat x, ALfloat y, ALfloat z) = 0;
     virtual void setPosition(const ALfloat *pos) = 0;

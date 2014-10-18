@@ -216,6 +216,15 @@ void ALContext::finalize(Source *source)
 }
 
 
+void ALContext::setGain(ALfloat gain)
+{
+    if(!(gain >= 0.0f))
+        throw std::runtime_error("Gain out of range");
+    CheckContext(this);
+    alListenerf(AL_GAIN, gain);
+}
+
+
 void ALContext::setPosition(ALfloat x, ALfloat y, ALfloat z)
 {
     CheckContext(this);

@@ -23,6 +23,7 @@ class ALSource : public Source {
     ALBufferStream *mStream;
 
     bool mLooping;
+    ALfloat mGain;
     ALfloat mPosition[3];
     ALfloat mVelocity[3];
     ALfloat mDirection[3];
@@ -32,6 +33,7 @@ public:
       : mContext(context), mId(0), mBuffer(0), mStream(0)
     {
         mLooping = false;
+        mGain = 1.0f;
         mPosition[0] = mPosition[1] = mPosition[2] = 0.0f;
         mVelocity[0] = mVelocity[1] = mVelocity[2] = 0.0f;
         mDirection[0] = mDirection[1] = mDirection[2] = 0.0f;
@@ -50,6 +52,8 @@ public:
     virtual bool isPlaying() const final;
 
     virtual ALuint getOffset() const final;
+
+    virtual void setGain(ALfloat gain) final;
 
     virtual void setPosition(ALfloat x, ALfloat y, ALfloat z) final;
     virtual void setPosition(const ALfloat *pos) final;

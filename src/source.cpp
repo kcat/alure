@@ -115,6 +115,7 @@ void ALSource::finalize()
     mContext->freeSource(this);
 
     mLooping = false;
+    mGain = 1.0f;
     mPosition[0] = mPosition[1] = mPosition[2] = 0.0f;
     mVelocity[0] = mVelocity[1] = mVelocity[2] = 0.0f;
     mDirection[0] = mDirection[1] = mDirection[2] = 0.0f;
@@ -153,6 +154,7 @@ void ALSource::play(Buffer *buffer)
     if(mId == 0)
     {
         mId = mContext->getSourceId();
+        alSourcef(mId, AL_GAIN, mGain);
         alSourcefv(mId, AL_POSITION, mPosition);
         alSourcefv(mId, AL_VELOCITY, mVelocity);
         alSourcefv(mId, AL_DIRECTION, mDirection);
@@ -191,6 +193,7 @@ void ALSource::play(Decoder *decoder, ALuint updatelen, ALuint queuesize)
     if(mId == 0)
     {
         mId = mContext->getSourceId();
+        alSourcef(mId, AL_GAIN, mGain);
         alSourcefv(mId, AL_POSITION, mPosition);
         alSourcefv(mId, AL_VELOCITY, mVelocity);
         alSourcefv(mId, AL_DIRECTION, mDirection);
@@ -364,6 +367,16 @@ ALuint ALSource::getOffset() const
     ALint srcpos = 0;
     alGetSourcei(mId, AL_SAMPLE_OFFSET, &srcpos);
     return srcpos;
+}
+
+
+void ALSource::setGain(ALfloat gain)
+{
+    if(!(gain >= 0.0f))
+        throw std::runtime_error("Gain out of range");
+    if(mId != 0)
+        alSourcef(mId, AL_GAIN, gain);
+    mGain = gain;
 }
 
 

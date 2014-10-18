@@ -83,6 +83,8 @@ public:
     virtual Source *getSource() final;
     virtual void finalize(Source *source) final;
 
+    virtual void setGain(ALfloat gain) final;
+
     virtual void setPosition(ALfloat x, ALfloat y, ALfloat z) final;
     virtual void setPosition(const ALfloat *pos) final;
 
