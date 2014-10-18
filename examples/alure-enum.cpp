@@ -34,10 +34,10 @@ int main()
     alure::Device *dev = devMgr->openPlayback();
     std::cout<< "Info for device \""<<dev->getName(alure::PlaybackDevType_Complete)<<"\":" <<std::endl;
     version = dev->getALCVersion();
-    std::cout<< "ALC version: "<<(version>>16)<<"."<<(version&65535) <<std::endl;
+    std::cout<< "ALC version: "<<alure::MajorVersion(version)<<"."<<alure::MinorVersion(version) <<std::endl;
     version = dev->getEFXVersion();
     if(version)
-        std::cout<< "EFX version: "<<(version>>16)<<"."<<(version&65535) <<std::endl;
+        std::cout<< "EFX version: "<<alure::MajorVersion(version)<<"."<<alure::MinorVersion(version) <<std::endl;
     else
         std::cout<< "EFX not supported" <<std::endl;
     dev->close();

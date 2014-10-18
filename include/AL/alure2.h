@@ -20,6 +20,11 @@ class Source;
 inline ALCuint MakeVersion(ALCushort major, ALCushort minor)
 { return (major<<16) | minor; }
 
+inline ALCuint MajorVersion(ALCuint version)
+{ return version>>16; }
+inline ALCuint MinorVersion(ALCuint version)
+{ return version&0xffff; }
+
 
 enum DeviceEnumeration {
     DevEnum_Basic = ALC_DEVICE_SPECIFIER,
