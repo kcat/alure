@@ -85,6 +85,7 @@ ALuint FramesToBytes(ALuint size, SampleConfig chans, SampleType type)
         case SampleType_UInt8: size *= 1; break;
         case SampleType_Int16: size *= 2; break;
         case SampleType_Float32: size *= 4; break;
+        case SampleType_Mulaw: size *= 1; break;
     }
 
     return size;
@@ -149,6 +150,24 @@ ALenum GetFormat(SampleConfig chans, SampleType type)
         {
             if(chans == SampleConfig_BFmt_WXY) RETURN_FMT("AL_FORMAT_BFORMAT2D_FLOAT32");
             if(chans == SampleConfig_BFmt_WXYZ) RETURN_FMT("AL_FORMAT_BFORMAT3D_FLOAT32");
+        }
+    }
+    else if(type == SampleType_Mulaw && alIsExtensionPresent("AL_EXT_MULAW"))
+    {
+        if(chans == SampleConfig_Mono) return AL_FORMAT_MONO_MULAW;
+        if(chans == SampleConfig_Stereo) return AL_FORMAT_STEREO_MULAW;
+        if(alIsExtensionPresent("AL_EXT_MULAW_MCFORMATS"))
+        {
+            if(chans == SampleConfig_Rear) RETURN_FMT("AL_FORMAT_REAR_MULAW");
+            if(chans == SampleConfig_Quad) RETURN_FMT("AL_FORMAT_QUAD_MULAW");
+            if(chans == SampleConfig_X51) RETURN_FMT("AL_FORMAT_51CHN_MULAW");
+            if(chans == SampleConfig_X61) RETURN_FMT("AL_FORMAT_61CHN_MULAW");
+            if(chans == SampleConfig_X71) RETURN_FMT("AL_FORMAT_71CHN_MULAW");
+        }
+        if(alIsExtensionPresent("AL_EXT_MULAW_BFORMAT"))
+        {
+            if(chans == SampleConfig_BFmt_WXY) RETURN_FMT("AL_FORMAT_BFORMAT2D_MULAW");
+            if(chans == SampleConfig_BFmt_WXYZ) RETURN_FMT("AL_FORMAT_BFORMAT3D_MULAW");
         }
     }
 #undef RETURN_FMT

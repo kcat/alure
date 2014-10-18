@@ -133,7 +133,8 @@ public:
 enum SampleType {
     SampleType_UInt8,
     SampleType_Int16,
-    SampleType_Float32
+    SampleType_Float32,
+    SampleType_Mulaw
 };
 
 enum SampleConfig {
