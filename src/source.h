@@ -28,15 +28,29 @@ class ALSource : public Source {
     ALfloat mVelocity[3];
     ALfloat mDirection[3];
 
-public:
-    ALSource(ALContext *context)
-      : mContext(context), mId(0), mBuffer(0), mStream(0)
+    void resetProperties()
     {
         mLooping = false;
         mGain = 1.0f;
         mPosition[0] = mPosition[1] = mPosition[2] = 0.0f;
         mVelocity[0] = mVelocity[1] = mVelocity[2] = 0.0f;
         mDirection[0] = mDirection[1] = mDirection[2] = 0.0f;
+    }
+
+    void applyProperties(bool looping)
+    {
+        alSourcei(mId, AL_LOOPING, looping ? AL_TRUE : AL_FALSE);
+        alSourcef(mId, AL_GAIN, mGain);
+        alSourcefv(mId, AL_POSITION, mPosition);
+        alSourcefv(mId, AL_VELOCITY, mVelocity);
+        alSourcefv(mId, AL_DIRECTION, mDirection);
+    }
+
+public:
+    ALSource(ALContext *context)
+      : mContext(context), mId(0), mBuffer(0), mStream(0)
+    {
+        resetProperties();
     }
 
     void updateNoCtxCheck();

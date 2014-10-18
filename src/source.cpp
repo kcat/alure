@@ -114,11 +114,7 @@ void ALSource::finalize()
 
     mContext->freeSource(this);
 
-    mLooping = false;
-    mGain = 1.0f;
-    mPosition[0] = mPosition[1] = mPosition[2] = 0.0f;
-    mVelocity[0] = mVelocity[1] = mVelocity[2] = 0.0f;
-    mDirection[0] = mDirection[1] = mDirection[2] = 0.0f;
+    resetProperties();
 
     if(mBuffer)
         mBuffer->decRef();
@@ -154,15 +150,13 @@ void ALSource::play(Buffer *buffer)
     if(mId == 0)
     {
         mId = mContext->getSourceId();
-        alSourcef(mId, AL_GAIN, mGain);
-        alSourcefv(mId, AL_POSITION, mPosition);
-        alSourcefv(mId, AL_VELOCITY, mVelocity);
-        alSourcefv(mId, AL_DIRECTION, mDirection);
+        applyProperties(mLooping);
     }
     else
     {
         alSourceRewind(mId);
         alSourcei(mId, AL_BUFFER, 0);
+        alSourcei(mId, AL_LOOPING, mLooping ? AL_TRUE : AL_FALSE);
     }
 
     delete mStream;
@@ -172,8 +166,6 @@ void ALSource::play(Buffer *buffer)
     if(mBuffer)
         mBuffer->decRef();
     mBuffer = albuf;
-
-    alSourcei(mId, AL_LOOPING, mLooping ? AL_TRUE : AL_FALSE);
 
     alSourcei(mId, AL_BUFFER, mBuffer->getId());
     alSourcePlay(mId);
@@ -193,15 +185,13 @@ void ALSource::play(Decoder *decoder, ALuint updatelen, ALuint queuesize)
     if(mId == 0)
     {
         mId = mContext->getSourceId();
-        alSourcef(mId, AL_GAIN, mGain);
-        alSourcefv(mId, AL_POSITION, mPosition);
-        alSourcefv(mId, AL_VELOCITY, mVelocity);
-        alSourcefv(mId, AL_DIRECTION, mDirection);
+        applyProperties(false);
     }
     else
     {
         alSourceRewind(mId);
         alSourcei(mId, AL_BUFFER, 0);
+        alSourcei(mId, AL_LOOPING, AL_FALSE);
     }
 
     if(mBuffer)
@@ -210,8 +200,6 @@ void ALSource::play(Decoder *decoder, ALuint updatelen, ALuint queuesize)
 
     delete mStream;
     mStream = stream.release();
-
-    alSourcei(mId, AL_LOOPING, AL_FALSE);
 
     for(ALuint i = 0;i < mStream->getNumUpdates();i++)
     {
@@ -247,20 +235,12 @@ bool ALSource::isPlaying() const
     CheckContext(mContext);
     if(mId == 0) return false;
 
-    if(mStream)
-    {
-        ALint state = -1;
-        alGetSourcei(mId, AL_SOURCE_STATE, &state);
-        if(state == -1)
-            throw std::runtime_error("Source state error");
-        return state == AL_PLAYING || (state != AL_PAUSED && mStream->hasMoreData());
-    }
-
     ALint state = -1;
     alGetSourcei(mId, AL_SOURCE_STATE, &state);
     if(state == -1)
         throw std::runtime_error("Source state error");
-    return state == AL_PLAYING;
+
+    return state == AL_PLAYING || (mStream && state != AL_PAUSED && mStream->hasMoreData());
 }
 
 void ALSource::update()
