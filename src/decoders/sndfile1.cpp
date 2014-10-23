@@ -3,8 +3,29 @@
 
 #include <stdexcept>
 
+#include "sndfile.h"
+
 namespace alure
 {
+
+class SndFileDecoder : public Decoder {
+    SNDFILE *mSndFile;
+    SF_INFO mSndInfo;
+
+public:
+    SndFileDecoder(SNDFILE *sndfile, const SF_INFO &info);
+    virtual ~SndFileDecoder();
+
+    virtual ALuint getFrequency() final;
+    virtual SampleConfig getSampleConfig() final;
+    virtual SampleType getSampleType() final;
+
+    virtual ALuint getLength() final;
+    virtual ALuint getPosition() final;
+    virtual bool seek(ALuint pos) final;
+
+    virtual ALuint read(ALvoid *ptr, ALuint count) final;
+};
 
 SndFileDecoder::SndFileDecoder(SNDFILE *sndfile, const SF_INFO &info)
   : mSndFile(sndfile), mSndInfo(info)

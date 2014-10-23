@@ -3,8 +3,30 @@
 
 #include <stdexcept>
 
+#include "mpg123.h"
+
 namespace alure
 {
+
+class Mpg123Decoder : public Decoder {
+    mpg123_handle *mMpg123;
+    int mChannels;
+    long mSampleRate;
+
+public:
+    Mpg123Decoder(mpg123_handle *mpg123, int chans, long srate);
+    virtual ~Mpg123Decoder();
+
+    virtual ALuint getFrequency() final;
+    virtual SampleConfig getSampleConfig() final;
+    virtual SampleType getSampleType() final;
+
+    virtual ALuint getLength() final;
+    virtual ALuint getPosition() final;
+    virtual bool seek(ALuint pos) final;
+
+    virtual ALuint read(ALvoid *ptr, ALuint count) final;
+};
 
 Mpg123Decoder::Mpg123Decoder(mpg123_handle *mpg123, int chans, long srate)
   : mMpg123(mpg123), mChannels(chans), mSampleRate(srate)
