@@ -18,11 +18,23 @@ class Decoder;
 class DecoderFactory;
 
 
+/**
+ * Creates a version number value using the specified \param major and
+ * \param minor values.
+ */
 inline ALCuint MakeVersion(ALCushort major, ALCushort minor)
 { return (major<<16) | minor; }
 
+/**
+ * Retrieves the major version of a version number value created by
+ * \ref MakeVersion.
+ */
 inline ALCuint MajorVersion(ALCuint version)
 { return version>>16; }
+/**
+ * Retrieves the minor version of a version number value created by
+ * \ref MakeVersion.
+ */
 inline ALCuint MinorVersion(ALCuint version)
 { return version&0xffff; }
 
@@ -39,18 +51,24 @@ enum DefaultDeviceType {
     DefaultDevType_Capture = ALC_CAPTURE_DEFAULT_DEVICE_SPECIFIER
 };
 
+/**
+ * A class managing \ref Device objects and other related functionality. This
+ * class is a singleton, only one instance will exist in a process.
+ */
 class DeviceManager {
-protected:
-    virtual ~DeviceManager() { }
-
 public:
+    /** Retrieves the DeviceManager instance. */
     static DeviceManager *get();
 
+    /** Queries the existence of a non-device-specific ALC extension. */
     virtual bool queryExtension(const char *extname) = 0;
 
+    /** Enumerates available device names of the given \param type. */
     virtual std::vector<std::string> enumerate(DeviceEnumeration type) = 0;
+    /** Retrieves the default device of the given \param type. */
     virtual std::string defaultDeviceName(DefaultDeviceType type) = 0;
 
+    /** Opens the playback device given by \param name, or the default if empty. */
     virtual Device *openPlayback(const std::string &name=std::string()) = 0;
 };
 
@@ -61,50 +79,107 @@ enum PlaybackDeviceType {
 };
 
 class Device {
-protected:
-    virtual ~Device() { }
-
 public:
+    /** Retrieves the device name as given by \param type. */
     virtual std::string getName(PlaybackDeviceType type) = 0;
+    /** Queries the existence of an ALC extension on this device. */
     virtual bool queryExtension(const char *extname) = 0;
 
+    /**
+     * Retrieves the ALC version supported by this device, as constructed by
+     * \ref MakeVersion.
+     */
     virtual ALCuint getALCVersion() = 0;
+
+    /**
+     * Retrieves the EFX version supported by this device, as constructed by
+     * \ref MakeVersion. If the ALC_EXT_EFX extension is unsupported, this
+     * will be 0.
+     */
     virtual ALCuint getEFXVersion() = 0;
 
+    /** Retrieves the device's playback frequency, in hz. */
     virtual ALCuint getFrequency() = 0;
 
-    virtual Context *createContext(ALCint *attribs=0) = 0;
+    /**
+     * Creates a new \ref Context on this device, using the specified
+     * \param attributes.
+     */
+    virtual Context *createContext(ALCint *attributes=0) = 0;
 
+    /**
+     * Closes and frees the device. All previously-created contexts must first
+     * be destroyed.
+     */
     virtual void close() = 0;
 };
 
 
 class Context {
-protected:
-    virtual ~Context() { }
-
 public:
+    /** Makes the specified \param context current for OpenAL operations. */
     static void MakeCurrent(Context *context);
+    /** Retrieves the current context used for OpenAL operations. */
     static Context *GetCurrent();
 
+    /**
+     * Makes the specified \param context current for OpenAL operations on the
+     * calling thread only. Requires the ALC_EXT_thread_local_context extension.
+     */
     static void MakeThreadCurrent(Context *context);
+    /**
+     * Retrieves the thread-specific context used for OpenAL operations.
+     * Requires the ALC_EXT_thread_local_context extension.
+     */
     static Context *GetThreadCurrent();
 
+    /**
+     * Destroys the context. The context must not be current for this to be
+     * called.
+     */
     virtual void destroy() = 0;
 
+    /** Retrieves the \ref Device this context was created from. */
     virtual Device *getDevice() = 0;
 
     virtual void startBatch() = 0;
     virtual void endBatch() = 0;
 
+    /**
+     * Creates a \ref Decoder instance for the given audio file or resource
+     * \param name. The caller is responsible for deleting the returned object.
+     */
     virtual Decoder *createDecoder(const std::string &name) = 0;
 
     // Functions below require the context to be current
+
+    /**
+     * Creates and caches a \ref Buffer for the given audio file or resource
+     * \param name. Multiple calls with the same name will return the same
+     * \ref Buffer object.
+     */
     virtual Buffer *getBuffer(const std::string &name) = 0;
+
+    /**
+     * Deletes the cached \ref Buffer instance for the given audio file or
+     * resource \param name. The buffer must not be in use by a \ref Source.
+     */
     virtual void removeBuffer(const std::string &name) = 0;
+    /**
+     * Deletes the given cached \param buffer instance. The buffer must not be
+     * in use by a \ref Source.
+     */
     virtual void removeBuffer(Buffer *buffer) = 0;
 
+    /**
+     * Gets a new \ref Source. There is no practical limit to the number of
+     * sources you may get.
+     */
     virtual Source *getSource() = 0;
+    /**
+     * Finalizes the given \param source, stopping it and returning it to the
+     * system.
+     */
     virtual void finalize(Source *source) = 0;
 
     virtual void setGain(ALfloat gain) = 0;
@@ -128,11 +203,16 @@ protected:
     virtual ~Buffer() { }
 
 public:
+    /** Retrieves the length of the buffer in sample frames. */
     virtual ALuint getLength() = 0;
 
+    /** Retrieves the buffer's frequency in hz. */
     virtual ALuint getFrequency() = 0;
+
+    /** Retrieves the storage size used by the buffer, in bytes. */
     virtual ALuint getSize() = 0;
 
+    /** Queries if the buffer is not in use and can be removed. */
     virtual bool isRemovable() const = 0;
 };
 
