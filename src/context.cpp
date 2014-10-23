@@ -24,6 +24,23 @@
 namespace alure
 {
 
+typedef std::pair<std::string,std::unique_ptr<DecoderFactory>> FactoryPair;
+typedef std::vector<FactoryPair> FactoryMap;
+
+static FactoryMap sDecodersInit()
+{
+    FactoryMap ret;
+#ifdef HAVE_MPG123
+    ret.push_back(std::make_pair(std::string("_alure_int_mpg123"), std::unique_ptr<DecoderFactory>(new Mpg123DecoderFactory)));
+#endif
+#ifdef HAVE_LIBSNDFILE
+    ret.push_back(std::make_pair(std::string("_alure_int_sndfile"), std::unique_ptr<DecoderFactory>(new SndFileDecoderFactory)));
+#endif
+    return ret;
+}
+static FactoryMap sDecoders = sDecodersInit();
+
+
 ALContext *ALContext::sCurrentCtx = 0;
 #if __cplusplus >= 201103L
 thread_local ALContext *ALContext::sThreadCurrentCtx;
@@ -95,15 +112,14 @@ void ALContext::endBatch()
 
 Decoder *ALContext::createDecoder(const std::string &name)
 {
-    Decoder *decoder = 0;
-#ifdef HAVE_LIBSNDFILE
-    decoder = SndFileDecoder::openFile(name);
-    if(decoder) return decoder;
-#endif
-#ifdef HAVE_MPG123
-    decoder = Mpg123Decoder::openFile(name);
-    if(decoder) return decoder;
-#endif
+    FactoryMap::const_reverse_iterator iter = sDecoders.rbegin();
+    while(iter != sDecoders.rend())
+    {
+        DecoderFactory *factory = iter->second.get();
+        Decoder *decoder = factory->createDecoder(name);
+        if(decoder) return decoder;
+        ++iter;
+    }
     throw std::runtime_error("No decoder for "+name);
 }
 

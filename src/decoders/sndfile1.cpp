@@ -6,14 +6,6 @@
 namespace alure
 {
 
-Decoder *SndFileDecoder::openFile(const std::string &name)
-{
-    SF_INFO sndinfo;
-    SNDFILE *sndfile = sf_open(name.c_str(), SFM_READ, &sndinfo);
-    if(!sndfile) return 0;
-    return new SndFileDecoder(sndfile, sndinfo);
-}
-
 SndFileDecoder::SndFileDecoder(SNDFILE *sndfile, const SF_INFO &info)
   : mSndFile(sndfile), mSndInfo(info)
 { }
@@ -69,6 +61,15 @@ ALuint SndFileDecoder::read(ALvoid *ptr, ALuint count)
 {
     sf_count_t got = sf_readf_short(mSndFile, static_cast<short*>(ptr), count);
     return (ALuint)std::max<sf_count_t>(got, 0);
+}
+
+
+Decoder *SndFileDecoderFactory::createDecoder(const std::string &name)
+{
+    SF_INFO sndinfo;
+    SNDFILE *sndfile = sf_open(name.c_str(), SFM_READ, &sndinfo);
+    if(!sndfile) return 0;
+    return new SndFileDecoder(sndfile, sndinfo);
 }
 
 }

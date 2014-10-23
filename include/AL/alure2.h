@@ -13,8 +13,9 @@ class DeviceManager;
 class Device;
 class Context;
 class Buffer;
-class Decoder;
 class Source;
+class Decoder;
+class DecoderFactory;
 
 
 inline ALCuint MakeVersion(ALCushort major, ALCushort minor)
@@ -156,21 +157,6 @@ enum SampleConfig {
     SampleConfig_BFmt_WXYZ
 };
 
-class Decoder {
-public:
-    virtual ~Decoder() { }
-
-    virtual ALuint getFrequency() = 0;
-    virtual SampleConfig getSampleConfig() = 0;
-    virtual SampleType getSampleType() = 0;
-
-    virtual ALuint getLength() = 0;
-    virtual ALuint getPosition() = 0;
-    virtual bool seek(ALuint pos) = 0;
-
-    virtual ALuint read(ALvoid *ptr, ALuint count) = 0;
-};
-
 
 class Source {
 protected:
@@ -201,6 +187,30 @@ public:
 
     virtual void update() = 0;
 };
+
+
+class Decoder {
+public:
+    virtual ~Decoder() { }
+
+    virtual ALuint getFrequency() = 0;
+    virtual SampleConfig getSampleConfig() = 0;
+    virtual SampleType getSampleType() = 0;
+
+    virtual ALuint getLength() = 0;
+    virtual ALuint getPosition() = 0;
+    virtual bool seek(ALuint pos) = 0;
+
+    virtual ALuint read(ALvoid *ptr, ALuint count) = 0;
+};
+
+class DecoderFactory {
+public:
+    virtual ~DecoderFactory() { }
+
+    virtual Decoder *createDecoder(const std::string &name) = 0;
+};
+
 
 } // namespace alure
 

@@ -24,8 +24,10 @@ public:
     virtual bool seek(ALuint pos) final;
 
     virtual ALuint read(ALvoid *ptr, ALuint count) final;
+};
 
-    static Decoder *openFile(const std::string &name);
+class SndFileDecoderFactory : public DecoderFactory {
+    virtual Decoder *createDecoder(const std::string &name) final;
 };
 
 } // namespace alure

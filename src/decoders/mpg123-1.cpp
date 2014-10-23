@@ -6,42 +6,6 @@
 namespace alure
 {
 
-Decoder *Mpg123Decoder::openFile(const std::string &name)
-{
-    static bool inited = false;
-    if(!inited)
-    {
-        if(mpg123_init() != MPG123_OK)
-            return 0;
-        inited = true;
-    }
-
-    mpg123_handle *mpg123 = mpg123_new(0, 0);
-    if(mpg123)
-    {
-        if(mpg123_open(mpg123, name.c_str()) == MPG123_OK)
-        {
-            int enc, channels;
-            long srate;
-
-            if(mpg123_getformat(mpg123, &srate, &channels, &enc) == MPG123_OK)
-            {
-                if((channels == 1 || channels == 2) && srate > 0 &&
-                   mpg123_format_none(mpg123) == MPG123_OK &&
-                   mpg123_format(mpg123, srate, channels, MPG123_ENC_SIGNED_16) == MPG123_OK)
-                {
-                    // All OK
-                    return new Mpg123Decoder(mpg123, channels, srate);
-                }
-            }
-            mpg123_close(mpg123);
-        }
-        mpg123_delete(mpg123);
-        mpg123 = 0;
-    }
-    return 0;
-}
-
 Mpg123Decoder::Mpg123Decoder(mpg123_handle *mpg123, int chans, long srate)
   : mMpg123(mpg123), mChannels(chans), mSampleRate(srate)
 { }
@@ -112,6 +76,43 @@ ALuint Mpg123Decoder::read(ALvoid *ptr, ALuint count)
             break;
     }
     return total;
+}
+
+
+Decoder *Mpg123DecoderFactory::createDecoder(const std::string &name)
+{
+    static bool inited = false;
+    if(!inited)
+    {
+        if(mpg123_init() != MPG123_OK)
+            return 0;
+        inited = true;
+    }
+
+    mpg123_handle *mpg123 = mpg123_new(0, 0);
+    if(mpg123)
+    {
+        if(mpg123_open(mpg123, name.c_str()) == MPG123_OK)
+        {
+            int enc, channels;
+            long srate;
+
+            if(mpg123_getformat(mpg123, &srate, &channels, &enc) == MPG123_OK)
+            {
+                if((channels == 1 || channels == 2) && srate > 0 &&
+                   mpg123_format_none(mpg123) == MPG123_OK &&
+                   mpg123_format(mpg123, srate, channels, MPG123_ENC_SIGNED_16) == MPG123_OK)
+                {
+                    // All OK
+                    return new Mpg123Decoder(mpg123, channels, srate);
+                }
+            }
+            mpg123_close(mpg123);
+        }
+        mpg123_delete(mpg123);
+        mpg123 = 0;
+    }
+    return 0;
 }
 
 }
