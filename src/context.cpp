@@ -159,8 +159,15 @@ Decoder *ALContext::createDecoder(const std::string &name)
 }
 
 
-Buffer *ALContext::fillBuffer(const std::string &name, Decoder *decoder)
+Buffer *ALContext::getBuffer(const std::string &name)
 {
+    CheckContext(this);
+
+    Buffer *buffer = mDevice->getBuffer(name);
+    if(buffer) return buffer;
+
+    std::unique_ptr<Decoder> decoder(createDecoder(name.c_str()));
+
     ALuint srate = decoder->getFrequency();
     SampleConfig chans = decoder->getSampleConfig();
     SampleType type = decoder->getSampleType();
@@ -186,25 +193,6 @@ Buffer *ALContext::fillBuffer(const std::string &name, Decoder *decoder)
         alDeleteBuffers(1, &bid);
         throw;
     }
-}
-
-Buffer *ALContext::getBuffer(const std::string &name)
-{
-    CheckContext(this);
-
-    Buffer *buffer = mDevice->getBuffer(name);
-    if(buffer) return buffer;
-
-    std::auto_ptr<Decoder> decoder(createDecoder(name.c_str()));
-    return fillBuffer(name, decoder.get());
-}
-
-Buffer *ALContext::getBuffer(Decoder *decoder)
-{
-    CheckContext(this);
-
-    decoder->seek(0);
-    return fillBuffer(std::string(), decoder);
 }
 
 

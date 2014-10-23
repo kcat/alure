@@ -59,8 +59,6 @@ public:
     long addRef() { return ++mRefs; }
     long decRef() { return --mRefs; }
 
-    Buffer *fillBuffer(const std::string &name, Decoder *decoder);
-
     ALuint getSourceId();
     void insertSourceId(ALuint id) { mSourceIds.push(id); }
 
@@ -76,7 +74,6 @@ public:
     virtual Decoder *createDecoder(const std::string &name) final;
 
     virtual Buffer *getBuffer(const std::string &name) final;
-    virtual Buffer *getBuffer(Decoder *decoder) final;
     virtual void removeBuffer(const std::string &name) final;
     virtual void removeBuffer(Buffer *buffer) final;
 
