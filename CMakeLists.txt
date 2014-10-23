@@ -39,6 +39,14 @@ if(SNDFILE_FOUND)
     set(HAVE_LIBSNDFILE 1)
 endif()
 
+find_package(MPG123)
+if(MPG123_FOUND)
+    include_directories(${MPG123_INCLUDE_DIRS})
+    set(alure_libs ${alure_libs} ${MPG123_LIBRARIES})
+    set(alure_srcs ${alure_srcs} src/decoders/mpg123-1.cpp)
+    set(HAVE_MPG123 1)
+endif()
+
 
 CONFIGURE_FILE(
     "${alure_SOURCE_DIR}/config.h.in"

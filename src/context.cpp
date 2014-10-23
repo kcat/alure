@@ -12,6 +12,9 @@
 #ifdef HAVE_LIBSNDFILE
 #include "decoders/sndfile1.h"
 #endif
+#ifdef HAVE_MPG123
+#include "decoders/mpg123-1.h"
+#endif
 
 #include "devicemanager.h"
 #include "device.h"
@@ -93,8 +96,16 @@ void ALContext::endBatch()
 Decoder *ALContext::createDecoder(const std::string &name)
 {
 #ifdef HAVE_LIBSNDFILE
-    return SndFileDecoder::openFile(name.c_str());
+    try {
+        return SndFileDecoder::openFile(name);
+    }
+    catch(std::runtime_error &e)
 #endif
+    {
+#ifdef HAVE_MPG123
+        return Mpg123Decoder::openFile(name);
+#endif
+    }
     throw std::runtime_error("No decoder for file");
 }
 

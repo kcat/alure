@@ -1,2 +1,5 @@
 /* Define if we have libsndfile support */
 #cmakedefine HAVE_LIBSNDFILE
+
+/* Define if we have MPG123 support */
+#cmakedefine HAVE_MPG123
