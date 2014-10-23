@@ -211,6 +211,29 @@ public:
     virtual Decoder *createDecoder(const std::string &name) = 0;
 };
 
+/**
+ * Registers a decoder factory for decoding audio. Registered factories are
+ * used on a last-registered basis, e.g. if Factory1 is registered, then
+ * Factory2 is registered, Factory2 will be used before Factory1.
+ *
+ * \param name A unique name identifying this decoder factory.
+ * \param factory A DecoderFactory instance used to create Decoder instances.
+ * The library takes ownership of the factory instance, and will delete it
+ * automatically at program termination.
+ */
+void RegisterDecoder(const std::string &name, DecoderFactory *factory);
+
+/**
+ * Unregisters a decoder factory by name. Ownership of the DecoderFactory
+ * instance is returned to the application.
+ *
+ * \param name The unique name identifying a previously-registered decoder
+ * factory.
+ *
+ * \return The unregistered decoder factory instance, or 0 (nullptr) if a
+ * decoder factory with the matching name doesn't exist.
+ */
+DecoderFactory *UnregisterDecoder(const std::string &name);
 
 } // namespace alure
 

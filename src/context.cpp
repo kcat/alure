@@ -6,6 +6,7 @@
 #include <stdexcept>
 #include <algorithm>
 #include <memory>
+#include <sstream>
 
 #include "alc.h"
 
@@ -39,6 +40,40 @@ static FactoryMap sDecodersInit()
     return ret;
 }
 static FactoryMap sDecoders = sDecodersInit();
+
+void RegisterDecoder(const std::string &name, DecoderFactory *factory)
+{
+    FactoryMap::iterator iter = sDecoders.begin();
+    while(iter != sDecoders.end())
+    {
+        if(iter->first == name)
+            throw std::runtime_error("Decoder factory \""+name+"\" already registered");
+        if(iter->second.get() == factory)
+        {
+            std::stringstream sstr;
+            sstr<< "Decoder factory instance "<<factory<<" already registered";
+            throw std::runtime_error(sstr.str());
+        }
+        iter++;
+    }
+    sDecoders.push_back(std::make_pair(name, std::unique_ptr<DecoderFactory>(factory)));
+}
+
+DecoderFactory *UnregisterDecoder(const std::string &name)
+{
+    FactoryMap::iterator iter = sDecoders.begin();
+    while(iter != sDecoders.end())
+    {
+        if(iter->first == name)
+        {
+            DecoderFactory *factory = iter->second.release();
+            sDecoders.erase(iter);
+            return factory;
+        }
+        iter++;
+    }
+    return 0;
+}
 
 
 ALContext *ALContext::sCurrentCtx = 0;
