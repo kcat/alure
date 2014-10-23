@@ -16,7 +16,6 @@ Decoder *Mpg123Decoder::openFile(const std::string &name)
         inited = true;
     }
 
-    const char *errstr = "Failed to open file";
     mpg123_handle *mpg123 = mpg123_new(0, 0);
     if(mpg123)
     {
@@ -34,14 +33,13 @@ Decoder *Mpg123Decoder::openFile(const std::string &name)
                     // All OK
                     return new Mpg123Decoder(mpg123, channels, srate);
                 }
-                errstr = "Unsupported format";
             }
             mpg123_close(mpg123);
         }
         mpg123_delete(mpg123);
         mpg123 = 0;
     }
-    throw std::runtime_error(errstr);
+    return 0;
 }
 
 Mpg123Decoder::Mpg123Decoder(mpg123_handle *mpg123, int chans, long srate)

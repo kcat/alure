@@ -95,18 +95,16 @@ void ALContext::endBatch()
 
 Decoder *ALContext::createDecoder(const std::string &name)
 {
+    Decoder *decoder = 0;
 #ifdef HAVE_LIBSNDFILE
-    try {
-        return SndFileDecoder::openFile(name);
-    }
-    catch(std::runtime_error &e)
+    decoder = SndFileDecoder::openFile(name);
+    if(decoder) return decoder;
 #endif
-    {
 #ifdef HAVE_MPG123
-        return Mpg123Decoder::openFile(name);
+    decoder = Mpg123Decoder::openFile(name);
+    if(decoder) return decoder;
 #endif
-    }
-    throw std::runtime_error("No decoder for file");
+    throw std::runtime_error("No decoder for "+name);
 }
 
 

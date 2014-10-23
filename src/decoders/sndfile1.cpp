@@ -10,8 +10,7 @@ Decoder *SndFileDecoder::openFile(const std::string &name)
 {
     SF_INFO sndinfo;
     SNDFILE *sndfile = sf_open(name.c_str(), SFM_READ, &sndinfo);
-    if(!sndfile)
-        throw std::runtime_error("Failed to open file");
+    if(!sndfile) return 0;
     return new SndFileDecoder(sndfile, sndinfo);
 }
 
