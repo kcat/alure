@@ -79,8 +79,6 @@ bool Mpg123Decoder::seek(ALuint pos)
 {
     off_t newpos = mpg123_seek(mMpg123, pos, SEEK_SET);
     if(newpos < 0) return false;
-    if(newpos != pos)
-        throw std::runtime_error("Unexpected seek offset");
     return true;
 }
 

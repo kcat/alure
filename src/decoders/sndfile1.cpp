@@ -73,8 +73,6 @@ bool SndFileDecoder::seek(ALuint pos)
 {
     sf_count_t newpos = sf_seek(mSndFile, pos, SEEK_SET);
     if(newpos < 0) return false;
-    if(newpos != pos)
-        throw std::runtime_error("Unexpected seek offset");
     return true;
 }
 
