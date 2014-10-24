@@ -299,7 +299,12 @@ public:
      */
     virtual ALuint getOffset() const = 0;
 
+    virtual void setPitch(ALfloat pitch) = 0;
+
     virtual void setGain(ALfloat gain) = 0;
+    virtual void setGainRange(ALfloat mingain, ALfloat maxgain) = 0;
+
+    virtual void setDistanceRange(ALfloat refdist, ALfloat maxdist) = 0;
 
     virtual void setPosition(ALfloat x, ALfloat y, ALfloat z) = 0;
     virtual void setPosition(const ALfloat *pos) = 0;
@@ -309,6 +314,9 @@ public:
 
     virtual void setDirection(ALfloat x, ALfloat y, ALfloat z) = 0;
     virtual void setDirection(const ALfloat *dir) = 0;
+
+    virtual void setConeAngles(ALfloat inner, ALfloat outer) = 0;
+    virtual void setOuterConeGain(ALfloat gain) = 0;
 
     virtual void setRolloffFactor(ALfloat factor) = 0;
 

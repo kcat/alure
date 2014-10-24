@@ -390,13 +390,54 @@ ALuint ALSource::getOffset() const
 }
 
 
+void ALSource::setPitch(ALfloat pitch)
+{
+    if(!(pitch > 0.0f))
+        throw std::runtime_error("Pitch out of range");
+    CheckContext(mContext);
+    if(mId != 0)
+        alSourcef(mId, AL_PITCH, pitch);
+    mPitch = pitch;
+}
+
+
 void ALSource::setGain(ALfloat gain)
 {
     if(!(gain >= 0.0f))
         throw std::runtime_error("Gain out of range");
+    CheckContext(mContext);
     if(mId != 0)
         alSourcef(mId, AL_GAIN, gain);
     mGain = gain;
+}
+
+void ALSource::setGainRange(ALfloat mingain, ALfloat maxgain)
+{
+    if(!(mingain >= 0.0f && maxgain <= 1.0f && maxgain >= mingain))
+        throw std::runtime_error("Gain range out of range");
+    CheckContext(mContext);
+    if(mId != 0)
+    {
+        alSourcef(mId, AL_MIN_GAIN, mingain);
+        alSourcef(mId, AL_MAX_GAIN, maxgain);
+    }
+    mMinGain = mingain;
+    mMaxGain = maxgain;
+}
+
+
+void ALSource::setDistanceRange(ALfloat refdist, ALfloat maxdist)
+{
+    if(!(refdist >= 0.0f && maxdist <= std::numeric_limits<float>::max() && refdist <= maxdist))
+        throw std::runtime_error("Distance range out of range");
+    CheckContext(mContext);
+    if(mId != 0)
+    {
+        alSourcef(mId, AL_REFERENCE_DISTANCE, refdist);
+        alSourcef(mId, AL_MAX_DISTANCE, maxdist);
+    }
+    mRefDist = refdist;
+    mMaxDist = maxdist;
 }
 
 
@@ -458,6 +499,31 @@ void ALSource::setDirection(const ALfloat *dir)
     mDirection[0] = dir[0];
     mDirection[1] = dir[1];
     mDirection[2] = dir[2];
+}
+
+
+void ALSource::setConeAngles(ALfloat inner, ALfloat outer)
+{
+    if(!(inner >= 0.0f && outer <= 360.0f && outer >= inner))
+        throw std::runtime_error("Cone angles out of range");
+    CheckContext(mContext);
+    if(mId != 0)
+    {
+        alSourcef(mId, AL_CONE_INNER_ANGLE, inner);
+        alSourcef(mId, AL_CONE_OUTER_ANGLE, outer);
+    }
+    mConeInnerAngle = inner;
+    mConeOuterAngle = outer;
+}
+
+void ALSource::setOuterConeGain(ALfloat gain)
+{
+    if(!(gain >= 0.0f && gain <= 1.0f))
+        throw std::runtime_error("Outer cone gain out of range");
+    CheckContext(mContext);
+    if(mId != 0)
+        alSourcef(mId, AL_CONE_OUTER_GAIN, gain);
+    mConeOuterGain = gain;
 }
 
 
