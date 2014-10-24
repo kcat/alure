@@ -62,8 +62,11 @@ public:
     virtual void play(Buffer *buffer) final;
     virtual void play(Decoder *decoder, ALuint updatelen, ALuint queuesize) final;
     virtual void stop() final;
+    virtual void pause() final;
+    virtual void resume() final;
 
     virtual bool isPlaying() const final;
+    virtual bool isPaused() const final;
 
     virtual ALuint getOffset() const final;
 

@@ -230,6 +230,27 @@ void ALSource::stop()
     mStream = 0;
 }
 
+
+void ALSource::pause()
+{
+    CheckContext(mContext);
+    if(mId != 0)
+        alSourcePause(mId);
+}
+
+void ALSource::resume()
+{
+    CheckContext(mContext);
+    if(mId != 0)
+    {
+        ALint state = -1;
+        alGetSourcei(mId, AL_SOURCE_STATE, &state);
+        if(state == AL_PAUSED)
+            alSourcePlay(mId);
+    }
+}
+
+
 bool ALSource::isPlaying() const
 {
     CheckContext(mContext);
@@ -242,6 +263,20 @@ bool ALSource::isPlaying() const
 
     return state == AL_PLAYING || (mStream && state != AL_PAUSED && mStream->hasMoreData());
 }
+
+bool ALSource::isPaused() const
+{
+    CheckContext(mContext);
+    if(mId == 0) return false;
+
+    ALint state = -1;
+    alGetSourcei(mId, AL_SOURCE_STATE, &state);
+    if(state == -1)
+        throw std::runtime_error("Source state error");
+
+    return state == AL_PAUSED;
+}
+
 
 void ALSource::update()
 {

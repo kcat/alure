@@ -264,8 +264,17 @@ public:
      */
     virtual void stop() = 0;
 
-    /** Specifies if the source is currently playing, */
+    /** Pauses the source if it is playing. */
+    virtual void pause() = 0;
+
+    /** Resumes the source if it is paused. */
+    virtual void resume() = 0;
+
+    /** Specifies if the source is currently playing. */
     virtual bool isPlaying() const = 0;
+
+    /** Specifies if the source is currently paused. */
+    virtual bool isPaused() const = 0;
 
     /**
      * Retrieves the source offset in sample frames. For streaming sources,
