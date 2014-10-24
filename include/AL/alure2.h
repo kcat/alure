@@ -134,7 +134,7 @@ public:
     static Context *GetThreadCurrent();
 
     /**
-     * Destroys the context. The context must not be current for this to be
+     * Destroys the context. The context must not be current when this is
      * called.
      */
     virtual void destroy() = 0;
@@ -161,7 +161,7 @@ public:
     virtual Buffer *getBuffer(const std::string &name) = 0;
 
     /**
-     * Deletes the cached \ref Buffer instance for the given audio file or
+     * Deletes the cached \ref Buffer object for the given audio file or
      * resource \param name. The buffer must not be in use by a \ref Source.
      */
     virtual void removeBuffer(const std::string &name) = 0;
@@ -176,10 +176,7 @@ public:
      * sources you may get.
      */
     virtual Source *getSource() = 0;
-    /**
-     * Finalizes the given \param source, stopping it and returning it to the
-     * system.
-     */
+    /** Finalizes \param source, stopping it and returning it to the system. */
     virtual void finalize(Source *source) = 0;
 
     virtual void setGain(ALfloat gain) = 0;
@@ -194,6 +191,11 @@ public:
     virtual void setOrientation(const ALfloat *at, const ALfloat *up) = 0;
     virtual void setOrientation(const ALfloat *ori) = 0;
 
+    /**
+     * Updates the context and all sources belonging to this context (you do
+     * not need to call the individual sources' update method if you call this
+     * function).
+     */
     virtual void update() = 0;
 };
 
@@ -245,12 +247,31 @@ public:
     virtual void setLooping(bool looping) = 0;
     virtual bool getLooping() const = 0;
 
+    /**
+     * Plays the source using \param buffer. The same buffer may be played from
+     * multiple sources simultaneously.
+     */
     virtual void play(Buffer *buffer) = 0;
+    /**
+     * Plays the source by streaming audio from \param decoder. This will use
+     * \param queuelen buffers, each with \param updatelen sample frames. The
+     * given decoder must *NOT* be in use elsewhere, and must not be deleted
+     * while playing.
+     */
     virtual void play(Decoder *decoder, ALuint updatelen, ALuint queuesize) = 0;
+    /**
+     * Stops playback, releasing the buffer or decoder reference.
+     */
     virtual void stop() = 0;
 
+    /** Specifies if the source is currently playing, */
     virtual bool isPlaying() const = 0;
 
+    /**
+     * Retrieves the source offset in sample frames. For streaming sources,
+     * this will be the offset from the beginning of the stream based on the
+     * decoder's reported position.
+     */
     virtual ALuint getOffset() const = 0;
 
     virtual void setGain(ALfloat gain) = 0;
@@ -264,29 +285,68 @@ public:
     virtual void setDirection(ALfloat x, ALfloat y, ALfloat z) = 0;
     virtual void setDirection(const ALfloat *dir) = 0;
 
+    /**
+     * Updates the source, ensuring that streaming buffers are kept full and
+     * resources are released when playback is finished.
+     */
     virtual void update() = 0;
 };
 
 
+/**
+ * Audio decoder interface. Applications may derive from this, implementing the
+ * necessary methods, and use it in places the API wants a Decoder object.
+ */
 class Decoder {
 public:
     virtual ~Decoder() { }
 
+    /** Retrieves the sample frequency, in hz, of the audio being decoded. */
     virtual ALuint getFrequency() = 0;
+    /** Retrieves the channel configuration of the audio being decoded. */
     virtual SampleConfig getSampleConfig() = 0;
+    /** Retrieves the sample type of the audio being decoded. */
     virtual SampleType getSampleType() = 0;
 
+    /**
+     * Retrieves the total length of the audio, in sample frames. If unknown,
+     * returns 0. Note that if the returned length is 0, the decoder may not be
+     * used to load a \ref Buffer.
+     */
     virtual ALuint getLength() = 0;
+    /**
+     * Retrieves the current sample frame position (i.e. the number of sample
+     * frames from the beginning).
+     */
     virtual ALuint getPosition() = 0;
+    /**
+     * Seek as close as possible to \param pos, specified in sample frames.
+     * Returns true if the seek was successful.
+     */
     virtual bool seek(ALuint pos) = 0;
 
+    /**
+     * Decodes \param count sample frames, writing them to \param ptr, and
+     * returns the number of sample frames written. Returning less than the
+     * requested count indicates the end of the audio.
+     */
     virtual ALuint read(ALvoid *ptr, ALuint count) = 0;
 };
 
+/**
+ * Audio decoder factory interface. Applications may derive from this,
+ * implementing the necessary methods, and use it in places the API wants a
+ * DecoderFactory object.
+ */
 class DecoderFactory {
 public:
     virtual ~DecoderFactory() { }
 
+    /**
+     * Creates and returns a \ref Decoder instance for the specified audio
+     * resource \param name. The name will be the string specified to the
+     * Context's createDecoder or getBuffer methods.
+     */
     virtual Decoder *createDecoder(const std::string &name) = 0;
 };
 
@@ -310,7 +370,7 @@ void RegisterDecoder(const std::string &name, DecoderFactory *factory);
  * factory.
  *
  * \return The unregistered decoder factory instance, or 0 (nullptr) if a
- * decoder factory with the matching name doesn't exist.
+ * decoder factory with the given name doesn't exist.
  */
 DecoderFactory *UnregisterDecoder(const std::string &name);
 
