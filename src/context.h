@@ -94,6 +94,10 @@ public:
 
     virtual void setDopplerFactor(ALfloat factor) final;
 
+    virtual void setSpeedOfSound(ALfloat speed) final;
+
+    virtual void setDistanceModel(DistanceModel model) final;
+
     virtual void update() final;
 };
 

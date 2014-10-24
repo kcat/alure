@@ -115,6 +115,16 @@ public:
 };
 
 
+enum DistanceModel {
+    DistanceModel_InverseClamped  = AL_INVERSE_DISTANCE_CLAMPED,
+    DistanceModel_LinearClamped   = AL_LINEAR_DISTANCE_CLAMPED,
+    DistanceModel_ExponentClamped = AL_EXPONENT_DISTANCE_CLAMPED,
+    DistanceModel_Inverse  = AL_INVERSE_DISTANCE,
+    DistanceModel_Linear   = AL_LINEAR_DISTANCE,
+    DistanceModel_Exponent = AL_EXPONENT_DISTANCE,
+    DistanceModel_None  = AL_NONE,
+};
+
 class Context {
 public:
     /** Makes the specified \param context current for OpenAL operations. */
@@ -192,6 +202,10 @@ public:
     virtual void setOrientation(const ALfloat *ori) = 0;
 
     virtual void setDopplerFactor(ALfloat factor) = 0;
+
+    virtual void setSpeedOfSound(ALfloat speed) = 0;
+
+    virtual void setDistanceModel(DistanceModel model) = 0;
 
     /**
      * Updates the context and all sources belonging to this context (you do

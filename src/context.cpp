@@ -327,6 +327,22 @@ void ALContext::setDopplerFactor(ALfloat factor)
 }
 
 
+void ALContext::setSpeedOfSound(ALfloat speed)
+{
+    if(!(speed > 0.0f))
+        throw std::runtime_error("Speed of sound out of range");
+    CheckContext(this);
+    alSpeedOfSound(speed);
+}
+
+
+void ALContext::setDistanceModel(DistanceModel model)
+{
+    CheckContext(this);
+    alDistanceModel(model);
+}
+
+
 void ALContext::update()
 {
     CheckContext(this);
