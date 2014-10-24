@@ -27,6 +27,8 @@ class ALSource : public Source {
     ALfloat mPosition[3];
     ALfloat mVelocity[3];
     ALfloat mDirection[3];
+    ALfloat mRolloffFactor;
+    ALfloat mDopplerFactor;
 
     void resetProperties()
     {
@@ -35,6 +37,8 @@ class ALSource : public Source {
         mPosition[0] = mPosition[1] = mPosition[2] = 0.0f;
         mVelocity[0] = mVelocity[1] = mVelocity[2] = 0.0f;
         mDirection[0] = mDirection[1] = mDirection[2] = 0.0f;
+        mRolloffFactor = 1.0f;
+        mDopplerFactor = 1.0f;
     }
 
     void applyProperties(bool looping)
@@ -44,6 +48,8 @@ class ALSource : public Source {
         alSourcefv(mId, AL_POSITION, mPosition);
         alSourcefv(mId, AL_VELOCITY, mVelocity);
         alSourcefv(mId, AL_DIRECTION, mDirection);
+        alSourcef(mId, AL_ROLLOFF_FACTOR, mRolloffFactor);
+        alSourcef(mId, AL_DOPPLER_FACTOR, mDopplerFactor);
     }
 
 public:
@@ -80,6 +86,10 @@ public:
 
     virtual void setDirection(ALfloat x, ALfloat y, ALfloat z) final;
     virtual void setDirection(const ALfloat *dir) final;
+
+    virtual void setRolloffFactor(ALfloat factor) final;
+
+    virtual void setDopplerFactor(ALfloat factor) final;
 
     virtual void update() final;
 };

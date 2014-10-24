@@ -92,6 +92,8 @@ public:
     virtual void setOrientation(const ALfloat *at, const ALfloat *up) final;
     virtual void setOrientation(const ALfloat *ori) final;
 
+    virtual void setDopplerFactor(ALfloat factor) final;
+
     virtual void update() final;
 };
 

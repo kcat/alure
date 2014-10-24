@@ -460,4 +460,25 @@ void ALSource::setDirection(const ALfloat *dir)
     mDirection[2] = dir[2];
 }
 
+
+void ALSource::setRolloffFactor(ALfloat factor)
+{
+    if(!(factor >= 0.0f))
+        throw std::runtime_error("Doppler factor out of range");
+    CheckContext(mContext);
+    if(mId != 0)
+        alSourcef(mId, AL_ROLLOFF_FACTOR, factor);
+    mRolloffFactor = factor;
+}
+
+void ALSource::setDopplerFactor(ALfloat factor)
+{
+    if(!(factor >= 0.0f && factor <= 1.0f))
+        throw std::runtime_error("Doppler factor out of range");
+    CheckContext(mContext);
+    if(mId != 0)
+        alSourcef(mId, AL_DOPPLER_FACTOR, factor);
+    mDopplerFactor = factor;
+}
+
 }

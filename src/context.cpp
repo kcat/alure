@@ -318,6 +318,15 @@ void ALContext::setOrientation(const ALfloat *ori)
 }
 
 
+void ALContext::setDopplerFactor(ALfloat factor)
+{
+    if(!(factor >= 0.0f))
+        throw std::runtime_error("Doppler factor out of range");
+    CheckContext(this);
+    alDopplerFactor(factor);
+}
+
+
 void ALContext::update()
 {
     CheckContext(this);

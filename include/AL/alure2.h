@@ -191,6 +191,8 @@ public:
     virtual void setOrientation(const ALfloat *at, const ALfloat *up) = 0;
     virtual void setOrientation(const ALfloat *ori) = 0;
 
+    virtual void setDopplerFactor(ALfloat factor) = 0;
+
     /**
      * Updates the context and all sources belonging to this context (you do
      * not need to call the individual sources' update method if you call this
@@ -293,6 +295,10 @@ public:
 
     virtual void setDirection(ALfloat x, ALfloat y, ALfloat z) = 0;
     virtual void setDirection(const ALfloat *dir) = 0;
+
+    virtual void setRolloffFactor(ALfloat factor) = 0;
+
+    virtual void setDopplerFactor(ALfloat factor) = 0;
 
     /**
      * Updates the source, ensuring that streaming buffers are kept full and
