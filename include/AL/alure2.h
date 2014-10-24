@@ -293,6 +293,12 @@ public:
     virtual bool isPaused() const = 0;
 
     /**
+     * Sets the source's offset, in sample frames. If the source is playing it
+     * will go to that offset immediately, otherwise the source will start at
+     * the specified offset the next time it's played or resumed.
+     */
+    virtual void setOffset(ALuint offset) = 0;
+    /**
      * Retrieves the source offset in sample frames. For streaming sources,
      * this will be the offset from the beginning of the stream based on the
      * decoder's reported position.

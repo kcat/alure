@@ -25,6 +25,8 @@ class ALSource : public Source {
     ALBufferStream *mStream;
 
     bool mLooping;
+    bool mPaused;
+    ALuint mOffset;
     ALfloat mPitch;
     ALfloat mGain;
     ALfloat mMinGain, mMaxGain;
@@ -40,6 +42,8 @@ class ALSource : public Source {
     void resetProperties()
     {
         mLooping = false;
+        mPaused = false;
+        mOffset = 0;
         mPitch = 1.0f;
         mGain = 1.0f;
         mMinGain = 0.0f;
@@ -56,9 +60,10 @@ class ALSource : public Source {
         mDopplerFactor = 1.0f;
     }
 
-    void applyProperties(bool looping)
+    void applyProperties(bool looping, ALuint offset)
     {
         alSourcei(mId, AL_LOOPING, looping ? AL_TRUE : AL_FALSE);
+        alSourcei(mId, AL_SAMPLE_OFFSET, offset);
         alSourcef(mId, AL_PITCH, mPitch);
         alSourcef(mId, AL_GAIN, mGain);
         alSourcef(mId, AL_MIN_GAIN, mMinGain);
@@ -97,6 +102,7 @@ public:
     virtual bool isPlaying() const final;
     virtual bool isPaused() const final;
 
+    virtual void setOffset(ALuint offset) final;
     virtual ALuint getOffset() const final;
 
     virtual void setPitch(ALfloat pitch) final;

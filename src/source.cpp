@@ -53,6 +53,14 @@ public:
     ALuint getNumUpdates() const { return mNumUpdates; }
     ALuint getUpdateLength() const { return mUpdateLen; }
 
+    bool seek(ALuint pos)
+    {
+        if(!mDecoder->seek(pos))
+            return false;
+        mDone = false;
+        return true;
+    }
+
     void prepare()
     {
         ALuint srate = mDecoder->getFrequency();
@@ -150,14 +158,16 @@ void ALSource::play(Buffer *buffer)
     if(mId == 0)
     {
         mId = mContext->getSourceId();
-        applyProperties(mLooping);
+        applyProperties(mLooping, mOffset);
     }
     else
     {
         alSourceRewind(mId);
         alSourcei(mId, AL_BUFFER, 0);
         alSourcei(mId, AL_LOOPING, mLooping ? AL_TRUE : AL_FALSE);
+        alSourcei(mId, AL_SAMPLE_OFFSET, mOffset);
     }
+    mOffset = 0;
 
     delete mStream;
     mStream = 0;
@@ -169,6 +179,7 @@ void ALSource::play(Buffer *buffer)
 
     alSourcei(mId, AL_BUFFER, mBuffer->getId());
     alSourcePlay(mId);
+    mPaused = false;
 }
 
 void ALSource::play(Decoder *decoder, ALuint updatelen, ALuint queuesize)
@@ -185,13 +196,14 @@ void ALSource::play(Decoder *decoder, ALuint updatelen, ALuint queuesize)
     if(mId == 0)
     {
         mId = mContext->getSourceId();
-        applyProperties(false);
+        applyProperties(false, 0);
     }
     else
     {
         alSourceRewind(mId);
         alSourcei(mId, AL_BUFFER, 0);
         alSourcei(mId, AL_LOOPING, AL_FALSE);
+        alSourcei(mId, AL_SAMPLE_OFFSET, 0);
     }
 
     if(mBuffer)
@@ -201,12 +213,16 @@ void ALSource::play(Decoder *decoder, ALuint updatelen, ALuint queuesize)
     delete mStream;
     mStream = stream.release();
 
+    mStream->seek(mOffset);
+    mOffset = 0;
+
     for(ALuint i = 0;i < mStream->getNumUpdates();i++)
     {
         if(!mStream->streamMoreData(mId, mLooping))
             break;
     }
     alSourcePlay(mId);
+    mPaused = false;
 }
 
 
@@ -228,6 +244,8 @@ void ALSource::stop()
 
     delete mStream;
     mStream = 0;
+
+    mPaused = false;
 }
 
 
@@ -235,12 +253,19 @@ void ALSource::pause()
 {
     CheckContext(mContext);
     if(mId != 0)
+    {
         alSourcePause(mId);
+        ALint state = -1;
+        alGetSourcei(mId, AL_SOURCE_STATE, &state);
+        mPaused = (state == AL_PAUSED);
+    }
 }
 
 void ALSource::resume()
 {
     CheckContext(mContext);
+    if(!mPaused) return;
+
     if(mId != 0)
     {
         ALint state = -1;
@@ -248,6 +273,7 @@ void ALSource::resume()
         if(state == AL_PAUSED)
             alSourcePlay(mId);
     }
+    mPaused = false;
 }
 
 
@@ -261,7 +287,7 @@ bool ALSource::isPlaying() const
     if(state == -1)
         throw std::runtime_error("Source state error");
 
-    return state == AL_PLAYING || (mStream && state != AL_PAUSED && mStream->hasMoreData());
+    return state == AL_PLAYING || (mStream && !mPaused && mStream->hasMoreData());
 }
 
 bool ALSource::isPaused() const
@@ -274,7 +300,7 @@ bool ALSource::isPaused() const
     if(state == -1)
         throw std::runtime_error("Source state error");
 
-    return state == AL_PAUSED;
+    return state == AL_PAUSED || mPaused;
 }
 
 
@@ -309,11 +335,11 @@ void ALSource::updateNoCtxCheck()
 
         if(queued == 0)
             stop();
-        else
+        else if(!mPaused)
         {
             ALint state = -1;
             alGetSourcei(mId, AL_SOURCE_STATE, &state);
-            if(state != AL_PLAYING && state != AL_PAUSED)
+            if(state != AL_PLAYING)
             {
                 alGetSourcei(mId, AL_BUFFERS_PROCESSED, &processed);
                 if(processed > 0)
@@ -338,6 +364,26 @@ void ALSource::updateNoCtxCheck()
         alGetSourcei(mId, AL_SOURCE_STATE, &state);
         if(state != AL_PLAYING && state != AL_PAUSED)
             stop();
+    }
+}
+
+
+void ALSource::setOffset(ALuint offset)
+{
+    CheckContext(mContext);
+    if(mId == 0)
+    {
+        mOffset = offset;
+        return;
+    }
+
+    if(!mStream)
+        alSourcei(mId, AL_SAMPLE_OFFSET, offset);
+    else
+    {
+        if(!mStream->seek(offset))
+            throw std::runtime_error("Failed to seek to offset");
+        alSourceStop(mId);
     }
 }
 
