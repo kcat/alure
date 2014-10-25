@@ -28,18 +28,16 @@ namespace alure
 typedef std::pair<std::string,std::unique_ptr<DecoderFactory>> FactoryPair;
 typedef std::vector<FactoryPair> FactoryMap;
 
-static FactoryMap sDecodersInit()
-{
-    FactoryMap ret;
+static FactoryPair sDefaultDecoders[] = {
 #ifdef HAVE_MPG123
-    ret.push_back(std::make_pair(std::string("_alure_int_mpg123"), std::unique_ptr<DecoderFactory>(new Mpg123DecoderFactory)));
+    { "_alure_int_mpg123", std::unique_ptr<DecoderFactory>(new Mpg123DecoderFactory) },
 #endif
 #ifdef HAVE_LIBSNDFILE
-    ret.push_back(std::make_pair(std::string("_alure_int_sndfile"), std::unique_ptr<DecoderFactory>(new SndFileDecoderFactory)));
+    { "_alure_int_sndfile", std::unique_ptr<DecoderFactory>(new SndFileDecoderFactory) },
 #endif
-    return ret;
-}
-static FactoryMap sDecoders = sDecodersInit();
+};
+static FactoryMap sDecoders{ std::make_move_iterator(std::begin(sDefaultDecoders)),
+                             std::make_move_iterator(std::end(sDefaultDecoders)) };
 
 void RegisterDecoder(const std::string &name, DecoderFactory *factory)
 {
