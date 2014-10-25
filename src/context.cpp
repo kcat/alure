@@ -184,7 +184,6 @@ Buffer *ALContext::getBuffer(const std::string &name)
         if(alGetError() != AL_NO_ERROR)
             throw std::runtime_error("Failed to buffer data");
 
-        if(name.empty()) return new ALBuffer(mDevice, bid);
         return mDevice->addBuffer(name, new ALBuffer(mDevice, bid));
     }
     catch(...) {
