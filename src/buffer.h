@@ -44,13 +44,13 @@ public:
     ALDevice *getDevice() { return mDevice; }
     const ALuint &getId() const { return mId; }
 
-    virtual ALuint getLength() final;
+    virtual ALuint getLength() const final;
 
-    virtual ALuint getFrequency() final;
-    virtual SampleConfig getSampleConfig() final;
-    virtual SampleType getSampleType() final;
+    virtual ALuint getFrequency() const final;
+    virtual SampleConfig getSampleConfig() const final;
+    virtual SampleType getSampleType() const final;
 
-    virtual ALuint getSize() final;
+    virtual ALuint getSize() const final;
 
     virtual bool isRemovable() const final;
 };

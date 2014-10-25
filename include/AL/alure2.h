@@ -244,19 +244,19 @@ protected:
 
 public:
     /** Retrieves the length of the buffer in sample frames. */
-    virtual ALuint getLength() = 0;
+    virtual ALuint getLength() const = 0;
 
     /** Retrieves the buffer's frequency in hz. */
-    virtual ALuint getFrequency() = 0;
+    virtual ALuint getFrequency() const = 0;
 
     /** Retrieves the buffer's sample configuration. */
-    virtual SampleConfig getSampleConfig() = 0;
+    virtual SampleConfig getSampleConfig() const = 0;
 
     /** Retrieves the buffer's sample type. */
-    virtual SampleType getSampleType() = 0;
+    virtual SampleType getSampleType() const = 0;
 
     /** Retrieves the storage size used by the buffer, in bytes. */
-    virtual ALuint getSize() = 0;
+    virtual ALuint getSize() const = 0;
 
     /** Queries if the buffer is not in use and can be removed. */
     virtual bool isRemovable() const = 0;

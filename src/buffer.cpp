@@ -26,7 +26,7 @@ void ALBuffer::cleanup()
     delete this;
 }
 
-ALuint ALBuffer::getLength()
+ALuint ALBuffer::getLength() const
 {
     CheckContextDevice(mDevice);
 
@@ -39,25 +39,25 @@ ALuint ALBuffer::getLength()
     return size / chans * 8 / bits;
 }
 
-ALuint ALBuffer::getFrequency()
+ALuint ALBuffer::getFrequency() const
 {
     CheckContextDevice(mDevice);
     return mFrequency;
 }
 
-SampleConfig ALBuffer::getSampleConfig()
+SampleConfig ALBuffer::getSampleConfig() const
 {
     CheckContextDevice(mDevice);
     return mSampleConfig;
 }
 
-SampleType ALBuffer::getSampleType()
+SampleType ALBuffer::getSampleType() const
 {
     CheckContextDevice(mDevice);
     return mSampleType;
 }
 
-ALuint ALBuffer::getSize()
+ALuint ALBuffer::getSize() const
 {
     CheckContextDevice(mDevice);
 
