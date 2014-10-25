@@ -12,6 +12,7 @@ namespace alure {
 class DeviceManager;
 class Device;
 class Context;
+class Listener;
 class Buffer;
 class Source;
 class Decoder;
@@ -161,6 +162,12 @@ public:
      */
     virtual Decoder *createDecoder(const std::string &name) = 0;
 
+    /**
+     * Retrieves a \ref Listener instance for this context. Each context will
+     * only have one listener.
+     */
+    virtual Listener *getListener() = 0;
+
     // Functions below require the context to be current
 
     /**
@@ -188,18 +195,6 @@ public:
     virtual Source *getSource() = 0;
     /** Finalizes \param source, stopping it and returning it to the system. */
     virtual void finalize(Source *source) = 0;
-
-    virtual void setGain(ALfloat gain) = 0;
-
-    virtual void setPosition(ALfloat x, ALfloat y, ALfloat z) = 0;
-    virtual void setPosition(const ALfloat *pos) = 0;
-
-    virtual void setVelocity(ALfloat x, ALfloat y, ALfloat z) = 0;
-    virtual void setVelocity(const ALfloat *vel) = 0;
-
-    virtual void setOrientation(ALfloat x1, ALfloat y1, ALfloat z1, ALfloat x2, ALfloat y2, ALfloat z2) = 0;
-    virtual void setOrientation(const ALfloat *at, const ALfloat *up) = 0;
-    virtual void setOrientation(const ALfloat *ori) = 0;
 
     virtual void setDopplerFactor(ALfloat factor) = 0;
 
@@ -236,6 +231,22 @@ enum SampleConfig {
     SampleConfig_BFmt_WXYZ
 };
 const char *GetSampleConfigName(SampleConfig cfg);
+
+
+class Listener {
+public:
+    virtual void setGain(ALfloat gain) = 0;
+
+    virtual void setPosition(ALfloat x, ALfloat y, ALfloat z) = 0;
+    virtual void setPosition(const ALfloat *pos) = 0;
+
+    virtual void setVelocity(ALfloat x, ALfloat y, ALfloat z) = 0;
+    virtual void setVelocity(const ALfloat *vel) = 0;
+
+    virtual void setOrientation(ALfloat x1, ALfloat y1, ALfloat z1, ALfloat x2, ALfloat y2, ALfloat z2) = 0;
+    virtual void setOrientation(const ALfloat *at, const ALfloat *up) = 0;
+    virtual void setOrientation(const ALfloat *ori) = 0;
+};
 
 
 class Buffer {

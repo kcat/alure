@@ -23,7 +23,7 @@ class ALDevice;
 class ALBuffer;
 class ALSource;
 
-class ALContext : public Context {
+class ALContext : public Context, public Listener {
     static ALContext *sCurrentCtx;
 #if __cplusplus >= 201103L
     static thread_local ALContext *sThreadCurrentCtx;
@@ -71,6 +71,8 @@ public:
     virtual void startBatch() final;
     virtual void endBatch() final;
 
+    virtual Listener *getListener() final;
+
     virtual Decoder *createDecoder(const std::string &name) final;
 
     virtual Buffer *getBuffer(const std::string &name) final;
@@ -80,6 +82,15 @@ public:
     virtual Source *getSource() final;
     virtual void finalize(Source *source) final;
 
+    virtual void setDopplerFactor(ALfloat factor) final;
+
+    virtual void setSpeedOfSound(ALfloat speed) final;
+
+    virtual void setDistanceModel(DistanceModel model) final;
+
+    virtual void update() final;
+
+    // Listener methods
     virtual void setGain(ALfloat gain) final;
 
     virtual void setPosition(ALfloat x, ALfloat y, ALfloat z) final;
@@ -91,14 +102,6 @@ public:
     virtual void setOrientation(ALfloat x1, ALfloat y1, ALfloat z1, ALfloat x2, ALfloat y2, ALfloat z2) final;
     virtual void setOrientation(const ALfloat *at, const ALfloat *up) final;
     virtual void setOrientation(const ALfloat *ori) final;
-
-    virtual void setDopplerFactor(ALfloat factor) final;
-
-    virtual void setSpeedOfSound(ALfloat speed) final;
-
-    virtual void setDistanceModel(DistanceModel model) final;
-
-    virtual void update() final;
 };
 
 

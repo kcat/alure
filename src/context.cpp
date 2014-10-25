@@ -143,6 +143,12 @@ void ALContext::endBatch()
 }
 
 
+Listener *ALContext::getListener()
+{
+    return this;
+}
+
+
 Decoder *ALContext::createDecoder(const std::string &name)
 {
     FactoryMap::const_reverse_iterator iter = sDecoders.rbegin();
@@ -261,6 +267,38 @@ void ALContext::finalize(Source *source)
 }
 
 
+void ALContext::setDopplerFactor(ALfloat factor)
+{
+    if(!(factor >= 0.0f))
+        throw std::runtime_error("Doppler factor out of range");
+    CheckContext(this);
+    alDopplerFactor(factor);
+}
+
+
+void ALContext::setSpeedOfSound(ALfloat speed)
+{
+    if(!(speed > 0.0f))
+        throw std::runtime_error("Speed of sound out of range");
+    CheckContext(this);
+    alSpeedOfSound(speed);
+}
+
+
+void ALContext::setDistanceModel(DistanceModel model)
+{
+    CheckContext(this);
+    alDistanceModel(model);
+}
+
+
+void ALContext::update()
+{
+    CheckContext(this);
+    std::for_each(mUsedSources.begin(), mUsedSources.end(), std::mem_fun(&ALSource::updateNoCtxCheck));
+}
+
+
 void ALContext::setGain(ALfloat gain)
 {
     if(!(gain >= 0.0f))
@@ -312,38 +350,6 @@ void ALContext::setOrientation(const ALfloat *ori)
 {
     CheckContext(this);
     alListenerfv(AL_ORIENTATION, ori);
-}
-
-
-void ALContext::setDopplerFactor(ALfloat factor)
-{
-    if(!(factor >= 0.0f))
-        throw std::runtime_error("Doppler factor out of range");
-    CheckContext(this);
-    alDopplerFactor(factor);
-}
-
-
-void ALContext::setSpeedOfSound(ALfloat speed)
-{
-    if(!(speed > 0.0f))
-        throw std::runtime_error("Speed of sound out of range");
-    CheckContext(this);
-    alSpeedOfSound(speed);
-}
-
-
-void ALContext::setDistanceModel(DistanceModel model)
-{
-    CheckContext(this);
-    alDistanceModel(model);
-}
-
-
-void ALContext::update()
-{
-    CheckContext(this);
-    std::for_each(mUsedSources.begin(), mUsedSources.end(), std::mem_fun(&ALSource::updateNoCtxCheck));
 }
 
 
