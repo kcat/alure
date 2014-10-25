@@ -34,7 +34,9 @@ int main(int argc, char *argv[])
         alure::Buffer *buffer = ctx->getBuffer(argv[i]);
         alure::Source *source = ctx->getSource();
         source->play(buffer);
-        std::cout<< "Playing "<<argv[i]<<" ("<<buffer->getFrequency()<<"hz)" <<std::endl;
+        std::cout<< "Playing "<<argv[i]<<" ("<<alure::GetSampleTypeName(buffer->getSampleType())<<", "
+                                             <<alure::GetSampleConfigName(buffer->getSampleConfig())<<", "
+                                             <<buffer->getFrequency()<<"hz)" <<std::endl;
 
         while(source->isPlaying())
         {

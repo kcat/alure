@@ -42,12 +42,19 @@ ALuint ALBuffer::getLength()
 ALuint ALBuffer::getFrequency()
 {
     CheckContextDevice(mDevice);
+    return mFrequency;
+}
 
-    ALint freq = -1;
-    alGetBufferi(mId, AL_FREQUENCY, &freq);
-    if(freq < 0)
-        throw std::runtime_error("Buffer frequency error");
-    return freq;
+SampleConfig ALBuffer::getSampleConfig()
+{
+    CheckContextDevice(mDevice);
+    return mSampleConfig;
+}
+
+SampleType ALBuffer::getSampleType()
+{
+    CheckContextDevice(mDevice);
+    return mSampleType;
 }
 
 ALuint ALBuffer::getSize()

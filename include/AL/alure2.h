@@ -216,25 +216,6 @@ public:
 };
 
 
-class Buffer {
-protected:
-    virtual ~Buffer() { }
-
-public:
-    /** Retrieves the length of the buffer in sample frames. */
-    virtual ALuint getLength() = 0;
-
-    /** Retrieves the buffer's frequency in hz. */
-    virtual ALuint getFrequency() = 0;
-
-    /** Retrieves the storage size used by the buffer, in bytes. */
-    virtual ALuint getSize() = 0;
-
-    /** Queries if the buffer is not in use and can be removed. */
-    virtual bool isRemovable() const = 0;
-};
-
-
 enum SampleType {
     SampleType_UInt8,
     SampleType_Int16,
@@ -255,6 +236,31 @@ enum SampleConfig {
     SampleConfig_BFmt_WXYZ
 };
 const char *GetSampleConfigName(SampleConfig cfg);
+
+
+class Buffer {
+protected:
+    virtual ~Buffer() { }
+
+public:
+    /** Retrieves the length of the buffer in sample frames. */
+    virtual ALuint getLength() = 0;
+
+    /** Retrieves the buffer's frequency in hz. */
+    virtual ALuint getFrequency() = 0;
+
+    /** Retrieves the buffer's sample configuration. */
+    virtual SampleConfig getSampleConfig() = 0;
+
+    /** Retrieves the buffer's sample type. */
+    virtual SampleType getSampleType() = 0;
+
+    /** Retrieves the storage size used by the buffer, in bytes. */
+    virtual ALuint getSize() = 0;
+
+    /** Queries if the buffer is not in use and can be removed. */
+    virtual bool isRemovable() const = 0;
+};
 
 
 class Source {

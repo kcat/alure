@@ -24,11 +24,15 @@ class ALBuffer : public Buffer {
     ALDevice *const mDevice;
     ALuint mId;
 
+    ALuint mFrequency;
+    SampleConfig mSampleConfig;
+    SampleType mSampleType;
+
     RefCount mRefs;
 
 public:
-    ALBuffer(ALDevice *device, ALuint id)
-      : mDevice(device), mId(id), mRefs(0)
+    ALBuffer(ALDevice *device, ALuint id, ALuint freq, SampleConfig config, SampleType type)
+      : mDevice(device), mId(id), mFrequency(freq), mSampleConfig(config), mSampleType(type), mRefs(0)
     { }
 
     void cleanup();
@@ -43,6 +47,9 @@ public:
     virtual ALuint getLength() final;
 
     virtual ALuint getFrequency() final;
+    virtual SampleConfig getSampleConfig() final;
+    virtual SampleType getSampleType() final;
+
     virtual ALuint getSize() final;
 
     virtual bool isRemovable() const final;

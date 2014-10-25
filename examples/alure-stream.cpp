@@ -34,7 +34,9 @@ int main(int argc, char *argv[])
         alure::Decoder *decoder = ctx->createDecoder(argv[i]);
         alure::Source *source = ctx->getSource();
         source->play(decoder, 32768, 4);
-        std::cout<< "Playing "<<argv[i]<<" ("<<decoder->getFrequency()<<"hz)" <<std::endl;
+        std::cout<< "Playing "<<argv[i]<<" ("<<alure::GetSampleTypeName(decoder->getSampleType())<<", "
+                                             <<alure::GetSampleConfigName(decoder->getSampleConfig())<<", "
+                                             <<decoder->getFrequency()<<"hz)" <<std::endl;
 
         while(source->isPlaying())
         {
