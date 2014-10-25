@@ -49,6 +49,13 @@ SampleConfig SndFileDecoder::getSampleConfig()
         return SampleConfig_Mono;
     if(mSndInfo.channels == 2)
         return SampleConfig_Stereo;
+    if(sf_command(mSndFile, SFC_WAVEX_GET_AMBISONIC, 0, 0) == SF_AMBISONIC_B_FORMAT)
+    {
+        if(mSndInfo.channels == 3)
+            return SampleConfig_BFmt_WXY;
+        if(mSndInfo.channels == 4)
+            return SampleConfig_BFmt_WXYZ;
+    }
     throw std::runtime_error("Unsupported sample configuration");
 }
 
