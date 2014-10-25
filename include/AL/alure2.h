@@ -241,6 +241,7 @@ enum SampleType {
     SampleType_Float32,
     SampleType_Mulaw
 };
+const char *GetSampleTypeName(SampleType type);
 
 enum SampleConfig {
     SampleConfig_Mono,
@@ -253,6 +254,7 @@ enum SampleConfig {
     SampleConfig_BFmt_WXY,
     SampleConfig_BFmt_WXYZ
 };
+const char *GetSampleConfigName(SampleConfig cfg);
 
 
 class Source {

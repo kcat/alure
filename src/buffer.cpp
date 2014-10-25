@@ -2,6 +2,7 @@
 #include "buffer.h"
 
 #include <stdexcept>
+#include <sstream>
 
 #include "al.h"
 #include "alext.h"
@@ -63,6 +64,36 @@ ALuint ALBuffer::getSize()
 bool ALBuffer::isRemovable() const
 {
     return (mRefs.load() == 0);
+}
+
+
+const char *GetSampleTypeName(SampleType type)
+{
+    switch(type)
+    {
+        case SampleType_UInt8: return "Unsigned 8-bit";
+        case SampleType_Int16: return "Signed 16-bit";
+        case SampleType_Float32: return "32-bit float";
+        case SampleType_Mulaw: return "Mulaw";
+    }
+    throw std::runtime_error("Invalid type");
+}
+
+const char *GetSampleConfigName(SampleConfig cfg)
+{
+    switch(cfg)
+    {
+        case SampleConfig_Mono: return "Mono";
+        case SampleConfig_Stereo: return "Stereo";
+        case SampleConfig_Rear: return "Rear";
+        case SampleConfig_Quad: return "Quadrophonic";
+        case SampleConfig_X51: return "5.1 Surround";
+        case SampleConfig_X61: return "6.1 Surround";
+        case SampleConfig_X71: return "7.1 Surround";
+        case SampleConfig_BFmt_WXY: return "B-Format 2D";
+        case SampleConfig_BFmt_WXYZ: return "B-Format 3D";
+    }
+    throw std::runtime_error("Invalid config");
 }
 
 
@@ -172,7 +203,9 @@ ALenum GetFormat(SampleConfig chans, SampleType type)
     }
 #undef RETURN_FMT
 
-    throw std::runtime_error("Format not supported");
+    std::stringstream sstr;
+    sstr<< "Format not supported ("<<GetSampleTypeName(type)<<", "<<GetSampleConfigName(chans)<<")";
+    throw std::runtime_error(sstr.str());
 }
 
 }
