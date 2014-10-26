@@ -308,7 +308,7 @@ public:
      * will go to that offset immediately, otherwise the source will start at
      * the specified offset the next time it's played or resumed.
      */
-    virtual void setOffset(ALuint offset) = 0;
+    virtual void setOffset(uint64_t offset) = 0;
     /**
      * Retrieves the source offset in sample frames. For streaming sources,
      * this will be the offset from the beginning of the stream based on the
@@ -317,7 +317,7 @@ public:
      * \param latency If non-NULL and the device supports it, the source's, in
      * nanoseconds, will be written to that location.
      */
-    virtual ALuint getOffset(uint64_t *latency=0) const = 0;
+    virtual uint64_t getOffset(uint64_t *latency=0) const = 0;
 
     virtual void setLooping(bool looping) = 0;
     virtual bool getLooping() const = 0;
@@ -373,17 +373,17 @@ public:
      * returns 0. Note that if the returned length is 0, the decoder may not be
      * used to load a \ref Buffer.
      */
-    virtual ALuint getLength() = 0;
+    virtual uint64_t getLength() = 0;
     /**
      * Retrieves the current sample frame position (i.e. the number of sample
      * frames from the beginning).
      */
-    virtual ALuint getPosition() = 0;
+    virtual uint64_t getPosition() = 0;
     /**
      * Seek as close as possible to \param pos, specified in sample frames.
      * Returns true if the seek was successful.
      */
-    virtual bool seek(ALuint pos) = 0;
+    virtual bool seek(uint64_t pos) = 0;
 
     /**
      * Decodes \param count sample frames, writing them to \param ptr, and

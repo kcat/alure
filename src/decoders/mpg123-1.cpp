@@ -46,9 +46,9 @@ public:
     virtual SampleConfig getSampleConfig() final;
     virtual SampleType getSampleType() final;
 
-    virtual ALuint getLength() final;
-    virtual ALuint getPosition() final;
-    virtual bool seek(ALuint pos) final;
+    virtual uint64_t getLength() final;
+    virtual uint64_t getPosition() final;
+    virtual bool seek(uint64_t pos) final;
 
     virtual ALuint read(ALvoid *ptr, ALuint count) final;
 };
@@ -81,19 +81,19 @@ SampleType Mpg123Decoder::getSampleType()
 }
 
 
-ALuint Mpg123Decoder::getLength()
+uint64_t Mpg123Decoder::getLength()
 {
     off_t len = mpg123_length(mMpg123);
     return (ALuint)std::max<off_t>(len, 0);
 }
 
-ALuint Mpg123Decoder::getPosition()
+uint64_t Mpg123Decoder::getPosition()
 {
     off_t pos = mpg123_tell(mMpg123);
     return (ALuint)std::max<off_t>(pos, 0);
 }
 
-bool Mpg123Decoder::seek(ALuint pos)
+bool Mpg123Decoder::seek(uint64_t pos)
 {
     off_t newpos = mpg123_seek(mMpg123, pos, SEEK_SET);
     if(newpos < 0) return false;

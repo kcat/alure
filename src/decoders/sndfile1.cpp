@@ -73,9 +73,9 @@ public:
     virtual SampleConfig getSampleConfig() final;
     virtual SampleType getSampleType() final;
 
-    virtual ALuint getLength() final;
-    virtual ALuint getPosition() final;
-    virtual bool seek(ALuint pos) final;
+    virtual uint64_t getLength() final;
+    virtual uint64_t getPosition() final;
+    virtual bool seek(uint64_t pos) final;
 
     virtual ALuint read(ALvoid *ptr, ALuint count) final;
 };
@@ -110,22 +110,23 @@ SampleConfig SndFileDecoder::getSampleConfig()
 
 SampleType SndFileDecoder::getSampleType()
 {
+    std::cerr<< std::hex<<mSndInfo.format <<std::endl;
     return SampleType_Int16;
 }
 
 
-ALuint SndFileDecoder::getLength()
+uint64_t SndFileDecoder::getLength()
 {
     return std::max<sf_count_t>(mSndInfo.frames, 0);
 }
 
-ALuint SndFileDecoder::getPosition()
+uint64_t SndFileDecoder::getPosition()
 {
     sf_count_t pos = sf_seek(mSndFile, 0, SEEK_CUR);
     return std::max<sf_count_t>(pos, 0);
 }
 
-bool SndFileDecoder::seek(ALuint pos)
+bool SndFileDecoder::seek(uint64_t pos)
 {
     sf_count_t newpos = sf_seek(mSndFile, pos, SEEK_SET);
     if(newpos < 0) return false;

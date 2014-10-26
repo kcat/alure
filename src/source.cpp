@@ -48,13 +48,13 @@ public:
         }
     }
 
-    ALuint getLength() const { return mDecoder->getLength(); }
-    ALuint getPosition() const { return mDecoder->getPosition(); }
+    uint64_t getLength() const { return mDecoder->getLength(); }
+    uint64_t getPosition() const { return mDecoder->getPosition(); }
 
     ALuint getNumUpdates() const { return mNumUpdates; }
     ALuint getUpdateLength() const { return mUpdateLen; }
 
-    bool seek(ALuint pos)
+    bool seek(uint64_t pos)
     {
         if(!mDecoder->seek(pos))
             return false;
@@ -144,14 +144,14 @@ void ALSource::play(Buffer *buffer)
     if(mId == 0)
     {
         mId = mContext->getSourceId();
-        applyProperties(mLooping, mOffset);
+        applyProperties(mLooping, (ALuint)std::min<uint64_t>(mOffset, std::numeric_limits<ALint>::max()));
     }
     else
     {
         alSourceRewind(mId);
         alSourcei(mId, AL_BUFFER, 0);
         alSourcei(mId, AL_LOOPING, mLooping ? AL_TRUE : AL_FALSE);
-        alSourcei(mId, AL_SAMPLE_OFFSET, mOffset);
+        alSourcei(mId, AL_SAMPLE_OFFSET, (ALuint)std::min<uint64_t>(mOffset, std::numeric_limits<ALint>::max()));
     }
     mOffset = 0;
 
@@ -354,7 +354,7 @@ void ALSource::updateNoCtxCheck()
 }
 
 
-void ALSource::setOffset(ALuint offset)
+void ALSource::setOffset(uint64_t offset)
 {
     CheckContext(mContext);
     if(mId == 0)
@@ -364,7 +364,14 @@ void ALSource::setOffset(ALuint offset)
     }
 
     if(!mStream)
-        alSourcei(mId, AL_SAMPLE_OFFSET, offset);
+    {
+        if(offset >= std::numeric_limits<ALint>::max())
+            throw std::runtime_error("Offset out of range");
+        alGetError();
+        alSourcei(mId, AL_SAMPLE_OFFSET, (ALint)offset);
+        if(alGetError() != AL_NO_ERROR)
+            throw std::runtime_error("Offset out of range");
+    }
     else
     {
         if(!mStream->seek(offset))
@@ -373,7 +380,7 @@ void ALSource::setOffset(ALuint offset)
     }
 }
 
-ALuint ALSource::getOffset(uint64_t *latency) const
+uint64_t ALSource::getOffset(uint64_t *latency) const
 {
     CheckContext(mContext);
     if(mId == 0)
@@ -401,7 +408,7 @@ ALuint ALSource::getOffset(uint64_t *latency) const
         }
         alGetSourcei(mId, AL_SOURCE_STATE, &state);
 
-        ALuint pos = mStream->getPosition();
+        uint64_t pos = mStream->getPosition();
         if(state == AL_PLAYING || state == AL_PAUSED)
         {
             // The amount of samples in the queue waiting to play
@@ -417,13 +424,13 @@ ALuint ALSource::getOffset(uint64_t *latency) const
             }
             else
             {
-                ALuint streamlen = mStream->getLength();
+                uint64_t streamlen = mStream->getLength();
                 if(streamlen == 0)
                 {
                     // A looped stream that doesn't know its own length?
                     pos = 0;
                 }
-                else while((ALint)pos < 0)
+                else while((int64_t)pos < 0)
                     pos += streamlen;
             }
         }

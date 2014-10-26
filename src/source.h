@@ -6,6 +6,7 @@
 #include <limits>
 
 #include "al.h"
+#include "alext.h"
 
 #if __cplusplus < 201103L
 #define final
@@ -26,7 +27,7 @@ class ALSource : public Source {
 
     bool mLooping;
     bool mPaused;
-    ALuint mOffset;
+    ALuint64SOFT mOffset;
     ALfloat mPitch;
     ALfloat mGain;
     ALfloat mMinGain, mMaxGain;
@@ -99,8 +100,8 @@ public:
     virtual bool isPlaying() const final;
     virtual bool isPaused() const final;
 
-    virtual void setOffset(ALuint offset) final;
-    virtual ALuint getOffset(uint64_t *latency=0) const final;
+    virtual void setOffset(uint64_t offset) final;
+    virtual uint64_t getOffset(uint64_t *latency=0) const final;
 
     virtual void setLooping(bool looping) final;
     virtual bool getLooping() const final;
