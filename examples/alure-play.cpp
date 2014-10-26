@@ -16,6 +16,7 @@ inline void Sleep(uint32_t ms)
 #endif
 
 #include <iostream>
+#include <iomanip>
 
 #include "alure2.h"
 
@@ -38,11 +39,16 @@ int main(int argc, char *argv[])
                                              <<alure::GetSampleConfigName(buffer->getSampleConfig())<<", "
                                              <<buffer->getFrequency()<<"hz)" <<std::endl;
 
+        float invfreq = 1.0f / buffer->getFrequency();
         while(source->isPlaying())
         {
+            std::cout<< "\r "<<std::setiosflags(std::ios::fixed)<<std::setprecision(2)<<
+                        (source->getOffset()*invfreq)<<" / "<<(buffer->getLength()*invfreq);
+            std::cout.flush();
             Sleep(25);
             ctx->update();
         }
+        std::cout<<std::endl;
 
         ctx->finalize(source);
         source = 0;
