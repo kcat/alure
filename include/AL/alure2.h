@@ -251,9 +251,6 @@ public:
 
 
 class Buffer {
-protected:
-    virtual ~Buffer() { }
-
 public:
     /** Retrieves the length of the buffer in sample frames. */
     virtual ALuint getLength() const = 0;
@@ -276,9 +273,6 @@ public:
 
 
 class Source {
-protected:
-    virtual ~Source() { }
-
 public:
     virtual void setLooping(bool looping) = 0;
     virtual bool getLooping() const = 0;

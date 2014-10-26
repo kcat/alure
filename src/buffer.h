@@ -34,6 +34,7 @@ public:
     ALBuffer(ALDevice *device, ALuint id, ALuint freq, SampleConfig config, SampleType type)
       : mDevice(device), mId(id), mFrequency(freq), mSampleConfig(config), mSampleType(type), mRefs(0)
     { }
+    virtual ~ALBuffer() { }
 
     void cleanup();
 
