@@ -2,6 +2,7 @@
 #include "mpg123-1.h"
 
 #include <stdexcept>
+#include <iostream>
 
 #include "mpg123.h"
 
@@ -9,13 +10,17 @@ namespace alure
 {
 
 class Mpg123Decoder : public Decoder {
+    std::unique_ptr<std::istream> mFile;
+
     mpg123_handle *mMpg123;
     int mChannels;
     long mSampleRate;
 
 public:
-    Mpg123Decoder(mpg123_handle *mpg123, int chans, long srate);
+    Mpg123Decoder(std::unique_ptr<std::istream> file);
     virtual ~Mpg123Decoder();
+
+    bool init();
 
     virtual ALuint getFrequency() final;
     virtual SampleConfig getSampleConfig() final;
@@ -26,10 +31,13 @@ public:
     virtual bool seek(ALuint pos) final;
 
     virtual ALuint read(ALvoid *ptr, ALuint count) final;
+
+    static ssize_t r_read(void *user_data, void *ptr, size_t count);
+    static off_t r_lseek(void *user_data, off_t offset, int whence);
 };
 
-Mpg123Decoder::Mpg123Decoder(mpg123_handle *mpg123, int chans, long srate)
-  : mMpg123(mpg123), mChannels(chans), mSampleRate(srate)
+Mpg123Decoder::Mpg123Decoder(std::unique_ptr<std::istream> file)
+  : mFile(std::move(file)), mMpg123(0)
 { }
 
 Mpg123Decoder::~Mpg123Decoder()
@@ -40,6 +48,34 @@ Mpg123Decoder::~Mpg123Decoder()
         mpg123_delete(mMpg123);
         mMpg123 = 0;
     }
+}
+
+bool Mpg123Decoder::init()
+{
+    mMpg123 = mpg123_new(0, 0);
+    if(mMpg123)
+    {
+        if(mpg123_replace_reader_handle(mMpg123, r_read, r_lseek, 0) == MPG123_OK &&
+           mpg123_open_handle(mMpg123, this) == MPG123_OK)
+        {
+            int enc, channels;
+            long srate;
+
+            if(mpg123_getformat(mMpg123, &srate, &channels, &enc) == MPG123_OK)
+            {
+                if((channels == 1 || channels == 2) && srate > 0 &&
+                   mpg123_format_none(mMpg123) == MPG123_OK &&
+                   mpg123_format(mMpg123, srate, channels, MPG123_ENC_SIGNED_16) == MPG123_OK)
+                {
+                    // All OK
+                    mChannels = channels;
+                    mSampleRate = srate;
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
 }
 
 
@@ -99,6 +135,26 @@ ALuint Mpg123Decoder::read(ALvoid *ptr, ALuint count)
 }
 
 
+ssize_t Mpg123Decoder::r_read(void *user_data, void *ptr, size_t count)
+{
+    std::istream *file = reinterpret_cast<Mpg123Decoder*>(user_data)->mFile.get();
+
+    file->clear();
+    file->read(reinterpret_cast<char*>(ptr), count);
+    return file->gcount();
+}
+
+off_t Mpg123Decoder::r_lseek(void* user_data, off_t offset, int whence)
+{
+    std::istream *file = reinterpret_cast<Mpg123Decoder*>(user_data)->mFile.get();
+
+    file->clear();
+    if(!file->seekg(offset, std::ios::seekdir(whence)))
+        return -1;
+    return file->tellg();
+}
+
+
 Decoder *Mpg123DecoderFactory::createDecoder(const std::string &name)
 {
     static bool inited = false;
@@ -109,30 +165,16 @@ Decoder *Mpg123DecoderFactory::createDecoder(const std::string &name)
         inited = true;
     }
 
-    mpg123_handle *mpg123 = mpg123_new(0, 0);
-    if(mpg123)
-    {
-        if(mpg123_open(mpg123, name.c_str()) == MPG123_OK)
-        {
-            int enc, channels;
-            long srate;
+    std::unique_ptr<std::istream> file(FileIOFactory::get()->createFile(name).release());
+    if(!file.get()) return 0;
 
-            if(mpg123_getformat(mpg123, &srate, &channels, &enc) == MPG123_OK)
-            {
-                if((channels == 1 || channels == 2) && srate > 0 &&
-                   mpg123_format_none(mpg123) == MPG123_OK &&
-                   mpg123_format(mpg123, srate, channels, MPG123_ENC_SIGNED_16) == MPG123_OK)
-                {
-                    // All OK
-                    return new Mpg123Decoder(mpg123, channels, srate);
-                }
-            }
-            mpg123_close(mpg123);
-        }
-        mpg123_delete(mpg123);
-        mpg123 = 0;
+    Mpg123Decoder *decoder = new Mpg123Decoder(std::move(file));
+    if(!decoder->init())
+    {
+        delete decoder;
+        decoder = 0;
     }
-    return 0;
+    return decoder;
 }
 
 }

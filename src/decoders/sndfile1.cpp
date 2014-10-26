@@ -2,6 +2,7 @@
 #include "sndfile1.h"
 
 #include <stdexcept>
+#include <iostream>
 
 #include "sndfile.h"
 
@@ -9,12 +10,16 @@ namespace alure
 {
 
 class SndFileDecoder : public Decoder {
+    std::unique_ptr<std::istream> mFile;
+
     SNDFILE *mSndFile;
     SF_INFO mSndInfo;
 
 public:
-    SndFileDecoder(SNDFILE *sndfile, const SF_INFO &info);
+    SndFileDecoder(std::unique_ptr<std::istream> file);
     virtual ~SndFileDecoder();
+
+    bool init();
 
     virtual ALuint getFrequency() final;
     virtual SampleConfig getSampleConfig() final;
@@ -25,16 +30,37 @@ public:
     virtual bool seek(ALuint pos) final;
 
     virtual ALuint read(ALvoid *ptr, ALuint count) final;
+
+
+    static sf_count_t get_filelen(void *user_data);
+    static sf_count_t seek(sf_count_t offset, int whence, void *user_data);
+    static sf_count_t read(void *ptr, sf_count_t count, void *user_data);
+    static sf_count_t write(const void *ptr, sf_count_t count, void *user_data);
+    static sf_count_t tell(void *user_data);
 };
 
-SndFileDecoder::SndFileDecoder(SNDFILE *sndfile, const SF_INFO &info)
-  : mSndFile(sndfile), mSndInfo(info)
+SndFileDecoder::SndFileDecoder(std::unique_ptr<std::istream> file)
+  : mFile(std::move(file)), mSndFile(0)
 { }
 
 SndFileDecoder::~SndFileDecoder()
 {
-    sf_close(mSndFile);
+    if(mSndFile)
+        sf_close(mSndFile);
     mSndFile = 0;
+}
+
+bool SndFileDecoder::init()
+{
+    SF_VIRTUAL_IO vio = {
+        get_filelen,
+        seek,
+        read,
+        write,
+        tell
+    };
+    mSndFile = sf_open_virtual(&vio, SFM_READ, &mSndInfo, this);
+    return !!mSndFile;
 }
 
 
@@ -90,12 +116,66 @@ ALuint SndFileDecoder::read(ALvoid *ptr, ALuint count)
 }
 
 
+sf_count_t SndFileDecoder::get_filelen(void *user_data)
+{
+    std::istream *file = reinterpret_cast<SndFileDecoder*>(user_data)->mFile.get();
+    sf_count_t len = -1;
+
+    file->clear();
+    std::streampos pos = file->tellg();
+    if(pos != -1 && file->seekg(0, std::ios::end))
+    {
+        len = file->tellg();
+        file->seekg(pos);
+    }
+    return len;
+}
+
+sf_count_t SndFileDecoder::seek(sf_count_t offset, int whence, void *user_data)
+{
+    std::istream *file = reinterpret_cast<SndFileDecoder*>(user_data)->mFile.get();
+
+    file->clear();
+    if(!file->seekg(offset, std::ios::seekdir(whence)))
+        return -1;
+    return file->tellg();
+}
+
+sf_count_t SndFileDecoder::read(void *ptr, sf_count_t count, void *user_data)
+{
+    std::istream *file = reinterpret_cast<SndFileDecoder*>(user_data)->mFile.get();
+
+    file->clear();
+    file->read(reinterpret_cast<char*>(ptr), count);
+    return file->gcount();
+}
+
+sf_count_t SndFileDecoder::write(const void*, sf_count_t, void*)
+{
+    return -1;
+}
+
+sf_count_t SndFileDecoder::tell(void* user_data)
+{
+    std::istream *file = reinterpret_cast<SndFileDecoder*>(user_data)->mFile.get();
+
+    file->clear();
+    return file->tellg();
+}
+
+
 Decoder *SndFileDecoderFactory::createDecoder(const std::string &name)
 {
-    SF_INFO sndinfo;
-    SNDFILE *sndfile = sf_open(name.c_str(), SFM_READ, &sndinfo);
-    if(!sndfile) return 0;
-    return new SndFileDecoder(sndfile, sndinfo);
+    std::unique_ptr<std::istream> file(FileIOFactory::get()->createFile(name).release());
+    if(!file.get()) return 0;
+
+    SndFileDecoder *decoder = new SndFileDecoder(std::move(file));
+    if(!decoder->init())
+    {
+        delete decoder;
+        decoder = 0;
+    }
+    return decoder;
 }
 
 }
