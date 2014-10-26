@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <string>
+#include <memory>
 
 #include "alc.h"
 #include "al.h"
@@ -435,6 +436,35 @@ void RegisterDecoder(const std::string &name, DecoderFactory *factory);
  * decoder factory with the given name doesn't exist.
  */
 DecoderFactory *UnregisterDecoder(const std::string &name);
+
+
+/**
+ * A file I/O factory interface. Applications may derive from this and set an
+ * instance to be used by the built-in audio decoders.
+ */
+class FileIOFactory {
+public:
+    /**
+     * Sets the \param factory instance to be used by the built-in audio
+     * decoders. The library takes ownership of the factory and will delete it
+     * at program termination. If a previous factory was set, it and ownership
+     * to it are returned to the application. Passing in a NULL factory reverts
+     * to the default.
+     */
+    static FileIOFactory *set(FileIOFactory *factory);
+    /**
+     * Gets the current FileIOFactory instance being used by the built-in audio
+     * decoders. The returned object must NOT be deleted.
+     */
+    static FileIOFactory *get();
+
+    virtual ~FileIOFactory() { }
+
+    /**
+     * Creates a read-only binary file instance for the given \param name.
+     */
+    virtual std::auto_ptr<std::istream> createFile(const std::string &name) = 0;
+};
 
 } // namespace alure
 

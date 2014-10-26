@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <memory>
 #include <sstream>
+#include <fstream>
 
 #include "alc.h"
 
@@ -71,6 +72,36 @@ DecoderFactory *UnregisterDecoder(const std::string &name)
         iter++;
     }
     return 0;
+}
+
+
+class DefaultFileIOFactory : public FileIOFactory {
+    virtual std::auto_ptr<std::istream> createFile(const std::string &name)
+    {
+        std::ifstream *file = new std::ifstream(name.c_str(), std::ios::binary);
+        if(!file->is_open())
+        {
+            delete file;
+            file = 0;
+        }
+        return std::auto_ptr<std::istream>(file);
+    }
+};
+static DefaultFileIOFactory sDefaultFileFactory;
+
+static std::unique_ptr<FileIOFactory> sFileFactory;
+FileIOFactory *FileIOFactory::set(FileIOFactory *factory)
+{
+    FileIOFactory *old = sFileFactory.release();
+    sFileFactory.reset(factory);
+    return old;
+}
+
+FileIOFactory *FileIOFactory::get()
+{
+    FileIOFactory *factory = sFileFactory.get();
+    if(factory) return factory;
+    return &sDefaultFileFactory;
 }
 
 
