@@ -274,9 +274,6 @@ public:
 
 class Source {
 public:
-    virtual void setLooping(bool looping) = 0;
-    virtual bool getLooping() const = 0;
-
     /**
      * Plays the source using \param buffer. The same buffer may be played from
      * multiple sources simultaneously.
@@ -316,8 +313,14 @@ public:
      * Retrieves the source offset in sample frames. For streaming sources,
      * this will be the offset from the beginning of the stream based on the
      * decoder's reported position.
+     *
+     * \param latency If non-NULL and the device supports it, the source's, in
+     * nanoseconds, will be written to that location.
      */
-    virtual ALuint getOffset() const = 0;
+    virtual ALuint getOffset(uint64_t *latency=0) const = 0;
+
+    virtual void setLooping(bool looping) = 0;
+    virtual bool getLooping() const = 0;
 
     virtual void setPitch(ALfloat pitch) = 0;
 

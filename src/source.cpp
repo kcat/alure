@@ -133,21 +133,6 @@ void ALSource::finalize()
 }
 
 
-void ALSource::setLooping(bool looping)
-{
-    CheckContext(mContext);
-
-    if(mId && !mStream)
-        alSourcei(mId, AL_LOOPING, looping ? AL_TRUE : AL_FALSE);
-    mLooping = looping;
-}
-
-bool ALSource::getLooping() const
-{
-    return mLooping;
-}
-
-
 void ALSource::play(Buffer *buffer)
 {
     ALBuffer *albuf = dynamic_cast<ALBuffer*>(buffer);
@@ -387,12 +372,18 @@ void ALSource::setOffset(ALuint offset)
     }
 }
 
-ALuint ALSource::getOffset() const
+ALuint ALSource::getOffset(uint64_t *latency) const
 {
     CheckContext(mContext);
     if(mId == 0)
+    {
+        if(latency)
+            *latency = 0;
         return 0;
+    }
 
+    if(latency)
+        *latency = 0;
     if(mStream)
     {
         ALint queued = 0, state = -1, srcpos = 0;
@@ -433,6 +424,21 @@ ALuint ALSource::getOffset() const
     ALint srcpos = 0;
     alGetSourcei(mId, AL_SAMPLE_OFFSET, &srcpos);
     return srcpos;
+}
+
+
+void ALSource::setLooping(bool looping)
+{
+    CheckContext(mContext);
+
+    if(mId && !mStream)
+        alSourcei(mId, AL_LOOPING, looping ? AL_TRUE : AL_FALSE);
+    mLooping = looping;
+}
+
+bool ALSource::getLooping() const
+{
+    return mLooping;
 }
 
 

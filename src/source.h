@@ -90,9 +90,6 @@ public:
     void updateNoCtxCheck();
     void finalize();
 
-    virtual void setLooping(bool looping) final;
-    virtual bool getLooping() const final;
-
     virtual void play(Buffer *buffer) final;
     virtual void play(Decoder *decoder, ALuint updatelen, ALuint queuesize) final;
     virtual void stop() final;
@@ -103,7 +100,10 @@ public:
     virtual bool isPaused() const final;
 
     virtual void setOffset(ALuint offset) final;
-    virtual ALuint getOffset() const final;
+    virtual ALuint getOffset(uint64_t *latency=0) const final;
+
+    virtual void setLooping(bool looping) final;
+    virtual bool getLooping() const final;
 
     virtual void setPitch(ALfloat pitch) final;
 
