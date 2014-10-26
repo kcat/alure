@@ -7,6 +7,7 @@
 #include <memory>
 
 #include "al.h"
+#include "alext.h"
 
 #include "context.h"
 #include "buffer.h"
@@ -382,13 +383,22 @@ ALuint ALSource::getOffset(uint64_t *latency) const
         return 0;
     }
 
-    if(latency)
-        *latency = 0;
     if(mStream)
     {
         ALint queued = 0, state = -1, srcpos = 0;
         alGetSourcei(mId, AL_BUFFERS_QUEUED, &queued);
-        alGetSourcei(mId, AL_SAMPLE_OFFSET, &srcpos);
+        if(latency && mContext->hasExtension(SOFT_source_latency))
+        {
+            ALint64SOFT val[2];
+            mContext->alGetSourcei64vSOFT(mId, AL_SAMPLE_OFFSET_LATENCY_SOFT, val);
+            srcpos = val[0]>>32;
+            *latency = val[1];
+        }
+        else
+        {
+            alGetSourcei(mId, AL_SAMPLE_OFFSET, &srcpos);
+            if(latency) *latency = 0;
+        }
         alGetSourcei(mId, AL_SOURCE_STATE, &state);
 
         ALuint pos = mStream->getPosition();
@@ -422,7 +432,18 @@ ALuint ALSource::getOffset(uint64_t *latency) const
     }
 
     ALint srcpos = 0;
-    alGetSourcei(mId, AL_SAMPLE_OFFSET, &srcpos);
+    if(latency && mContext->hasExtension(SOFT_source_latency))
+    {
+        ALint64SOFT val[2];
+        mContext->alGetSourcei64vSOFT(mId, AL_SAMPLE_OFFSET_LATENCY_SOFT, val);
+        srcpos = val[0]>>32;
+        *latency = val[1];
+    }
+    else
+    {
+        alGetSourcei(mId, AL_SAMPLE_OFFSET, &srcpos);
+        if(latency) *latency = 0;
+    }
     return srcpos;
 }
 

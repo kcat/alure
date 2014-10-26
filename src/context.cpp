@@ -8,6 +8,7 @@
 #include <memory>
 #include <sstream>
 #include <fstream>
+#include <cstring>
 
 #include "alc.h"
 
@@ -119,7 +120,10 @@ void ALContext::MakeCurrent(ALContext *context)
     if(alcMakeContextCurrent(context ? context->getContext() : 0) == ALC_FALSE)
         throw std::runtime_error("Call to alcMakeContextCurrent failed");
     if(context)
+    {
         context->addRef();
+        context->setCurrent();
+    }
     if(sCurrentCtx)
         sCurrentCtx->decRef();
     sCurrentCtx = context;
@@ -135,17 +139,45 @@ void ALContext::MakeThreadCurrent(ALContext *context)
     if(ALDeviceManager::SetThreadContext(context ? context->getContext() : 0) == ALC_FALSE)
         throw std::runtime_error("Call to alcSetThreadContext failed");
     if(context)
+    {
         context->addRef();
+        context->setCurrent();
+    }
     if(sThreadCurrentCtx)
         sThreadCurrentCtx->decRef();
     sThreadCurrentCtx = context;
 }
 
+void ALContext::setupExts()
+{
+    if(alIsExtensionPresent("AL_SOFT_source_latency"))
+    {
+        mHasExt[SOFT_source_latency] = true;
+        alGetSourcei64vSOFT = reinterpret_cast<LPALGETSOURCEI64VSOFT>(alGetProcAddress("alGetSourcei64vSOFT"));
+    }
+}
+
+
+ALContext::ALContext(ALCcontext *context, ALDevice *device)
+  : mContext(context), mDevice(device), mRefs(0), mFirstSet(true), alGetSourcei64vSOFT(0)
+{
+    memset(mHasExt, 0, sizeof(mHasExt));
+}
 
 ALContext::~ALContext()
 {
     mDevice->removeContext(this);
 }
+
+void ALContext::setCurrent()
+{
+    if(mFirstSet)
+    {
+        mFirstSet = false;
+        setupExts();
+    }
+}
+
 
 Device *ALContext::getDevice()
 {

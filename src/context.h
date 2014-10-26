@@ -9,6 +9,7 @@
 #include <set>
 
 #include "alc.h"
+#include "alext.h"
 
 #include "refcount.h"
 #include "device.h"
@@ -22,6 +23,12 @@ namespace alure {
 class ALDevice;
 class ALBuffer;
 class ALSource;
+
+enum ALExtension {
+    SOFT_source_latency,
+
+    AL_EXTENTION_MAX
+};
 
 class ALContext : public Context, public Listener {
     static ALContext *sCurrentCtx;
@@ -49,15 +56,23 @@ private:
 
     RefCount mRefs;
 
-    virtual ~ALContext();
+    bool mFirstSet;
+    bool mHasExt[AL_EXTENTION_MAX];
+
+    void setupExts();
+
 public:
-    ALContext(ALCcontext *context, ALDevice *device)
-      : mContext(context), mDevice(device), mRefs(0)
-    { }
+    ALContext(ALCcontext *context, ALDevice *device);
+    virtual ~ALContext();
 
     ALCcontext *getContext() const { return mContext; }
     long addRef() { return ++mRefs; }
     long decRef() { return --mRefs; }
+
+    void setCurrent();
+    bool hasExtension(ALExtension ext) const { return mHasExt[ext]; }
+
+    LPALGETSOURCEI64VSOFT alGetSourcei64vSOFT;
 
     ALuint getSourceId();
     void insertSourceId(ALuint id) { mSourceIds.push(id); }
