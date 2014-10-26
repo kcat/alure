@@ -304,9 +304,9 @@ public:
     virtual bool isPaused() const = 0;
 
     /**
-     * Sets the source's offset, in sample frames. If the source is playing it
-     * will go to that offset immediately, otherwise the source will start at
-     * the specified offset the next time it's played or resumed.
+     * Sets the source's offset, in sample frames. If the source is playing or
+     * paused, it will go to that offset immediately, otherwise the source will
+     * start at the specified offset the next time it's played.
      */
     virtual void setOffset(uint64_t offset) = 0;
     /**
@@ -314,8 +314,8 @@ public:
      * this will be the offset from the beginning of the stream based on the
      * decoder's reported position.
      *
-     * \param latency If non-NULL and the device supports it, the source's, in
-     * nanoseconds, will be written to that location.
+     * \param latency If non-NULL and the device supports it, the source's
+     * latency, in nanoseconds, will be written to that location.
      */
     virtual uint64_t getOffset(uint64_t *latency=0) const = 0;
 
