@@ -77,7 +77,7 @@ DecoderFactory *UnregisterDecoder(const std::string &name)
 
 
 class DefaultFileIOFactory : public FileIOFactory {
-    virtual std::auto_ptr<std::istream> createFile(const std::string &name)
+    virtual std::unique_ptr<std::istream> createFile(const std::string &name)
     {
         std::ifstream *file = new std::ifstream(name.c_str(), std::ios::binary);
         if(!file->is_open())
@@ -85,24 +85,24 @@ class DefaultFileIOFactory : public FileIOFactory {
             delete file;
             file = 0;
         }
-        return std::auto_ptr<std::istream>(file);
+        return std::unique_ptr<std::istream>(file);
     }
 };
 static DefaultFileIOFactory sDefaultFileFactory;
 
 static std::unique_ptr<FileIOFactory> sFileFactory;
-FileIOFactory *FileIOFactory::set(FileIOFactory *factory)
+std::unique_ptr<FileIOFactory> FileIOFactory::set(std::unique_ptr<FileIOFactory> factory)
 {
-    FileIOFactory *old = sFileFactory.release();
-    sFileFactory.reset(factory);
+    std::unique_ptr<FileIOFactory> old = std::move(sFileFactory);
+    sFileFactory = std::move(factory);
     return old;
 }
 
-FileIOFactory *FileIOFactory::get()
+FileIOFactory &FileIOFactory::get()
 {
     FileIOFactory *factory = sFileFactory.get();
-    if(factory) return factory;
-    return &sDefaultFileFactory;
+    if(factory) return *factory;
+    return sDefaultFileFactory;
 }
 
 

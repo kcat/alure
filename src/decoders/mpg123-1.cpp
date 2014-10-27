@@ -127,7 +127,7 @@ Decoder *Mpg123DecoderFactory::createDecoder(const std::string &name)
         inited = true;
     }
 
-    std::unique_ptr<std::istream> file(FileIOFactory::get()->createFile(name).release());
+    std::unique_ptr<std::istream> file(FileIOFactory::get().createFile(name));
     if(!file.get()) return 0;
 
     mpg123_handle *mpg123 = mpg123_new(0, 0);
