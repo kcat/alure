@@ -161,7 +161,7 @@ public:
      * Creates a \ref Decoder instance for the given audio file or resource
      * \param name. The caller is responsible for deleting the returned object.
      */
-    virtual Decoder *createDecoder(const std::string &name) = 0;
+    virtual std::unique_ptr<Decoder> createDecoder(const std::string &name) = 0;
 
     /**
      * Retrieves a \ref Listener instance for this context. Each context will

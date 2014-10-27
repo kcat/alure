@@ -32,9 +32,9 @@ int main(int argc, char *argv[])
 
     for(int i = 1;i < argc;i++)
     {
-        alure::Decoder *decoder = ctx->createDecoder(argv[i]);
+        std::unique_ptr<alure::Decoder> decoder(ctx->createDecoder(argv[i]));
         alure::Source *source = ctx->getSource();
-        source->play(decoder, 32768, 4);
+        source->play(decoder.get(), 32768, 4);
         std::cout<< "Playing "<<argv[i]<<" ("<<alure::GetSampleTypeName(decoder->getSampleType())<<", "
                                              <<alure::GetSampleConfigName(decoder->getSampleConfig())<<", "
                                              <<decoder->getFrequency()<<"hz)" <<std::endl;
@@ -52,8 +52,7 @@ int main(int argc, char *argv[])
 
         ctx->finalize(source);
         source = 0;
-        delete decoder;
-        decoder = 0;
+        decoder.reset();
     }
 
     alure::Context::MakeCurrent(0);

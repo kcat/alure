@@ -212,14 +212,14 @@ Listener *ALContext::getListener()
 }
 
 
-Decoder *ALContext::createDecoder(const std::string &name)
+std::unique_ptr<Decoder> ALContext::createDecoder(const std::string &name)
 {
     FactoryMap::const_reverse_iterator iter = sDecoders.rbegin();
     while(iter != sDecoders.rend())
     {
         DecoderFactory *factory = iter->second.get();
         Decoder *decoder = factory->createDecoder(name);
-        if(decoder) return decoder;
+        if(decoder) return std::unique_ptr<Decoder>(decoder);
         ++iter;
     }
     throw std::runtime_error("No decoder for "+name);

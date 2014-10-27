@@ -88,7 +88,7 @@ public:
 
     virtual Listener *getListener() final;
 
-    virtual Decoder *createDecoder(const std::string &name) final;
+    virtual std::unique_ptr<Decoder> createDecoder(const std::string &name) final;
 
     virtual Buffer *getBuffer(const std::string &name) final;
     virtual void removeBuffer(const std::string &name) final;
