@@ -6,7 +6,7 @@
 namespace alure {
 
 class SndFileDecoderFactory : public DecoderFactory {
-    virtual Decoder *createDecoder(const std::string &name) final;
+    virtual Decoder *createDecoder(std::unique_ptr<std::istream> &file) final;
 };
 
 } // namespace alure

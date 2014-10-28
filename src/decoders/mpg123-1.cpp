@@ -117,7 +117,7 @@ ALuint Mpg123Decoder::read(ALvoid *ptr, ALuint count)
 }
 
 
-Decoder *Mpg123DecoderFactory::createDecoder(const std::string &name)
+Decoder *Mpg123DecoderFactory::createDecoder(std::unique_ptr<std::istream> &file)
 {
     static bool inited = false;
     if(!inited)
@@ -126,9 +126,6 @@ Decoder *Mpg123DecoderFactory::createDecoder(const std::string &name)
             return 0;
         inited = true;
     }
-
-    std::unique_ptr<std::istream> file(FileIOFactory::get().createFile(name));
-    if(!file.get()) return 0;
 
     mpg123_handle *mpg123 = mpg123_new(0, 0);
     if(mpg123)

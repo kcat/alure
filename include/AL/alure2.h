@@ -403,11 +403,11 @@ public:
     virtual ~DecoderFactory() { }
 
     /**
-     * Creates and returns a \ref Decoder instance for the specified audio
-     * resource \param name. The name will be the string specified to the
-     * Context's createDecoder or getBuffer methods.
+     * Creates and returns a \ref Decoder instance for the given resource
+     * \param file. If successful, the returned decoder takes ownership of the
+     * file handle. Returns NULL if a decoder can't be created from the file.
      */
-    virtual Decoder *createDecoder(const std::string &name) = 0;
+    virtual Decoder *createDecoder(std::unique_ptr<std::istream> &file) = 0;
 };
 
 /**
@@ -437,20 +437,21 @@ DecoderFactory *UnregisterDecoder(const std::string &name);
 
 /**
  * A file I/O factory interface. Applications may derive from this and set an
- * instance to be used by the built-in audio decoders.
+ * instance to be used by the audio decoders. By default, the library uses
+ * standard I/O.
  */
 class FileIOFactory {
 public:
     /**
-     * Sets the \param factory instance to be used by the built-in audio
-     * decoders. The library takes ownership of the factory and will delete it
-     * at program termination. If a previous factory was set, it and ownership
-     * to it are returned to the application. Passing in a NULL factory reverts
-     * to the default.
+     * Sets the \param factory instance to be used by the audio decoders. The
+     * library takes ownership of the factory and will delete it at program
+     * termination. If a previous factory was set, it and ownership to it are
+     * returned to the application. Passing in a NULL factory reverts to the
+     * default.
      */
     static std::unique_ptr<FileIOFactory> set(std::unique_ptr<FileIOFactory> factory);
     /**
-     * Gets the current FileIOFactory instance being used by the built-in audio
+     * Gets the current FileIOFactory instance being used by the audio
      * decoders.
      */
     static FileIOFactory &get();

@@ -140,11 +140,8 @@ ALuint SndFileDecoder::read(ALvoid *ptr, ALuint count)
 }
 
 
-Decoder *SndFileDecoderFactory::createDecoder(const std::string &name)
+Decoder *SndFileDecoderFactory::createDecoder(std::unique_ptr<std::istream> &file)
 {
-    std::unique_ptr<std::istream> file(FileIOFactory::get().createFile(name));
-    if(!file.get()) return 0;
-
     SF_VIRTUAL_IO vio = {
         get_filelen, seek,
         read, write, tell

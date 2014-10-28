@@ -214,12 +214,22 @@ Listener *ALContext::getListener()
 
 std::unique_ptr<Decoder> ALContext::createDecoder(const std::string &name)
 {
+    std::unique_ptr<std::istream> file(FileIOFactory::get().createFile(name));
+    if(!file.get()) throw std::runtime_error("Failed to open "+name);
+
     FactoryMap::const_reverse_iterator iter = sDecoders.rbegin();
     while(iter != sDecoders.rend())
     {
         DecoderFactory *factory = iter->second.get();
-        Decoder *decoder = factory->createDecoder(name);
+        Decoder *decoder = factory->createDecoder(file);
         if(decoder) return std::unique_ptr<Decoder>(decoder);
+
+        if(!file.get())
+            throw std::runtime_error("Decoder factory took file but did not give a decoder");
+        file->clear();
+        if(!file->seekg(0))
+            throw std::runtime_error("Failed to rewind "+name+" for the next decoder factory");
+
         ++iter;
     }
     throw std::runtime_error("No decoder for "+name);
