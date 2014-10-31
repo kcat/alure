@@ -110,7 +110,6 @@ SampleConfig SndFileDecoder::getSampleConfig()
 
 SampleType SndFileDecoder::getSampleType()
 {
-    std::cerr<< std::hex<<mSndInfo.format <<std::endl;
     return SampleType_Int16;
 }
 
