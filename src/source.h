@@ -39,6 +39,7 @@ class ALSource : public Source {
     ALfloat mConeOuterGain;
     ALfloat mRolloffFactor;
     ALfloat mDopplerFactor;
+    bool mRelative;
 
     void resetProperties()
     {
@@ -59,6 +60,7 @@ class ALSource : public Source {
         mConeOuterGain = 0.0f;
         mRolloffFactor = 1.0f;
         mDopplerFactor = 1.0f;
+        mRelative = false;
     }
 
     void applyProperties(bool looping, ALuint offset)
@@ -79,6 +81,7 @@ class ALSource : public Source {
         alSourcef(mId, AL_CONE_OUTER_GAIN, mConeOuterGain);
         alSourcef(mId, AL_ROLLOFF_FACTOR, mRolloffFactor);
         alSourcef(mId, AL_DOPPLER_FACTOR, mDopplerFactor);
+        alSourcei(mId, AL_SOURCE_RELATIVE, mRelative ? AL_TRUE : AL_FALSE);
     }
 
 public:
@@ -128,6 +131,8 @@ public:
     virtual void setRolloffFactor(ALfloat factor) final;
 
     virtual void setDopplerFactor(ALfloat factor) final;
+
+    virtual void setRelative(bool relative) final;
 
     virtual void update() final;
 };

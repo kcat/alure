@@ -345,6 +345,8 @@ public:
 
     virtual void setDopplerFactor(ALfloat factor) = 0;
 
+    virtual void setRelative(bool relative) = 0;
+
     /**
      * Updates the source, ensuring that streaming buffers are kept full and
      * resources are released when playback is finished.

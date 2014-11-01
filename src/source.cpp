@@ -627,4 +627,12 @@ void ALSource::setDopplerFactor(ALfloat factor)
     mDopplerFactor = factor;
 }
 
+void ALSource::setRelative(bool relative)
+{
+    CheckContext(mContext);
+    if(mId != 0)
+        alSourcei(mId, AL_SOURCE_RELATIVE, relative ? AL_TRUE : AL_FALSE);
+    mRelative = relative;
+}
+
 }
