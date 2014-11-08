@@ -430,8 +430,12 @@ uint64_t ALSource::getOffset(uint64_t *latency) const
                     // A looped stream that doesn't know its own length?
                     pos = 0;
                 }
-                else while((int64_t)pos < 0)
-                    pos += streamlen;
+                else
+                {
+                    pos += streamlen - inqueue;
+                    while((int64_t)pos < 0)
+                        pos += streamlen;
+                }
             }
         }
 
