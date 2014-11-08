@@ -143,10 +143,55 @@ Decoder *SndFileDecoderFactory::createDecoder(std::unique_ptr<std::istream> &fil
     SampleConfig sconfig;
     if(sndfile)
     {
-        if(sndinfo.channels == 1)
-            sconfig = SampleConfig_Mono;
-        else if(sndinfo.channels == 2)
-            sconfig = SampleConfig_Stereo;
+        std::vector<int> chanmap(sndinfo.channels);
+        if(sf_command(sndfile, SFC_GET_CHANNEL_MAP_INFO, &chanmap[0], chanmap.size()*sizeof(int)) == SF_TRUE)
+        {
+            if(sndinfo.channels == 1 && chanmap[0] == SF_CHANNEL_MAP_MONO)
+                sconfig = SampleConfig_Mono;
+            else if(sndinfo.channels == 2 && chanmap[0] == SF_CHANNEL_MAP_LEFT && chanmap[1] == SF_CHANNEL_MAP_RIGHT)
+                sconfig = SampleConfig_Stereo;
+            else if(sndinfo.channels == 2 && chanmap[0] == SF_CHANNEL_MAP_REAR_RIGHT && chanmap[1] == SF_CHANNEL_MAP_REAR_LEFT)
+                sconfig = SampleConfig_Rear;
+            else if(sndinfo.channels == 4 &&
+                    chanmap[0] == SF_CHANNEL_MAP_LEFT && chanmap[1] == SF_CHANNEL_MAP_RIGHT &&
+                    chanmap[2] == SF_CHANNEL_MAP_REAR_LEFT && chanmap[3] == SF_CHANNEL_MAP_REAR_RIGHT)
+                sconfig = SampleConfig_Quad;
+            else if(sndinfo.channels == 6 &&
+                    chanmap[0] == SF_CHANNEL_MAP_LEFT && chanmap[1] == SF_CHANNEL_MAP_RIGHT &&
+                    chanmap[2] == SF_CHANNEL_MAP_CENTER && chanmap[3] == SF_CHANNEL_MAP_LFE &&
+                    chanmap[4] == SF_CHANNEL_MAP_REAR_LEFT && chanmap[5] == SF_CHANNEL_MAP_REAR_RIGHT)
+                sconfig = SampleConfig_X51;
+            else if(sndinfo.channels == 6 &&
+                    chanmap[0] == SF_CHANNEL_MAP_LEFT && chanmap[1] == SF_CHANNEL_MAP_RIGHT &&
+                    chanmap[2] == SF_CHANNEL_MAP_CENTER && chanmap[3] == SF_CHANNEL_MAP_LFE &&
+                    chanmap[4] == SF_CHANNEL_MAP_SIDE_LEFT && chanmap[5] == SF_CHANNEL_MAP_SIDE_RIGHT)
+                sconfig = SampleConfig_X51;
+            else if(sndinfo.channels == 7 &&
+                    chanmap[0] == SF_CHANNEL_MAP_LEFT && chanmap[1] == SF_CHANNEL_MAP_RIGHT &&
+                    chanmap[2] == SF_CHANNEL_MAP_CENTER && chanmap[3] == SF_CHANNEL_MAP_LFE &&
+                    chanmap[4] == SF_CHANNEL_MAP_REAR_CENTER && chanmap[5] == SF_CHANNEL_MAP_SIDE_LEFT &&
+                    chanmap[6] == SF_CHANNEL_MAP_SIDE_RIGHT)
+                sconfig = SampleConfig_X61;
+            else if(sndinfo.channels == 8 &&
+                    chanmap[0] == SF_CHANNEL_MAP_LEFT && chanmap[1] == SF_CHANNEL_MAP_RIGHT &&
+                    chanmap[2] == SF_CHANNEL_MAP_CENTER && chanmap[3] == SF_CHANNEL_MAP_LFE &&
+                    chanmap[4] == SF_CHANNEL_MAP_REAR_LEFT && chanmap[5] == SF_CHANNEL_MAP_REAR_RIGHT &&
+                    chanmap[6] == SF_CHANNEL_MAP_SIDE_LEFT && chanmap[7] == SF_CHANNEL_MAP_SIDE_RIGHT)
+                sconfig = SampleConfig_X51;
+            else if(sndinfo.channels == 3 &&
+                    chanmap[0] == SF_CHANNEL_MAP_AMBISONIC_B_W && chanmap[1] == SF_CHANNEL_MAP_AMBISONIC_B_X &&
+                    chanmap[2] == SF_CHANNEL_MAP_AMBISONIC_B_Y)
+                sconfig = SampleConfig_BFmt_WXY;
+            else if(sndinfo.channels == 4 &&
+                    chanmap[0] == SF_CHANNEL_MAP_AMBISONIC_B_W && chanmap[1] == SF_CHANNEL_MAP_AMBISONIC_B_X &&
+                    chanmap[2] == SF_CHANNEL_MAP_AMBISONIC_B_Y && chanmap[3] == SF_CHANNEL_MAP_AMBISONIC_B_Z)
+                sconfig = SampleConfig_BFmt_WXYZ;
+            else
+            {
+                sf_close(sndfile);
+                return 0;
+            }
+        }
         else if(sf_command(sndfile, SFC_WAVEX_GET_AMBISONIC, 0, 0) == SF_AMBISONIC_B_FORMAT)
         {
             if(sndinfo.channels == 3)
@@ -156,13 +201,17 @@ Decoder *SndFileDecoderFactory::createDecoder(std::unique_ptr<std::istream> &fil
             else
             {
                 sf_close(sndfile);
-                sndfile = 0;
+                return 0;
             }
         }
+        else if(sndinfo.channels == 1)
+            sconfig = SampleConfig_Mono;
+        else if(sndinfo.channels == 2)
+            sconfig = SampleConfig_Stereo;
         else
         {
             sf_close(sndfile);
-            sndfile = 0;
+            return 0;
         }
     }
 
