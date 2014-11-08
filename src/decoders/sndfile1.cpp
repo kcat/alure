@@ -126,7 +126,11 @@ bool SndFileDecoder::seek(uint64_t pos)
 
 ALuint SndFileDecoder::read(ALvoid *ptr, ALuint count)
 {
-    sf_count_t got = sf_readf_short(mSndFile, static_cast<short*>(ptr), count);
+    sf_count_t got = 0;
+    if(mSampleType == SampleType_Int16)
+        got = sf_readf_short(mSndFile, static_cast<short*>(ptr), count);
+    else if(mSampleType == SampleType_Float32)
+        got = sf_readf_float(mSndFile, static_cast<float*>(ptr), count);
     return (ALuint)std::max<sf_count_t>(got, 0);
 }
 
@@ -148,9 +152,11 @@ Decoder *SndFileDecoderFactory::createDecoder(std::unique_ptr<std::istream> &fil
         {
             if(sndinfo.channels == 1 && chanmap[0] == SF_CHANNEL_MAP_MONO)
                 sconfig = SampleConfig_Mono;
-            else if(sndinfo.channels == 2 && chanmap[0] == SF_CHANNEL_MAP_LEFT && chanmap[1] == SF_CHANNEL_MAP_RIGHT)
+            else if(sndinfo.channels == 2 &&
+                    chanmap[0] == SF_CHANNEL_MAP_LEFT && chanmap[1] == SF_CHANNEL_MAP_RIGHT)
                 sconfig = SampleConfig_Stereo;
-            else if(sndinfo.channels == 2 && chanmap[0] == SF_CHANNEL_MAP_REAR_RIGHT && chanmap[1] == SF_CHANNEL_MAP_REAR_LEFT)
+            else if(sndinfo.channels == 2 &&
+                    chanmap[0] == SF_CHANNEL_MAP_REAR_LEFT && chanmap[1] == SF_CHANNEL_MAP_REAR_RIGHT)
                 sconfig = SampleConfig_Rear;
             else if(sndinfo.channels == 4 &&
                     chanmap[0] == SF_CHANNEL_MAP_LEFT && chanmap[1] == SF_CHANNEL_MAP_RIGHT &&
@@ -215,8 +221,25 @@ Decoder *SndFileDecoderFactory::createDecoder(std::unique_ptr<std::istream> &fil
         }
     }
 
+    SampleType stype = SampleType_Int16;
+    if(sndfile)
+    {
+        switch(sndinfo.format&SF_FORMAT_SUBMASK)
+        {
+            case SF_FORMAT_FLOAT:
+            case SF_FORMAT_DOUBLE:
+            case SF_FORMAT_VORBIS:
+                stype = SampleType_Float32;
+                break;
+
+            default:
+                stype = SampleType_Int16;
+                break;
+        }
+    }
+
     if(!sndfile) return 0;
-    return new SndFileDecoder(std::move(file), sndfile, sndinfo, sconfig, SampleType_Int16);
+    return new SndFileDecoder(std::move(file), sndfile, sndinfo, sconfig, stype);
 }
 
 }
