@@ -63,9 +63,12 @@ class SndFileDecoder : public Decoder {
     SNDFILE *mSndFile;
     SF_INFO mSndInfo;
 
+    SampleConfig mSampleConfig;
+    SampleType mSampleType;
+
 public:
-    SndFileDecoder(std::unique_ptr<std::istream> &&file, SNDFILE *sndfile, const SF_INFO sndinfo)
-      : mFile(std::move(file)), mSndFile(sndfile), mSndInfo(sndinfo)
+    SndFileDecoder(std::unique_ptr<std::istream> &&file, SNDFILE *sndfile, const SF_INFO sndinfo, SampleConfig sconfig, SampleType stype)
+      : mFile(std::move(file)), mSndFile(sndfile), mSndInfo(sndinfo), mSampleConfig(sconfig), mSampleType(stype)
     { }
     virtual ~SndFileDecoder();
 
@@ -94,23 +97,12 @@ ALuint SndFileDecoder::getFrequency()
 
 SampleConfig SndFileDecoder::getSampleConfig()
 {
-    if(mSndInfo.channels == 1)
-        return SampleConfig_Mono;
-    if(mSndInfo.channels == 2)
-        return SampleConfig_Stereo;
-    if(sf_command(mSndFile, SFC_WAVEX_GET_AMBISONIC, 0, 0) == SF_AMBISONIC_B_FORMAT)
-    {
-        if(mSndInfo.channels == 3)
-            return SampleConfig_BFmt_WXY;
-        if(mSndInfo.channels == 4)
-            return SampleConfig_BFmt_WXYZ;
-    }
-    throw std::runtime_error("Unsupported sample configuration");
+    return mSampleConfig;
 }
 
 SampleType SndFileDecoder::getSampleType()
 {
-    return SampleType_Int16;
+    return mSampleType;
 }
 
 
@@ -147,8 +139,35 @@ Decoder *SndFileDecoderFactory::createDecoder(std::unique_ptr<std::istream> &fil
     };
     SF_INFO sndinfo;
     SNDFILE *sndfile = sf_open_virtual(&vio, SFM_READ, &sndinfo, file.get());
+
+    SampleConfig sconfig;
+    if(sndfile)
+    {
+        if(sndinfo.channels == 1)
+            sconfig = SampleConfig_Mono;
+        else if(sndinfo.channels == 2)
+            sconfig = SampleConfig_Stereo;
+        else if(sf_command(sndfile, SFC_WAVEX_GET_AMBISONIC, 0, 0) == SF_AMBISONIC_B_FORMAT)
+        {
+            if(sndinfo.channels == 3)
+                sconfig = SampleConfig_BFmt_WXY;
+            else if(sndinfo.channels == 4)
+                sconfig = SampleConfig_BFmt_WXYZ;
+            else
+            {
+                sf_close(sndfile);
+                sndfile = 0;
+            }
+        }
+        else
+        {
+            sf_close(sndfile);
+            sndfile = 0;
+        }
+    }
+
     if(!sndfile) return 0;
-    return new SndFileDecoder(std::move(file), sndfile, sndinfo);
+    return new SndFileDecoder(std::move(file), sndfile, sndinfo, sconfig, SampleType_Int16);
 }
 
 }
