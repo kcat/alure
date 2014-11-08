@@ -106,6 +106,11 @@ FileIOFactory &FileIOFactory::get()
 }
 
 
+template<typename T>
+static inline void LoadALFunc(T **func, const char *name)
+{ *func = reinterpret_cast<T*>(alGetProcAddress(name)); }
+
+
 ALContext *ALContext::sCurrentCtx = 0;
 #if __cplusplus >= 201103L
 thread_local ALContext *ALContext::sThreadCurrentCtx;
@@ -153,7 +158,7 @@ void ALContext::setupExts()
     if(alIsExtensionPresent("AL_SOFT_source_latency"))
     {
         mHasExt[SOFT_source_latency] = true;
-        alGetSourcei64vSOFT = reinterpret_cast<LPALGETSOURCEI64VSOFT>(alGetProcAddress("alGetSourcei64vSOFT"));
+        LoadALFunc(&alGetSourcei64vSOFT, "alGetSourcei64vSOFT");
     }
 }
 
