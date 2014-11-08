@@ -59,20 +59,20 @@ void RegisterDecoder(const std::string &name, DecoderFactory *factory)
     sDecoders.push_back(std::make_pair(name, std::unique_ptr<DecoderFactory>(factory)));
 }
 
-DecoderFactory *UnregisterDecoder(const std::string &name)
+std::unique_ptr<DecoderFactory> UnregisterDecoder(const std::string &name)
 {
     FactoryMap::iterator iter = sDecoders.begin();
     while(iter != sDecoders.end())
     {
         if(iter->first == name)
         {
-            DecoderFactory *factory = iter->second.release();
+            std::unique_ptr<DecoderFactory> factory = std::move(iter->second);
             sDecoders.erase(iter);
             return factory;
         }
         iter++;
     }
-    return 0;
+    return std::unique_ptr<DecoderFactory>(nullptr);
 }
 
 

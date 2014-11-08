@@ -434,7 +434,7 @@ void RegisterDecoder(const std::string &name, DecoderFactory *factory);
  * \return The unregistered decoder factory instance, or 0 (nullptr) if a
  * decoder factory with the given name doesn't exist.
  */
-DecoderFactory *UnregisterDecoder(const std::string &name);
+std::unique_ptr<DecoderFactory> UnregisterDecoder(const std::string &name);
 
 
 /**
