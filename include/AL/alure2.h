@@ -198,6 +198,9 @@ public:
     /** Finalizes \param source, stopping it and returning it to the system. */
     virtual void finalize(Source *source) = 0;
 
+    virtual AuxiliaryEffectSlot *createAuxiliaryEffectSlot() = 0;
+    virtual void removeAuxiliaryEffectSlot(AuxiliaryEffectSlot *auxslot) = 0;
+
     virtual void setDopplerFactor(ALfloat factor) = 0;
 
     virtual void setSpeedOfSound(ALfloat speed) = 0;
@@ -347,6 +350,8 @@ public:
     virtual void setDopplerFactor(ALfloat factor) = 0;
 
     virtual void setRelative(bool relative) = 0;
+
+    virtual void setAuxiliarySendFilter(AuxiliaryEffectSlot *slot, ALuint send) = 0;
 
     /**
      * Updates the source, ensuring that streaming buffers are kept full and

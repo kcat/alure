@@ -5,12 +5,14 @@
 
 #include <stdexcept>
 #include <memory>
+#include <limits>
 
 #include "al.h"
 #include "alext.h"
 
 #include "context.h"
 #include "buffer.h"
+#include "auxeffectslot.h"
 
 namespace alure
 {
@@ -107,6 +109,55 @@ public:
         return true;
     }
 };
+
+
+void ALSource::resetProperties()
+{
+    mLooping = false;
+    mPaused = false;
+    mOffset = 0;
+    mPitch = 1.0f;
+    mGain = 1.0f;
+    mMinGain = 0.0f;
+    mMaxGain = 1.0f;
+    mRefDist = 1.0f;
+    mMaxDist = std::numeric_limits<float>::max();
+    mPosition[0] = mPosition[1] = mPosition[2] = 0.0f;
+    mVelocity[0] = mVelocity[1] = mVelocity[2] = 0.0f;
+    mDirection[0] = mDirection[1] = mDirection[2] = 0.0f;
+    mConeInnerAngle = 360.0f;
+    mConeOuterAngle = 360.0f;
+    mConeOuterGain = 0.0f;
+    mRolloffFactor = 1.0f;
+    mDopplerFactor = 1.0f;
+    mRelative = false;
+    for(auto &i : mEffectSlots)
+        i.second->decRef();
+    mEffectSlots.clear();
+}
+
+void ALSource::applyProperties(bool looping, ALuint offset) const
+{
+    alSourcei(mId, AL_LOOPING, looping ? AL_TRUE : AL_FALSE);
+    alSourcei(mId, AL_SAMPLE_OFFSET, offset);
+    alSourcef(mId, AL_PITCH, mPitch);
+    alSourcef(mId, AL_GAIN, mGain);
+    alSourcef(mId, AL_MIN_GAIN, mMinGain);
+    alSourcef(mId, AL_MAX_GAIN, mMaxGain);
+    alSourcef(mId, AL_REFERENCE_DISTANCE, mRefDist);
+    alSourcef(mId, AL_MAX_DISTANCE, mMaxDist);
+    alSourcefv(mId, AL_POSITION, mPosition);
+    alSourcefv(mId, AL_VELOCITY, mVelocity);
+    alSourcefv(mId, AL_DIRECTION, mDirection);
+    alSourcef(mId, AL_CONE_INNER_ANGLE, mConeInnerAngle);
+    alSourcef(mId, AL_CONE_OUTER_ANGLE, mConeOuterAngle);
+    alSourcef(mId, AL_CONE_OUTER_GAIN, mConeOuterGain);
+    alSourcef(mId, AL_ROLLOFF_FACTOR, mRolloffFactor);
+    alSourcef(mId, AL_DOPPLER_FACTOR, mDopplerFactor);
+    alSourcei(mId, AL_SOURCE_RELATIVE, mRelative ? AL_TRUE : AL_FALSE);
+    for(const auto &i : mEffectSlots)
+        alSource3i(mId, AL_AUXILIARY_SEND_FILTER, i.second->getId(), i.first, AL_FILTER_NULL);
+}
 
 
 void ALSource::finalize()
@@ -638,5 +689,23 @@ void ALSource::setRelative(bool relative)
         alSourcei(mId, AL_SOURCE_RELATIVE, relative ? AL_TRUE : AL_FALSE);
     mRelative = relative;
 }
+
+void ALSource::setAuxiliarySendFilter(AuxiliaryEffectSlot *auxslot, ALuint send)
+{
+    ALAuxiliaryEffectSlot *slot = dynamic_cast<ALAuxiliaryEffectSlot*>(auxslot);
+    if(!slot) throw std::runtime_error("Invalid AuxiliaryEffectSlot");
+    CheckContext(mContext);
+    CheckContext(slot->getContext());
+
+    if(mId)
+        alSource3i(mId, AL_AUXILIARY_SEND_FILTER, slot->getId(), send, AL_FILTER_NULL);
+
+    ALAuxiliaryEffectSlot *&sendslot = mEffectSlots[send];
+    slot->addRef();
+    if(sendslot != 0)
+        sendslot->decRef();
+    sendslot = slot;
+}
+
 
 }

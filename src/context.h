@@ -134,6 +134,9 @@ public:
     virtual Source *getSource() final;
     virtual void finalize(Source *source) final;
 
+    virtual AuxiliaryEffectSlot *createAuxiliaryEffectSlot() final;
+    virtual void removeAuxiliaryEffectSlot(AuxiliaryEffectSlot *auxslot) final;
+
     virtual void setDopplerFactor(ALfloat factor) final;
 
     virtual void setSpeedOfSound(ALfloat speed) final;

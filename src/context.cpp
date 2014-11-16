@@ -23,6 +23,7 @@
 #include "device.h"
 #include "buffer.h"
 #include "source.h"
+#include "auxeffectslot.h"
 
 namespace alure
 {
@@ -389,6 +390,34 @@ void ALContext::finalize(Source *source)
     if(!alsrc) throw std::runtime_error("Invalid source");
     CheckContext(this);
     alsrc->finalize();
+}
+
+
+AuxiliaryEffectSlot *ALContext::createAuxiliaryEffectSlot()
+{
+    if(!hasExtension(EXT_EFX) || !alGenAuxiliaryEffectSlots)
+        throw std::runtime_error("AuxiliaryEffectSlots not supported");
+    CheckContext(this);
+
+    alGetError();
+    ALuint id = 0;
+    alGenAuxiliaryEffectSlots(1, &id);
+    if(alGetError() != AL_NO_ERROR)
+        throw std::runtime_error("Failed to create AuxiliaryEffectSlot");
+    try {
+        return new ALAuxiliaryEffectSlot(this, id);
+    }
+    catch(...) {
+        alDeleteAuxiliaryEffectSlots(1, &id);
+        throw;
+    }
+}
+
+void ALContext::removeAuxiliaryEffectSlot(AuxiliaryEffectSlot *auxslot)
+{
+    ALAuxiliaryEffectSlot *slot = dynamic_cast<ALAuxiliaryEffectSlot*>(auxslot);
+    if(!slot) throw std::runtime_error("Invalid AuxiliaryEffectSlot");
+    slot->cleanup();
 }
 
 

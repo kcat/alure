@@ -3,7 +3,7 @@
 
 #include "alure2.h"
 
-#include <limits>
+#include <map>
 
 #include "al.h"
 #include "alext.h"
@@ -17,6 +17,7 @@ namespace alure {
 class ALContext;
 class ALBuffer;
 class ALBufferStream;
+class ALAuxiliaryEffectSlot;
 
 class ALSource : public Source {
     ALContext *const mContext;
@@ -40,56 +41,15 @@ class ALSource : public Source {
     ALfloat mRolloffFactor;
     ALfloat mDopplerFactor;
     bool mRelative;
+    std::map<ALuint,ALAuxiliaryEffectSlot*> mEffectSlots;
 
-    void resetProperties()
-    {
-        mLooping = false;
-        mPaused = false;
-        mOffset = 0;
-        mPitch = 1.0f;
-        mGain = 1.0f;
-        mMinGain = 0.0f;
-        mMaxGain = 1.0f;
-        mRefDist = 1.0f;
-        mMaxDist = std::numeric_limits<float>::max();
-        mPosition[0] = mPosition[1] = mPosition[2] = 0.0f;
-        mVelocity[0] = mVelocity[1] = mVelocity[2] = 0.0f;
-        mDirection[0] = mDirection[1] = mDirection[2] = 0.0f;
-        mConeInnerAngle = 360.0f;
-        mConeOuterAngle = 360.0f;
-        mConeOuterGain = 0.0f;
-        mRolloffFactor = 1.0f;
-        mDopplerFactor = 1.0f;
-        mRelative = false;
-    }
-
-    void applyProperties(bool looping, ALuint offset)
-    {
-        alSourcei(mId, AL_LOOPING, looping ? AL_TRUE : AL_FALSE);
-        alSourcei(mId, AL_SAMPLE_OFFSET, offset);
-        alSourcef(mId, AL_PITCH, mPitch);
-        alSourcef(mId, AL_GAIN, mGain);
-        alSourcef(mId, AL_MIN_GAIN, mMinGain);
-        alSourcef(mId, AL_MAX_GAIN, mMaxGain);
-        alSourcef(mId, AL_REFERENCE_DISTANCE, mRefDist);
-        alSourcef(mId, AL_MAX_DISTANCE, mMaxDist);
-        alSourcefv(mId, AL_POSITION, mPosition);
-        alSourcefv(mId, AL_VELOCITY, mVelocity);
-        alSourcefv(mId, AL_DIRECTION, mDirection);
-        alSourcef(mId, AL_CONE_INNER_ANGLE, mConeInnerAngle);
-        alSourcef(mId, AL_CONE_OUTER_ANGLE, mConeOuterAngle);
-        alSourcef(mId, AL_CONE_OUTER_GAIN, mConeOuterGain);
-        alSourcef(mId, AL_ROLLOFF_FACTOR, mRolloffFactor);
-        alSourcef(mId, AL_DOPPLER_FACTOR, mDopplerFactor);
-        alSourcei(mId, AL_SOURCE_RELATIVE, mRelative ? AL_TRUE : AL_FALSE);
-    }
+    void resetProperties();
+    void applyProperties(bool looping, ALuint offset) const;
 
 public:
     ALSource(ALContext *context)
       : mContext(context), mId(0), mBuffer(0), mStream(0)
-    {
-        resetProperties();
-    }
+    { resetProperties(); }
 
     void updateNoCtxCheck();
     void finalize();
@@ -133,6 +93,8 @@ public:
     virtual void setDopplerFactor(ALfloat factor) final;
 
     virtual void setRelative(bool relative) final;
+
+    virtual void setAuxiliarySendFilter(AuxiliaryEffectSlot *slot, ALuint send) final;
 
     virtual void update() final;
 };
