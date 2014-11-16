@@ -155,6 +155,44 @@ void ALContext::MakeThreadCurrent(ALContext *context)
 
 void ALContext::setupExts()
 {
+    ALCdevice *device = mDevice->getDevice();
+    if(alcIsExtensionPresent(device, "ALC_EXT_EFX"))
+    {
+        mHasExt[EXT_EFX] = true;
+        LoadALFunc(&alGenEffects,    "alGenEffects");
+        LoadALFunc(&alDeleteEffects, "alDeleteEffects");
+        LoadALFunc(&alIsEffect,      "alIsEffect");
+        LoadALFunc(&alEffecti,       "alEffecti");
+        LoadALFunc(&alEffectiv,      "alEffectiv");
+        LoadALFunc(&alEffectf,       "alEffectf");
+        LoadALFunc(&alEffectfv,      "alEffectfv");
+        LoadALFunc(&alGetEffecti,    "alGetEffecti");
+        LoadALFunc(&alGetEffectiv,   "alGetEffectiv");
+        LoadALFunc(&alGetEffectf,    "alGetEffectf");
+        LoadALFunc(&alGetEffectfv,   "alGetEffectfv");
+        LoadALFunc(&alGenFilters,    "alGenFilters");
+        LoadALFunc(&alDeleteFilters, "alDeleteFilters");
+        LoadALFunc(&alIsFilter,      "alIsFilter");
+        LoadALFunc(&alFilteri,       "alFilteri");
+        LoadALFunc(&alFilteriv,      "alFilteriv");
+        LoadALFunc(&alFilterf,       "alFilterf");
+        LoadALFunc(&alFilterfv,      "alFilterfv");
+        LoadALFunc(&alGetFilteri,    "alGetFilteri");
+        LoadALFunc(&alGetFilteriv,   "alGetFilteriv");
+        LoadALFunc(&alGetFilterf,    "alGetFilterf");
+        LoadALFunc(&alGetFilterfv,   "alGetFilterfv");
+        LoadALFunc(&alGenAuxiliaryEffectSlots,    "alGenAuxiliaryEffectSlots");
+        LoadALFunc(&alDeleteAuxiliaryEffectSlots, "alDeleteAuxiliaryEffectSlots");
+        LoadALFunc(&alIsAuxiliaryEffectSlot,      "alIsAuxiliaryEffectSlot");
+        LoadALFunc(&alAuxiliaryEffectSloti,       "alAuxiliaryEffectSloti");
+        LoadALFunc(&alAuxiliaryEffectSlotiv,      "alAuxiliaryEffectSlotiv");
+        LoadALFunc(&alAuxiliaryEffectSlotf,       "alAuxiliaryEffectSlotf");
+        LoadALFunc(&alAuxiliaryEffectSlotfv,      "alAuxiliaryEffectSlotfv");
+        LoadALFunc(&alGetAuxiliaryEffectSloti,    "alGetAuxiliaryEffectSloti");
+        LoadALFunc(&alGetAuxiliaryEffectSlotiv,   "alGetAuxiliaryEffectSlotiv");
+        LoadALFunc(&alGetAuxiliaryEffectSlotf,    "alGetAuxiliaryEffectSlotf");
+        LoadALFunc(&alGetAuxiliaryEffectSlotfv,   "alGetAuxiliaryEffectSlotfv");
+    }
     if(alIsExtensionPresent("AL_SOFT_source_latency"))
     {
         mHasExt[SOFT_source_latency] = true;
@@ -164,7 +202,16 @@ void ALContext::setupExts()
 
 
 ALContext::ALContext(ALCcontext *context, ALDevice *device)
-  : mContext(context), mDevice(device), mRefs(0), mFirstSet(true), alGetSourcei64vSOFT(0)
+  : mContext(context), mDevice(device), mRefs(0), mFirstSet(true), alGetSourcei64vSOFT(0),
+    alGenEffects(0), alDeleteEffects(0), alIsEffect(0),
+    alEffecti(0), alEffectiv(0), alEffectf(0), alEffectfv(0),
+    alGetEffecti(0), alGetEffectiv(0), alGetEffectf(0), alGetEffectfv(0),
+    alGenFilters(0), alDeleteFilters(0), alIsFilter(0),
+    alFilteri(0), alFilteriv(0), alFilterf(0), alFilterfv(0),
+    alGetFilteri(0), alGetFilteriv(0), alGetFilterf(0), alGetFilterfv(0),
+    alGenAuxiliaryEffectSlots(0), alDeleteAuxiliaryEffectSlots(0), alIsAuxiliaryEffectSlot(0),
+    alAuxiliaryEffectSloti(0), alAuxiliaryEffectSlotiv(0), alAuxiliaryEffectSlotf(0), alAuxiliaryEffectSlotfv(0),
+    alGetAuxiliaryEffectSloti(0), alGetAuxiliaryEffectSlotiv(0), alGetAuxiliaryEffectSlotf(0), alGetAuxiliaryEffectSlotfv(0)
 {
     memset(mHasExt, 0, sizeof(mHasExt));
 }

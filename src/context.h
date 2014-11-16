@@ -25,9 +25,10 @@ class ALBuffer;
 class ALSource;
 
 enum ALExtension {
+    EXT_EFX,
     SOFT_source_latency,
 
-    AL_EXTENTION_MAX
+    AL_EXTENSION_MAX
 };
 
 class ALContext : public Context, public Listener {
@@ -57,7 +58,7 @@ private:
     RefCount mRefs;
 
     bool mFirstSet;
-    bool mHasExt[AL_EXTENTION_MAX];
+    bool mHasExt[AL_EXTENSION_MAX];
 
     void setupExts();
 
@@ -73,6 +74,42 @@ public:
     bool hasExtension(ALExtension ext) const { return mHasExt[ext]; }
 
     LPALGETSOURCEI64VSOFT alGetSourcei64vSOFT;
+
+    LPALGENEFFECTS alGenEffects;
+    LPALDELETEEFFECTS alDeleteEffects;
+    LPALISEFFECT alIsEffect;
+    LPALEFFECTI alEffecti;
+    LPALEFFECTIV alEffectiv;
+    LPALEFFECTF alEffectf;
+    LPALEFFECTFV alEffectfv;
+    LPALGETEFFECTI alGetEffecti;
+    LPALGETEFFECTIV alGetEffectiv;
+    LPALGETEFFECTF alGetEffectf;
+    LPALGETEFFECTFV alGetEffectfv;
+
+    LPALGENFILTERS alGenFilters;
+    LPALDELETEFILTERS alDeleteFilters;
+    LPALISFILTER alIsFilter;
+    LPALFILTERI alFilteri;
+    LPALFILTERIV alFilteriv;
+    LPALFILTERF alFilterf;
+    LPALFILTERFV alFilterfv;
+    LPALGETFILTERI alGetFilteri;
+    LPALGETFILTERIV alGetFilteriv;
+    LPALGETFILTERF alGetFilterf;
+    LPALGETFILTERFV alGetFilterfv;
+
+    LPALGENAUXILIARYEFFECTSLOTS alGenAuxiliaryEffectSlots;
+    LPALDELETEAUXILIARYEFFECTSLOTS alDeleteAuxiliaryEffectSlots;
+    LPALISAUXILIARYEFFECTSLOT alIsAuxiliaryEffectSlot;
+    LPALAUXILIARYEFFECTSLOTI alAuxiliaryEffectSloti;
+    LPALAUXILIARYEFFECTSLOTIV alAuxiliaryEffectSlotiv;
+    LPALAUXILIARYEFFECTSLOTF alAuxiliaryEffectSlotf;
+    LPALAUXILIARYEFFECTSLOTFV alAuxiliaryEffectSlotfv;
+    LPALGETAUXILIARYEFFECTSLOTI alGetAuxiliaryEffectSloti;
+    LPALGETAUXILIARYEFFECTSLOTIV alGetAuxiliaryEffectSlotiv;
+    LPALGETAUXILIARYEFFECTSLOTF alGetAuxiliaryEffectSlotf;
+    LPALGETAUXILIARYEFFECTSLOTFV alGetAuxiliaryEffectSlotfv;
 
     ALuint getSourceId();
     void insertSourceId(ALuint id) { mSourceIds.push(id); }
