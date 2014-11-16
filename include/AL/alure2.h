@@ -16,6 +16,7 @@ class Context;
 class Listener;
 class Buffer;
 class Source;
+class AuxiliaryEffectSlot;
 class Decoder;
 class DecoderFactory;
 
@@ -352,6 +353,15 @@ public:
      * resources are released when playback is finished.
      */
     virtual void update() = 0;
+};
+
+
+class AuxiliaryEffectSlot {
+public:
+    virtual void setGain(ALfloat gain) = 0;
+    virtual void setSendAuto(bool sendauto) = 0;
+
+    virtual bool isRemovable() const = 0;
 };
 
 
