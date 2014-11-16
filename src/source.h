@@ -36,6 +36,7 @@ class ALSource : public Source {
     ALfloat mPosition[3];
     ALfloat mVelocity[3];
     ALfloat mDirection[3];
+    ALfloat mOrientation[2][3];
     ALfloat mConeInnerAngle, mConeOuterAngle;
     ALfloat mConeOuterGain;
     ALfloat mRolloffFactor;
@@ -84,6 +85,9 @@ public:
 
     virtual void setDirection(ALfloat x, ALfloat y, ALfloat z) final;
     virtual void setDirection(const ALfloat *dir) final;
+
+    virtual void setOrientation(ALfloat x1, ALfloat y1, ALfloat z1, ALfloat x2, ALfloat y2, ALfloat z2) final;
+    virtual void setOrientation(const ALfloat *ori) final;
 
     virtual void setConeAngles(ALfloat inner, ALfloat outer) final;
     virtual void setOuterConeGain(ALfloat gain) final;

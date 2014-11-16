@@ -125,6 +125,12 @@ void ALSource::resetProperties()
     mPosition[0] = mPosition[1] = mPosition[2] = 0.0f;
     mVelocity[0] = mVelocity[1] = mVelocity[2] = 0.0f;
     mDirection[0] = mDirection[1] = mDirection[2] = 0.0f;
+    mOrientation[0][0] =  0.0f;
+    mOrientation[0][1] =  0.0f;
+    mOrientation[0][2] = -1.0f;
+    mOrientation[1][0] = 0.0f;
+    mOrientation[1][1] = 1.0f;
+    mOrientation[1][2] = 0.0f;
     mConeInnerAngle = 360.0f;
     mConeOuterAngle = 360.0f;
     mConeOuterGain = 0.0f;
@@ -149,6 +155,8 @@ void ALSource::applyProperties(bool looping, ALuint offset) const
     alSourcefv(mId, AL_POSITION, mPosition);
     alSourcefv(mId, AL_VELOCITY, mVelocity);
     alSourcefv(mId, AL_DIRECTION, mDirection);
+    if(mContext->hasExtension(EXT_BFORMAT))
+        alSourcefv(mId, AL_ORIENTATION, &mOrientation[0][0]);
     alSourcef(mId, AL_CONE_INNER_ANGLE, mConeInnerAngle);
     alSourcef(mId, AL_CONE_OUTER_ANGLE, mConeOuterAngle);
     alSourcef(mId, AL_CONE_OUTER_GAIN, mConeOuterGain);
@@ -634,6 +642,41 @@ void ALSource::setDirection(const ALfloat *dir)
     mDirection[0] = dir[0];
     mDirection[1] = dir[1];
     mDirection[2] = dir[2];
+}
+
+void ALSource::setOrientation(ALfloat x1, ALfloat y1, ALfloat z1, ALfloat x2, ALfloat y2, ALfloat z2)
+{
+    CheckContext(mContext);
+    if(mId != 0)
+    {
+        ALfloat ori[6] = { x1, y1, z1, x2, y2, z2 };
+        if(mContext->hasExtension(EXT_BFORMAT))
+            alSourcefv(mId, AL_ORIENTATION, ori);
+        alSourcefv(mId, AL_DIRECTION, ori);
+    }
+    mDirection[0] = mOrientation[0][0] = x1;
+    mDirection[1] = mOrientation[0][1] = y1;
+    mDirection[2] = mOrientation[0][2] = z1;
+    mOrientation[1][0] = x2;
+    mOrientation[1][1] = y2;
+    mOrientation[1][2] = z2;
+}
+
+void ALSource::setOrientation(const ALfloat *ori)
+{
+    CheckContext(mContext);
+    if(mId != 0)
+    {
+        if(mContext->hasExtension(EXT_BFORMAT))
+            alSourcefv(mId, AL_ORIENTATION, ori);
+        alSourcefv(mId, AL_DIRECTION, ori);
+    }
+    mDirection[0] = mOrientation[0][0] = ori[0];
+    mDirection[1] = mOrientation[0][1] = ori[1];
+    mDirection[2] = mOrientation[0][2] = ori[2];
+    mOrientation[1][0] = ori[3];
+    mOrientation[1][1] = ori[4];
+    mOrientation[1][2] = ori[5];
 }
 
 
