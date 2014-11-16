@@ -295,7 +295,7 @@ Buffer *ALContext::getBuffer(const std::string &name)
     Buffer *buffer = mDevice->getBuffer(name);
     if(buffer) return buffer;
 
-    std::unique_ptr<Decoder> decoder(createDecoder(name.c_str()));
+    std::unique_ptr<Decoder> decoder(createDecoder(name));
 
     ALuint srate = decoder->getFrequency();
     SampleConfig chans = decoder->getSampleConfig();
