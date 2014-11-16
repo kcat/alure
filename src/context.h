@@ -26,6 +26,15 @@ class ALSource;
 
 enum ALExtension {
     EXT_EFX,
+
+    EXT_FLOAT32,
+    EXT_MCFORMATS,
+    EXT_BFORMAT,
+
+    EXT_MULAW,
+    EXT_MULAW_MCFORMATS,
+    EXT_MULAW_BFORMAT,
+
     SOFT_source_latency,
 
     AL_EXTENSION_MAX

@@ -194,6 +194,15 @@ void ALContext::setupExts()
         LoadALFunc(&alGetAuxiliaryEffectSlotf,    "alGetAuxiliaryEffectSlotf");
         LoadALFunc(&alGetAuxiliaryEffectSlotfv,   "alGetAuxiliaryEffectSlotfv");
     }
+
+    mHasExt[EXT_FLOAT32] = alIsExtensionPresent("AL_EXT_FLOAT32");
+    mHasExt[EXT_MCFORMATS] = alIsExtensionPresent("AL_EXT_MCFORMATS");
+    mHasExt[EXT_BFORMAT] = alIsExtensionPresent("AL_EXT_BFORMAT");
+
+    mHasExt[EXT_MULAW] = alIsExtensionPresent("AL_EXT_MULAW");
+    mHasExt[EXT_MULAW_MCFORMATS] = alIsExtensionPresent("AL_EXT_MULAW_MCFORMATS");
+    mHasExt[EXT_MULAW_BFORMAT] = alIsExtensionPresent("AL_EXT_MULAW_BFORMAT");
+
     if(alIsExtensionPresent("AL_SOFT_source_latency"))
     {
         mHasExt[SOFT_source_latency] = true;

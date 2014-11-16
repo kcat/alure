@@ -140,7 +140,7 @@ ALenum GetFormat(SampleConfig chans, SampleType type)
     {
         if(chans == SampleConfig_Mono) return AL_FORMAT_MONO8;
         if(chans == SampleConfig_Stereo) return AL_FORMAT_STEREO8;
-        if(alIsExtensionPresent("AL_EXT_MCFORMATS"))
+        if(ALContext::GetCurrent()->hasExtension(EXT_MCFORMATS))
         {
             if(chans == SampleConfig_Rear) RETURN_FMT("AL_FORMAT_REAR8");
             if(chans == SampleConfig_Quad) RETURN_FMT("AL_FORMAT_QUAD8");
@@ -148,7 +148,7 @@ ALenum GetFormat(SampleConfig chans, SampleType type)
             if(chans == SampleConfig_X61) RETURN_FMT("AL_FORMAT_61CHN8");
             if(chans == SampleConfig_X71) RETURN_FMT("AL_FORMAT_71CHN8");
         }
-        if(alIsExtensionPresent("AL_EXT_BFORMAT"))
+        if(ALContext::GetCurrent()->hasExtension(EXT_BFORMAT))
         {
             if(chans == SampleConfig_BFmt_WXY) RETURN_FMT("AL_FORMAT_BFORMAT2D_8");
             if(chans == SampleConfig_BFmt_WXYZ) RETURN_FMT("AL_FORMAT_BFORMAT3D_8");
@@ -158,7 +158,7 @@ ALenum GetFormat(SampleConfig chans, SampleType type)
     {
         if(chans == SampleConfig_Mono) return AL_FORMAT_MONO16;
         if(chans == SampleConfig_Stereo) return AL_FORMAT_STEREO16;
-        if(alIsExtensionPresent("AL_EXT_MCFORMATS"))
+        if(ALContext::GetCurrent()->hasExtension(EXT_MCFORMATS))
         {
             if(chans == SampleConfig_Rear) RETURN_FMT("AL_FORMAT_REAR16");
             if(chans == SampleConfig_Quad) RETURN_FMT("AL_FORMAT_QUAD16");
@@ -166,17 +166,17 @@ ALenum GetFormat(SampleConfig chans, SampleType type)
             if(chans == SampleConfig_X61) RETURN_FMT("AL_FORMAT_61CHN16");
             if(chans == SampleConfig_X71) RETURN_FMT("AL_FORMAT_71CHN16");
         }
-        if(alIsExtensionPresent("AL_EXT_BFORMAT"))
+        if(ALContext::GetCurrent()->hasExtension(EXT_BFORMAT))
         {
             if(chans == SampleConfig_BFmt_WXY) RETURN_FMT("AL_FORMAT_BFORMAT2D_16");
             if(chans == SampleConfig_BFmt_WXYZ) RETURN_FMT("AL_FORMAT_BFORMAT3D_16");
         }
     }
-    else if(type == SampleType_Float32 && alIsExtensionPresent("AL_EXT_float32"))
+    else if(type == SampleType_Float32 && ALContext::GetCurrent()->hasExtension(EXT_FLOAT32))
     {
         if(chans == SampleConfig_Mono) return AL_FORMAT_MONO_FLOAT32;
         if(chans == SampleConfig_Stereo) return AL_FORMAT_STEREO_FLOAT32;
-        if(alIsExtensionPresent("AL_EXT_MCFORMATS"))
+        if(ALContext::GetCurrent()->hasExtension(EXT_MCFORMATS))
         {
             if(chans == SampleConfig_Rear) RETURN_FMT("AL_FORMAT_REAR32");
             if(chans == SampleConfig_Quad) RETURN_FMT("AL_FORMAT_QUAD32");
@@ -184,17 +184,17 @@ ALenum GetFormat(SampleConfig chans, SampleType type)
             if(chans == SampleConfig_X61) RETURN_FMT("AL_FORMAT_61CHN32");
             if(chans == SampleConfig_X71) RETURN_FMT("AL_FORMAT_71CHN32");
         }
-        if(alIsExtensionPresent("AL_EXT_BFORMAT"))
+        if(ALContext::GetCurrent()->hasExtension(EXT_BFORMAT))
         {
             if(chans == SampleConfig_BFmt_WXY) RETURN_FMT("AL_FORMAT_BFORMAT2D_FLOAT32");
             if(chans == SampleConfig_BFmt_WXYZ) RETURN_FMT("AL_FORMAT_BFORMAT3D_FLOAT32");
         }
     }
-    else if(type == SampleType_Mulaw && alIsExtensionPresent("AL_EXT_MULAW"))
+    else if(type == SampleType_Mulaw && ALContext::GetCurrent()->hasExtension(EXT_MULAW))
     {
         if(chans == SampleConfig_Mono) return AL_FORMAT_MONO_MULAW;
         if(chans == SampleConfig_Stereo) return AL_FORMAT_STEREO_MULAW;
-        if(alIsExtensionPresent("AL_EXT_MULAW_MCFORMATS"))
+        if(ALContext::GetCurrent()->hasExtension(EXT_MULAW_MCFORMATS))
         {
             if(chans == SampleConfig_Rear) RETURN_FMT("AL_FORMAT_REAR_MULAW");
             if(chans == SampleConfig_Quad) RETURN_FMT("AL_FORMAT_QUAD_MULAW");
@@ -202,7 +202,7 @@ ALenum GetFormat(SampleConfig chans, SampleType type)
             if(chans == SampleConfig_X61) RETURN_FMT("AL_FORMAT_61CHN_MULAW");
             if(chans == SampleConfig_X71) RETURN_FMT("AL_FORMAT_71CHN_MULAW");
         }
-        if(alIsExtensionPresent("AL_EXT_MULAW_BFORMAT"))
+        if(ALContext::GetCurrent()->hasExtension(EXT_MULAW_BFORMAT))
         {
             if(chans == SampleConfig_BFmt_WXY) RETURN_FMT("AL_FORMAT_BFORMAT2D_MULAW");
             if(chans == SampleConfig_BFmt_WXYZ) RETURN_FMT("AL_FORMAT_BFORMAT3D_MULAW");
