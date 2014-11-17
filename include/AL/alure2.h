@@ -8,19 +8,6 @@
 #include "alc.h"
 #include "al.h"
 
-namespace alure {
-
-class DeviceManager;
-class Device;
-class Context;
-class Listener;
-class Buffer;
-class Source;
-class AuxiliaryEffectSlot;
-class Effect;
-class Decoder;
-class DecoderFactory;
-
 #ifndef EFXEAXREVERBPROPERTIES_DEFINED
 #define EFXEAXREVERBPROPERTIES_DEFINED
 typedef struct {
@@ -49,6 +36,19 @@ typedef struct {
     int   iDecayHFLimit;
 } EFXEAXREVERBPROPERTIES, *LPEFXEAXREVERBPROPERTIES;
 #endif
+
+namespace alure {
+
+class DeviceManager;
+class Device;
+class Context;
+class Listener;
+class Buffer;
+class Source;
+class AuxiliaryEffectSlot;
+class Effect;
+class Decoder;
+class DecoderFactory;
 
 
 /**
