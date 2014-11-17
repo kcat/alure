@@ -25,6 +25,7 @@
 #include "buffer.h"
 #include "source.h"
 #include "auxeffectslot.h"
+#include "effect.h"
 
 namespace alure
 {
@@ -453,6 +454,34 @@ void ALContext::removeAuxiliaryEffectSlot(AuxiliaryEffectSlot *auxslot)
     ALAuxiliaryEffectSlot *slot = dynamic_cast<ALAuxiliaryEffectSlot*>(auxslot);
     if(!slot) throw std::runtime_error("Invalid AuxiliaryEffectSlot");
     slot->cleanup();
+}
+
+
+Effect *ALContext::createEffect()
+{
+    if(!hasExtension(EXT_EFX))
+        throw std::runtime_error("Effects not supported");
+    CheckContext(this);
+
+    alGetError();
+    ALuint id = 0;
+    alGenEffects(1, &id);
+    if(alGetError() != AL_NO_ERROR)
+        throw std::runtime_error("Failed to create AuxiliaryEffectSlot");
+    try {
+        return new ALEffect(this, id);
+    }
+    catch(...) {
+        alDeleteEffects(1, &id);
+        throw;
+    }
+}
+
+void ALContext::destroyEffect(Effect *effect)
+{
+    ALEffect *eff = dynamic_cast<ALEffect*>(effect);
+    if(!eff) throw std::runtime_error("Invalid Effect");
+    eff->cleanup();
 }
 
 

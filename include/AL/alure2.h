@@ -231,6 +231,9 @@ public:
     virtual AuxiliaryEffectSlot *createAuxiliaryEffectSlot() = 0;
     virtual void removeAuxiliaryEffectSlot(AuxiliaryEffectSlot *auxslot) = 0;
 
+    virtual Effect *createEffect() = 0;
+    virtual void destroyEffect(Effect *effect) = 0;
+
     virtual void setDopplerFactor(ALfloat factor) = 0;
 
     virtual void setSpeedOfSound(ALfloat speed) = 0;
@@ -399,6 +402,8 @@ class AuxiliaryEffectSlot {
 public:
     virtual void setGain(ALfloat gain) = 0;
     virtual void setSendAuto(bool sendauto) = 0;
+
+    virtual void setEffect(const Effect *effect) = 0;
 
     virtual bool isRemovable() const = 0;
 };

@@ -31,6 +31,8 @@ public:
     virtual void setGain(ALfloat gain) final;
     virtual void setSendAuto(bool sendauto) final;
 
+    virtual void setEffect(const Effect *effect) final;
+
     void cleanup();
 
     long addRef() { return ++mRefs; }

@@ -7,6 +7,7 @@
 #include "alext.h"
 
 #include "context.h"
+#include "effect.h"
 
 namespace alure
 {
@@ -39,6 +40,15 @@ void ALAuxiliaryEffectSlot::setSendAuto(bool sendauto)
 {
     CheckContext(mContext);
     mContext->alAuxiliaryEffectSloti(mId, AL_EFFECTSLOT_AUXILIARY_SEND_AUTO, sendauto ? AL_TRUE : AL_FALSE);
+}
+
+void ALAuxiliaryEffectSlot::setEffect(const Effect *effect)
+{
+    const ALEffect *eff = dynamic_cast<const ALEffect*>(effect);
+    if(!eff) throw std::runtime_error("Invalid Effect");
+    CheckContext(mContext);
+
+    mContext->alAuxiliaryEffectSloti(mId, AL_EFFECTSLOT_EFFECT, eff->getId());
 }
 
 

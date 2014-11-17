@@ -73,6 +73,8 @@ void ALEffect::setReverbProperties(const EFXEAXREVERBPROPERTIES *props)
 
 void ALEffect::cleanup()
 {
+    CheckContext(mContext);
+
     alGetError();
     mContext->alDeleteEffects(1, &mId);
     if(alGetError() != AL_NO_ERROR)
