@@ -176,6 +176,8 @@ void ALSource::finalize()
     {
         alSourceRewind(mId);
         alSourcei(mId, AL_BUFFER, 0);
+        for(auto &i : mEffectSlots)
+            alSource3i(mId, AL_AUXILIARY_SEND_FILTER, 0, i.first, AL_FILTER_NULL);
         mContext->insertSourceId(mId);
         mId = 0;
     }
@@ -279,6 +281,8 @@ void ALSource::stop()
     {
         alSourceRewind(mId);
         alSourcei(mId, AL_BUFFER, 0);
+        for(auto &i : mEffectSlots)
+            alSource3i(mId, AL_AUXILIARY_SEND_FILTER, 0, i.first, AL_FILTER_NULL);
         mContext->insertSourceId(mId);
         mId = 0;
     }
