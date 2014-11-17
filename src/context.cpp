@@ -30,6 +30,11 @@
 namespace alure
 {
 
+template<typename T, size_t N>
+static inline size_t countof(const T(&)[N])
+{ return N; }
+
+
 typedef std::pair<std::string,std::unique_ptr<DecoderFactory>> FactoryPair;
 typedef std::vector<FactoryPair> FactoryMap;
 
@@ -224,7 +229,7 @@ void ALContext::MakeThreadCurrent(ALContext *context)
 void ALContext::setupExts()
 {
     ALCdevice *device = mDevice->getDevice();
-    for(size_t i = 0;i < sizeof(ALExtensionList)/sizeof(ALExtensionList[0]);i++)
+    for(size_t i = 0;i < countof(ALExtensionList);i++)
     {
         mHasExt[ALExtensionList[i].extension] = false;
         if(strncmp(ALExtensionList[i].name, "ALC", 3) == 0)

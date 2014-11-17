@@ -23,6 +23,10 @@ inline void Sleep(uint32_t ms)
 
 #include "efx-presets.h"
 
+template<typename T, size_t N>
+static inline size_t countof(const T(&)[N])
+{ return N; }
+
 #define DECL(x) { #x, EFX_REVERB_PRESET_##x }
 static const struct {
     const char name[32];
@@ -174,7 +178,7 @@ int main(int argc, char *argv[])
     int i = 1;
     if(argc-i >= 2 && strcasecmp(argv[i], "-preset") == 0)
     {
-        for(size_t j = 0;j < sizeof(reverblist)/sizeof(reverblist[0]);j++)
+        for(size_t j = 0;j < countof(reverblist);j++)
         {
             if(strcasecmp(argv[i+1], reverblist[j].name) == 0)
             {
