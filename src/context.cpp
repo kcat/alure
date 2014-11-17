@@ -6,6 +6,7 @@
 #include <stdexcept>
 #include <algorithm>
 #include <memory>
+#include <iostream>
 #include <sstream>
 #include <fstream>
 #include <cstring>
@@ -112,6 +113,71 @@ static inline void LoadALFunc(T **func, const char *name)
 { *func = reinterpret_cast<T*>(alGetProcAddress(name)); }
 
 
+static void LoadNothing(ALContext*) { }
+
+static void LoadEFX(ALContext *ctx)
+{
+    LoadALFunc(&ctx->alGenEffects,    "alGenEffects");
+    LoadALFunc(&ctx->alDeleteEffects, "alDeleteEffects");
+    LoadALFunc(&ctx->alIsEffect,      "alIsEffect");
+    LoadALFunc(&ctx->alEffecti,       "alEffecti");
+    LoadALFunc(&ctx->alEffectiv,      "alEffectiv");
+    LoadALFunc(&ctx->alEffectf,       "alEffectf");
+    LoadALFunc(&ctx->alEffectfv,      "alEffectfv");
+    LoadALFunc(&ctx->alGetEffecti,    "alGetEffecti");
+    LoadALFunc(&ctx->alGetEffectiv,   "alGetEffectiv");
+    LoadALFunc(&ctx->alGetEffectf,    "alGetEffectf");
+    LoadALFunc(&ctx->alGetEffectfv,   "alGetEffectfv");
+
+    LoadALFunc(&ctx->alGenFilters,    "alGenFilters");
+    LoadALFunc(&ctx->alDeleteFilters, "alDeleteFilters");
+    LoadALFunc(&ctx->alIsFilter,      "alIsFilter");
+    LoadALFunc(&ctx->alFilteri,       "alFilteri");
+    LoadALFunc(&ctx->alFilteriv,      "alFilteriv");
+    LoadALFunc(&ctx->alFilterf,       "alFilterf");
+    LoadALFunc(&ctx->alFilterfv,      "alFilterfv");
+    LoadALFunc(&ctx->alGetFilteri,    "alGetFilteri");
+    LoadALFunc(&ctx->alGetFilteriv,   "alGetFilteriv");
+    LoadALFunc(&ctx->alGetFilterf,    "alGetFilterf");
+    LoadALFunc(&ctx->alGetFilterfv,   "alGetFilterfv");
+
+    LoadALFunc(&ctx->alGenAuxiliaryEffectSlots,    "alGenAuxiliaryEffectSlots");
+    LoadALFunc(&ctx->alDeleteAuxiliaryEffectSlots, "alDeleteAuxiliaryEffectSlots");
+    LoadALFunc(&ctx->alIsAuxiliaryEffectSlot,      "alIsAuxiliaryEffectSlot");
+    LoadALFunc(&ctx->alAuxiliaryEffectSloti,       "alAuxiliaryEffectSloti");
+    LoadALFunc(&ctx->alAuxiliaryEffectSlotiv,      "alAuxiliaryEffectSlotiv");
+    LoadALFunc(&ctx->alAuxiliaryEffectSlotf,       "alAuxiliaryEffectSlotf");
+    LoadALFunc(&ctx->alAuxiliaryEffectSlotfv,      "alAuxiliaryEffectSlotfv");
+    LoadALFunc(&ctx->alGetAuxiliaryEffectSloti,    "alGetAuxiliaryEffectSloti");
+    LoadALFunc(&ctx->alGetAuxiliaryEffectSlotiv,   "alGetAuxiliaryEffectSlotiv");
+    LoadALFunc(&ctx->alGetAuxiliaryEffectSlotf,    "alGetAuxiliaryEffectSlotf");
+    LoadALFunc(&ctx->alGetAuxiliaryEffectSlotfv,   "alGetAuxiliaryEffectSlotfv");
+}
+
+static void LoadSourceLatency(ALContext *ctx)
+{
+    LoadALFunc(&ctx->alGetSourcei64vSOFT, "alGetSourcei64vSOFT");
+}
+
+static const struct {
+    enum ALExtension extension;
+    const char name[32];
+    void (*loader)(ALContext*);
+} ALExtensionList[] = {
+    { EXT_EFX, "ALC_EXT_EFX", LoadEFX },
+
+    { EXT_FLOAT32,   "AL_EXT_FLOAT32",   LoadNothing },
+    { EXT_MCFORMATS, "AL_EXT_MCFORMATS", LoadNothing },
+    { EXT_BFORMAT,   "AL_EXT_BFORMAT",   LoadNothing },
+
+    { EXT_MULAW,           "AL_EXT_MULAW",           LoadNothing },
+    { EXT_MULAW_MCFORMATS, "AL_EXT_MULAW_MCFORMATS", LoadNothing },
+    { EXT_MULAW_BFORMAT,   "AL_EXT_MULAW_BFORMAT",   LoadNothing },
+
+    { SOFT_source_latency, "AL_SOFT_source_latency", LoadSourceLatency },
+};
+
+
 ALContext *ALContext::sCurrentCtx = 0;
 #if __cplusplus >= 201103L
 thread_local ALContext *ALContext::sThreadCurrentCtx;
@@ -157,56 +223,16 @@ void ALContext::MakeThreadCurrent(ALContext *context)
 void ALContext::setupExts()
 {
     ALCdevice *device = mDevice->getDevice();
-    if(alcIsExtensionPresent(device, "ALC_EXT_EFX"))
+    for(size_t i = 0;i < sizeof(ALExtensionList)/sizeof(ALExtensionList[0]);i++)
     {
-        mHasExt[EXT_EFX] = true;
-        LoadALFunc(&alGenEffects,    "alGenEffects");
-        LoadALFunc(&alDeleteEffects, "alDeleteEffects");
-        LoadALFunc(&alIsEffect,      "alIsEffect");
-        LoadALFunc(&alEffecti,       "alEffecti");
-        LoadALFunc(&alEffectiv,      "alEffectiv");
-        LoadALFunc(&alEffectf,       "alEffectf");
-        LoadALFunc(&alEffectfv,      "alEffectfv");
-        LoadALFunc(&alGetEffecti,    "alGetEffecti");
-        LoadALFunc(&alGetEffectiv,   "alGetEffectiv");
-        LoadALFunc(&alGetEffectf,    "alGetEffectf");
-        LoadALFunc(&alGetEffectfv,   "alGetEffectfv");
-        LoadALFunc(&alGenFilters,    "alGenFilters");
-        LoadALFunc(&alDeleteFilters, "alDeleteFilters");
-        LoadALFunc(&alIsFilter,      "alIsFilter");
-        LoadALFunc(&alFilteri,       "alFilteri");
-        LoadALFunc(&alFilteriv,      "alFilteriv");
-        LoadALFunc(&alFilterf,       "alFilterf");
-        LoadALFunc(&alFilterfv,      "alFilterfv");
-        LoadALFunc(&alGetFilteri,    "alGetFilteri");
-        LoadALFunc(&alGetFilteriv,   "alGetFilteriv");
-        LoadALFunc(&alGetFilterf,    "alGetFilterf");
-        LoadALFunc(&alGetFilterfv,   "alGetFilterfv");
-        LoadALFunc(&alGenAuxiliaryEffectSlots,    "alGenAuxiliaryEffectSlots");
-        LoadALFunc(&alDeleteAuxiliaryEffectSlots, "alDeleteAuxiliaryEffectSlots");
-        LoadALFunc(&alIsAuxiliaryEffectSlot,      "alIsAuxiliaryEffectSlot");
-        LoadALFunc(&alAuxiliaryEffectSloti,       "alAuxiliaryEffectSloti");
-        LoadALFunc(&alAuxiliaryEffectSlotiv,      "alAuxiliaryEffectSlotiv");
-        LoadALFunc(&alAuxiliaryEffectSlotf,       "alAuxiliaryEffectSlotf");
-        LoadALFunc(&alAuxiliaryEffectSlotfv,      "alAuxiliaryEffectSlotfv");
-        LoadALFunc(&alGetAuxiliaryEffectSloti,    "alGetAuxiliaryEffectSloti");
-        LoadALFunc(&alGetAuxiliaryEffectSlotiv,   "alGetAuxiliaryEffectSlotiv");
-        LoadALFunc(&alGetAuxiliaryEffectSlotf,    "alGetAuxiliaryEffectSlotf");
-        LoadALFunc(&alGetAuxiliaryEffectSlotfv,   "alGetAuxiliaryEffectSlotfv");
-    }
+        mHasExt[ALExtensionList[i].extension] = false;
+        if(strncmp(ALExtensionList[i].name, "ALC", 3) == 0)
+            mHasExt[ALExtensionList[i].extension] = alcIsExtensionPresent(device, ALExtensionList[i].name);
+        else
+            mHasExt[ALExtensionList[i].extension] = alIsExtensionPresent(ALExtensionList[i].name);
 
-    mHasExt[EXT_FLOAT32] = alIsExtensionPresent("AL_EXT_FLOAT32");
-    mHasExt[EXT_MCFORMATS] = alIsExtensionPresent("AL_EXT_MCFORMATS");
-    mHasExt[EXT_BFORMAT] = alIsExtensionPresent("AL_EXT_BFORMAT");
-
-    mHasExt[EXT_MULAW] = alIsExtensionPresent("AL_EXT_MULAW");
-    mHasExt[EXT_MULAW_MCFORMATS] = alIsExtensionPresent("AL_EXT_MULAW_MCFORMATS");
-    mHasExt[EXT_MULAW_BFORMAT] = alIsExtensionPresent("AL_EXT_MULAW_BFORMAT");
-
-    if(alIsExtensionPresent("AL_SOFT_source_latency"))
-    {
-        mHasExt[SOFT_source_latency] = true;
-        LoadALFunc(&alGetSourcei64vSOFT, "alGetSourcei64vSOFT");
+        if(mHasExt[ALExtensionList[i].extension])
+            ALExtensionList[i].loader(this);
     }
 }
 
