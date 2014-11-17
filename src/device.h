@@ -47,6 +47,8 @@ public:
 
     virtual ALCuint getFrequency() final;
 
+    virtual ALCuint getMaxAuxiliarySends() final;
+
     virtual Context *createContext(ALCint *attribs=0) final;
 
     virtual void close() final;

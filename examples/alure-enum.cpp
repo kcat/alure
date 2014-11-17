@@ -37,7 +37,10 @@ int main()
     std::cout<< "ALC version: "<<alure::MajorVersion(version)<<"."<<alure::MinorVersion(version) <<std::endl;
     version = dev->getEFXVersion();
     if(version)
+    {
         std::cout<< "EFX version: "<<alure::MajorVersion(version)<<"."<<alure::MinorVersion(version) <<std::endl;
+        std::cout<< "Max auxiliary sends: "<<dev->getMaxAuxiliarySends() <<std::endl;
+    }
     else
         std::cout<< "EFX not supported" <<std::endl;
     dev->close();

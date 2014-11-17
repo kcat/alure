@@ -121,6 +121,18 @@ ALCuint ALDevice::getFrequency()
     return freq;
 }
 
+ALCuint ALDevice::getMaxAuxiliarySends()
+{
+    if(!alcIsExtensionPresent(mDevice, "ALC_EXT_EFX"))
+        return 0;
+
+    ALCint sends=-1;
+    alcGetIntegerv(mDevice, ALC_MAX_AUXILIARY_SENDS, 1, &sends);
+    if(sends == -1)
+        throw std::runtime_error("Max auxiliary sends error");
+    return sends;
+}
+
 Context *ALDevice::createContext(ALCint *attribs)
 {
     ALCcontext *ctx = alcCreateContext(mDevice, attribs);

@@ -135,6 +135,12 @@ public:
     virtual ALCuint getFrequency() = 0;
 
     /**
+     * Retrives the maximum number of auxiliary source sends. If ALC_EXT_EFX is
+     * unsupported, this will be 0.
+     */
+    virtual ALCuint getMaxAuxiliarySends() = 0;
+
+    /**
      * Creates a new \ref Context on this device, using the specified
      * \param attributes.
      */
