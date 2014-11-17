@@ -757,19 +757,35 @@ void ALSource::setRelative(bool relative)
 
 void ALSource::setAuxiliarySendFilter(AuxiliaryEffectSlot *auxslot, ALuint send)
 {
-    ALAuxiliaryEffectSlot *slot = dynamic_cast<ALAuxiliaryEffectSlot*>(auxslot);
-    if(!slot) throw std::runtime_error("Invalid AuxiliaryEffectSlot");
+    ALAuxiliaryEffectSlot *slot = 0;
+    if(auxslot)
+    {
+        slot = dynamic_cast<ALAuxiliaryEffectSlot*>(auxslot);
+        if(!slot) throw std::runtime_error("Invalid AuxiliaryEffectSlot");
+        CheckContext(slot->getContext());
+    }
     CheckContext(mContext);
-    CheckContext(slot->getContext());
 
     if(mId)
-        alSource3i(mId, AL_AUXILIARY_SEND_FILTER, slot->getId(), send, AL_FILTER_NULL);
+        alSource3i(mId, AL_AUXILIARY_SEND_FILTER, slot ? slot->getId() : 0, send, AL_FILTER_NULL);
 
-    ALAuxiliaryEffectSlot *&sendslot = mEffectSlots[send];
-    slot->addRef();
-    if(sendslot != 0)
-        sendslot->decRef();
-    sendslot = slot;
+    if(slot)
+    {
+        ALAuxiliaryEffectSlot *&sendslot = mEffectSlots[send];
+        slot->addRef();
+        if(sendslot != 0)
+            sendslot->decRef();
+        sendslot = slot;
+    }
+    else
+    {
+        auto i = mEffectSlots.find(send);
+        if(i != mEffectSlots.end())
+        {
+            i->second->decRef();
+            mEffectSlots.erase(i);
+        }
+    }
 }
 
 
