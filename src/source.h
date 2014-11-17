@@ -87,6 +87,7 @@ public:
     virtual void setDirection(const ALfloat *dir) final;
 
     virtual void setOrientation(ALfloat x1, ALfloat y1, ALfloat z1, ALfloat x2, ALfloat y2, ALfloat z2) final;
+    virtual void setOrientation(const ALfloat *at, const ALfloat *up) final;
     virtual void setOrientation(const ALfloat *ori) final;
 
     virtual void setConeAngles(ALfloat inner, ALfloat outer) final;

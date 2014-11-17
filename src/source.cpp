@@ -662,6 +662,24 @@ void ALSource::setOrientation(ALfloat x1, ALfloat y1, ALfloat z1, ALfloat x2, AL
     mOrientation[1][2] = z2;
 }
 
+void ALSource::setOrientation(const ALfloat *at, const ALfloat *up)
+{
+    CheckContext(mContext);
+    if(mId != 0)
+    {
+        ALfloat ori[6] = { at[0], at[1], at[2], up[0], up[1], up[2] };
+        if(mContext->hasExtension(EXT_BFORMAT))
+            alSourcefv(mId, AL_ORIENTATION, ori);
+        alSourcefv(mId, AL_DIRECTION, ori);
+    }
+    mDirection[0] = mOrientation[0][0] = at[0];
+    mDirection[1] = mOrientation[0][1] = at[1];
+    mDirection[2] = mOrientation[0][2] = at[2];
+    mOrientation[1][0] = up[0];
+    mOrientation[1][1] = up[1];
+    mOrientation[1][2] = up[2];
+}
+
 void ALSource::setOrientation(const ALfloat *ori)
 {
     CheckContext(mContext);
