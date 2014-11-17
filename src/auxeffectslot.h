@@ -24,7 +24,7 @@ class ALAuxiliaryEffectSlot : public AuxiliaryEffectSlot {
 
 public:
     ALAuxiliaryEffectSlot(ALContext *context, ALuint id)
-      : mContext(context), mId(id)
+      : mContext(context), mId(id), mRefs(0)
     { }
     virtual ~ALAuxiliaryEffectSlot() { }
 
