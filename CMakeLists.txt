@@ -71,6 +71,9 @@ target_link_libraries(alure-play alure2)
 add_executable(alure-stream examples/alure-stream.cpp)
 target_link_libraries(alure-stream alure2)
 
+add_executable(alure-reverb examples/alure-reverb.cpp)
+target_link_libraries(alure-reverb alure2)
+
 
 if(NOT DEFINED LIB_SUFFIX)
     set(LIB_SUFFIX "")
