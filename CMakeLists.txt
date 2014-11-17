@@ -29,6 +29,7 @@ set(alure_srcs src/devicemanager.cpp
                src/buffer.cpp
                src/source.cpp
                src/auxeffectslot.cpp
+               src/effect.cpp
 )
 set(alure_libs ${OPENAL_LIBRARY})
 

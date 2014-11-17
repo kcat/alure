@@ -17,8 +17,38 @@ class Listener;
 class Buffer;
 class Source;
 class AuxiliaryEffectSlot;
+class Effect;
 class Decoder;
 class DecoderFactory;
+
+#ifndef EFXEAXREVERBPROPERTIES_DEFINED
+#define EFXEAXREVERBPROPERTIES_DEFINED
+typedef struct {
+    float flDensity;
+    float flDiffusion;
+    float flGain;
+    float flGainHF;
+    float flGainLF;
+    float flDecayTime;
+    float flDecayHFRatio;
+    float flDecayLFRatio;
+    float flReflectionsGain;
+    float flReflectionsDelay;
+    float flReflectionsPan[3];
+    float flLateReverbGain;
+    float flLateReverbDelay;
+    float flLateReverbPan[3];
+    float flEchoTime;
+    float flEchoDepth;
+    float flModulationTime;
+    float flModulationDepth;
+    float flAirAbsorptionGainHF;
+    float flHFReference;
+    float flLFReference;
+    float flRoomRolloffFactor;
+    int   iDecayHFLimit;
+} EFXEAXREVERBPROPERTIES, *LPEFXEAXREVERBPROPERTIES;
+#endif
 
 
 /**
@@ -371,6 +401,12 @@ public:
     virtual void setSendAuto(bool sendauto) = 0;
 
     virtual bool isRemovable() const = 0;
+};
+
+
+class Effect {
+public:
+    virtual void setReverbProperties(const EFXEAXREVERBPROPERTIES *props) = 0;
 };
 
 
