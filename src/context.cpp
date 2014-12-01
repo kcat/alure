@@ -425,14 +425,6 @@ void ALContext::freeSource(ALSource *source)
     mFreeSources.push(source);
 }
 
-void ALContext::finalize(Source *source)
-{
-    ALSource *alsrc = dynamic_cast<ALSource*>(source);
-    if(!alsrc) throw std::runtime_error("Invalid source");
-    CheckContext(this);
-    alsrc->finalize();
-}
-
 
 AuxiliaryEffectSlot *ALContext::createAuxiliaryEffectSlot()
 {

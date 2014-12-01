@@ -141,7 +141,6 @@ public:
     virtual void removeBuffer(Buffer *buffer) final;
 
     virtual Source *getSource() final;
-    virtual void finalize(Source *source) final;
 
     virtual AuxiliaryEffectSlot *createAuxiliaryEffectSlot() final;
     virtual void removeAuxiliaryEffectSlot(AuxiliaryEffectSlot *auxslot) final;

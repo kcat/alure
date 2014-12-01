@@ -168,33 +168,6 @@ void ALSource::applyProperties(bool looping, ALuint offset) const
 }
 
 
-void ALSource::finalize()
-{
-    CheckContext(mContext);
-
-    if(mId != 0)
-    {
-        alSourceRewind(mId);
-        alSourcei(mId, AL_BUFFER, 0);
-        for(auto &i : mEffectSlots)
-            alSource3i(mId, AL_AUXILIARY_SEND_FILTER, 0, i.first, AL_FILTER_NULL);
-        mContext->insertSourceId(mId);
-        mId = 0;
-    }
-
-    mContext->freeSource(this);
-
-    resetProperties();
-
-    if(mBuffer)
-        mBuffer->decRef();
-    mBuffer = 0;
-
-    delete mStream;
-    mStream = 0;
-}
-
-
 void ALSource::play(Buffer *buffer)
 {
     ALBuffer *albuf = dynamic_cast<ALBuffer*>(buffer);
@@ -788,5 +761,31 @@ void ALSource::setAuxiliarySendFilter(AuxiliaryEffectSlot *auxslot, ALuint send)
     }
 }
 
+
+void ALSource::release()
+{
+    CheckContext(mContext);
+
+    if(mId != 0)
+    {
+        alSourceRewind(mId);
+        alSourcei(mId, AL_BUFFER, 0);
+        for(auto &i : mEffectSlots)
+            alSource3i(mId, AL_AUXILIARY_SEND_FILTER, 0, i.first, AL_FILTER_NULL);
+        mContext->insertSourceId(mId);
+        mId = 0;
+    }
+
+    mContext->freeSource(this);
+
+    resetProperties();
+
+    if(mBuffer)
+        mBuffer->decRef();
+    mBuffer = 0;
+
+    delete mStream;
+    mStream = 0;
+}
 
 }

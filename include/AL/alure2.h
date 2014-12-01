@@ -231,8 +231,6 @@ public:
      * sources you may get.
      */
     virtual Source *getSource() = 0;
-    /** Finalizes \param source, stopping it and returning it to the system. */
-    virtual void finalize(Source *source) = 0;
 
     virtual AuxiliaryEffectSlot *createAuxiliaryEffectSlot() = 0;
     virtual void removeAuxiliaryEffectSlot(AuxiliaryEffectSlot *auxslot) = 0;
@@ -401,6 +399,12 @@ public:
      * resources are released when playback is finished.
      */
     virtual void update() = 0;
+
+    /**
+     * Releases the source, stopping playback, releasing resources, and
+     * returning it to the system.
+     */
+    virtual void release() = 0;
 };
 
 

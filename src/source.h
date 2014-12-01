@@ -53,7 +53,6 @@ public:
     { resetProperties(); }
 
     void updateNoCtxCheck();
-    void finalize();
 
     virtual void play(Buffer *buffer) final;
     virtual void play(Decoder *decoder, ALuint updatelen, ALuint queuesize) final;
@@ -102,6 +101,8 @@ public:
     virtual void setAuxiliarySendFilter(AuxiliaryEffectSlot *slot, ALuint send) final;
 
     virtual void update() final;
+
+    virtual void release() final;
 };
 
 } // namespace alure

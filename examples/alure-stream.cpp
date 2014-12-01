@@ -50,7 +50,7 @@ int main(int argc, char *argv[])
         }
         std::cout<<std::endl;
 
-        ctx->finalize(source);
+        source->release();
         source = 0;
         decoder.reset();
     }
