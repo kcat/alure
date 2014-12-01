@@ -464,7 +464,7 @@ Effect *ALContext::createEffect()
     ALuint id = 0;
     alGenEffects(1, &id);
     if(alGetError() != AL_NO_ERROR)
-        throw std::runtime_error("Failed to create AuxiliaryEffectSlot");
+        throw std::runtime_error("Failed to create Effect");
     try {
         return new ALEffect(this, id);
     }
