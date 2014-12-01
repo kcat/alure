@@ -98,7 +98,7 @@ public:
 
     virtual void setRelative(bool relative) final;
 
-    virtual void setAuxiliarySendFilter(AuxiliaryEffectSlot *slot, ALuint send) final;
+    virtual void setAuxiliarySend(AuxiliaryEffectSlot *slot, ALuint send) final;
 
     virtual void update() final;
 

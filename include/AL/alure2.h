@@ -392,7 +392,7 @@ public:
 
     virtual void setRelative(bool relative) = 0;
 
-    virtual void setAuxiliarySendFilter(AuxiliaryEffectSlot *slot, ALuint send) = 0;
+    virtual void setAuxiliarySend(AuxiliaryEffectSlot *slot, ALuint send) = 0;
 
     /**
      * Updates the source, ensuring that streaming buffers are kept full and

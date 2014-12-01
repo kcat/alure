@@ -209,7 +209,7 @@ int main(int argc, char *argv[])
         std::unique_ptr<alure::Decoder> decoder(ctx->createDecoder(argv[i]));
         alure::Source *source = ctx->getSource();
 
-        source->setAuxiliarySendFilter(auxslot, 0);
+        source->setAuxiliarySend(auxslot, 0);
 
         source->play(decoder.get(), 32768, 4);
         std::cout<< "Playing "<<argv[i]<<" ("<<alure::GetSampleTypeName(decoder->getSampleType())<<", "

@@ -728,7 +728,7 @@ void ALSource::setRelative(bool relative)
     mRelative = relative;
 }
 
-void ALSource::setAuxiliarySendFilter(AuxiliaryEffectSlot *auxslot, ALuint send)
+void ALSource::setAuxiliarySend(AuxiliaryEffectSlot *auxslot, ALuint send)
 {
     ALAuxiliaryEffectSlot *slot = 0;
     if(auxslot)
