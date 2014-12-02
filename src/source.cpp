@@ -137,6 +137,9 @@ void ALSource::resetProperties()
     mRolloffFactor = 1.0f;
     mDopplerFactor = 1.0f;
     mRelative = false;
+    if(mDirectFilter)
+        mContext->alDeleteFilters(1, &mDirectFilter);
+    mDirectFilter = 0;
     for(auto &i : mEffectSlots)
         i.second->decRef();
     mEffectSlots.clear();
@@ -163,8 +166,13 @@ void ALSource::applyProperties(bool looping, ALuint offset) const
     alSourcef(mId, AL_ROLLOFF_FACTOR, mRolloffFactor);
     alSourcef(mId, AL_DOPPLER_FACTOR, mDopplerFactor);
     alSourcei(mId, AL_SOURCE_RELATIVE, mRelative ? AL_TRUE : AL_FALSE);
-    for(const auto &i : mEffectSlots)
-        alSource3i(mId, AL_AUXILIARY_SEND_FILTER, i.second->getId(), i.first, AL_FILTER_NULL);
+    if(mContext->hasExtension(EXT_EFX))
+    {
+        if(mDirectFilter)
+            alSourcei(mId, AL_DIRECT_FILTER, mDirectFilter);
+        for(const auto &i : mEffectSlots)
+            alSource3i(mId, AL_AUXILIARY_SEND_FILTER, i.second->getId(), i.first, AL_FILTER_NULL);
+    }
 }
 
 
@@ -254,6 +262,8 @@ void ALSource::stop()
     {
         alSourceRewind(mId);
         alSourcei(mId, AL_BUFFER, 0);
+        if(mDirectFilter)
+            alSourcei(mId, AL_DIRECT_FILTER, AL_FILTER_NULL);
         for(auto &i : mEffectSlots)
             alSource3i(mId, AL_AUXILIARY_SEND_FILTER, 0, i.first, AL_FILTER_NULL);
         mContext->insertSourceId(mId);
@@ -728,6 +738,67 @@ void ALSource::setRelative(bool relative)
     mRelative = relative;
 }
 
+
+void ALSource::setDirectFilter(const FilterParams &filter)
+{
+    if(!(filter.mGain >= 0.0f && filter.mGainHF >= 0.0f && filter.mGainLF >= 0.0f))
+        throw std::runtime_error("Gain value out of range");
+    CheckContext(mContext);
+
+    if(!(filter.mGain < 1.0f || filter.mGainHF < 1.0f || filter.mGainLF < 1.0f))
+    {
+        if(!mDirectFilter)
+            return;
+        mContext->alFilteri(mDirectFilter, AL_FILTER_TYPE, AL_FILTER_NULL);
+    }
+    else if(mContext->hasExtension(EXT_EFX))
+    {
+        alGetError();
+        if(!mDirectFilter)
+        {
+            mContext->alGenFilters(1, &mDirectFilter);
+            if(alGetError() != AL_NO_ERROR)
+                throw std::runtime_error("Failed to create Filter");
+        }
+        bool filterset = false;
+        if(filter.mGainHF < 1.0f && filter.mGainLF < 1.0f)
+        {
+            mContext->alFilteri(mDirectFilter, AL_FILTER_TYPE, AL_FILTER_BANDPASS);
+            if(alGetError() == AL_NO_ERROR)
+            {
+                mContext->alFilterf(mDirectFilter, AL_BANDPASS_GAIN, std::min<ALfloat>(filter.mGain, 1.0f));
+                mContext->alFilterf(mDirectFilter, AL_BANDPASS_GAINHF, std::min<ALfloat>(filter.mGainHF, 1.0f));
+                mContext->alFilterf(mDirectFilter, AL_BANDPASS_GAINLF, std::min<ALfloat>(filter.mGainLF, 1.0f));
+                filterset = true;
+            }
+        }
+        if(!filterset && !(filter.mGainHF < 1.0f) && filter.mGainLF < 1.0f)
+        {
+            mContext->alFilteri(mDirectFilter, AL_FILTER_TYPE, AL_FILTER_HIGHPASS);
+            if(alGetError() == AL_NO_ERROR)
+            {
+                mContext->alFilterf(mDirectFilter, AL_HIGHPASS_GAIN, std::min<ALfloat>(filter.mGain, 1.0f));
+                mContext->alFilterf(mDirectFilter, AL_HIGHPASS_GAINLF, std::min<ALfloat>(filter.mGainLF, 1.0f));
+                filterset = true;
+            }
+        }
+        if(!filterset)
+        {
+            mContext->alFilteri(mDirectFilter, AL_FILTER_TYPE, AL_FILTER_LOWPASS);
+            if(alGetError() == AL_NO_ERROR)
+            {
+                mContext->alFilterf(mDirectFilter, AL_LOWPASS_GAIN, std::min<ALfloat>(filter.mGain, 1.0f));
+                mContext->alFilterf(mDirectFilter, AL_LOWPASS_GAINHF, std::min<ALfloat>(filter.mGainHF, 1.0f));
+                filterset = true;
+            }
+        }
+    }
+
+    if(mId)
+        alSourcei(mId, AL_DIRECT_FILTER, mDirectFilter);
+}
+
+
 void ALSource::setAuxiliarySend(AuxiliaryEffectSlot *auxslot, ALuint send)
 {
     ALAuxiliaryEffectSlot *slot = 0;
@@ -770,6 +841,8 @@ void ALSource::release()
     {
         alSourceRewind(mId);
         alSourcei(mId, AL_BUFFER, 0);
+        if(mDirectFilter)
+            alSourcei(mId, AL_DIRECT_FILTER, AL_FILTER_NULL);
         for(auto &i : mEffectSlots)
             alSource3i(mId, AL_AUXILIARY_SEND_FILTER, 0, i.first, AL_FILTER_NULL);
         mContext->insertSourceId(mId);

@@ -42,6 +42,8 @@ class ALSource : public Source {
     ALfloat mRolloffFactor;
     ALfloat mDopplerFactor;
     bool mRelative;
+
+    ALuint mDirectFilter;
     std::map<ALuint,ALAuxiliaryEffectSlot*> mEffectSlots;
 
     void resetProperties();
@@ -49,7 +51,7 @@ class ALSource : public Source {
 
 public:
     ALSource(ALContext *context)
-      : mContext(context), mId(0), mBuffer(0), mStream(0)
+      : mContext(context), mId(0), mBuffer(0), mStream(0), mDirectFilter(AL_FILTER_NULL)
     { resetProperties(); }
 
     void updateNoCtxCheck();
@@ -98,6 +100,7 @@ public:
 
     virtual void setRelative(bool relative) final;
 
+    virtual void setDirectFilter(const FilterParams &filter) final;
     virtual void setAuxiliarySend(AuxiliaryEffectSlot *slot, ALuint send) final;
 
     virtual void update() final;

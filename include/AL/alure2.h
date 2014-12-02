@@ -51,6 +51,13 @@ class Decoder;
 class DecoderFactory;
 
 
+struct FilterParams {
+    ALfloat mGain;
+    ALfloat mGainHF; // For low-pass and band-pass filters
+    ALfloat mGainLF; // For high-pass and band-pass filters
+};
+
+
 /**
  * Creates a version number value using the specified \param major and
  * \param minor values.
@@ -392,6 +399,7 @@ public:
 
     virtual void setRelative(bool relative) = 0;
 
+    virtual void setDirectFilter(const FilterParams &filter) = 0;
     virtual void setAuxiliarySend(AuxiliaryEffectSlot *slot, ALuint send) = 0;
 
     /**
