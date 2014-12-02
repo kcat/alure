@@ -141,7 +141,12 @@ void ALSource::resetProperties()
         mContext->alDeleteFilters(1, &mDirectFilter);
     mDirectFilter = 0;
     for(auto &i : mEffectSlots)
-        i.second->decRef();
+    {
+        if(i.second.mSlot)
+            i.second.mSlot->decRef();
+        if(i.second.mFilter)
+            mContext->alDeleteFilters(1, &i.second.mFilter);
+    }
     mEffectSlots.clear();
 }
 
@@ -171,7 +176,10 @@ void ALSource::applyProperties(bool looping, ALuint offset) const
         if(mDirectFilter)
             alSourcei(mId, AL_DIRECT_FILTER, mDirectFilter);
         for(const auto &i : mEffectSlots)
-            alSource3i(mId, AL_AUXILIARY_SEND_FILTER, i.second->getId(), i.first, AL_FILTER_NULL);
+        {
+            ALuint slotid = (i.second.mSlot ? i.second.mSlot->getId() : 0);
+            alSource3i(mId, AL_AUXILIARY_SEND_FILTER, slotid, i.first, i.second.mFilter);
+        }
     }
 }
 
@@ -739,65 +747,96 @@ void ALSource::setRelative(bool relative)
 }
 
 
+void ALSource::setFilterParams(ALuint &filterid, const FilterParams &params)
+{
+    if(!mContext->hasExtension(EXT_EFX))
+        return;
+
+    if(!(params.mGain < 1.0f || params.mGainHF < 1.0f || params.mGainLF < 1.0f))
+    {
+        if(filterid)
+            mContext->alFilteri(filterid, AL_FILTER_TYPE, AL_FILTER_NULL);
+        return;
+    }
+
+    alGetError();
+    if(!filterid)
+    {
+        mContext->alGenFilters(1, &filterid);
+        if(alGetError() != AL_NO_ERROR)
+            throw std::runtime_error("Failed to create Filter");
+    }
+    bool filterset = false;
+    if(params.mGainHF < 1.0f && params.mGainLF < 1.0f)
+    {
+        mContext->alFilteri(filterid, AL_FILTER_TYPE, AL_FILTER_BANDPASS);
+        if(alGetError() == AL_NO_ERROR)
+        {
+            mContext->alFilterf(filterid, AL_BANDPASS_GAIN, std::min<ALfloat>(params.mGain, 1.0f));
+            mContext->alFilterf(filterid, AL_BANDPASS_GAINHF, std::min<ALfloat>(params.mGainHF, 1.0f));
+            mContext->alFilterf(filterid, AL_BANDPASS_GAINLF, std::min<ALfloat>(params.mGainLF, 1.0f));
+            filterset = true;
+        }
+    }
+    if(!filterset && !(params.mGainHF < 1.0f) && params.mGainLF < 1.0f)
+    {
+        mContext->alFilteri(filterid, AL_FILTER_TYPE, AL_FILTER_HIGHPASS);
+        if(alGetError() == AL_NO_ERROR)
+        {
+            mContext->alFilterf(filterid, AL_HIGHPASS_GAIN, std::min<ALfloat>(params.mGain, 1.0f));
+            mContext->alFilterf(filterid, AL_HIGHPASS_GAINLF, std::min<ALfloat>(params.mGainLF, 1.0f));
+            filterset = true;
+        }
+    }
+    if(!filterset)
+    {
+        mContext->alFilteri(filterid, AL_FILTER_TYPE, AL_FILTER_LOWPASS);
+        if(alGetError() == AL_NO_ERROR)
+        {
+            mContext->alFilterf(filterid, AL_LOWPASS_GAIN, std::min<ALfloat>(params.mGain, 1.0f));
+            mContext->alFilterf(filterid, AL_LOWPASS_GAINHF, std::min<ALfloat>(params.mGainHF, 1.0f));
+            filterset = true;
+        }
+    }
+}
+
+
 void ALSource::setDirectFilter(const FilterParams &filter)
 {
     if(!(filter.mGain >= 0.0f && filter.mGainHF >= 0.0f && filter.mGainLF >= 0.0f))
         throw std::runtime_error("Gain value out of range");
     CheckContext(mContext);
 
-    if(!(filter.mGain < 1.0f || filter.mGainHF < 1.0f || filter.mGainLF < 1.0f))
-    {
-        if(!mDirectFilter)
-            return;
-        mContext->alFilteri(mDirectFilter, AL_FILTER_TYPE, AL_FILTER_NULL);
-    }
-    else if(mContext->hasExtension(EXT_EFX))
-    {
-        alGetError();
-        if(!mDirectFilter)
-        {
-            mContext->alGenFilters(1, &mDirectFilter);
-            if(alGetError() != AL_NO_ERROR)
-                throw std::runtime_error("Failed to create Filter");
-        }
-        bool filterset = false;
-        if(filter.mGainHF < 1.0f && filter.mGainLF < 1.0f)
-        {
-            mContext->alFilteri(mDirectFilter, AL_FILTER_TYPE, AL_FILTER_BANDPASS);
-            if(alGetError() == AL_NO_ERROR)
-            {
-                mContext->alFilterf(mDirectFilter, AL_BANDPASS_GAIN, std::min<ALfloat>(filter.mGain, 1.0f));
-                mContext->alFilterf(mDirectFilter, AL_BANDPASS_GAINHF, std::min<ALfloat>(filter.mGainHF, 1.0f));
-                mContext->alFilterf(mDirectFilter, AL_BANDPASS_GAINLF, std::min<ALfloat>(filter.mGainLF, 1.0f));
-                filterset = true;
-            }
-        }
-        if(!filterset && !(filter.mGainHF < 1.0f) && filter.mGainLF < 1.0f)
-        {
-            mContext->alFilteri(mDirectFilter, AL_FILTER_TYPE, AL_FILTER_HIGHPASS);
-            if(alGetError() == AL_NO_ERROR)
-            {
-                mContext->alFilterf(mDirectFilter, AL_HIGHPASS_GAIN, std::min<ALfloat>(filter.mGain, 1.0f));
-                mContext->alFilterf(mDirectFilter, AL_HIGHPASS_GAINLF, std::min<ALfloat>(filter.mGainLF, 1.0f));
-                filterset = true;
-            }
-        }
-        if(!filterset)
-        {
-            mContext->alFilteri(mDirectFilter, AL_FILTER_TYPE, AL_FILTER_LOWPASS);
-            if(alGetError() == AL_NO_ERROR)
-            {
-                mContext->alFilterf(mDirectFilter, AL_LOWPASS_GAIN, std::min<ALfloat>(filter.mGain, 1.0f));
-                mContext->alFilterf(mDirectFilter, AL_LOWPASS_GAINHF, std::min<ALfloat>(filter.mGainHF, 1.0f));
-                filterset = true;
-            }
-        }
-    }
-
+    setFilterParams(mDirectFilter, filter);
     if(mId)
         alSourcei(mId, AL_DIRECT_FILTER, mDirectFilter);
 }
 
+void ALSource::setSendFilter(ALuint send, const FilterParams &filter)
+{
+    if(!(filter.mGain >= 0.0f && filter.mGainHF >= 0.0f && filter.mGainLF >= 0.0f))
+        throw std::runtime_error("Gain value out of range");
+    CheckContext(mContext);
+
+    SendPropMap::iterator siter = mEffectSlots.find(send);
+    if(siter == mEffectSlots.end())
+    {
+        ALuint filterid = 0;
+
+        setFilterParams(filterid, filter);
+        if(!filterid) return;
+
+        siter = mEffectSlots.insert(std::make_pair(send, SendProps(filterid))).first;
+    }
+    else
+        setFilterParams(siter->second.mFilter, filter);
+
+    if(mId)
+    {
+        ALuint slotid = (siter->second.mSlot ? siter->second.mSlot->getId() : 0);
+        alSource3i(mId, AL_AUXILIARY_SEND_FILTER, slotid, send, siter->second.mFilter);
+    }
+}
 
 void ALSource::setAuxiliarySend(AuxiliaryEffectSlot *auxslot, ALuint send)
 {
@@ -810,25 +849,27 @@ void ALSource::setAuxiliarySend(AuxiliaryEffectSlot *auxslot, ALuint send)
     }
     CheckContext(mContext);
 
-    if(mId)
-        alSource3i(mId, AL_AUXILIARY_SEND_FILTER, slot ? slot->getId() : 0, send, AL_FILTER_NULL);
-
-    if(slot)
+    SendPropMap::iterator siter = mEffectSlots.find(send);
+    if(siter == mEffectSlots.end())
     {
-        ALAuxiliaryEffectSlot *&sendslot = mEffectSlots[send];
+        if(!slot)
+            return;
         slot->addRef();
-        if(sendslot != 0)
-            sendslot->decRef();
-        sendslot = slot;
+        siter = mEffectSlots.insert(std::make_pair(send, SendProps(slot))).first;
     }
     else
     {
-        auto i = mEffectSlots.find(send);
-        if(i != mEffectSlots.end())
-        {
-            i->second->decRef();
-            mEffectSlots.erase(i);
-        }
+        if(slot)
+            slot->addRef();
+        if(siter->second.mSlot)
+            siter->second.mSlot->decRef();
+        siter->second.mSlot = slot;
+    }
+
+    if(mId)
+    {
+        ALuint slotid = (siter->second.mSlot ? siter->second.mSlot->getId() : 0);
+        alSource3i(mId, AL_AUXILIARY_SEND_FILTER, slotid, send, siter->second.mFilter);
     }
 }
 
@@ -851,7 +892,18 @@ void ALSource::release()
 
     mContext->freeSource(this);
 
-    resetProperties();
+    if(mDirectFilter)
+        mContext->alDeleteFilters(1, &mDirectFilter);
+    mDirectFilter = AL_FILTER_NULL;
+
+    for(auto &i : mEffectSlots)
+    {
+        if(i.second.mSlot)
+            i.second.mSlot->decRef();
+        if(i.second.mFilter)
+            mContext->alDeleteFilters(1, &i.second.mFilter);
+    }
+    mEffectSlots.clear();
 
     if(mBuffer)
         mBuffer->decRef();

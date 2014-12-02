@@ -19,6 +19,17 @@ class ALBuffer;
 class ALBufferStream;
 class ALAuxiliaryEffectSlot;
 
+struct SendProps {
+    ALAuxiliaryEffectSlot *mSlot;
+    ALuint mFilter;
+
+    SendProps(ALAuxiliaryEffectSlot *slot) : mSlot(slot), mFilter(AL_FILTER_NULL)
+    { }
+    SendProps(ALuint filter) : mSlot(0), mFilter(filter)
+    { }
+};
+typedef std::map<ALuint,SendProps> SendPropMap;
+
 class ALSource : public Source {
     ALContext *const mContext;
     ALuint mId;
@@ -44,10 +55,12 @@ class ALSource : public Source {
     bool mRelative;
 
     ALuint mDirectFilter;
-    std::map<ALuint,ALAuxiliaryEffectSlot*> mEffectSlots;
+    SendPropMap mEffectSlots;
 
     void resetProperties();
     void applyProperties(bool looping, ALuint offset) const;
+
+    void setFilterParams(ALuint &filterid, const FilterParams &params);
 
 public:
     ALSource(ALContext *context)
@@ -101,6 +114,7 @@ public:
     virtual void setRelative(bool relative) final;
 
     virtual void setDirectFilter(const FilterParams &filter) final;
+    virtual void setSendFilter(ALuint send, const FilterParams &filter) final;
     virtual void setAuxiliarySend(AuxiliaryEffectSlot *slot, ALuint send) final;
 
     virtual void update() final;

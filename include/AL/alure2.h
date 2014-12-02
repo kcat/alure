@@ -400,6 +400,7 @@ public:
     virtual void setRelative(bool relative) = 0;
 
     virtual void setDirectFilter(const FilterParams &filter) = 0;
+    virtual void setSendFilter(ALuint send, const FilterParams &filter) = 0;
     virtual void setAuxiliarySend(AuxiliaryEffectSlot *slot, ALuint send) = 0;
 
     /**
