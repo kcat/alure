@@ -27,6 +27,8 @@ struct SendProps {
     { }
     SendProps(ALuint filter) : mSlot(0), mFilter(filter)
     { }
+    SendProps(ALAuxiliaryEffectSlot *slot, ALuint filter) : mSlot(slot), mFilter(filter)
+    { }
 };
 typedef std::map<ALuint,SendProps> SendPropMap;
 
@@ -116,6 +118,7 @@ public:
     virtual void setDirectFilter(const FilterParams &filter) final;
     virtual void setSendFilter(ALuint send, const FilterParams &filter) final;
     virtual void setAuxiliarySend(AuxiliaryEffectSlot *slot, ALuint send) final;
+    virtual void setAuxiliarySendFilter(AuxiliaryEffectSlot *slot, ALuint send, const FilterParams &filter) final;
 
     virtual void update() final;
 

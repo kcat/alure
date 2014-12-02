@@ -402,6 +402,7 @@ public:
     virtual void setDirectFilter(const FilterParams &filter) = 0;
     virtual void setSendFilter(ALuint send, const FilterParams &filter) = 0;
     virtual void setAuxiliarySend(AuxiliaryEffectSlot *slot, ALuint send) = 0;
+    virtual void setAuxiliarySendFilter(AuxiliaryEffectSlot *slot, ALuint send, const FilterParams &filter) = 0;
 
     /**
      * Updates the source, ensuring that streaming buffers are kept full and

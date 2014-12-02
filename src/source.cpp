@@ -873,6 +873,49 @@ void ALSource::setAuxiliarySend(AuxiliaryEffectSlot *auxslot, ALuint send)
     }
 }
 
+void ALSource::setAuxiliarySendFilter(AuxiliaryEffectSlot *auxslot, ALuint send, const FilterParams &filter)
+{
+    if(!(filter.mGain >= 0.0f && filter.mGainHF >= 0.0f && filter.mGainLF >= 0.0f))
+        throw std::runtime_error("Gain value out of range");
+    ALAuxiliaryEffectSlot *slot = 0;
+    if(auxslot)
+    {
+        slot = dynamic_cast<ALAuxiliaryEffectSlot*>(auxslot);
+        if(!slot) throw std::runtime_error("Invalid AuxiliaryEffectSlot");
+        CheckContext(slot->getContext());
+    }
+    CheckContext(mContext);
+
+    SendPropMap::iterator siter = mEffectSlots.find(send);
+    if(siter == mEffectSlots.end())
+    {
+        ALuint filterid = 0;
+
+        setFilterParams(filterid, filter);
+        if(!filterid && !slot)
+            return;
+
+        if(slot)
+            slot->addRef();
+        siter = mEffectSlots.insert(std::make_pair(send, SendProps(slot, filterid))).first;
+    }
+    else
+    {
+        if(slot)
+            slot->addRef();
+        if(siter->second.mSlot)
+            siter->second.mSlot->decRef();
+        siter->second.mSlot = slot;
+        setFilterParams(siter->second.mFilter, filter);
+    }
+
+    if(mId)
+    {
+        ALuint slotid = (siter->second.mSlot ? siter->second.mSlot->getId() : 0);
+        alSource3i(mId, AL_AUXILIARY_SEND_FILTER, slotid, send, siter->second.mFilter);
+    }
+}
+
 
 void ALSource::release()
 {
