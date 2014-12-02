@@ -234,7 +234,7 @@ int main(int argc, char *argv[])
 
     ctx->removeAuxiliaryEffectSlot(auxslot);
     auxslot = 0;
-    ctx->destroyEffect(effect);
+    effect->destroy();
     effect = 0;
 
     alure::Context::MakeCurrent(0);

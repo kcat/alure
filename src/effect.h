@@ -18,10 +18,10 @@ public:
 
     virtual void setReverbProperties(const EFXEAXREVERBPROPERTIES *props) final;
 
+    virtual void destroy() final;
+
     ALContext *getContext() const { return mContext; }
     ALuint getId() const { return mId; }
-
-    void cleanup();
 };
 
 } // namespace alure

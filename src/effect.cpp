@@ -71,7 +71,7 @@ void ALEffect::setReverbProperties(const EFXEAXREVERBPROPERTIES *props)
     }
 }
 
-void ALEffect::cleanup()
+void ALEffect::destroy()
 {
     CheckContext(mContext);
 

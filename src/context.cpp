@@ -474,13 +474,6 @@ Effect *ALContext::createEffect()
     }
 }
 
-void ALContext::destroyEffect(Effect *effect)
-{
-    ALEffect *eff = cast<ALEffect*>(effect);
-    if(!eff) throw std::runtime_error("Invalid Effect");
-    eff->cleanup();
-}
-
 
 void ALContext::setDopplerFactor(ALfloat factor)
 {

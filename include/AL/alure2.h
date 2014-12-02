@@ -243,7 +243,6 @@ public:
     virtual void removeAuxiliaryEffectSlot(AuxiliaryEffectSlot *auxslot) = 0;
 
     virtual Effect *createEffect() = 0;
-    virtual void destroyEffect(Effect *effect) = 0;
 
     virtual void setDopplerFactor(ALfloat factor) = 0;
 
@@ -432,6 +431,8 @@ public:
 class Effect {
 public:
     virtual void setReverbProperties(const EFXEAXREVERBPROPERTIES *props) = 0;
+
+    virtual void destroy() = 0;
 };
 
 

@@ -142,7 +142,6 @@ public:
     virtual void removeAuxiliaryEffectSlot(AuxiliaryEffectSlot *auxslot) final;
 
     virtual Effect *createEffect() final;
-    virtual void destroyEffect(Effect *effect) final;
 
     virtual void setDopplerFactor(ALfloat factor) final;
 
