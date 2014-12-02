@@ -139,7 +139,6 @@ public:
     virtual Source *getSource() final;
 
     virtual AuxiliaryEffectSlot *createAuxiliaryEffectSlot() final;
-    virtual void removeAuxiliaryEffectSlot(AuxiliaryEffectSlot *auxslot) final;
 
     virtual Effect *createEffect() final;
 

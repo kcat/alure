@@ -29,7 +29,9 @@ public:
 
     virtual void setEffect(const Effect *effect) final;
 
-    void cleanup();
+    virtual void release() final;
+
+    virtual bool isInUse() const final;
 
     long addRef() { return ++mRefs; }
     long decRef() { return --mRefs; }
@@ -37,8 +39,6 @@ public:
 
     ALContext *getContext() { return mContext; }
     const ALuint &getId() const { return mId; }
-
-    virtual bool isRemovable() const final;
 };
 
 } // namespace alure

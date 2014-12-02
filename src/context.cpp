@@ -446,13 +446,6 @@ AuxiliaryEffectSlot *ALContext::createAuxiliaryEffectSlot()
     }
 }
 
-void ALContext::removeAuxiliaryEffectSlot(AuxiliaryEffectSlot *auxslot)
-{
-    ALAuxiliaryEffectSlot *slot = cast<ALAuxiliaryEffectSlot*>(auxslot);
-    if(!slot) throw std::runtime_error("Invalid AuxiliaryEffectSlot");
-    slot->cleanup();
-}
-
 
 Effect *ALContext::createEffect()
 {

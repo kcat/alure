@@ -232,7 +232,7 @@ int main(int argc, char *argv[])
         decoder.reset();
     }
 
-    ctx->removeAuxiliaryEffectSlot(auxslot);
+    auxslot->release();
     auxslot = 0;
     effect->destroy();
     effect = 0;

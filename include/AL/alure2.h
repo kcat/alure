@@ -240,7 +240,6 @@ public:
     virtual Source *getSource() = 0;
 
     virtual AuxiliaryEffectSlot *createAuxiliaryEffectSlot() = 0;
-    virtual void removeAuxiliaryEffectSlot(AuxiliaryEffectSlot *auxslot) = 0;
 
     virtual Effect *createEffect() = 0;
 
@@ -424,7 +423,9 @@ public:
 
     virtual void setEffect(const Effect *effect) = 0;
 
-    virtual bool isRemovable() const = 0;
+    virtual void release() = 0;
+
+    virtual bool isInUse() const = 0;
 };
 
 

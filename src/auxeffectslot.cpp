@@ -12,22 +12,6 @@
 namespace alure
 {
 
-void ALAuxiliaryEffectSlot::cleanup()
-{
-    CheckContext(mContext);
-    if(!isRemovable())
-        throw std::runtime_error("AuxiliaryEffectSlot is in use");
-
-    alGetError();
-    mContext->alDeleteAuxiliaryEffectSlots(1, &mId);
-    if(alGetError() != AL_NO_ERROR)
-        throw std::runtime_error("AuxiliaryEffectSlot failed to delete");
-    mId = 0;
-
-    delete this;
-}
-
-
 void ALAuxiliaryEffectSlot::setGain(ALfloat gain)
 {
     if(!(gain >= 0.0f && gain <= 1.0f))
@@ -52,7 +36,22 @@ void ALAuxiliaryEffectSlot::setEffect(const Effect *effect)
 }
 
 
-bool ALAuxiliaryEffectSlot::isRemovable() const
+void ALAuxiliaryEffectSlot::release()
+{
+    CheckContext(mContext);
+    if(!isInUse())
+        throw std::runtime_error("AuxiliaryEffectSlot is in use");
+
+    alGetError();
+    mContext->alDeleteAuxiliaryEffectSlots(1, &mId);
+    if(alGetError() != AL_NO_ERROR)
+        throw std::runtime_error("AuxiliaryEffectSlot failed to delete");
+    mId = 0;
+
+    delete this;
+}
+
+bool ALAuxiliaryEffectSlot::isInUse() const
 {
     return (mRefs.load() == 0);
 }
