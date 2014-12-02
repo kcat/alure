@@ -44,7 +44,7 @@ void ALAuxiliaryEffectSlot::setSendAuto(bool sendauto)
 
 void ALAuxiliaryEffectSlot::setEffect(const Effect *effect)
 {
-    const ALEffect *eff = dynamic_cast<const ALEffect*>(effect);
+    const ALEffect *eff = cast<const ALEffect*>(effect);
     if(!eff) throw std::runtime_error("Invalid Effect");
     CheckContext(mContext);
 

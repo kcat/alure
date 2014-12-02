@@ -1,7 +1,7 @@
 #ifndef EFFECT_H
 #define EFFECT_H
 
-#include "alure2.h"
+#include "main.h"
 
 namespace alure {
 

@@ -1,16 +1,12 @@
 #ifndef SOURCE_H
 #define SOURCE_H
 
-#include "alure2.h"
+#include "main.h"
 
 #include <map>
 
 #include "al.h"
 #include "alext.h"
-
-#if __cplusplus < 201103L
-#define final
-#endif
 
 namespace alure {
 

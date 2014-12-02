@@ -1,11 +1,7 @@
 #ifndef DEVICEMANAGER_H
 #define DEVICEMANAGER_H
 
-#include "alure2.h"
-
-#if __cplusplus < 201103L
-#define final
-#endif
+#include "main.h"
 
 namespace alure {
 

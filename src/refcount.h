@@ -8,10 +8,6 @@
 #include <windows.h>
 #endif
 
-#if __cplusplus < 201103L
-#define final
-#endif
-
 namespace alure {
 
 #if __cplusplus >= 201103L

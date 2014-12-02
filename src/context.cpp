@@ -448,7 +448,7 @@ AuxiliaryEffectSlot *ALContext::createAuxiliaryEffectSlot()
 
 void ALContext::removeAuxiliaryEffectSlot(AuxiliaryEffectSlot *auxslot)
 {
-    ALAuxiliaryEffectSlot *slot = dynamic_cast<ALAuxiliaryEffectSlot*>(auxslot);
+    ALAuxiliaryEffectSlot *slot = cast<ALAuxiliaryEffectSlot*>(auxslot);
     if(!slot) throw std::runtime_error("Invalid AuxiliaryEffectSlot");
     slot->cleanup();
 }
@@ -476,7 +476,7 @@ Effect *ALContext::createEffect()
 
 void ALContext::destroyEffect(Effect *effect)
 {
-    ALEffect *eff = dynamic_cast<ALEffect*>(effect);
+    ALEffect *eff = cast<ALEffect*>(effect);
     if(!eff) throw std::runtime_error("Invalid Effect");
     eff->cleanup();
 }
@@ -573,7 +573,7 @@ void Context::MakeCurrent(Context *context)
     ALContext *ctx = 0;
     if(context)
     {
-        ctx = dynamic_cast<ALContext*>(context);
+        ctx = cast<ALContext*>(context);
         if(!ctx) throw std::runtime_error("Invalid context pointer");
     }
     ALContext::MakeCurrent(ctx);
@@ -589,7 +589,7 @@ void Context::MakeThreadCurrent(Context *context)
     ALContext *ctx = 0;
     if(context)
     {
-        ctx = dynamic_cast<ALContext*>(context);
+        ctx = cast<ALContext*>(context);
         if(!ctx) throw std::runtime_error("Invalid context pointer");
     }
     ALContext::MakeThreadCurrent(ctx);

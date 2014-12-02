@@ -1,7 +1,7 @@
 #ifndef CONTEXT_H
 #define CONTEXT_H
 
-#include "alure2.h"
+#include "main.h"
 
 #include <stdexcept>
 #include <stack>
@@ -13,10 +13,6 @@
 
 #include "refcount.h"
 #include "device.h"
-
-#if __cplusplus < 201103L
-#define final
-#endif
 
 namespace alure {
 

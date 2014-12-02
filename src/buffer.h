@@ -1,15 +1,11 @@
 #ifndef BUFFER_H
 #define BUFFER_H
 
-#include "alure2.h"
+#include "main.h"
 
 #include "al.h"
 
 #include "refcount.h"
-
-#if __cplusplus < 201103L
-#define final
-#endif
 
 namespace alure {
 

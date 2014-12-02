@@ -1,15 +1,11 @@
 #ifndef DEVICE_H
 #define DEVICE_H
 
-#include "alure2.h"
+#include "main.h"
 
 #include <map>
 
 #include "alc.h"
-
-#if __cplusplus < 201103L
-#define final
-#endif
 
 namespace alure {
 

@@ -186,7 +186,7 @@ void ALSource::applyProperties(bool looping, ALuint offset) const
 
 void ALSource::play(Buffer *buffer)
 {
-    ALBuffer *albuf = dynamic_cast<ALBuffer*>(buffer);
+    ALBuffer *albuf = cast<ALBuffer*>(buffer);
     if(!albuf) throw std::runtime_error("Buffer is not valid");
     CheckContext(mContext);
     CheckContextDevice(albuf->getDevice());
@@ -843,7 +843,7 @@ void ALSource::setAuxiliarySend(AuxiliaryEffectSlot *auxslot, ALuint send)
     ALAuxiliaryEffectSlot *slot = 0;
     if(auxslot)
     {
-        slot = dynamic_cast<ALAuxiliaryEffectSlot*>(auxslot);
+        slot = cast<ALAuxiliaryEffectSlot*>(auxslot);
         if(!slot) throw std::runtime_error("Invalid AuxiliaryEffectSlot");
         CheckContext(slot->getContext());
     }
@@ -880,7 +880,7 @@ void ALSource::setAuxiliarySendFilter(AuxiliaryEffectSlot *auxslot, ALuint send,
     ALAuxiliaryEffectSlot *slot = 0;
     if(auxslot)
     {
-        slot = dynamic_cast<ALAuxiliaryEffectSlot*>(auxslot);
+        slot = cast<ALAuxiliaryEffectSlot*>(auxslot);
         if(!slot) throw std::runtime_error("Invalid AuxiliaryEffectSlot");
         CheckContext(slot->getContext());
     }
