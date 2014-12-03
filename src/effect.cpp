@@ -23,7 +23,7 @@ void ALEffect::setReverbProperties(const EFXEAXREVERBPROPERTIES *props)
     if(alGetError() == AL_NO_ERROR)
     {
 #define SETPARAM(e,t,v) mContext->alEffectf((e), AL_EAXREVERB_##t, clamp((v), AL_EAXREVERB_MIN_##t, AL_EAXREVERB_MAX_##t))
-        SETPARAM(mId, DENSITY, props->flDiffusion);
+        SETPARAM(mId, DENSITY, props->flDensity);
         SETPARAM(mId, DIFFUSION, props->flDiffusion);
         SETPARAM(mId, GAIN, props->flGain);
         SETPARAM(mId, GAINHF, props->flGainHF);
@@ -54,7 +54,7 @@ void ALEffect::setReverbProperties(const EFXEAXREVERBPROPERTIES *props)
         if(alGetError() != AL_NO_ERROR)
             throw std::runtime_error("Failed to set reverb type");
 #define SETPARAM(e,t,v) mContext->alEffectf((e), AL_REVERB_##t, clamp((v), AL_REVERB_MIN_##t, AL_REVERB_MAX_##t))
-        SETPARAM(mId, DENSITY, props->flDiffusion);
+        SETPARAM(mId, DENSITY, props->flDensity);
         SETPARAM(mId, DIFFUSION, props->flDiffusion);
         SETPARAM(mId, GAIN, props->flGain);
         SETPARAM(mId, GAINHF, props->flGainHF);
