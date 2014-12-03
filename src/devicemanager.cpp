@@ -1,4 +1,6 @@
 
+#include "config.h"
+
 #include "devicemanager.h"
 #include "device.h"
 
@@ -8,10 +10,6 @@
 
 #include "alc.h"
 #include "al.h"
-
-#if __cplusplus < 201103L
-#define final
-#endif
 
 namespace alure
 {

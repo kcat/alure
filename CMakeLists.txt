@@ -9,6 +9,8 @@ find_package(OpenAL REQUIRED)
 
 include_directories(${alure_SOURCE_DIR}/include/AL ${alure_BINARY_DIR} ${OPENAL_INCLUDE_DIR})
 
+option(ALURE_USE_RTTI  "Enable run-time type information"  OFF)
+
 check_cxx_compiler_flag(-std=c++11 HAVE_STD_CXX11)
 if(HAVE_STD_CXX11)
     set(CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS}")
@@ -22,6 +24,14 @@ check_cxx_compiler_flag(-Wextra HAVE_WEXTRA_SWITCH)
 if(HAVE_WEXTRA_SWITCH)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wextra")
 endif()
+
+if(NOT ALURE_USE_RTTI)
+    check_cxx_compiler_flag(-fno-rtti HAVE_NO_RTTI_SWITCH)
+    if(HAVE_NO_RTTI_SWITCH)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-rtti")
+    endif()
+endif()
+
 
 set(alure_srcs src/devicemanager.cpp
                src/device.cpp

@@ -1,4 +1,6 @@
 
+#include "config.h"
+
 #include "auxeffectslot.h"
 
 #include <stdexcept>

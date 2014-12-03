@@ -1,3 +1,6 @@
+/* Define if we can use RTTI */
+#cmakedefine ALURE_USE_RTTI
+
 /* Define if we have libsndfile support */
 #cmakedefine HAVE_LIBSNDFILE
 

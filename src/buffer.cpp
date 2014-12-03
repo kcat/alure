@@ -1,4 +1,6 @@
 
+#include "config.h"
+
 #include "buffer.h"
 
 #include <stdexcept>

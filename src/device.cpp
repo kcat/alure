@@ -1,4 +1,6 @@
 
+#include "config.h"
+
 #include "device.h"
 
 #include <string.h>
