@@ -175,8 +175,7 @@ void ALSource::applyProperties(bool looping, ALuint offset) const
     alSourcei(mId, AL_SOURCE_RELATIVE, mRelative ? AL_TRUE : AL_FALSE);
     if(mContext->hasExtension(EXT_EFX))
     {
-        if(mDirectFilter)
-            alSourcei(mId, AL_DIRECT_FILTER, mDirectFilter);
+        alSourcei(mId, AL_DIRECT_FILTER, mDirectFilter);
         for(const auto &i : mEffectSlots)
         {
             ALuint slotid = (i.second.mSlot ? i.second.mSlot->getId() : 0);
@@ -272,10 +271,12 @@ void ALSource::stop()
     {
         alSourceRewind(mId);
         alSourcei(mId, AL_BUFFER, 0);
-        if(mDirectFilter)
+        if(mContext->hasExtension(EXT_EFX))
+        {
             alSourcei(mId, AL_DIRECT_FILTER, AL_FILTER_NULL);
-        for(auto &i : mEffectSlots)
-            alSource3i(mId, AL_AUXILIARY_SEND_FILTER, 0, i.first, AL_FILTER_NULL);
+            for(auto &i : mEffectSlots)
+                alSource3i(mId, AL_AUXILIARY_SEND_FILTER, 0, i.first, AL_FILTER_NULL);
+        }
         mContext->insertSourceId(mId);
         mId = 0;
     }
@@ -927,10 +928,12 @@ void ALSource::release()
     {
         alSourceRewind(mId);
         alSourcei(mId, AL_BUFFER, 0);
-        if(mDirectFilter)
+        if(mContext->hasExtension(EXT_EFX))
+        {
             alSourcei(mId, AL_DIRECT_FILTER, AL_FILTER_NULL);
-        for(auto &i : mEffectSlots)
-            alSource3i(mId, AL_AUXILIARY_SEND_FILTER, 0, i.first, AL_FILTER_NULL);
+            for(auto &i : mEffectSlots)
+                alSource3i(mId, AL_AUXILIARY_SEND_FILTER, 0, i.first, AL_FILTER_NULL);
+        }
         mContext->insertSourceId(mId);
         mId = 0;
     }
