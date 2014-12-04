@@ -27,7 +27,7 @@ public:
     virtual void setGain(ALfloat gain) final;
     virtual void setSendAuto(bool sendauto) final;
 
-    virtual void setEffect(const Effect *effect) final;
+    virtual void applyEffect(const Effect *effect) final;
 
     virtual void release() final;
 

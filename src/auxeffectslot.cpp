@@ -28,7 +28,7 @@ void ALAuxiliaryEffectSlot::setSendAuto(bool sendauto)
     mContext->alAuxiliaryEffectSloti(mId, AL_EFFECTSLOT_AUXILIARY_SEND_AUTO, sendauto ? AL_TRUE : AL_FALSE);
 }
 
-void ALAuxiliaryEffectSlot::setEffect(const Effect *effect)
+void ALAuxiliaryEffectSlot::applyEffect(const Effect *effect)
 {
     const ALEffect *eff = cast<const ALEffect*>(effect);
     if(!eff) throw std::runtime_error("Invalid Effect");

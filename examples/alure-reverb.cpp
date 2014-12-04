@@ -201,7 +201,7 @@ int main(int argc, char *argv[])
     }
 
     alure::AuxiliaryEffectSlot *auxslot = ctx->createAuxiliaryEffectSlot();
-    auxslot->setEffect(effect);
+    auxslot->applyEffect(effect);
 
     for(;i < argc;i++)
     {
