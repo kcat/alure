@@ -431,7 +431,7 @@ public:
 
 class Effect {
 public:
-    virtual void setReverbProperties(const EFXEAXREVERBPROPERTIES *props) = 0;
+    virtual void setReverbProperties(const EFXEAXREVERBPROPERTIES &props) = 0;
 
     virtual void destroy() = 0;
 };

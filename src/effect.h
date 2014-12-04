@@ -16,7 +16,7 @@ public:
     { }
     virtual ~ALEffect() { }
 
-    virtual void setReverbProperties(const EFXEAXREVERBPROPERTIES *props) final;
+    virtual void setReverbProperties(const EFXEAXREVERBPROPERTIES &props) final;
 
     virtual void destroy() final;
 

@@ -185,7 +185,7 @@ int main(int argc, char *argv[])
                 std::cout<< "Loading preset "<<reverblist[j].name <<std::endl;
                 std::cout.flush();
 
-                effect->setReverbProperties(&reverblist[j].props);
+                effect->setReverbProperties(reverblist[j].props);
                 gotreverb = true;
                 break;
             }
@@ -197,8 +197,7 @@ int main(int argc, char *argv[])
         std::cout<< "Loading generic preset" <<std::endl;
         std::cout.flush();
 
-        EFXEAXREVERBPROPERTIES props = EFX_REVERB_PRESET_GENERIC;
-        effect->setReverbProperties(&props);
+        effect->setReverbProperties(EFX_REVERB_PRESET_GENERIC);
     }
 
     alure::AuxiliaryEffectSlot *auxslot = ctx->createAuxiliaryEffectSlot();
