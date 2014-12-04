@@ -955,6 +955,8 @@ void ALSource::release()
 
     delete mStream;
     mStream = 0;
+
+    resetProperties();
 }
 
 }
