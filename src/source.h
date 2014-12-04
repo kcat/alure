@@ -42,10 +42,10 @@ class ALSource : public Source {
     ALfloat mGain;
     ALfloat mMinGain, mMaxGain;
     ALfloat mRefDist, mMaxDist;
-    ALfloat mPosition[3];
-    ALfloat mVelocity[3];
-    ALfloat mDirection[3];
-    ALfloat mOrientation[2][3];
+    Vector3 mPosition;
+    Vector3 mVelocity;
+    Vector3 mDirection;
+    Vector3 mOrientation[2];
     ALfloat mConeInnerAngle, mConeOuterAngle;
     ALfloat mConeOuterGain;
     ALfloat mRolloffFactor;
