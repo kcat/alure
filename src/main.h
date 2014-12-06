@@ -55,6 +55,19 @@ public:
     { return mValue[i]; }
     const ALfloat& operator[](size_t i) const
     { return mValue[i]; }
+
+    Vector3 operator-(const Vector3 &rhs) const
+    {
+        return Vector3(mValue[0] - rhs.mValue[0],
+                       mValue[1] - rhs.mValue[1],
+                       mValue[2] - rhs.mValue[2]);
+    }
+
+    ALfloat getLengthSquared() const
+    { return mValue[0]*mValue[0] + mValue[1]*mValue[1] + mValue[2]*mValue[2]; }
+
+    ALfloat getDistanceSquared(const Vector3 &pos) const
+    { return (pos - *this).getLengthSquared(); }
 };
 static_assert(sizeof(Vector3) == sizeof(ALfloat[3]), "Bad Vector3 size");
 

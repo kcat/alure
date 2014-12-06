@@ -55,6 +55,8 @@ class ALSource : public Source {
     ALuint mDirectFilter;
     SendPropMap mEffectSlots;
 
+    ALfloat mDistanceSquared;
+
     void resetProperties();
     void applyProperties(bool looping, ALuint offset) const;
 

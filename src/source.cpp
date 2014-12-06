@@ -146,6 +146,8 @@ void ALSource::resetProperties()
             mContext->alDeleteFilters(1, &i.second.mFilter);
     }
     mEffectSlots.clear();
+
+    mDistanceSquared = 0.0f;
 }
 
 void ALSource::applyProperties(bool looping, ALuint offset) const
@@ -354,6 +356,7 @@ void ALSource::updateNoCtxCheck()
     if(mId == 0)
         return;
 
+    mDistanceSquared = mPosition.getDistanceSquared(mContext->getListenerPosition());
     if(mStream)
     {
         ALint processed;

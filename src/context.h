@@ -65,6 +65,8 @@ private:
     bool mFirstSet;
     bool mHasExt[AL_EXTENSION_MAX];
 
+    Vector3 mPosition;
+
     void setupExts();
 
 public:
@@ -120,6 +122,9 @@ public:
     void insertSourceId(ALuint id) { mSourceIds.push(id); }
 
     void freeSource(ALSource *source);
+
+    const Vector3& getListenerPosition() const
+    { return mPosition; }
 
     virtual Device *getDevice() final;
 
