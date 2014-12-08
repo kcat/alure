@@ -723,7 +723,7 @@ void ALSource::setOuterConeGain(ALfloat gain)
 void ALSource::setRolloffFactor(ALfloat factor)
 {
     if(!(factor >= 0.0f))
-        throw std::runtime_error("Doppler factor out of range");
+        throw std::runtime_error("Rolloff factor out of range");
     CheckContext(mContext);
     if(mId != 0)
         alSourcef(mId, AL_ROLLOFF_FACTOR, factor);
