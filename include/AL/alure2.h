@@ -202,18 +202,18 @@ public:
     virtual void endBatch() = 0;
 
     /**
-     * Creates a \ref Decoder instance for the given audio file or resource
-     * \param name. The caller is responsible for deleting the returned object.
-     */
-    virtual std::unique_ptr<Decoder> createDecoder(const std::string &name) = 0;
-
-    /**
      * Retrieves a \ref Listener instance for this context. Each context will
      * only have one listener.
      */
     virtual Listener *getListener() = 0;
 
     // Functions below require the context to be current
+
+    /**
+     * Creates a \ref Decoder instance for the given audio file or resource
+     * \param name. The caller is responsible for deleting the returned object.
+     */
+    virtual std::unique_ptr<Decoder> createDecoder(const std::string &name) = 0;
 
     /**
      * Creates and caches a \ref Buffer for the given audio file or resource
