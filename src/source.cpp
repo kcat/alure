@@ -356,7 +356,8 @@ void ALSource::updateNoCtxCheck()
     if(mId == 0)
         return;
 
-    mDistanceSquared = mPosition.getDistanceSquared(mContext->getListenerPosition());
+    mDistanceSquared = mRelative ? mPosition.getLengthSquared() :
+                       mPosition.getDistanceSquared(mContext->getListenerPosition());
     if(mStream)
     {
         ALint processed;
