@@ -25,30 +25,14 @@ class Vector3 {
 
 public:
     Vector3() { }
-    Vector3(const Vector3 &rhs)
-    {
-        mValue[0] = rhs.mValue[0];
-        mValue[1] = rhs.mValue[1];
-        mValue[2] = rhs.mValue[2];
-    }
-    Vector3(ALfloat val)
-    {
-        mValue[0] = val;
-        mValue[1] = val;
-        mValue[2] = val;
-    }
-    Vector3(ALfloat x, ALfloat y, ALfloat z)
-    {
-        mValue[0] = x;
-        mValue[1] = y;
-        mValue[2] = z;
-    }
-    Vector3(const ALfloat *vec)
-    {
-        mValue[0] = vec[0];
-        mValue[1] = vec[1];
-        mValue[2] = vec[2];
-    }
+    Vector3(const Vector3 &rhs) : mValue{rhs.mValue[0], rhs.mValue[1], rhs.mValue[2]}
+    { }
+    Vector3(ALfloat val) : mValue{val, val, val}
+    { }
+    Vector3(ALfloat x, ALfloat y, ALfloat z) : mValue{x, y, z}
+    { }
+    Vector3(const ALfloat *vec) : mValue{vec[0], vec[1], vec[2]}
+    { }
 
     const ALfloat *getPtr() const
     { return mValue; }
