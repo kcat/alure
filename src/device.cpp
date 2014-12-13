@@ -14,9 +14,6 @@
 #include "context.h"
 #include "buffer.h"
 
-#if __cplusplus < 201103L
-#define final
-#endif
 
 namespace alure
 {

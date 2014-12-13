@@ -38,13 +38,8 @@ enum ALExtension {
 
 class ALContext : public Context, public Listener {
     static ALContext *sCurrentCtx;
-#if __cplusplus >= 201103L
     static thread_local ALContext *sThreadCurrentCtx;
-#elif defined(_WIN32)
-    static __declspec(thread) ALContext *sThreadCurrentCtx;
-#else
-    static __thread ALContext *sThreadCurrentCtx;
-#endif
+
 public:
     static void MakeCurrent(ALContext *context);
     static ALContext *GetCurrent() { return sThreadCurrentCtx ? sThreadCurrentCtx : sCurrentCtx; }

@@ -185,13 +185,7 @@ static const struct {
 
 
 ALContext *ALContext::sCurrentCtx = 0;
-#if __cplusplus >= 201103L
 thread_local ALContext *ALContext::sThreadCurrentCtx;
-#elif defined(_WIN32)
-__declspec(thread) ALContext *ALContext::sThreadCurrentCtx;
-#else
-__thread ALContext *ALContext::sThreadCurrentCtx;
-#endif
 
 void ALContext::MakeCurrent(ALContext *context)
 {
