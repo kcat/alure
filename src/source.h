@@ -55,7 +55,7 @@ class ALSource : public Source {
     ALuint mDirectFilter;
     SendPropMap mEffectSlots;
 
-    ALfloat mDistanceSquared;
+    ALuint mPriority;
 
     void resetProperties();
     void applyProperties(bool looping, ALuint offset) const;
@@ -77,6 +77,10 @@ public:
 
     virtual bool isPlaying() const final;
     virtual bool isPaused() const final;
+
+    virtual void setPriority(ALuint priority) final;
+    virtual ALuint getPriority() const final
+    { return mPriority; }
 
     virtual void setOffset(uint64_t offset) final;
     virtual uint64_t getOffset(uint64_t *latency=0) const final;

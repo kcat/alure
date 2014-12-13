@@ -147,7 +147,7 @@ void ALSource::resetProperties()
     }
     mEffectSlots.clear();
 
-    mDistanceSquared = 0.0f;
+    mPriority = 0;
 }
 
 void ALSource::applyProperties(bool looping, ALuint offset) const
@@ -356,8 +356,6 @@ void ALSource::updateNoCtxCheck()
     if(mId == 0)
         return;
 
-    mDistanceSquared = mRelative ? mPosition.getLengthSquared() :
-                       mPosition.getDistanceSquared(mContext->getListenerPosition());
     if(mStream)
     {
         ALint processed;
@@ -408,6 +406,12 @@ void ALSource::updateNoCtxCheck()
         if(state != AL_PLAYING && state != AL_PAUSED)
             stop();
     }
+}
+
+
+void ALSource::setPriority(ALuint priority)
+{
+    mPriority = priority;
 }
 
 

@@ -350,6 +350,14 @@ public:
     virtual bool isPaused() const = 0;
 
     /**
+     * Specifies the source's playback priority. Lowest priority sources will
+     * be evicted first when higher priority sources are played.
+     */
+    virtual void setPriority(ALuint priority) = 0;
+    /** Retrieves the source's priority. */
+    virtual ALuint getPriority() const = 0;
+
+    /**
      * Sets the source's offset, in sample frames. If the source is playing or
      * paused, it will go to that offset immediately, otherwise the source will
      * start at the specified offset the next time it's played.
