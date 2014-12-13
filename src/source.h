@@ -91,33 +91,55 @@ public:
     { return mLooping; }
 
     virtual void setPitch(ALfloat pitch) final;
+    virtual ALfloat getPitch() const final
+    { return mPitch; }
 
     virtual void setGain(ALfloat gain) final;
+    virtual ALfloat getGain() const final { return mGain; }
+
     virtual void setGainRange(ALfloat mingain, ALfloat maxgain) final;
+    virtual ALfloat getMinGain() const final { return mMinGain; }
+    virtual ALfloat getMaxGain() const final { return mMaxGain; }
 
     virtual void setDistanceRange(ALfloat refdist, ALfloat maxdist) final;
+    virtual ALfloat getReferenceDistance() const final { return mRefDist; }
+    virtual ALfloat getMaxDistance() const final { return mMaxDist; }
 
     virtual void setPosition(ALfloat x, ALfloat y, ALfloat z) final;
     virtual void setPosition(const ALfloat *pos) final;
+    virtual Vector3 getPosition() const final { return mPosition; }
 
     virtual void setVelocity(ALfloat x, ALfloat y, ALfloat z) final;
     virtual void setVelocity(const ALfloat *vel) final;
+    virtual Vector3 getVelocity() const final { return mVelocity; }
 
     virtual void setDirection(ALfloat x, ALfloat y, ALfloat z) final;
     virtual void setDirection(const ALfloat *dir) final;
+    virtual Vector3 getDirection() const final { return mDirection; }
 
     virtual void setOrientation(ALfloat x1, ALfloat y1, ALfloat z1, ALfloat x2, ALfloat y2, ALfloat z2) final;
     virtual void setOrientation(const ALfloat *at, const ALfloat *up) final;
     virtual void setOrientation(const ALfloat *ori) final;
 
     virtual void setConeAngles(ALfloat inner, ALfloat outer) final;
+    virtual ALfloat getInnerConeAngle() const final { return mConeInnerAngle; }
+    virtual ALfloat getOuterConeAngle() const final { return mConeOuterAngle; }
+
     virtual void setOuterConeGain(ALfloat gain) final;
+    virtual ALfloat getOuterConeGain() const final
+    { return mConeOuterGain; }
 
     virtual void setRolloffFactor(ALfloat factor) final;
+    virtual ALfloat getRolloffFactor() const final
+    { return mRolloffFactor; }
 
     virtual void setDopplerFactor(ALfloat factor) final;
+    virtual ALfloat getDopplerFactor() const final
+    { return mDopplerFactor; }
 
     virtual void setRelative(bool relative) final;
+    virtual bool getRelative() const final
+    { return mRelative; }
 
     virtual void setDirectFilter(const FilterParams &filter) final;
     virtual void setSendFilter(ALuint send, const FilterParams &filter) final;

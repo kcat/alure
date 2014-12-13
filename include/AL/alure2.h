@@ -460,33 +460,50 @@ public:
     virtual bool getLooping() const = 0;
 
     virtual void setPitch(ALfloat pitch) = 0;
+    virtual ALfloat getPitch() const = 0;
 
     virtual void setGain(ALfloat gain) = 0;
+    virtual ALfloat getGain() const = 0;
+
     virtual void setGainRange(ALfloat mingain, ALfloat maxgain) = 0;
+    virtual ALfloat getMinGain() const = 0;
+    virtual ALfloat getMaxGain() const = 0;
 
     virtual void setDistanceRange(ALfloat refdist, ALfloat maxdist) = 0;
+    virtual ALfloat getReferenceDistance() const = 0;
+    virtual ALfloat getMaxDistance() const = 0;
 
     virtual void setPosition(ALfloat x, ALfloat y, ALfloat z) = 0;
     virtual void setPosition(const ALfloat *pos) = 0;
+    virtual Vector3 getPosition() const = 0;
 
     virtual void setVelocity(ALfloat x, ALfloat y, ALfloat z) = 0;
     virtual void setVelocity(const ALfloat *vel) = 0;
+    virtual Vector3 getVelocity() const = 0;
 
     virtual void setDirection(ALfloat x, ALfloat y, ALfloat z) = 0;
     virtual void setDirection(const ALfloat *dir) = 0;
+    virtual Vector3 getDirection() const = 0;
 
     virtual void setOrientation(ALfloat x1, ALfloat y1, ALfloat z1, ALfloat x2, ALfloat y2, ALfloat z2) = 0;
     virtual void setOrientation(const ALfloat *at, const ALfloat *up) = 0;
     virtual void setOrientation(const ALfloat *ori) = 0;
 
     virtual void setConeAngles(ALfloat inner, ALfloat outer) = 0;
+    virtual ALfloat getInnerConeAngle() const = 0;
+    virtual ALfloat getOuterConeAngle() const = 0;
+
     virtual void setOuterConeGain(ALfloat gain) = 0;
+    virtual ALfloat getOuterConeGain() const = 0;
 
     virtual void setRolloffFactor(ALfloat factor) = 0;
+    virtual ALfloat getRolloffFactor() const = 0;
 
     virtual void setDopplerFactor(ALfloat factor) = 0;
+    virtual ALfloat getDopplerFactor() const = 0;
 
     virtual void setRelative(bool relative) = 0;
+    virtual bool getRelative() const = 0;
 
     virtual void setDirectFilter(const FilterParams &filter) = 0;
     virtual void setSendFilter(ALuint send, const FilterParams &filter) = 0;
