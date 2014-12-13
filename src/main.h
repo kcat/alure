@@ -3,6 +3,8 @@
 
 #include "alure2.h"
 
+#include <cmath>
+
 #if __cplusplus < 201103L
 #define final
 #endif
@@ -84,9 +86,13 @@ public:
 
     ALfloat getLengthSquared() const
     { return mValue[0]*mValue[0] + mValue[1]*mValue[1] + mValue[2]*mValue[2]; }
+    ALfloat getLength() const
+    { return sqrtf(getLengthSquared()); }
 
     ALfloat getDistanceSquared(const Vector3 &pos) const
     { return (pos - *this).getLengthSquared(); }
+    ALfloat getDistance(const Vector3 &pos) const
+    { return (pos - *this).getLength(); }
 };
 static_assert(sizeof(Vector3) == sizeof(ALfloat[3]), "Bad Vector3 size");
 
