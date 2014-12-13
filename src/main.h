@@ -67,6 +67,27 @@ public:
     ALURE_DECL_OP(*=)
     ALURE_DECL_OP(/=)
 #undef ALURE_DECL_OP
+#define ALURE_DECL_OP(op)                    \
+    Vector3 operator op(ALfloat scale) const \
+    {                                        \
+        return Vector3(mValue[0] op scale,   \
+                       mValue[1] op scale,   \
+                       mValue[2] op scale);  \
+    }
+    ALURE_DECL_OP(*)
+    ALURE_DECL_OP(/)
+#undef ALURE_DECL_OP
+#define ALURE_DECL_OP(op)               \
+    Vector3& operator op(ALfloat scale) \
+    {                                   \
+        mValue[0] op scale;             \
+        mValue[1] op scale;             \
+        mValue[2] op scale;             \
+        return *this;                   \
+    }
+    ALURE_DECL_OP(*=)
+    ALURE_DECL_OP(/=)
+#undef ALURE_DECL_OP
 
     ALfloat getLengthSquared() const
     { return mValue[0]*mValue[0] + mValue[1]*mValue[1] + mValue[2]*mValue[2]; }
