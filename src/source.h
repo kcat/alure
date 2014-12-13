@@ -69,7 +69,6 @@ public:
 
     void updateNoCtxCheck();
     ALuint getId() const { return mId; }
-    ALuint stealId();
 
     virtual void play(Buffer *buffer) final;
     virtual void play(Decoder *decoder, ALuint updatelen, ALuint queuesize) final;

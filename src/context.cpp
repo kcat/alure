@@ -380,28 +380,27 @@ ALuint ALContext::getSourceId(ALuint maxprio)
     CheckContext(this);
 
     ALuint id = 0;
-    if(!mSourceIds.empty())
-    {
-        id = mSourceIds.top();
-        mSourceIds.pop();
-    }
-    else
+    if(mSourceIds.empty())
     {
         alGetError();
         alGenSources(1, &id);
-        if(alGetError() != AL_NO_ERROR)
+        if(alGetError() == AL_NO_ERROR)
+            return id;
+
+        ALSource *lowest = 0;
+        for(ALSource *src : mUsedSources)
         {
-            ALSource *lowest = 0;
-            for(ALSource *src : mUsedSources)
-            {
-                if(src->getId() != 0 && (!lowest || src->getPriority() < lowest->getPriority()))
-                    lowest = src;
-            }
-            if(!lowest || maxprio < lowest->getPriority())
-                throw std::runtime_error("No source IDs");
-            id = lowest->stealId();
+            if(src->getId() != 0 && (!lowest || src->getPriority() < lowest->getPriority()))
+                lowest = src;
         }
+        if(lowest && lowest->getPriority() < maxprio)
+            lowest->stop();
     }
+    if(mSourceIds.empty())
+        throw std::runtime_error("No available sources");
+
+    id = mSourceIds.top();
+    mSourceIds.pop();
     return id;
 }
 

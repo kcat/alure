@@ -409,24 +409,6 @@ void ALSource::updateNoCtxCheck()
 }
 
 
-ALuint ALSource::stealId()
-{
-    alSourceRewind(mId);
-    alSourcei(mId, AL_BUFFER, 0);
-    if(mContext->hasExtension(EXT_EFX))
-    {
-        alSourcei(mId, AL_DIRECT_FILTER, AL_FILTER_NULL);
-        for(auto &i : mEffectSlots)
-            alSource3i(mId, AL_AUXILIARY_SEND_FILTER, 0, i.first, AL_FILTER_NULL);
-    }
-    mPaused = false;
-
-    ALuint id = mId;
-    mId = 0;
-    return id;
-}
-
-
 void ALSource::setPriority(ALuint priority)
 {
     mPriority = priority;
