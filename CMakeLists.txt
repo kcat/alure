@@ -89,6 +89,13 @@ target_link_libraries(alure-stream alure2)
 add_executable(alure-reverb examples/alure-reverb.cpp)
 target_link_libraries(alure-reverb alure2)
 
+find_package(PhysFS)
+if(PHYSFS_FOUND)
+    add_executable(alure-physfs examples/alure-physfs.cpp)
+    set_property(TARGET alure-physfs APPEND PROPERTY INCLUDE_DIRECTORIES "${PHYSFS_INCLUDE_DIR}")
+    target_link_libraries(alure-physfs alure2 "${PHYSFS_LIBRARY}")
+endif()
+
 
 if(NOT DEFINED LIB_SUFFIX)
     set(LIB_SUFFIX "")
