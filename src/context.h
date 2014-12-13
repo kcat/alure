@@ -4,6 +4,7 @@
 #include "main.h"
 
 #include <stdexcept>
+#include <mutex>
 #include <stack>
 #include <queue>
 #include <set>
@@ -57,11 +58,11 @@ private:
 
     RefCount mRefs;
 
-    bool mFirstSet;
     bool mHasExt[AL_EXTENSION_MAX];
 
     Vector3 mPosition;
 
+    std::once_flag mSetExts;
     void setupExts();
 
 public:
@@ -72,7 +73,6 @@ public:
     long addRef() { return ++mRefs; }
     long decRef() { return --mRefs; }
 
-    void setCurrent();
     bool hasExtension(ALExtension ext) const { return mHasExt[ext]; }
 
     LPALGETSOURCEI64VSOFT alGetSourcei64vSOFT;

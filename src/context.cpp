@@ -194,7 +194,7 @@ void ALContext::MakeCurrent(ALContext *context)
     if(context)
     {
         context->addRef();
-        context->setCurrent();
+        std::call_once(context->mSetExts, std::mem_fn(&ALContext::setupExts), context);
     }
     if(sCurrentCtx)
         sCurrentCtx->decRef();
@@ -213,7 +213,7 @@ void ALContext::MakeThreadCurrent(ALContext *context)
     if(context)
     {
         context->addRef();
-        context->setCurrent();
+        std::call_once(context->mSetExts, std::mem_fn(&ALContext::setupExts), context);
     }
     if(sThreadCurrentCtx)
         sThreadCurrentCtx->decRef();
@@ -238,7 +238,7 @@ void ALContext::setupExts()
 
 
 ALContext::ALContext(ALCcontext *context, ALDevice *device)
-  : mContext(context), mDevice(device), mRefs(0), mFirstSet(true),
+  : mContext(context), mDevice(device), mRefs(0),
     mPosition(0.0f),
     alGetSourcei64vSOFT(0),
     alGenEffects(0), alDeleteEffects(0), alIsEffect(0),
@@ -257,15 +257,6 @@ ALContext::ALContext(ALCcontext *context, ALDevice *device)
 ALContext::~ALContext()
 {
     mDevice->removeContext(this);
-}
-
-void ALContext::setCurrent()
-{
-    if(mFirstSet)
-    {
-        mFirstSet = false;
-        setupExts();
-    }
 }
 
 
