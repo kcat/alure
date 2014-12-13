@@ -58,9 +58,9 @@ private:
 
     RefCount mRefs;
 
-    bool mHasExt[AL_EXTENSION_MAX];
-
     Vector3 mPosition;
+
+    bool mHasExt[AL_EXTENSION_MAX];
 
     std::once_flag mSetExts;
     void setupExts();

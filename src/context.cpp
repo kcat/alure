@@ -240,6 +240,7 @@ void ALContext::setupExts()
 ALContext::ALContext(ALCcontext *context, ALDevice *device)
   : mContext(context), mDevice(device), mRefs(0),
     mPosition(0.0f),
+    mHasExt{false},
     alGetSourcei64vSOFT(0),
     alGenEffects(0), alDeleteEffects(0), alIsEffect(0),
     alEffecti(0), alEffectiv(0), alEffectf(0), alEffectfv(0),
@@ -251,7 +252,6 @@ ALContext::ALContext(ALCcontext *context, ALDevice *device)
     alAuxiliaryEffectSloti(0), alAuxiliaryEffectSlotiv(0), alAuxiliaryEffectSlotf(0), alAuxiliaryEffectSlotfv(0),
     alGetAuxiliaryEffectSloti(0), alGetAuxiliaryEffectSlotiv(0), alGetAuxiliaryEffectSlotf(0), alGetAuxiliaryEffectSlotfv(0)
 {
-    memset(mHasExt, 0, sizeof(mHasExt));
 }
 
 ALContext::~ALContext()
