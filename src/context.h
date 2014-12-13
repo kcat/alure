@@ -118,7 +118,7 @@ public:
     LPALGETAUXILIARYEFFECTSLOTF alGetAuxiliaryEffectSlotf;
     LPALGETAUXILIARYEFFECTSLOTFV alGetAuxiliaryEffectSlotfv;
 
-    ALuint getSourceId();
+    ALuint getSourceId(ALuint maxprio);
     void insertSourceId(ALuint id) { mSourceIds.push(id); }
 
     void freeSource(ALSource *source);

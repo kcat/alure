@@ -192,7 +192,7 @@ void ALSource::play(Buffer *buffer)
 
     if(mId == 0)
     {
-        mId = mContext->getSourceId();
+        mId = mContext->getSourceId(mPriority);
         applyProperties(mLooping, (ALuint)std::min<uint64_t>(mOffset, std::numeric_limits<ALint>::max()));
     }
     else
@@ -230,7 +230,7 @@ void ALSource::play(Decoder *decoder, ALuint updatelen, ALuint queuesize)
 
     if(mId == 0)
     {
-        mId = mContext->getSourceId();
+        mId = mContext->getSourceId(mPriority);
         applyProperties(false, 0);
     }
     else
@@ -406,6 +406,24 @@ void ALSource::updateNoCtxCheck()
         if(state != AL_PLAYING && state != AL_PAUSED)
             stop();
     }
+}
+
+
+ALuint ALSource::stealId()
+{
+    alSourceRewind(mId);
+    alSourcei(mId, AL_BUFFER, 0);
+    if(mContext->hasExtension(EXT_EFX))
+    {
+        alSourcei(mId, AL_DIRECT_FILTER, AL_FILTER_NULL);
+        for(auto &i : mEffectSlots)
+            alSource3i(mId, AL_AUXILIARY_SEND_FILTER, 0, i.first, AL_FILTER_NULL);
+    }
+    mPaused = false;
+
+    ALuint id = mId;
+    mId = 0;
+    return id;
 }
 
 

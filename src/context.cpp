@@ -381,7 +381,7 @@ void ALContext::removeBuffer(Buffer *buffer)
 }
 
 
-ALuint ALContext::getSourceId()
+ALuint ALContext::getSourceId(ALuint maxprio)
 {
     CheckContext(this);
 
@@ -397,8 +397,15 @@ ALuint ALContext::getSourceId()
         alGenSources(1, &id);
         if(alGetError() != AL_NO_ERROR)
         {
-            // FIXME: Steal from an ALSource
-            throw std::runtime_error("No source IDs");
+            ALSource *lowest = 0;
+            for(ALSource *src : mUsedSources)
+            {
+                if(src->getId() != 0 && (!lowest || src->getPriority() < lowest->getPriority()))
+                    lowest = src;
+            }
+            if(!lowest || maxprio < lowest->getPriority())
+                throw std::runtime_error("No source IDs");
+            id = lowest->stealId();
         }
     }
     return id;
