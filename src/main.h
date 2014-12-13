@@ -5,10 +5,6 @@
 
 #include <cmath>
 
-#if __cplusplus < 201103L
-#define final
-#endif
-
 namespace alure
 {
 
