@@ -56,12 +56,31 @@ public:
     const ALfloat& operator[](size_t i) const
     { return mValue[i]; }
 
-    Vector3 operator-(const Vector3 &rhs) const
-    {
-        return Vector3(mValue[0] - rhs.mValue[0],
-                       mValue[1] - rhs.mValue[1],
-                       mValue[2] - rhs.mValue[2]);
+#define ALURE_DECL_OP(op)                           \
+    Vector3 operator op(const Vector3 &rhs) const   \
+    {                                               \
+        return Vector3(mValue[0] op rhs.mValue[0],  \
+                       mValue[1] op rhs.mValue[1],  \
+                       mValue[2] op rhs.mValue[2]); \
     }
+    ALURE_DECL_OP(+)
+    ALURE_DECL_OP(-)
+    ALURE_DECL_OP(*)
+    ALURE_DECL_OP(/)
+#undef ALURE_DECL_OP
+#define ALURE_DECL_OP(op)                    \
+    Vector3& operator op(const Vector3 &rhs) \
+    {                                        \
+        mValue[0] op rhs.mValue[0];          \
+        mValue[1] op rhs.mValue[1];          \
+        mValue[2] op rhs.mValue[2];          \
+        return *this;                        \
+    }
+    ALURE_DECL_OP(+=)
+    ALURE_DECL_OP(-=)
+    ALURE_DECL_OP(*=)
+    ALURE_DECL_OP(/=)
+#undef ALURE_DECL_OP
 
     ALfloat getLengthSquared() const
     { return mValue[0]*mValue[0] + mValue[1]*mValue[1] + mValue[2]*mValue[2]; }
