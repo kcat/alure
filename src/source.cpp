@@ -547,11 +547,6 @@ void ALSource::setLooping(bool looping)
     mLooping = looping;
 }
 
-bool ALSource::getLooping() const
-{
-    return mLooping;
-}
-
 
 void ALSource::setPitch(ALfloat pitch)
 {

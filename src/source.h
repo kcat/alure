@@ -88,7 +88,8 @@ public:
     virtual uint64_t getOffset(uint64_t *latency=0) const final;
 
     virtual void setLooping(bool looping) final;
-    virtual bool getLooping() const final;
+    virtual bool getLooping() const final
+    { return mLooping; }
 
     virtual void setPitch(ALfloat pitch) final;
 
