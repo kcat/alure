@@ -85,15 +85,11 @@ std::unique_ptr<DecoderFactory> UnregisterDecoder(const std::string &name)
 
 
 class DefaultFileIOFactory : public FileIOFactory {
-    virtual std::unique_ptr<std::istream> createFile(const std::string &name)
+    virtual std::unique_ptr<std::istream> openFile(const std::string &name)
     {
-        std::ifstream *file = new std::ifstream(name.c_str(), std::ios::binary);
-        if(!file->is_open())
-        {
-            delete file;
-            file = 0;
-        }
-        return std::unique_ptr<std::istream>(file);
+        std::unique_ptr<std::ifstream> file(new std::ifstream(name.c_str(), std::ios::binary));
+        if(!file->is_open()) file.reset();
+        return std::move(file);
     }
 };
 static DefaultFileIOFactory sDefaultFileFactory;
@@ -295,7 +291,7 @@ Listener *ALContext::getListener()
 
 std::unique_ptr<Decoder> ALContext::createDecoder(const std::string &name)
 {
-    std::unique_ptr<std::istream> file(FileIOFactory::get().createFile(name));
+    std::unique_ptr<std::istream> file(FileIOFactory::get().openFile(name));
     if(!file.get()) throw std::runtime_error("Failed to open "+name);
 
     FactoryMap::const_reverse_iterator iter = sDecoders.rbegin();

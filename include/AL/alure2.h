@@ -650,10 +650,8 @@ public:
 
     virtual ~FileIOFactory() { }
 
-    /**
-     * Creates a read-only binary file instance for the given \param name.
-     */
-    virtual std::unique_ptr<std::istream> createFile(const std::string &name) = 0;
+    /** Opens a read-only binary file for the given \param name. */
+    virtual std::unique_ptr<std::istream> openFile(const std::string &name) = 0;
 };
 
 } // namespace alure
