@@ -48,7 +48,7 @@ public:
         mValue[2] = vec[2];
     }
 
-    operator const ALfloat*() const
+    const ALfloat *getPtr() const
     { return mValue; }
 
     ALfloat& operator[](size_t i)

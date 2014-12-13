@@ -160,9 +160,9 @@ void ALSource::applyProperties(bool looping, ALuint offset) const
     alSourcef(mId, AL_MAX_GAIN, mMaxGain);
     alSourcef(mId, AL_REFERENCE_DISTANCE, mRefDist);
     alSourcef(mId, AL_MAX_DISTANCE, mMaxDist);
-    alSourcefv(mId, AL_POSITION, mPosition);
-    alSourcefv(mId, AL_VELOCITY, mVelocity);
-    alSourcefv(mId, AL_DIRECTION, mDirection);
+    alSourcefv(mId, AL_POSITION, mPosition.getPtr());
+    alSourcefv(mId, AL_VELOCITY, mVelocity.getPtr());
+    alSourcefv(mId, AL_DIRECTION, mDirection.getPtr());
     if(mContext->hasExtension(EXT_BFORMAT))
         alSourcefv(mId, AL_ORIENTATION, &mOrientation[0][0]);
     alSourcef(mId, AL_CONE_INNER_ANGLE, mConeInnerAngle);
