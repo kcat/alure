@@ -173,6 +173,7 @@ int main(int argc, char *argv[])
     std::cout<< "Initialized PhysFS, supported archive formats:" <<std::endl;
     for(const PHYSFS_ArchiveInfo **i = PHYSFS_supportedArchiveTypes();*i != NULL;i++)
         std::cout<< "  "<<(*i)->extension<<": "<<(*i)->description <<std::endl;
+    std::cout<<std::endl;
 
     alure::DeviceManager *devMgr = alure::DeviceManager::get();
 
@@ -186,8 +187,10 @@ int main(int argc, char *argv[])
     {
         if(strcasecmp(argv[i], "-add") == 0 && argc-i > 1)
         {
-            // Mount a new path for PhysFS to access files from
-            if(PHYSFS_mount(argv[++i], NULL, 0) == 0)
+            ++i;
+            // Mount a new archive/directory for PhysFS to access files from
+            std::cout<< "Adding new file source "<<argv[i]<<"..." <<std::endl;
+            if(PHYSFS_mount(argv[i], NULL, 0) == 0)
                 std::cerr<< "Failed to add "<<argv[i]<<": "<<PHYSFS_getLastError() <<std::endl;
             continue;
         }
