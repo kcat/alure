@@ -16,6 +16,7 @@ inline void Sleep(uint32_t ms)
 #endif
 
 #include <iostream>
+#include <sstream>
 #include <iomanip>
 #include <cstring>
 #include <limits>
@@ -106,20 +107,18 @@ class StreamBuf : public std::streambuf {
     }
 
 public:
-    bool isOpen() const
-    {
-        return mFile != nullptr;
-    }
-
-    StreamBuf(const char *filename)
-      : mFile(nullptr)
+    bool open(const char *filename)
     {
         mFile = PHYSFS_openRead(filename);
+        if(!mFile) return false;
+        return true;
     }
+
+    StreamBuf() : mFile(nullptr)
+    { }
     virtual ~StreamBuf()
     {
-        if(mFile)
-            PHYSFS_close(mFile);
+        PHYSFS_close(mFile);
         mFile = nullptr;
     }
 };
@@ -127,11 +126,10 @@ public:
 // Inherit from std::istream to use our custom streambuf
 class Stream : public std::istream {
 public:
-    Stream(const char *filename)
-      : std::istream(new StreamBuf(filename))
+    Stream(const char *filename) : std::istream(new StreamBuf())
     {
         // Set the failbit if the file failed to open.
-        if(!(static_cast<StreamBuf*>(rdbuf())->isOpen()))
+        if(!(static_cast<StreamBuf*>(rdbuf())->open(filename)))
             clear(failbit);
     }
     virtual ~Stream()
@@ -140,11 +138,48 @@ public:
 
 // Inherit from alure::FileIOFactory to use our custom istream
 class FileFactory : public alure::FileIOFactory {
+public:
+    FileFactory(const char *argv0)
+    {
+        // Need to initialize PhysFS before using it
+        if(PHYSFS_init(argv0) == 0)
+        {
+            std::stringstream sstr;
+            sstr<< "Failed to initialize PhysFS: "<<PHYSFS_getLastError();
+            throw std::runtime_error(sstr.str());
+        }
+
+        std::cout<< "Initialized PhysFS, supported archive formats:" <<std::endl;
+        for(const PHYSFS_ArchiveInfo **i = PHYSFS_supportedArchiveTypes();*i != NULL;i++)
+            std::cout<< "  "<<(*i)->extension<<": "<<(*i)->description <<std::endl;
+        std::cout<<std::endl;
+    }
+    virtual ~FileFactory()
+    {
+        PHYSFS_deinit();
+    }
+
     virtual std::unique_ptr<std::istream> openFile(const std::string &name)
     {
         std::unique_ptr<Stream> stream(new Stream(name.c_str()));
         if(stream->fail()) stream.reset();
         return std::move(stream);
+    }
+
+    // A PhysFS-specific function to mount a new path to the virtual directory
+    // tree.
+    static bool Mount(const char *path, const char *mountPoint=nullptr, int append=0)
+    {
+        std::cout<< "Adding new file source "<<path;
+        if(mountPoint) std::cout<< " to "<<mountPoint;
+        std::cout<<"..."<<std::endl;
+
+        if(PHYSFS_mount(path, mountPoint, append) == 0)
+        {
+            std::cerr<< "Failed to add "<<path<<": "<<PHYSFS_getLastError() <<std::endl;
+            return false;
+        }
+        return true;
     }
 };
 
@@ -159,21 +194,10 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    // Need to initialize PhysFS before using it
-    if(PHYSFS_init(argv[0]) == 0)
-    {
-        std::cerr<< "Failed to initialize PhysFS: "<<PHYSFS_getLastError() <<std::endl;
-        return 1;
-    }
     // Set our custom factory for file IO (Alure takes ownership of the factory
     // instance). From now on, all filenames given to Alure will be used with
     // our custom factory.
-    alure::FileIOFactory::set(std::unique_ptr<alure::FileIOFactory>(new FileFactory));
-
-    std::cout<< "Initialized PhysFS, supported archive formats:" <<std::endl;
-    for(const PHYSFS_ArchiveInfo **i = PHYSFS_supportedArchiveTypes();*i != NULL;i++)
-        std::cout<< "  "<<(*i)->extension<<": "<<(*i)->description <<std::endl;
-    std::cout<<std::endl;
+    alure::FileIOFactory::set(std::unique_ptr<alure::FileIOFactory>(new FileFactory(argv[0])));
 
     alure::DeviceManager *devMgr = alure::DeviceManager::get();
 
@@ -187,11 +211,7 @@ int main(int argc, char *argv[])
     {
         if(strcasecmp(argv[i], "-add") == 0 && argc-i > 1)
         {
-            ++i;
-            // Mount a new archive/directory for PhysFS to access files from
-            std::cout<< "Adding new file source "<<argv[i]<<"..." <<std::endl;
-            if(PHYSFS_mount(argv[i], NULL, 0) == 0)
-                std::cerr<< "Failed to add "<<argv[i]<<": "<<PHYSFS_getLastError() <<std::endl;
+            FileFactory::Mount(argv[++i]);
             continue;
         }
 
@@ -224,10 +244,5 @@ int main(int argc, char *argv[])
     dev->close();
     dev = 0;
 
-    // Unset the custom factory so we can safely deinitialize PhysFS (Alure
-    // returns the previously set factory, which implicitly gets deleted since
-    // we don't store the returned unique_ptr).
-    alure::FileIOFactory::set(nullptr);
-    PHYSFS_deinit();
     return 0;
 }
