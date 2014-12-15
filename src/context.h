@@ -52,7 +52,7 @@ private:
     ALCcontext *mContext;
     std::stack<ALuint> mSourceIds;
 
-    ALDevice *mDevice;
+    ALDevice *const mDevice;
     std::queue<ALSource*> mFreeSources;
     std::set<ALSource*> mUsedSources;
 
