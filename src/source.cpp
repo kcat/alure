@@ -35,13 +35,14 @@ class ALBufferStream {
     std::vector<ALuint> mBufferIds;
     ALuint mCurrentIdx;
 
+    bool mHasLooped;
     bool mDone;
 
 public:
     ALBufferStream(Decoder *decoder, ALuint updatelen, ALuint numupdates)
       : mDecoder(decoder), mUpdateLen(updatelen), mNumUpdates(numupdates),
         mFormat(AL_NONE), mFrequency(0), mFrameSize(0), mSilence(0),
-        mCurrentIdx(0), mDone(false)
+        mCurrentIdx(0), mHasLooped(false), mDone(false)
     { }
     virtual ~ALBufferStream()
     {
@@ -62,6 +63,7 @@ public:
     {
         if(!mDecoder->seek(pos))
             return false;
+        mHasLooped = false;
         mDone = false;
         return true;
     }
@@ -83,6 +85,7 @@ public:
         alGenBuffers(mBufferIds.size(), &mBufferIds[0]);
     }
 
+    bool hasLooped() const { return mHasLooped; }
     bool hasMoreData() const { return !mDone; }
     bool streamMoreData(ALuint srcid, bool loop)
     {
@@ -91,7 +94,10 @@ public:
         if(loop && frames < mUpdateLen)
         {
             do {
-                if(!mDecoder->seek(0)) break;
+                if(!mDecoder->seek(0))
+                    break;
+                mHasLooped = true;
+
                 ALuint got = mDecoder->read(&mData[frames*mFrameSize], mUpdateLen-frames);
                 if(got == 0) break;
                 frames += got;
@@ -477,9 +483,9 @@ uint64_t ALSource::getOffset(uint64_t *latency) const
 
             if(pos >= inqueue)
                 pos -= inqueue;
-            else if(!mLooping)
+            else if(!mStream->hasLooped())
             {
-                // A non-looping stream should never have more samples queued
+                // A non-looped stream should never have more samples queued
                 // than have been read...
                 pos = 0;
             }
