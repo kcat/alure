@@ -64,7 +64,11 @@ Device *ALDeviceManager::openPlayback(const std::string &name)
 {
     ALCdevice *dev = alcOpenDevice(name.c_str());
     if(!dev)
-        throw std::runtime_error("Failed to open \""+name+"\"");
+    {
+        if(name.empty())
+            throw std::runtime_error("Failed to open default device");
+        throw std::runtime_error("Failed to open device \""+name+"\"");
+    }
     return new ALDevice(dev);
 }
 
