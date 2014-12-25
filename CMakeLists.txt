@@ -96,6 +96,13 @@ if(PHYSFS_FOUND)
     target_link_libraries(alure-physfs alure2 "${PHYSFS_LIBRARY}")
 endif()
 
+find_package(DUMB)
+if(DUMB_FOUND)
+    add_executable(alure-dumb examples/alure-dumb.cpp)
+    set_property(TARGET alure-dumb APPEND PROPERTY INCLUDE_DIRECTORIES "${DUMB_INCLUDE_DIRS}")
+    target_link_libraries(alure-dumb alure2 "${DUMB_LIBRARIES}")
+endif()
+
 
 if(NOT DEFINED LIB_SUFFIX)
     set(LIB_SUFFIX "")
