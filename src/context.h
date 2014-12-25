@@ -58,8 +58,6 @@ private:
 
     RefCount mRefs;
 
-    Vector3 mPosition;
-
     bool mHasExt[AL_EXTENSION_MAX];
 
     std::once_flag mSetExts;
@@ -117,9 +115,6 @@ public:
     void insertSourceId(ALuint id) { mSourceIds.push(id); }
 
     void freeSource(ALSource *source);
-
-    const Vector3& getListenerPosition() const
-    { return mPosition; }
 
     virtual Device *getDevice() final;
 

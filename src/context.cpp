@@ -235,7 +235,6 @@ void ALContext::setupExts()
 
 ALContext::ALContext(ALCcontext *context, ALDevice *device)
   : mContext(context), mDevice(device), mRefs(0),
-    mPosition(0.0f),
     mHasExt{false},
     alGetSourcei64vSOFT(0),
     alGenEffects(0), alDeleteEffects(0), alIsEffect(0),
@@ -502,18 +501,12 @@ void ALContext::setPosition(ALfloat x, ALfloat y, ALfloat z)
 {
     CheckContext(this);
     alListener3f(AL_POSITION, x, y, z);
-    mPosition[0] = x;
-    mPosition[1] = y;
-    mPosition[2] = z;
 }
 
 void ALContext::setPosition(const ALfloat *pos)
 {
     CheckContext(this);
     alListenerfv(AL_POSITION, pos);
-    mPosition[0] = pos[0];
-    mPosition[1] = pos[1];
-    mPosition[2] = pos[2];
 }
 
 void ALContext::setVelocity(ALfloat x, ALfloat y, ALfloat z)
