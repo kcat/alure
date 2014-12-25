@@ -6,6 +6,12 @@
 namespace alure {
 
 class Mpg123DecoderFactory : public DecoderFactory {
+    bool mIsInited;
+
+public:
+    Mpg123DecoderFactory();
+    virtual ~Mpg123DecoderFactory();
+
     virtual Decoder *createDecoder(std::unique_ptr<std::istream> &file) final;
 };
 

@@ -117,15 +117,28 @@ ALuint Mpg123Decoder::read(ALvoid *ptr, ALuint count)
 }
 
 
+Mpg123DecoderFactory::Mpg123DecoderFactory()
+  : mIsInited(false)
+{
+    if(!mIsInited)
+    {
+        if(mpg123_init() == MPG123_OK)
+            mIsInited = true;
+    }
+}
+
+Mpg123DecoderFactory::~Mpg123DecoderFactory()
+{
+    if(mIsInited)
+        mpg123_exit();
+    mIsInited = false;
+}
+
+
 Decoder *Mpg123DecoderFactory::createDecoder(std::unique_ptr<std::istream> &file)
 {
-    static bool inited = false;
-    if(!inited)
-    {
-        if(mpg123_init() != MPG123_OK)
-            return 0;
-        inited = true;
-    }
+    if(!mIsInited)
+        return nullptr;
 
     mpg123_handle *mpg123 = mpg123_new(0, 0);
     if(mpg123)
