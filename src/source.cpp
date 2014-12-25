@@ -231,7 +231,7 @@ void ALSource::play(Decoder *decoder, ALuint updatelen, ALuint queuesize)
         throw std::runtime_error("Queue size out of range");
     CheckContext(mContext);
 
-    std::auto_ptr<ALBufferStream> stream(new ALBufferStream(decoder, updatelen, queuesize));
+    std::unique_ptr<ALBufferStream> stream(new ALBufferStream(decoder, updatelen, queuesize));
     stream->prepare();
 
     if(mId == 0)
