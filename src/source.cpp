@@ -366,10 +366,11 @@ void ALSource::updateNoCtxCheck()
     {
         ALint processed;
         alGetSourcei(mId, AL_BUFFERS_PROCESSED, &processed);
-        if(processed > 0)
+        while(processed > 0)
         {
-            ALuint bufs[processed];
-            alSourceUnqueueBuffers(mId, processed, bufs);
+            ALuint buf;
+            alSourceUnqueueBuffers(mId, 1, &buf);
+            --processed;
         }
 
         ALint queued;
@@ -389,10 +390,11 @@ void ALSource::updateNoCtxCheck()
             if(state != AL_PLAYING)
             {
                 alGetSourcei(mId, AL_BUFFERS_PROCESSED, &processed);
-                if(processed > 0)
+                while(processed > 0)
                 {
-                    ALuint bufs[processed];
-                    alSourceUnqueueBuffers(mId, processed, bufs);
+                    ALuint buf;
+                    alSourceUnqueueBuffers(mId, 1, &buf);
+                    --processed;
                 }
 
                 alGetSourcei(mId, AL_BUFFERS_QUEUED, &queued);
