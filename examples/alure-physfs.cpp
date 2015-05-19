@@ -194,10 +194,10 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    // Set our custom factory for file IO (Alure takes ownership of the factory
+    // Set our custom factory for file IO (Alure holds a reference to the factory
     // instance). From now on, all filenames given to Alure will be used with
     // our custom factory.
-    alure::FileIOFactory::set(std::unique_ptr<alure::FileIOFactory>(new FileFactory(argv[0])));
+    alure::FileIOFactory::set(alure::SharedPtr<alure::FileIOFactory>(new FileFactory(argv[0])));
 
     alure::DeviceManager *devMgr = alure::DeviceManager::get();
 

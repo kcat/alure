@@ -234,9 +234,7 @@ int main(int argc, char *argv[])
 {
     // Set our custom factory for decoding modules (Alure keeps a reference to the factory
     // instance).
-    alure::SharedPtr<alure::DecoderFactory> factory(new DumbFactory);
-    alure::RegisterDecoder("dumb", factory);
-    factory.reset();
+    alure::RegisterDecoder("dumb", alure::SharedPtr<alure::DecoderFactory>(new DumbFactory));
 
     alure::DeviceManager *devMgr = alure::DeviceManager::get();
 
