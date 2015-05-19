@@ -58,7 +58,7 @@ static sf_count_t tell(void *user_data)
 
 
 class SndFileDecoder : public Decoder {
-    std::unique_ptr<std::istream> mFile;
+    SharedPtr<std::istream> mFile;
 
     SNDFILE *mSndFile;
     SF_INFO mSndInfo;
@@ -67,8 +67,8 @@ class SndFileDecoder : public Decoder {
     SampleType mSampleType;
 
 public:
-    SndFileDecoder(std::unique_ptr<std::istream> &&file, SNDFILE *sndfile, const SF_INFO sndinfo, SampleConfig sconfig, SampleType stype)
-      : mFile(std::move(file)), mSndFile(sndfile), mSndInfo(sndinfo), mSampleConfig(sconfig), mSampleType(stype)
+    SndFileDecoder(SharedPtr<std::istream> file, SNDFILE *sndfile, const SF_INFO sndinfo, SampleConfig sconfig, SampleType stype)
+      : mFile(file), mSndFile(sndfile), mSndInfo(sndinfo), mSampleConfig(sconfig), mSampleType(stype)
     { }
     virtual ~SndFileDecoder();
 
@@ -135,7 +135,7 @@ ALuint SndFileDecoder::read(ALvoid *ptr, ALuint count)
 }
 
 
-Decoder *SndFileDecoderFactory::createDecoder(std::unique_ptr<std::istream> &file)
+SharedPtr<Decoder> SndFileDecoderFactory::createDecoder(SharedPtr<std::istream> file)
 {
     SF_VIRTUAL_IO vio = {
         get_filelen, seek,
@@ -238,8 +238,8 @@ Decoder *SndFileDecoderFactory::createDecoder(std::unique_ptr<std::istream> &fil
         }
     }
 
-    if(!sndfile) return 0;
-    return new SndFileDecoder(std::move(file), sndfile, sndinfo, sconfig, stype);
+    if(!sndfile) return SharedPtr<Decoder>(nullptr);
+    return SharedPtr<Decoder>(new SndFileDecoder(file, sndfile, sndinfo, sconfig, stype));
 }
 
 }

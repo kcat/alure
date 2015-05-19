@@ -86,7 +86,7 @@ static long cb_get_size(void *user_data)
 
 // Inherit from alure::Decoder to make a custom decoder (DUMB for this example)
 class DumbDecoder : public alure::Decoder {
-    std::unique_ptr<std::istream> mFile;
+    alure::SharedPtr<std::istream> mFile;
     std::unique_ptr<DUMBFILE_SYSTEM> mDfs;
     DUMBFILE *mDumbfile;
     DUH *mDuh;
@@ -96,8 +96,8 @@ class DumbDecoder : public alure::Decoder {
     uint64_t mStreamPos;
 
 public:
-    DumbDecoder(std::unique_ptr<std::istream> &&file, std::unique_ptr<DUMBFILE_SYSTEM> &&dfs, DUMBFILE *dfile, DUH *duh, DUH_SIGRENDERER *renderer, ALuint freq)
-      : mFile(std::move(file)), mDfs(std::move(dfs)), mDumbfile(dfile), mDuh(duh), mRenderer(renderer), mFrequency(freq),
+    DumbDecoder(alure::SharedPtr<std::istream> file, std::unique_ptr<DUMBFILE_SYSTEM> &&dfs, DUMBFILE *dfile, DUH *duh, DUH_SIGRENDERER *renderer, ALuint freq)
+      : mFile(file), mDfs(std::move(dfs)), mDumbfile(dfile), mDuh(duh), mRenderer(renderer), mFrequency(freq),
         mStreamPos(0)
     { }
     virtual ~DumbDecoder()
@@ -170,7 +170,7 @@ public:
 
 // Inherit from alure::DecoderFactory to use our custom decoder
 class DumbFactory : public alure::DecoderFactory {
-    virtual alure::Decoder *createDecoder(std::unique_ptr<std::istream> &file)
+    virtual alure::SharedPtr<alure::Decoder> createDecoder(alure::SharedPtr<std::istream> file)
     {
         static DUH* (*funcs[])(DUMBFILE*) = {
             dumb_read_it,
@@ -200,7 +200,9 @@ class DumbFactory : public alure::DecoderFactory {
             if((duh=funcs[i](dfile)) != nullptr)
             {
                 if((renderer=duh_start_sigrenderer(duh, 0, 2, 0)) != nullptr)
-                    return new DumbDecoder(std::move(file), std::move(dfs), dfile, duh, renderer, freq);
+                    return alure::SharedPtr<alure::Decoder>(new DumbDecoder(
+                        file, std::move(dfs), dfile, duh, renderer, freq
+                    ));
 
                 unload_duh(duh);
                 duh = nullptr;
@@ -212,7 +214,9 @@ class DumbFactory : public alure::DecoderFactory {
         if((duh=dumb_read_mod(dfile, 1)) != nullptr)
         {
             if((renderer=duh_start_sigrenderer(duh, 0, 2, 0)) != nullptr)
-                return new DumbDecoder(std::move(file), std::move(dfs), dfile, duh, renderer, freq);
+                return alure::SharedPtr<alure::Decoder>(new DumbDecoder(
+                    file, std::move(dfs), dfile, duh, renderer, freq
+                ));
 
             unload_duh(duh);
             duh = nullptr;
@@ -228,11 +232,11 @@ class DumbFactory : public alure::DecoderFactory {
 
 int main(int argc, char *argv[])
 {
-    // Set our custom factory for decoding modules (Alure takes ownership of the factory
+    // Set our custom factory for decoding modules (Alure keeps a reference to the factory
     // instance).
-    std::unique_ptr<alure::DecoderFactory> factory(new DumbFactory);
-    alure::RegisterDecoder("dumb", factory.get());
-    factory.release();
+    alure::SharedPtr<alure::DecoderFactory> factory(new DumbFactory);
+    alure::RegisterDecoder("dumb", factory);
+    factory.reset();
 
     alure::DeviceManager *devMgr = alure::DeviceManager::get();
 
@@ -244,9 +248,9 @@ int main(int argc, char *argv[])
 
     for(int i = 1;i < argc;i++)
     {
-        std::unique_ptr<alure::Decoder> decoder(ctx->createDecoder(argv[i]));
+        alure::SharedPtr<alure::Decoder> decoder(ctx->createDecoder(argv[i]));
         alure::Source *source = ctx->getSource();
-        source->play(decoder.get(), 32768, 4);
+        source->play(decoder, 32768, 4);
         std::cout<< "Playing "<<argv[i]<<" ("<<alure::GetSampleTypeName(decoder->getSampleType())<<", "
                                              <<alure::GetSampleConfigName(decoder->getSampleConfig())<<", "
                                              <<decoder->getFrequency()<<"hz)" <<std::endl;

@@ -52,6 +52,12 @@ class Decoder;
 class DecoderFactory;
 
 
+// A SharedPtr implementation, defaults to C++11's std::shared_ptr. If this is
+// changed, you must recompile the library.
+template<typename T>
+using SharedPtr = std::shared_ptr<T>;
+
+
 struct FilterParams {
     ALfloat mGain;
     ALfloat mGainHF; // For low-pass and band-pass filters
@@ -296,7 +302,7 @@ public:
      * Creates a \ref Decoder instance for the given audio file or resource
      * \param name. The caller is responsible for deleting the returned object.
      */
-    virtual std::unique_ptr<Decoder> createDecoder(const std::string &name) = 0;
+    virtual SharedPtr<Decoder> createDecoder(const std::string &name) = 0;
 
     /**
      * Creates and caches a \ref Buffer for the given audio file or resource
@@ -411,10 +417,9 @@ public:
     /**
      * Plays the source by streaming audio from \param decoder. This will use
      * \param queuelen buffers, each with \param updatelen sample frames. The
-     * given decoder must *NOT* be in use elsewhere, and must not be deleted
-     * while playing.
+     * given decoder must *NOT* be in use elsewhere.
      */
-    virtual void play(Decoder *decoder, ALuint updatelen, ALuint queuesize) = 0;
+    virtual void play(SharedPtr<Decoder> decoder, ALuint updatelen, ALuint queuesize) = 0;
     /**
      * Stops playback, releasing the buffer or decoder reference.
      */
@@ -596,10 +601,9 @@ public:
 
     /**
      * Creates and returns a \ref Decoder instance for the given resource
-     * \param file. If successful, the returned decoder takes ownership of the
-     * file handle. Returns NULL if a decoder can't be created from the file.
+     * \param file. Returns NULL if a decoder can't be created from the file.
      */
-    virtual Decoder *createDecoder(std::unique_ptr<std::istream> &file) = 0;
+    virtual SharedPtr<Decoder> createDecoder(SharedPtr<std::istream> file) = 0;
 };
 
 /**
@@ -609,10 +613,8 @@ public:
  *
  * \param name A unique name identifying this decoder factory.
  * \param factory A DecoderFactory instance used to create Decoder instances.
- * The library takes ownership of the factory instance, and will delete it
- * automatically at program termination.
  */
-void RegisterDecoder(const std::string &name, DecoderFactory *factory);
+void RegisterDecoder(const std::string &name, SharedPtr<DecoderFactory> factory);
 
 /**
  * Unregisters a decoder factory by name. Ownership of the DecoderFactory
@@ -624,7 +626,7 @@ void RegisterDecoder(const std::string &name, DecoderFactory *factory);
  * \return The unregistered decoder factory instance, or 0 (nullptr) if a
  * decoder factory with the given name doesn't exist.
  */
-std::unique_ptr<DecoderFactory> UnregisterDecoder(const std::string &name);
+SharedPtr<DecoderFactory> UnregisterDecoder(const std::string &name);
 
 
 /**
@@ -635,13 +637,11 @@ std::unique_ptr<DecoderFactory> UnregisterDecoder(const std::string &name);
 class FileIOFactory {
 public:
     /**
-     * Sets the \param factory instance to be used by the audio decoders. The
-     * library takes ownership of the factory and will delete it at program
-     * termination. If a previous factory was set, it and ownership to it are
-     * returned to the application. Passing in a NULL factory reverts to the
-     * default.
+     * Sets the \param factory instance to be used by the audio decoders. If a
+     * previous factory was set, it's returned to the application. Passing in a
+     * NULL factory reverts to the default.
      */
-    static std::unique_ptr<FileIOFactory> set(std::unique_ptr<FileIOFactory> factory);
+    static SharedPtr<FileIOFactory> set(SharedPtr<FileIOFactory> factory);
     /**
      * Gets the current FileIOFactory instance being used by the audio
      * decoders.
@@ -651,7 +651,7 @@ public:
     virtual ~FileIOFactory() { }
 
     /** Opens a read-only binary file for the given \param name. */
-    virtual std::unique_ptr<std::istream> openFile(const std::string &name) = 0;
+    virtual SharedPtr<std::istream> openFile(const std::string &name) = 0;
 };
 
 } // namespace alure

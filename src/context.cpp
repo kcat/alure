@@ -35,28 +35,28 @@ static inline size_t countof(const T(&)[N])
 { return N; }
 
 
-typedef std::pair<std::string,std::unique_ptr<DecoderFactory>> FactoryPair;
+typedef std::pair<std::string,SharedPtr<DecoderFactory>> FactoryPair;
 typedef std::vector<FactoryPair> FactoryMap;
 
 static FactoryPair sDefaultDecoders[] = {
 #ifdef HAVE_MPG123
-    { "_alure_int_mpg123", std::unique_ptr<DecoderFactory>(new Mpg123DecoderFactory) },
+    { "_alure_int_mpg123", SharedPtr<DecoderFactory>(new Mpg123DecoderFactory) },
 #endif
 #ifdef HAVE_LIBSNDFILE
-    { "_alure_int_sndfile", std::unique_ptr<DecoderFactory>(new SndFileDecoderFactory) },
+    { "_alure_int_sndfile", SharedPtr<DecoderFactory>(new SndFileDecoderFactory) },
 #endif
 };
 static FactoryMap sDecoders{ std::make_move_iterator(std::begin(sDefaultDecoders)),
                              std::make_move_iterator(std::end(sDefaultDecoders)) };
 
-void RegisterDecoder(const std::string &name, DecoderFactory *factory)
+void RegisterDecoder(const std::string &name, SharedPtr<DecoderFactory> factory)
 {
     FactoryMap::iterator iter = sDecoders.begin();
     while(iter != sDecoders.end())
     {
         if(iter->first == name)
             throw std::runtime_error("Decoder factory \""+name+"\" already registered");
-        if(iter->second.get() == factory)
+        if(iter->second.get() == factory.get())
         {
             std::stringstream sstr;
             sstr<< "Decoder factory instance "<<factory<<" already registered";
@@ -64,41 +64,41 @@ void RegisterDecoder(const std::string &name, DecoderFactory *factory)
         }
         iter++;
     }
-    sDecoders.push_back(std::make_pair(name, std::unique_ptr<DecoderFactory>(factory)));
+    sDecoders.push_back(std::make_pair(name, factory));
 }
 
-std::unique_ptr<DecoderFactory> UnregisterDecoder(const std::string &name)
+SharedPtr<DecoderFactory> UnregisterDecoder(const std::string &name)
 {
     FactoryMap::iterator iter = sDecoders.begin();
     while(iter != sDecoders.end())
     {
         if(iter->first == name)
         {
-            std::unique_ptr<DecoderFactory> factory = std::move(iter->second);
+            SharedPtr<DecoderFactory> factory = iter->second;
             sDecoders.erase(iter);
             return factory;
         }
         iter++;
     }
-    return std::unique_ptr<DecoderFactory>(nullptr);
+    return SharedPtr<DecoderFactory>(nullptr);
 }
 
 
 class DefaultFileIOFactory : public FileIOFactory {
-    virtual std::unique_ptr<std::istream> openFile(const std::string &name)
+    virtual SharedPtr<std::istream> openFile(const std::string &name)
     {
-        std::unique_ptr<std::ifstream> file(new std::ifstream(name.c_str(), std::ios::binary));
+        SharedPtr<std::ifstream> file(new std::ifstream(name.c_str(), std::ios::binary));
         if(!file->is_open()) file.reset();
-        return std::move(file);
+        return file;
     }
 };
 static DefaultFileIOFactory sDefaultFileFactory;
 
-static std::unique_ptr<FileIOFactory> sFileFactory;
-std::unique_ptr<FileIOFactory> FileIOFactory::set(std::unique_ptr<FileIOFactory> factory)
+static SharedPtr<FileIOFactory> sFileFactory;
+SharedPtr<FileIOFactory> FileIOFactory::set(SharedPtr<FileIOFactory> factory)
 {
-    std::unique_ptr<FileIOFactory> old = std::move(sFileFactory);
-    sFileFactory = std::move(factory);
+    SharedPtr<FileIOFactory> old = sFileFactory;
+    sFileFactory = factory;
     return old;
 }
 
@@ -288,20 +288,18 @@ Listener *ALContext::getListener()
 }
 
 
-std::unique_ptr<Decoder> ALContext::createDecoder(const std::string &name)
+SharedPtr<Decoder> ALContext::createDecoder(const std::string &name)
 {
-    std::unique_ptr<std::istream> file(FileIOFactory::get().openFile(name));
+    SharedPtr<std::istream> file(FileIOFactory::get().openFile(name));
     if(!file.get()) throw std::runtime_error("Failed to open "+name);
 
     FactoryMap::const_reverse_iterator iter = sDecoders.rbegin();
     while(iter != sDecoders.rend())
     {
         DecoderFactory *factory = iter->second.get();
-        Decoder *decoder = factory->createDecoder(file);
-        if(decoder) return std::unique_ptr<Decoder>(decoder);
+        SharedPtr<Decoder> decoder = factory->createDecoder(file);
+        if(decoder.get()) return decoder;
 
-        if(!file.get())
-            throw std::runtime_error("Decoder factory took file but did not give a decoder");
         file->clear();
         if(!file->seekg(0))
             throw std::runtime_error("Failed to rewind "+name+" for the next decoder factory");
@@ -319,7 +317,7 @@ Buffer *ALContext::getBuffer(const std::string &name)
     Buffer *buffer = mDevice->getBuffer(name);
     if(buffer) return buffer;
 
-    std::unique_ptr<Decoder> decoder(createDecoder(name));
+    SharedPtr<Decoder> decoder(createDecoder(name));
 
     ALuint srate = decoder->getFrequency();
     SampleConfig chans = decoder->getSampleConfig();

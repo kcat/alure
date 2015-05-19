@@ -71,7 +71,7 @@ public:
     ALuint getId() const { return mId; }
 
     virtual void play(Buffer *buffer) final;
-    virtual void play(Decoder *decoder, ALuint updatelen, ALuint queuesize) final;
+    virtual void play(SharedPtr<Decoder> decoder, ALuint updatelen, ALuint queuesize) final;
     virtual void stop() final;
     virtual void pause() final;
     virtual void resume() final;

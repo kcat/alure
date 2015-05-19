@@ -20,7 +20,7 @@ namespace alure
 {
 
 class ALBufferStream {
-    Decoder *mDecoder;
+    SharedPtr<Decoder> mDecoder;
 
     ALuint mUpdateLen;
     ALuint mNumUpdates;
@@ -39,7 +39,7 @@ class ALBufferStream {
     bool mDone;
 
 public:
-    ALBufferStream(Decoder *decoder, ALuint updatelen, ALuint numupdates)
+    ALBufferStream(SharedPtr<Decoder> decoder, ALuint updatelen, ALuint numupdates)
       : mDecoder(decoder), mUpdateLen(updatelen), mNumUpdates(numupdates),
         mFormat(AL_NONE), mFrequency(0), mFrameSize(0), mSilence(0),
         mCurrentIdx(0), mHasLooped(false), mDone(false)
@@ -223,7 +223,7 @@ void ALSource::play(Buffer *buffer)
     mPaused = false;
 }
 
-void ALSource::play(Decoder *decoder, ALuint updatelen, ALuint queuesize)
+void ALSource::play(SharedPtr<Decoder> decoder, ALuint updatelen, ALuint queuesize)
 {
     if(updatelen < 64)
         throw std::runtime_error("Update length out of range");

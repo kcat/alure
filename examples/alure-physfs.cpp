@@ -159,11 +159,11 @@ public:
         PHYSFS_deinit();
     }
 
-    virtual std::unique_ptr<std::istream> openFile(const std::string &name)
+    virtual alure::SharedPtr<std::istream> openFile(const std::string &name)
     {
-        std::unique_ptr<Stream> stream(new Stream(name.c_str()));
+        alure::SharedPtr<Stream> stream(new Stream(name.c_str()));
         if(stream->fail()) stream.reset();
-        return std::move(stream);
+        return stream;
     }
 
     // A PhysFS-specific function to mount a new path to the virtual directory
@@ -215,9 +215,9 @@ int main(int argc, char *argv[])
             continue;
         }
 
-        std::unique_ptr<alure::Decoder> decoder(ctx->createDecoder(argv[i]));
+        alure::SharedPtr<alure::Decoder> decoder(ctx->createDecoder(argv[i]));
         alure::Source *source = ctx->getSource();
-        source->play(decoder.get(), 32768, 4);
+        source->play(decoder, 32768, 4);
         std::cout<< "Playing "<<argv[i]<<" ("<<alure::GetSampleTypeName(decoder->getSampleType())<<", "
                                              <<alure::GetSampleConfigName(decoder->getSampleConfig())<<", "
                                              <<decoder->getFrequency()<<"hz)" <<std::endl;

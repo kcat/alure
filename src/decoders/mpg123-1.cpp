@@ -30,15 +30,15 @@ static off_t r_lseek(void *user_data, off_t offset, int whence)
 
 
 class Mpg123Decoder : public Decoder {
-    std::unique_ptr<std::istream> mFile;
+    SharedPtr<std::istream> mFile;
 
     mpg123_handle *mMpg123;
     int mChannels;
     long mSampleRate;
 
 public:
-    Mpg123Decoder(std::unique_ptr<std::istream> &&file, mpg123_handle *mpg123, int chans, long srate)
-      : mFile(std::move(file)), mMpg123(mpg123), mChannels(chans), mSampleRate(srate)
+    Mpg123Decoder(SharedPtr<std::istream> file, mpg123_handle *mpg123, int chans, long srate)
+      : mFile(file), mMpg123(mpg123), mChannels(chans), mSampleRate(srate)
     { }
     virtual ~Mpg123Decoder();
 
@@ -135,10 +135,10 @@ Mpg123DecoderFactory::~Mpg123DecoderFactory()
 }
 
 
-Decoder *Mpg123DecoderFactory::createDecoder(std::unique_ptr<std::istream> &file)
+SharedPtr<Decoder> Mpg123DecoderFactory::createDecoder(SharedPtr<std::istream> file)
 {
     if(!mIsInited)
-        return nullptr;
+        return SharedPtr<Decoder>(nullptr);
 
     mpg123_handle *mpg123 = mpg123_new(0, 0);
     if(mpg123)
@@ -156,14 +156,15 @@ Decoder *Mpg123DecoderFactory::createDecoder(std::unique_ptr<std::istream> &file
                    mpg123_format(mpg123, srate, channels, MPG123_ENC_SIGNED_16) == MPG123_OK)
                 {
                     // All OK
-                    return new Mpg123Decoder(std::move(file), mpg123, channels, srate);
+                    return SharedPtr<Decoder>(new Mpg123Decoder(file, mpg123, channels, srate));
                 }
             }
             mpg123_close(mpg123);
         }
         mpg123_delete(mpg123);
     }
-    return 0;
+
+    return SharedPtr<Decoder>(nullptr);
 }
 
 }

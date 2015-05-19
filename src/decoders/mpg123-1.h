@@ -12,7 +12,7 @@ public:
     Mpg123DecoderFactory();
     virtual ~Mpg123DecoderFactory();
 
-    virtual Decoder *createDecoder(std::unique_ptr<std::istream> &file) final;
+    virtual SharedPtr<Decoder> createDecoder(SharedPtr<std::istream> file) final;
 };
 
 } // namespace alure
