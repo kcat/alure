@@ -341,11 +341,18 @@ Buffer *ALContext::getBuffer(const std::string &name)
     if(!frames) throw std::runtime_error("No samples for buffer");
     data.resize(FramesToBytes(frames, chans, type));
 
+    // Get the format before calling the bufferLoading message handler, to
+    // ensure it's something OpenAL can handle.
+    ALenum format = GetFormat(chans, type);
+
+    if(mMessage.get())
+        mMessage->bufferLoading(name, chans, type, srate, data);
+
     alGetError();
     ALuint bid = 0;
     try {
         alGenBuffers(1, &bid);
-        alBufferData(bid, GetFormat(chans, type), &data[0], data.size(), srate);
+        alBufferData(bid, format, &data[0], data.size(), srate);
         if(alGetError() != AL_NO_ERROR)
             throw std::runtime_error("Failed to buffer data");
 

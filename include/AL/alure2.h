@@ -677,6 +677,17 @@ public:
 class MessageHandler {
 public:
     virtual ~MessageHandler() { }
+
+    /**
+     * Called when a new buffer is about to be created and loaded.
+     *
+     * \param name The resource name, as passed to \ref Context::getBuffer.
+     * \param channels Channel configuration of the given audio data.
+     * \param type Sample type of the given audio data.
+     * \param samplerate Sample rate of the given audio data.
+     * \param data The audio data that is about to be fed to the OpenAL buffer.
+     */
+    virtual void bufferLoading(const std::string &name, SampleConfig channels, SampleType type, ALuint samplerate, const std::vector<ALbyte> &data) = 0;
 };
 
 } // namespace alure
