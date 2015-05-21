@@ -58,6 +58,8 @@ private:
 
     RefCount mRefs;
 
+    SharedPtr<MessageHandler> mMessage;
+
     bool mHasExt[AL_EXTENSION_MAX];
 
     std::once_flag mSetExts;
@@ -124,6 +126,9 @@ public:
     virtual void endBatch() final;
 
     virtual Listener *getListener() final;
+
+    virtual SharedPtr<MessageHandler> setMessageHandler(SharedPtr<MessageHandler> handler) final;
+    virtual SharedPtr<MessageHandler> getMessageHandler() const final;
 
     virtual SharedPtr<Decoder> createDecoder(const std::string &name) final;
 

@@ -288,6 +288,18 @@ Listener *ALContext::getListener()
 }
 
 
+SharedPtr<MessageHandler> ALContext::setMessageHandler(SharedPtr<MessageHandler> handler)
+{
+    mMessage.swap(handler);
+    return handler;
+}
+
+SharedPtr<MessageHandler> ALContext::getMessageHandler() const
+{
+    return mMessage;
+}
+
+
 SharedPtr<Decoder> ALContext::createDecoder(const std::string &name)
 {
     SharedPtr<std::istream> file(FileIOFactory::get().openFile(name));

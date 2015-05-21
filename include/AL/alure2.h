@@ -50,6 +50,7 @@ class AuxiliaryEffectSlot;
 class Effect;
 class Decoder;
 class DecoderFactory;
+class MessageHandler;
 
 
 // A SharedPtr implementation, defaults to C++11's std::shared_ptr. If this is
@@ -296,6 +297,16 @@ public:
      */
     virtual Listener *getListener() = 0;
 
+    /**
+     * Sets a MessageHandler instance which will be used to provide certain
+     * messages back to the application. Only one handler may be set for a
+     * context at a time. The previously set handler will be returned.
+     */
+    virtual SharedPtr<MessageHandler> setMessageHandler(SharedPtr<MessageHandler> handler) = 0;
+
+    /** Gets the currently-set message handler. */
+    virtual SharedPtr<MessageHandler> getMessageHandler() const = 0;
+
     // Functions below require the context to be current
 
     /**
@@ -417,7 +428,8 @@ public:
     /**
      * Plays the source by streaming audio from \param decoder. This will use
      * \param queuelen buffers, each with \param updatelen sample frames. The
-     * given decoder must *NOT* be in use elsewhere.
+     * given decoder must *NOT* have its read or seek methods called from
+     * elsewhere while in use.
      */
     virtual void play(SharedPtr<Decoder> decoder, ALuint updatelen, ALuint queuesize) = 0;
     /**
@@ -609,7 +621,9 @@ public:
 /**
  * Registers a decoder factory for decoding audio. Registered factories are
  * used on a last-registered basis, e.g. if Factory1 is registered, then
- * Factory2 is registered, Factory2 will be used before Factory1.
+ * Factory2 is registered, Factory2 will be used before Factory1. Alure retains
+ * a reference to the DecoderFactory instance and will release it (potentially
+ * destroying the object) when the library unloads.
  *
  * \param name A unique name identifying this decoder factory.
  * \param factory A DecoderFactory instance used to create Decoder instances.
@@ -617,8 +631,8 @@ public:
 void RegisterDecoder(const std::string &name, SharedPtr<DecoderFactory> factory);
 
 /**
- * Unregisters a decoder factory by name. Ownership of the DecoderFactory
- * instance is returned to the application.
+ * Unregisters a decoder factory by name. Alure gives a reference to the
+ * instance back to the application and releases its own.
  *
  * \param name The unique name identifying a previously-registered decoder
  * factory.
@@ -642,6 +656,7 @@ public:
      * NULL factory reverts to the default.
      */
     static SharedPtr<FileIOFactory> set(SharedPtr<FileIOFactory> factory);
+
     /**
      * Gets the current FileIOFactory instance being used by the audio
      * decoders.
@@ -652,6 +667,16 @@ public:
 
     /** Opens a read-only binary file for the given \param name. */
     virtual SharedPtr<std::istream> openFile(const std::string &name) = 0;
+};
+
+
+/**
+ * A message handler interface. Applications may derive from this and set an
+ * instance on a context to receive messages.
+ */
+class MessageHandler {
+public:
+    virtual ~MessageHandler() { }
 };
 
 } // namespace alure
