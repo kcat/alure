@@ -48,6 +48,17 @@ set(alure_srcs src/devicemanager.cpp
 )
 set(alure_libs ${OPENAL_LIBRARY})
 
+find_package(Ogg)
+if(OGG_FOUND)
+    find_package(Vorbis)
+    if(VORBIS_FOUND)
+        include_directories(${OGG_INCLUDE_DIR} ${VORBIS_INCLUDE_DIR})
+        set(alure_libs ${alure_libs} ${VORBIS_LIBRARIES} ${OGG_LIBRARIES})
+        set(alure_srcs ${alure_srcs} src/decoders/vorbisfile1.cpp)
+        set(HAVE_VORBISFILE 1)
+    endif()
+endif()
+
 find_package(SndFile)
 if(SNDFILE_FOUND)
     include_directories(${SNDFILE_INCLUDE_DIRS})

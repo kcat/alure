@@ -13,6 +13,9 @@
 
 #include "alc.h"
 
+#ifdef HAVE_VORBISFILE
+#include "decoders/vorbisfile1.h"
+#endif
 #ifdef HAVE_LIBSNDFILE
 #include "decoders/sndfile1.h"
 #endif
@@ -44,6 +47,9 @@ static FactoryPair sDefaultDecoders[] = {
 #endif
 #ifdef HAVE_LIBSNDFILE
     { "_alure_int_sndfile", SharedPtr<DecoderFactory>(new SndFileDecoderFactory) },
+#endif
+#ifdef HAVE_VORBISFILE
+    { "_alure_int_vorbis", SharedPtr<DecoderFactory>(new VorbisFileDecoderFactory) },
 #endif
 };
 static FactoryMap sDecoders{ std::make_move_iterator(std::begin(sDefaultDecoders)),
