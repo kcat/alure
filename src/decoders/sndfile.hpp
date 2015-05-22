@@ -1,5 +1,5 @@
-#ifndef DECODERS_SNDFILE_H
-#define DECODERS_SNDFILE_H
+#ifndef DECODERS_SNDFILE_HPP
+#define DECODERS_SNDFILE_HPP
 
 #include "alure2.h"
 
@@ -11,4 +11,4 @@ class SndFileDecoderFactory : public DecoderFactory {
 
 } // namespace alure
 
-#endif /* DECODERS_SNDFILE_H */
+#endif /* DECODERS_SNDFILE_HPP */

@@ -1,5 +1,5 @@
-#ifndef DECODERS_MPG123_H
-#define DECODERS_MPG123_H
+#ifndef DECODERS_MPG123_HPP
+#define DECODERS_MPG123_HPP
 
 #include "alure2.h"
 
@@ -17,4 +17,4 @@ public:
 
 } // namespace alure
 
-#endif /* DECODERS_MPG123_H */
+#endif /* DECODERS_MPG123_HPP */

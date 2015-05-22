@@ -14,16 +14,16 @@
 #include "alc.h"
 
 #ifdef HAVE_VORBISFILE
-#include "decoders/vorbisfile1.h"
+#include "decoders/vorbisfile.hpp"
 #endif
 #ifdef HAVE_LIBFLAC
 #include "decoders/flac.hpp"
 #endif
 #ifdef HAVE_LIBSNDFILE
-#include "decoders/sndfile1.h"
+#include "decoders/sndfile.hpp"
 #endif
 #ifdef HAVE_MPG123
-#include "decoders/mpg123-1.h"
+#include "decoders/mpg123.hpp"
 #endif
 
 #include "devicemanager.h"

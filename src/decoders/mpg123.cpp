@@ -1,5 +1,5 @@
 
-#include "mpg123-1.h"
+#include "mpg123.hpp"
 
 #include <stdexcept>
 #include <iostream>

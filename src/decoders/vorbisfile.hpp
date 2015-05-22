@@ -1,5 +1,5 @@
-#ifndef DECODERS_VORBISFILE_H
-#define DECODERS_VORBISFILE_H
+#ifndef DECODERS_VORBISFILE_HPP
+#define DECODERS_VORBISFILE_HPP
 
 #include "alure2.h"
 
@@ -11,4 +11,4 @@ class VorbisFileDecoderFactory : public DecoderFactory {
 
 } // namespace alure
 
-#endif /* DECODERS_VORBISFILE_H */
+#endif /* DECODERS_VORBISFILE_HPP */

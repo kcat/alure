@@ -1,5 +1,5 @@
 
-#include "vorbisfile1.h"
+#include "vorbisfile.hpp"
 
 #include <stdexcept>
 #include <iostream>

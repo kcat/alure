@@ -1,5 +1,5 @@
 
-#include "sndfile1.h"
+#include "sndfile.hpp"
 
 #include <stdexcept>
 #include <iostream>
