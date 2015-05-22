@@ -103,9 +103,8 @@ static DefaultFileIOFactory sDefaultFileFactory;
 static SharedPtr<FileIOFactory> sFileFactory;
 SharedPtr<FileIOFactory> FileIOFactory::set(SharedPtr<FileIOFactory> factory)
 {
-    SharedPtr<FileIOFactory> old = sFileFactory;
-    sFileFactory = factory;
-    return old;
+    sFileFactory.swap(factory);
+    return factory;
 }
 
 FileIOFactory &FileIOFactory::get()
