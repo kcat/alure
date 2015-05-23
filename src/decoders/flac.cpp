@@ -18,7 +18,7 @@ class FlacDecoder : public Decoder {
     SampleConfig mSampleConfig;
     SampleType mSampleType;
     ALuint mFrequency;
-    ALuint mBlockAlign;
+    ALuint mFrameSize;
     uint64_t mSamplePos;
 
     std::vector<ALubyte> mData;
@@ -72,22 +72,22 @@ class FlacDecoder : public Decoder {
             else
                 return FLAC__STREAM_DECODER_WRITE_STATUS_ABORT;
 
-            self->mBlockAlign = frame->header.channels * bps/8;
+            self->mFrameSize = frame->header.channels * bps/8;
             self->mFrequency = frame->header.sample_rate;
         }
 
         ALubyte *data = self->mOutBytes + self->mOutLen;
-        ALuint todo = std::min<ALuint>((self->mOutMax-self->mOutLen) / self->mBlockAlign,
+        ALuint todo = std::min<ALuint>((self->mOutMax-self->mOutLen) / self->mFrameSize,
                                        frame->header.blocksize);
         self->CopySamples(data, todo, frame, buffer, 0);
-        self->mOutLen += self->mBlockAlign * todo;
+        self->mOutLen += self->mFrameSize * todo;
 
         if(todo < frame->header.blocksize)
         {
             ALuint offset = todo;
             todo = frame->header.blocksize - todo;
 
-            ALuint blocklen = todo * self->mBlockAlign;
+            ALuint blocklen = todo * self->mFrameSize;
             ALuint start = self->mData.size();
 
             self->mData.resize(start+blocklen);
@@ -162,7 +162,7 @@ class FlacDecoder : public Decoder {
 public:
     FlacDecoder(SharedPtr<std::istream> file)
       : mFile(file), mFlacFile(nullptr), mSampleConfig(SampleConfig_Mono), mSampleType(SampleType_Int16), mFrequency(0),
-        mBlockAlign(0), mSamplePos(0), mOutBytes(nullptr), mOutMax(0), mOutLen(0)
+        mFrameSize(0), mSamplePos(0), mOutBytes(nullptr), mOutMax(0), mOutLen(0)
     { }
     virtual ~FlacDecoder();
 
@@ -254,7 +254,7 @@ ALuint FlacDecoder::read(ALvoid *ptr, ALuint count)
 {
     mOutBytes = reinterpret_cast<ALubyte*>(ptr);
     mOutLen = 0;
-    mOutMax = count * mBlockAlign;
+    mOutMax = count * mFrameSize;
 
     if(mData.size() > 0)
     {
@@ -270,7 +270,7 @@ ALuint FlacDecoder::read(ALvoid *ptr, ALuint count)
            FLAC__stream_decoder_get_state(mFlacFile) == FLAC__STREAM_DECODER_END_OF_STREAM)
             break;
     }
-    ALuint ret = mOutLen / mBlockAlign;
+    ALuint ret = mOutLen / mFrameSize;
 
     mSamplePos += ret;
 
