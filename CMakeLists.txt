@@ -7,7 +7,7 @@ include(CheckCXXCompilerFlag)
 
 find_package(OpenAL REQUIRED)
 
-include_directories(${alure_SOURCE_DIR}/include/AL ${alure_BINARY_DIR} ${OPENAL_INCLUDE_DIR})
+include_directories(${alure_SOURCE_DIR}/include/AL ${alure_SOURCE_DIR}/src ${alure_BINARY_DIR} ${OPENAL_INCLUDE_DIR})
 
 option(ALURE_USE_RTTI  "Enable run-time type information"  OFF)
 
@@ -45,6 +45,7 @@ set(alure_srcs src/devicemanager.cpp
                src/source.cpp
                src/auxeffectslot.cpp
                src/effect.cpp
+               src/decoders/wave.cpp
 )
 set(alure_libs ${OPENAL_LIBRARY})
 

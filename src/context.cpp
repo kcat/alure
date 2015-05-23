@@ -25,6 +25,7 @@
 #ifdef HAVE_MPG123
 #include "decoders/mpg123.hpp"
 #endif
+#include "decoders/wave.hpp"
 
 #include "devicemanager.h"
 #include "device.h"
@@ -51,6 +52,9 @@ static FactoryPair sDefaultDecoders[] = {
 #ifdef HAVE_LIBSNDFILE
     { "_alure_int_sndfile", SharedPtr<DecoderFactory>(new SndFileDecoderFactory) },
 #endif
+
+    { "_alure_int_wave", SharedPtr<DecoderFactory>(new WaveDecoderFactory) },
+
 #ifdef HAVE_LIBFLAC
     { "_alure_int_flac", SharedPtr<DecoderFactory>(new FlacDecoderFactory) },
 #endif
