@@ -307,13 +307,13 @@ public:
     /** Gets the currently-set message handler. */
     virtual SharedPtr<MessageHandler> getMessageHandler() const = 0;
 
-    // Functions below require the context to be current
-
     /**
      * Creates a \ref Decoder instance for the given audio file or resource
-     * \param name. The caller is responsible for deleting the returned object.
+     * \param name.
      */
     virtual SharedPtr<Decoder> createDecoder(const std::string &name) = 0;
+
+    // Functions below require the context to be current
 
     /**
      * Creates and caches a \ref Buffer for the given audio file or resource
