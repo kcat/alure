@@ -191,6 +191,7 @@ static const struct {
     { EXT_MULAW_MCFORMATS, "AL_EXT_MULAW_MCFORMATS", LoadNothing },
     { EXT_MULAW_BFORMAT,   "AL_EXT_MULAW_BFORMAT",   LoadNothing },
 
+    { SOFT_loop_points,    "AL_SOFT_loop_points",    LoadNothing },
     { SOFT_source_latency, "AL_SOFT_source_latency", LoadSourceLatency },
 };
 

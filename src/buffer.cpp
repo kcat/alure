@@ -70,6 +70,45 @@ ALuint ALBuffer::getSize() const
     return size;
 }
 
+void ALBuffer::setLoopPoints(ALuint start, ALuint end)
+{
+    ALuint length = getLength();
+
+    if(isInUse())
+        throw std::runtime_error("Buffer is in use");
+
+    if(!ALContext::GetCurrent()->hasExtension(SOFT_loop_points))
+    {
+        if(start != 0 || end != length)
+            throw std::runtime_error("Loop points not supported");
+        return;
+    }
+
+    if(start >= end || end > length)
+        throw std::runtime_error("Loop points out of range");
+
+    ALint pts[2]{(ALint)start, (ALint)end};
+    alGetError();
+    alBufferiv(mId, AL_LOOP_POINTS_SOFT, pts);
+    if(alGetError() != AL_NO_ERROR)
+        throw std::runtime_error("Failed to set loop points");
+}
+
+std::pair<ALuint,ALuint> ALBuffer::getLoopPoints() const
+{
+    CheckContextDevice(mDevice);
+
+    if(!ALContext::GetCurrent()->hasExtension(SOFT_loop_points))
+        return std::make_pair(0, getLength());
+
+    ALint pts[2]{-1,-1};
+    alGetBufferiv(mId, AL_LOOP_POINTS_SOFT, pts);
+    if(pts[0] == -1 || pts[1] == -1)
+        throw std::runtime_error("Failed to get loop points");
+
+    return std::make_pair(pts[0], pts[1]);
+}
+
 bool ALBuffer::isInUse() const
 {
     return (mRefs.load() > 0);

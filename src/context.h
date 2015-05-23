@@ -32,6 +32,7 @@ enum ALExtension {
     EXT_MULAW_MCFORMATS,
     EXT_MULAW_BFORMAT,
 
+    SOFT_loop_points,
     SOFT_source_latency,
 
     AL_EXTENSION_MAX

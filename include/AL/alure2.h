@@ -413,6 +413,23 @@ public:
     /** Retrieves the storage size used by the buffer, in bytes. */
     virtual ALuint getSize() const = 0;
 
+    /**
+     * Sets the buffer's loop points, used for looping sources. If the current
+     * context does not support the AL_SOFT_loop_points extension, \param start
+     * and \param end must be 0 and \ref getLength() respectively. Otherwise,
+     * \param start must be less than \param end, and \param end must be less
+     * than or equal to \ref getLength().
+     *
+     * The buffer must not be in use when this method is called.
+     *
+     * \param start The starting point, in sample frames (inclusive).
+     * \param end The ending point, in sample frames (exclusive).
+     */
+    virtual void setLoopPoints(ALuint start, ALuint end) = 0;
+
+    /** Retrieves the current loop points as a (start,end) pair. */
+    virtual std::pair<ALuint,ALuint> getLoopPoints() const = 0;
+
     /** Queries if the buffer is in use and can't be removed. */
     virtual bool isInUse() const = 0;
 };

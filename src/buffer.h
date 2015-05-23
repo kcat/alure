@@ -49,6 +49,9 @@ public:
 
     virtual ALuint getSize() const final;
 
+    virtual void setLoopPoints(ALuint start, ALuint end) final;
+    virtual std::pair<ALuint,ALuint> getLoopPoints() const final;
+
     virtual bool isInUse() const final;
 };
 
