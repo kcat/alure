@@ -16,7 +16,7 @@ namespace alure
 
 void ALBuffer::cleanup()
 {
-    if(!isRemovable())
+    if(isInUse())
         throw std::runtime_error("Buffer is in use");
 
     alGetError();
@@ -70,9 +70,9 @@ ALuint ALBuffer::getSize() const
     return size;
 }
 
-bool ALBuffer::isRemovable() const
+bool ALBuffer::isInUse() const
 {
-    return (mRefs.load() == 0);
+    return (mRefs.load() > 0);
 }
 
 

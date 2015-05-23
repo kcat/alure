@@ -5,7 +5,7 @@
 
 namespace alure {
 
-typedef std::atomic<long> RefCount;
+typedef std::atomic<unsigned long> RefCount;
 
 } // namespace alure
 

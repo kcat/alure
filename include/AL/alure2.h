@@ -413,8 +413,8 @@ public:
     /** Retrieves the storage size used by the buffer, in bytes. */
     virtual ALuint getSize() const = 0;
 
-    /** Queries if the buffer is not in use and can be removed. */
-    virtual bool isRemovable() const = 0;
+    /** Queries if the buffer is in use and can't be removed. */
+    virtual bool isInUse() const = 0;
 };
 
 

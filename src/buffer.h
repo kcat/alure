@@ -34,9 +34,9 @@ public:
 
     void cleanup();
 
-    long addRef() { return ++mRefs; }
-    long decRef() { return --mRefs; }
-    long getRef() { return mRefs.load(); }
+    unsigned long addRef() { return ++mRefs; }
+    unsigned long decRef() { return --mRefs; }
+    unsigned long getRef() { return mRefs.load(); }
 
     ALDevice *getDevice() { return mDevice; }
     const ALuint &getId() const { return mId; }
@@ -49,7 +49,7 @@ public:
 
     virtual ALuint getSize() const final;
 
-    virtual bool isRemovable() const final;
+    virtual bool isInUse() const final;
 };
 
 } // namespace alure
