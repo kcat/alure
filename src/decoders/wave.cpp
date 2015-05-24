@@ -64,13 +64,17 @@ class WaveDecoder : public Decoder {
     ALuint mFrequency;
     ALuint mFrameSize;
 
+    // In sample frames, relative to sample data start
+    std::pair<ALuint,ALuint> mLoopPts;
+
+    // In bytes from beginning of file
     std::istream::pos_type mStart, mEnd;
 
 public:
     WaveDecoder(SharedPtr<std::istream> file, SampleConfig channels, SampleType type, ALuint frequency, ALuint framesize,
-                std::istream::pos_type start, std::istream::pos_type end)
+                std::istream::pos_type start, std::istream::pos_type end, ALuint loopstart, ALuint loopend)
       : mFile(file), mSampleConfig(channels), mSampleType(type), mFrequency(frequency), mFrameSize(framesize),
-        mStart(start), mEnd(end)
+        mLoopPts{loopstart,loopend}, mStart(start), mEnd(end)
     { }
     virtual ~WaveDecoder();
 
@@ -130,7 +134,7 @@ bool WaveDecoder::seek(uint64_t pos)
 
 std::pair<uint64_t,uint64_t> WaveDecoder::getLoopPoints() const
 {
-    return std::make_pair(0, 0);
+    return mLoopPts;
 }
 
 ALuint WaveDecoder::read(ALvoid *ptr, ALuint count)
@@ -201,6 +205,9 @@ SharedPtr<Decoder> WaveDecoderFactory::createDecoder(SharedPtr<std::istream> fil
     SampleType type = SampleType_UInt8;
     ALuint frequency = 0;
     ALuint framesize = 0;
+    ALuint loop_pts[2]{0, 0};
+    ALuint blockalign = 0;
+    ALuint framealign = 0;
 
     char tag[4]{};
     if(!file->read(tag, 4) || file->gcount() != 4 || memcmp(tag, "RIFF", 4) != 0)
@@ -236,8 +243,8 @@ SharedPtr<Decoder> WaveDecoderFactory::createDecoder(SharedPtr<std::istream> fil
             /* skip average bytes per second */
             read_le32(*file); size -= 4;
 
-            /* skip block alignment */
-            read_le16(*file); size -= 2;
+            /* bytes per block */
+            blockalign = read_le16(*file); size -= 2;
 
             /* bits per sample */
             int bitdepth = read_le16(*file); size -= 2;
@@ -365,6 +372,47 @@ SharedPtr<Decoder> WaveDecoderFactory::createDecoder(SharedPtr<std::istream> fil
                 goto next_chunk;
 
             framesize = FramesToBytes(1, channels, type);
+
+            /* Calculate the number of frames per block (ADPCM will need extra
+             * consideration). */
+            framealign = blockalign / framesize;
+        }
+        else if(memcmp(tag, "smpl", 4) == 0)
+        {
+            /* sampler data needs at least 36 bytes */
+            if(size < 36) goto next_chunk;
+
+            /* Most of this only affects MIDI sampling, but we only care about
+             * the loop definitions at the end. */
+            /*ALuint manufacturer =*/ read_le32(*file);
+            /*ALuint product =*/ read_le32(*file);
+            /*ALuint smpperiod =*/ read_le32(*file);
+            /*ALuint unitynote =*/ read_le32(*file);
+            /*ALuint pitchfrac =*/ read_le32(*file);
+            /*ALuint smptefmt =*/ read_le32(*file);
+            /*ALuint smpteoffset =*/ read_le32(*file);
+            ALuint loopcount = read_le32(*file);
+            /*ALuint extrabytes =*/ read_le32(*file);
+            size -= 36;
+
+            for(ALuint i = 0;i < loopcount && size >= 24;++i)
+            {
+                /*ALuint id =*/ read_le32(*file);
+                ALuint type = read_le32(*file);
+                ALuint loopstart = read_le32(*file);
+                ALuint loopend = read_le32(*file);
+                /*ALuint frac =*/ read_le32(*file);
+                ALuint numloops = read_le32(*file);
+                size -= 24;
+
+                /* Only handle indefinite forward loops. */
+                if(type == 0 || numloops == 0)
+                {
+                    loop_pts[0] = loopstart;
+                    loop_pts[1] = loopend;
+                    break;
+                }
+            }
         }
         else if(memcmp(tag, "data", 4) == 0)
         {
@@ -375,9 +423,15 @@ SharedPtr<Decoder> WaveDecoderFactory::createDecoder(SharedPtr<std::istream> fil
             std::istream::pos_type start = file->tellg();
             std::istream::pos_type end = start + std::istream::pos_type(size - (size%framesize));
             if(end-start >= framesize)
+            {
+                /* Loop points are byte offsets relative to the data start.
+                 * Convert to sample frame offsets. */
                 return SharedPtr<Decoder>(new WaveDecoder(file,
-                    channels, type, frequency, framesize, start, end
+                    channels, type, frequency, framesize, start, end,
+                    loop_pts[0] / blockalign * framealign,
+                    loop_pts[1] / blockalign * framealign
                 ));
+            }
         }
 
     next_chunk:
