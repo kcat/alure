@@ -35,6 +35,7 @@ class ALBufferStream {
     std::vector<ALuint> mBufferIds;
     ALuint mCurrentIdx;
 
+    std::pair<uint64_t,uint64_t> mLoopPts;
     bool mHasLooped;
     bool mDone;
 
@@ -42,7 +43,7 @@ public:
     ALBufferStream(SharedPtr<Decoder> decoder, ALuint updatelen, ALuint numupdates)
       : mDecoder(decoder), mUpdateLen(updatelen), mNumUpdates(numupdates),
         mFormat(AL_NONE), mFrequency(0), mFrameSize(0), mSilence(0),
-        mCurrentIdx(0), mHasLooped(false), mDone(false)
+        mCurrentIdx(0), mLoopPts{0,0}, mHasLooped(false), mDone(false)
     { }
     virtual ~ALBufferStream()
     {
@@ -74,6 +75,13 @@ public:
         SampleConfig chans = mDecoder->getSampleConfig();
         SampleType type = mDecoder->getSampleType();
 
+        mLoopPts = mDecoder->getLoopPoints();
+        if(mLoopPts.first >= mLoopPts.second)
+        {
+            mLoopPts.first = 0;
+            mLoopPts.second = std::numeric_limits<uint64_t>::max();
+        }
+
         mFormat = GetFormat(chans, type);
         mFrequency = srate;
         mFrameSize = FramesToBytes(1, chans, type);
@@ -85,20 +93,41 @@ public:
         alGenBuffers(mBufferIds.size(), &mBufferIds[0]);
     }
 
+    uint64_t getLoopStart() const { return mLoopPts.first; }
+    uint64_t getLoopEnd() const { return mLoopPts.second; }
+
     bool hasLooped() const { return mHasLooped; }
     bool hasMoreData() const { return !mDone; }
     bool streamMoreData(ALuint srcid, bool loop)
     {
         if(mDone) return false;
-        ALuint frames = mDecoder->read(&mData[0], mUpdateLen);
-        if(loop && frames < mUpdateLen)
+
+        ALuint len = mUpdateLen;
+        uint64_t pos = mDecoder->getPosition();
+        if(loop)
         {
+            if(pos <= mLoopPts.second)
+                len = std::min<uint64_t>(len, mLoopPts.second - pos);
+            else
+                loop = false;
+        }
+
+        ALuint frames = mDecoder->read(&mData[0], len);
+        if(loop && frames < mUpdateLen && pos+frames > 0)
+        {
+            if(pos+frames < mLoopPts.second)
+            {
+                mLoopPts.second = pos+frames;
+                mLoopPts.first = std::min(mLoopPts.first, mLoopPts.second-1);
+            }
+
             do {
-                if(!mDecoder->seek(0))
+                if(!mDecoder->seek(mLoopPts.first))
                     break;
                 mHasLooped = true;
 
-                ALuint got = mDecoder->read(&mData[frames*mFrameSize], mUpdateLen-frames);
+                len = std::min<uint64_t>(mUpdateLen-frames, mLoopPts.second-mLoopPts.first);
+                ALuint got = mDecoder->read(&mData[frames*mFrameSize], len);
                 if(got == 0) break;
                 frames += got;
             } while(frames < mUpdateLen);
@@ -484,7 +513,16 @@ uint64_t ALSource::getOffset(uint64_t *latency) const
             ALuint inqueue = queued*mStream->getUpdateLength() - srcpos;
 
             if(pos >= inqueue)
+            {
                 pos -= inqueue;
+                if(pos < mStream->getLoopStart() && mStream->hasLooped())
+                {
+                    uint64_t looplen = mStream->getLoopEnd() - mStream->getLoopStart();
+                    do {
+                        pos += looplen;
+                    } while(pos < mStream->getLoopStart());
+                }
+            }
             else if(!mStream->hasLooped())
             {
                 // A non-looped stream should never have more samples queued
@@ -493,18 +531,9 @@ uint64_t ALSource::getOffset(uint64_t *latency) const
             }
             else
             {
-                uint64_t streamlen = mStream->getLength();
-                if(streamlen == 0)
-                {
-                    // A looped stream that doesn't know its own length?
-                    pos = 0;
-                }
-                else
-                {
-                    pos += streamlen - inqueue;
-                    while((int64_t)pos < 0)
-                        pos += streamlen;
-                }
+                uint64_t looplen = mStream->getLoopEnd() - mStream->getLoopStart();
+                while(pos < mStream->getLoopStart())
+                    pos += looplen;
             }
         }
 

@@ -606,8 +606,8 @@ public:
      */
     virtual uint64_t getPosition() = 0;
     /**
-     * Seek as close as possible to \param pos, specified in sample frames.
-     * Returns true if the seek was successful.
+     * Seek to \param pos, specified in sample frames. Returns true if the seek
+     * was successful.
      */
     virtual bool seek(uint64_t pos) = 0;
 
