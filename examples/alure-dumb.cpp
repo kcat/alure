@@ -144,6 +144,12 @@ public:
         return false;
     }
 
+    virtual std::pair<uint64_t,uint64_t> getLoopPoints() const final
+    {
+        // No loop points
+        return std::make_pair(0, 0);
+    }
+
     virtual ALuint read(ALvoid *ptr, ALuint count) final
     {
         ALuint ret = 0;

@@ -357,6 +357,15 @@ Buffer *ALContext::getBuffer(const std::string &name)
     if(!frames) throw std::runtime_error("No samples for buffer");
     data.resize(FramesToBytes(frames, chans, type));
 
+    std::pair<uint64_t,uint64_t> loop_pts = decoder->getLoopPoints();
+    if(loop_pts.first >= loop_pts.second)
+        loop_pts = std::make_pair(0, frames);
+    else
+    {
+        loop_pts.second = std::min<uint64_t>(loop_pts.second, frames);
+        loop_pts.first = std::min<uint64_t>(loop_pts.first, loop_pts.second-1);
+    }
+
     // Get the format before calling the bufferLoading message handler, to
     // ensure it's something OpenAL can handle.
     ALenum format = GetFormat(chans, type);
@@ -369,6 +378,11 @@ Buffer *ALContext::getBuffer(const std::string &name)
     try {
         alGenBuffers(1, &bid);
         alBufferData(bid, format, &data[0], data.size(), srate);
+        if(hasExtension(SOFT_loop_points))
+        {
+            ALint pts[2]{(ALint)loop_pts.first, (ALint)loop_pts.second};
+            alBufferiv(bid, AL_LOOP_POINTS_SOFT, pts);
+        }
         if(alGetError() != AL_NO_ERROR)
             throw std::runtime_error("Failed to buffer data");
 

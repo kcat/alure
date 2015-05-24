@@ -427,7 +427,7 @@ public:
      */
     virtual void setLoopPoints(ALuint start, ALuint end) = 0;
 
-    /** Retrieves the current loop points as a (start,end) pair. */
+    /** Retrieves the current loop points as a [start,end) pair. */
     virtual std::pair<ALuint,ALuint> getLoopPoints() const = 0;
 
     /** Queries if the buffer is in use and can't be removed. */
@@ -610,6 +610,12 @@ public:
      * Returns true if the seek was successful.
      */
     virtual bool seek(uint64_t pos) = 0;
+
+    /**
+     * Retrieves the loop points, in sample frames, as a [start,end) pair. If
+     * start >= end, use all available data.
+     */
+    virtual std::pair<uint64_t,uint64_t> getLoopPoints() const = 0;
 
     /**
      * Decodes \param count sample frames, writing them to \param ptr, and

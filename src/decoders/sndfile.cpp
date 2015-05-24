@@ -80,6 +80,8 @@ public:
     virtual uint64_t getPosition() final;
     virtual bool seek(uint64_t pos) final;
 
+    virtual std::pair<uint64_t,uint64_t> getLoopPoints() const final;
+
     virtual ALuint read(ALvoid *ptr, ALuint count) final;
 };
 
@@ -122,6 +124,11 @@ bool SndFileDecoder::seek(uint64_t pos)
     sf_count_t newpos = sf_seek(mSndFile, pos, SEEK_SET);
     if(newpos < 0) return false;
     return true;
+}
+
+std::pair<uint64_t,uint64_t> SndFileDecoder::getLoopPoints() const
+{
+    return std::make_pair(0, 0);
 }
 
 ALuint SndFileDecoder::read(ALvoid *ptr, ALuint count)

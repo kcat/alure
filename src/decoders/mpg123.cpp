@@ -50,6 +50,8 @@ public:
     virtual uint64_t getPosition() final;
     virtual bool seek(uint64_t pos) final;
 
+    virtual std::pair<uint64_t,uint64_t> getLoopPoints() const final;
+
     virtual ALuint read(ALvoid *ptr, ALuint count) final;
 };
 
@@ -98,6 +100,11 @@ bool Mpg123Decoder::seek(uint64_t pos)
     off_t newpos = mpg123_seek(mMpg123, pos, SEEK_SET);
     if(newpos < 0) return false;
     return true;
+}
+
+std::pair<uint64_t,uint64_t> Mpg123Decoder::getLoopPoints() const
+{
+    return std::make_pair(0, 0);
 }
 
 ALuint Mpg123Decoder::read(ALvoid *ptr, ALuint count)

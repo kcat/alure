@@ -82,6 +82,8 @@ public:
     virtual uint64_t getPosition() final;
     virtual bool seek(uint64_t pos) final;
 
+    virtual std::pair<uint64_t,uint64_t> getLoopPoints() const final;
+
     virtual ALuint read(ALvoid *ptr, ALuint count) final;
 };
 
@@ -124,6 +126,11 @@ bool WaveDecoder::seek(uint64_t pos)
     if(!mFile->seekg(offset))
         return false;
     return true;
+}
+
+std::pair<uint64_t,uint64_t> WaveDecoder::getLoopPoints() const
+{
+    return std::make_pair(0, 0);
 }
 
 ALuint WaveDecoder::read(ALvoid *ptr, ALuint count)

@@ -176,6 +176,8 @@ public:
     virtual uint64_t getPosition() final;
     virtual bool seek(uint64_t pos) final;
 
+    virtual std::pair<uint64_t,uint64_t> getLoopPoints() const final;
+
     virtual ALuint read(ALvoid *ptr, ALuint count) final;
 };
 
@@ -248,6 +250,11 @@ bool FlacDecoder::seek(uint64_t pos)
         return false;
     mSamplePos = pos;
     return true;
+}
+
+std::pair<uint64_t,uint64_t> FlacDecoder::getLoopPoints() const
+{
+    return std::make_pair(0, 0);
 }
 
 ALuint FlacDecoder::read(ALvoid *ptr, ALuint count)

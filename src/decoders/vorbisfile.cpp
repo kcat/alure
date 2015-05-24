@@ -72,6 +72,8 @@ public:
     virtual uint64_t getPosition() final;
     virtual bool seek(uint64_t pos) final;
 
+    virtual std::pair<uint64_t,uint64_t> getLoopPoints() const final;
+
     virtual ALuint read(ALvoid *ptr, ALuint count) final;
 };
 
@@ -112,6 +114,11 @@ uint64_t VorbisFileDecoder::getPosition()
 bool VorbisFileDecoder::seek(uint64_t pos)
 {
     return ov_pcm_seek(mOggFile.get(), pos) == 0;
+}
+
+std::pair<uint64_t,uint64_t> VorbisFileDecoder::getLoopPoints() const
+{
+    return std::make_pair(0, 0);
 }
 
 ALuint VorbisFileDecoder::read(ALvoid *ptr, ALuint count)
