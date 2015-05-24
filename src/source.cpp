@@ -148,6 +148,17 @@ public:
 };
 
 
+ALSource::ALSource(ALContext *context)
+  : mContext(context), mId(0), mBuffer(0), mDirectFilter(AL_FILTER_NULL)
+{
+    resetProperties();
+}
+
+ALSource::~ALSource()
+{
+}
+
+
 void ALSource::resetProperties()
 {
     mLooping = false;
@@ -239,8 +250,7 @@ void ALSource::play(Buffer *buffer)
     }
     mOffset = 0;
 
-    delete mStream;
-    mStream = 0;
+    mStream.reset();
 
     albuf->addRef();
     if(mBuffer)
@@ -280,8 +290,7 @@ void ALSource::play(SharedPtr<Decoder> decoder, ALuint updatelen, ALuint queuesi
         mBuffer->decRef();
     mBuffer = 0;
 
-    delete mStream;
-    mStream = stream.release();
+    mStream = std::move(stream);
 
     mStream->seek(mOffset);
     mOffset = 0;
@@ -318,8 +327,7 @@ void ALSource::stop()
         mBuffer->decRef();
     mBuffer = 0;
 
-    delete mStream;
-    mStream = 0;
+    mStream.reset();
 
     mPaused = false;
 }
@@ -993,8 +1001,7 @@ void ALSource::release()
         mBuffer->decRef();
     mBuffer = 0;
 
-    delete mStream;
-    mStream = 0;
+    mStream.reset();
 
     resetProperties();
 }

@@ -33,7 +33,7 @@ class ALSource : public Source {
     ALuint mId;
 
     ALBuffer *mBuffer;
-    ALBufferStream *mStream;
+    std::unique_ptr<ALBufferStream> mStream;
 
     bool mLooping;
     bool mPaused;
@@ -63,9 +63,8 @@ class ALSource : public Source {
     void setFilterParams(ALuint &filterid, const FilterParams &params);
 
 public:
-    ALSource(ALContext *context)
-      : mContext(context), mId(0), mBuffer(0), mStream(0), mDirectFilter(AL_FILTER_NULL)
-    { resetProperties(); }
+    ALSource(ALContext *context);
+    virtual ~ALSource();
 
     void updateNoCtxCheck();
     ALuint getId() const { return mId; }
