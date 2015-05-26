@@ -87,7 +87,9 @@ public:
         mFrameSize = FramesToBytes(1, chans, type);
 
         mData.resize(mUpdateLen * mFrameSize);
-        mSilence = (type == SampleType_UInt8) ? 0x80 : 0x00;
+        if(type == SampleType_UInt8) mSilence = 0x80;
+        else if(type == SampleType_Mulaw) mSilence = 0x7f;
+        else mSilence = 0x00;
 
         mBufferIds.assign(mNumUpdates, 0);
         alGenBuffers(mBufferIds.size(), &mBufferIds[0]);
