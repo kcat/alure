@@ -430,6 +430,13 @@ public:
     /** Retrieves the current loop points as a [start,end) pair. */
     virtual std::pair<ALuint,ALuint> getLoopPoints() const = 0;
 
+    /**
+     * Retrieves the \ref Source objects currently playing the buffer. Stopping
+     * the returned sources will allow the buffer to be removed from the
+     * context.
+     */
+    virtual std::vector<Source*> getSources() const = 0;
+
     /** Queries if the buffer is in use and can't be removed. */
     virtual bool isInUse() const = 0;
 };

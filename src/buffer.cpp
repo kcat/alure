@@ -111,7 +111,7 @@ std::pair<ALuint,ALuint> ALBuffer::getLoopPoints() const
 
 bool ALBuffer::isInUse() const
 {
-    return (mRefs.load() > 0);
+    return (mSources.size() > 0);
 }
 
 

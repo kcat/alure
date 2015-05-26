@@ -252,10 +252,10 @@ void ALSource::play(Buffer *buffer)
 
     mStream.reset();
 
-    albuf->addRef();
     if(mBuffer)
-        mBuffer->decRef();
+        mBuffer->removeSource(this);
     mBuffer = albuf;
+    mBuffer->addSource(this);
 
     alSourcei(mId, AL_BUFFER, mBuffer->getId());
     alSourcePlay(mId);
@@ -287,7 +287,7 @@ void ALSource::play(SharedPtr<Decoder> decoder, ALuint updatelen, ALuint queuesi
     }
 
     if(mBuffer)
-        mBuffer->decRef();
+        mBuffer->removeSource(this);
     mBuffer = 0;
 
     mStream = std::move(stream);
@@ -324,7 +324,7 @@ void ALSource::stop()
     }
 
     if(mBuffer)
-        mBuffer->decRef();
+        mBuffer->removeSource(this);
     mBuffer = 0;
 
     mStream.reset();
@@ -997,7 +997,7 @@ void ALSource::release()
     mEffectSlots.clear();
 
     if(mBuffer)
-        mBuffer->decRef();
+        mBuffer->removeSource(this);
     mBuffer = 0;
 
     mStream.reset();

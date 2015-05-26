@@ -3,6 +3,8 @@
 
 #include "main.h"
 
+#include <algorithm>
+
 #include "al.h"
 
 #include "refcount.h"
@@ -24,22 +26,25 @@ class ALBuffer : public Buffer {
     SampleConfig mSampleConfig;
     SampleType mSampleType;
 
-    RefCount mRefs;
+    std::vector<Source*> mSources;
 
 public:
     ALBuffer(ALDevice *device, ALuint id, ALuint freq, SampleConfig config, SampleType type)
-      : mDevice(device), mId(id), mFrequency(freq), mSampleConfig(config), mSampleType(type), mRefs(0)
+      : mDevice(device), mId(id), mFrequency(freq), mSampleConfig(config), mSampleType(type)
     { }
     virtual ~ALBuffer() { }
 
     void cleanup();
 
-    unsigned long addRef() { return ++mRefs; }
-    unsigned long decRef() { return --mRefs; }
-    unsigned long getRef() { return mRefs.load(); }
-
     ALDevice *getDevice() { return mDevice; }
-    const ALuint &getId() const { return mId; }
+    ALuint getId() const { return mId; }
+
+    void addSource(Source *source) { mSources.push_back(source); }
+    void removeSource(Source *source)
+    {
+        auto iter = std::find(mSources.cbegin(), mSources.cend(), source);
+        if(iter != mSources.cend()) mSources.erase(iter);
+    }
 
     virtual ALuint getLength() const final;
 
@@ -51,6 +56,9 @@ public:
 
     virtual void setLoopPoints(ALuint start, ALuint end) final;
     virtual std::pair<ALuint,ALuint> getLoopPoints() const final;
+
+    virtual std::vector<Source*> getSources() const final
+    { return mSources; }
 
     virtual bool isInUse() const final;
 };
