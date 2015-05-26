@@ -388,6 +388,29 @@ bool ALSource::isPaused() const
 }
 
 
+ALint ALSource::refillBufferStream()
+{
+    ALint processed;
+    alGetSourcei(mId, AL_BUFFERS_PROCESSED, &processed);
+    while(processed > 0)
+    {
+        ALuint buf;
+        alSourceUnqueueBuffers(mId, 1, &buf);
+        --processed;
+    }
+
+    ALint queued;
+    alGetSourcei(mId, AL_BUFFERS_QUEUED, &queued);
+    for(;(ALuint)queued < mStream->getNumUpdates();queued++)
+    {
+        if(!mStream->streamMoreData(mId, mLooping))
+            break;
+    }
+
+    return queued;
+}
+
+
 void ALSource::update()
 {
     CheckContext(mContext);
@@ -401,23 +424,7 @@ void ALSource::updateNoCtxCheck()
 
     if(mStream)
     {
-        ALint processed;
-        alGetSourcei(mId, AL_BUFFERS_PROCESSED, &processed);
-        while(processed > 0)
-        {
-            ALuint buf;
-            alSourceUnqueueBuffers(mId, 1, &buf);
-            --processed;
-        }
-
-        ALint queued;
-        alGetSourcei(mId, AL_BUFFERS_QUEUED, &queued);
-        for(;(ALuint)queued < mStream->getNumUpdates();queued++)
-        {
-            if(!mStream->streamMoreData(mId, mLooping))
-                break;
-        }
-
+        ALint queued = refillBufferStream();
         if(queued == 0)
             stop();
         else if(!mPaused)
@@ -426,20 +433,7 @@ void ALSource::updateNoCtxCheck()
             alGetSourcei(mId, AL_SOURCE_STATE, &state);
             if(state != AL_PLAYING)
             {
-                alGetSourcei(mId, AL_BUFFERS_PROCESSED, &processed);
-                while(processed > 0)
-                {
-                    ALuint buf;
-                    alSourceUnqueueBuffers(mId, 1, &buf);
-                    --processed;
-                }
-
-                alGetSourcei(mId, AL_BUFFERS_QUEUED, &queued);
-                for(;(ALuint)queued < mStream->getNumUpdates();queued++)
-                {
-                    if(!mStream->streamMoreData(mId, mLooping))
-                        break;
-                }
+                refillBufferStream();
                 alSourcePlay(mId);
             }
         }
@@ -483,6 +477,11 @@ void ALSource::setOffset(uint64_t offset)
         if(!mStream->seek(offset))
             throw std::runtime_error("Failed to seek to offset");
         alSourceStop(mId);
+        ALint queued = refillBufferStream();
+        if(queued == 0)
+            stop();
+        else if(!mPaused)
+            alSourcePlay(mId);
     }
 }
 

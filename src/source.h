@@ -60,6 +60,8 @@ class ALSource : public Source {
     void resetProperties();
     void applyProperties(bool looping, ALuint offset) const;
 
+    ALint refillBufferStream();
+
     void setFilterParams(ALuint &filterid, const FilterParams &params);
 
 public:
