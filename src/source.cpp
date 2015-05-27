@@ -343,7 +343,9 @@ void ALSource::pause()
         alSourcePause(mId);
         ALint state = -1;
         alGetSourcei(mId, AL_SOURCE_STATE, &state);
-        mPaused = (state == AL_PAUSED);
+        // Streaming sources may be in a stopped state if underrun
+        mPaused = (state == AL_PAUSED) ||
+                  (state == AL_STOPPED && mStream && mStream->hasMoreData());
     }
 }
 
@@ -353,12 +355,7 @@ void ALSource::resume()
     if(!mPaused) return;
 
     if(mId != 0)
-    {
-        ALint state = -1;
-        alGetSourcei(mId, AL_SOURCE_STATE, &state);
-        if(state == AL_PAUSED)
-            alSourcePlay(mId);
-    }
+        alSourcePlay(mId);
     mPaused = false;
 }
 
@@ -373,7 +370,7 @@ bool ALSource::isPlaying() const
     if(state == -1)
         throw std::runtime_error("Source state error");
 
-    return state == AL_PLAYING || (mStream && !mPaused && mStream->hasMoreData());
+    return state == AL_PLAYING || (!mPaused && mStream && mStream->hasMoreData());
 }
 
 bool ALSource::isPaused() const
