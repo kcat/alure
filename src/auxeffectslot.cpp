@@ -41,7 +41,7 @@ void ALAuxiliaryEffectSlot::applyEffect(const Effect *effect)
 void ALAuxiliaryEffectSlot::release()
 {
     CheckContext(mContext);
-    if(!isInUse())
+    if(isInUse())
         throw std::runtime_error("AuxiliaryEffectSlot is in use");
 
     alGetError();
@@ -55,7 +55,7 @@ void ALAuxiliaryEffectSlot::release()
 
 bool ALAuxiliaryEffectSlot::isInUse() const
 {
-    return (mRefs.load() == 0);
+    return (mRefs.load() > 0);
 }
 
 } // namespace alure
