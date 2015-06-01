@@ -31,7 +31,7 @@ public:
 
     virtual void release() final;
 
-    virtual bool isInUse() const final;
+    virtual bool isInUse() const final { return (mRefs.load() > 0); }
 
     long addRef() { return ++mRefs; }
     long decRef() { return --mRefs; }

@@ -53,9 +53,4 @@ void ALAuxiliaryEffectSlot::release()
     delete this;
 }
 
-bool ALAuxiliaryEffectSlot::isInUse() const
-{
-    return (mRefs.load() > 0);
-}
-
 } // namespace alure

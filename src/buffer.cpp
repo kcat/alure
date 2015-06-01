@@ -109,11 +109,6 @@ std::pair<ALuint,ALuint> ALBuffer::getLoopPoints() const
     return std::make_pair(pts[0], pts[1]);
 }
 
-bool ALBuffer::isInUse() const
-{
-    return (mSources.size() > 0);
-}
-
 
 const char *GetSampleTypeName(SampleType type)
 {

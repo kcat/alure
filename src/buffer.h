@@ -60,7 +60,7 @@ public:
     virtual std::vector<Source*> getSources() const final
     { return mSources; }
 
-    virtual bool isInUse() const final;
+    virtual bool isInUse() const final { return (mSources.size() > 0); }
 };
 
 } // namespace alure
