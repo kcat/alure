@@ -32,20 +32,20 @@ class FlacDecoder : public Decoder {
         if(mSampleType == SampleType_UInt8)
         {
             ALubyte *samples = output;
-            for(ALuint i = 0;i < todo;i++)
+            for(ALuint c = 0;c < frame->header.channels;c++)
             {
-                for(ALuint c = 0;c < frame->header.channels;c++)
-                    *(samples++) = ALubyte(buffer[c][offset+i] + 0x80);
+                for(ALuint i = 0;i < todo;i++)
+                    samples[i*frame->header.channels + c] = ALubyte(buffer[c][offset+i] + 0x80);
             }
         }
         else
         {
             int shift = frame->header.bits_per_sample - 16;
             ALshort *samples = reinterpret_cast<ALshort*>(output);
-            for(ALuint i = 0;i < todo;i++)
+            for(ALuint c = 0;c < frame->header.channels;c++)
             {
-                for(ALuint c = 0;c < frame->header.channels;c++)
-                    *(samples++) = buffer[c][offset+i] >> shift;
+                for(ALuint i = 0;i < todo;i++)
+                    samples[i*frame->header.channels + c] = buffer[c][offset+i] >> shift;
             }
         }
     }
