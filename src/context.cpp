@@ -19,6 +19,9 @@
 #ifdef HAVE_LIBFLAC
 #include "decoders/flac.hpp"
 #endif
+#ifdef HAVE_OPUSFILE
+#include "decoders/opusfile.hpp"
+#endif
 #ifdef HAVE_LIBSNDFILE
 #include "decoders/sndfile.hpp"
 #endif
@@ -55,6 +58,9 @@ static FactoryPair sDefaultDecoders[] = {
 
     { "_alure_int_wave", SharedPtr<DecoderFactory>(new WaveDecoderFactory) },
 
+#ifdef HAVE_OPUSFILE
+    { "_alure_int_opus", SharedPtr<DecoderFactory>(new OpusFileDecoderFactory) },
+#endif
 #ifdef HAVE_LIBFLAC
     { "_alure_int_flac", SharedPtr<DecoderFactory>(new FlacDecoderFactory) },
 #endif

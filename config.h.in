@@ -7,6 +7,9 @@
 /* Define if we have libFLAC support */
 #cmakedefine HAVE_LIBFLAC
 
+/* Define if we have opusfile support */
+#cmakedefine HAVE_OPUSFILE
+
 /* Define if we have libsndfile support */
 #cmakedefine HAVE_LIBSNDFILE
 
