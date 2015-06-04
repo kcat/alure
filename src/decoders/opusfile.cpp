@@ -122,6 +122,7 @@ std::pair<uint64_t,uint64_t> OpusFileDecoder::getLoopPoints() const
 ALuint OpusFileDecoder::read(ALvoid *ptr, ALuint count)
 {
     ALuint total = 0;
+    opus_int16 *samples = (opus_int16*)ptr;
     int num_chans = FramesToBytes(1, mSampleConfig, SampleType_UInt8);
     while(total < count)
     {
@@ -129,10 +130,10 @@ ALuint OpusFileDecoder::read(ALvoid *ptr, ALuint count)
             break;
         int len = (count-total) * num_chans;
 
-        long got = op_read(mOggFile, reinterpret_cast<opus_int16*>(ptr), len, &mOggBitstream);
+        long got = op_read(mOggFile, samples, len, &mOggBitstream);
         if(got <= 0) break;
 
-        ptr = reinterpret_cast<opus_int16*>(ptr) + got*num_chans;
+        samples += got*num_chans;
         total += got;
     }
 
@@ -141,7 +142,7 @@ ALuint OpusFileDecoder::read(ALvoid *ptr, ALuint count)
     // re-ordered.
     if(mSampleConfig == SampleConfig_X51)
     {
-        ALshort *samples = (ALshort*)ptr;
+        samples = (opus_int16*)ptr;
         for(ALuint i = 0;i < total;++i)
         {
             // OpenAL : FL, FR, FC, LFE, RL, RR
@@ -153,7 +154,7 @@ ALuint OpusFileDecoder::read(ALvoid *ptr, ALuint count)
     }
     else if(mSampleConfig == SampleConfig_X61)
     {
-        ALshort *samples = (ALshort*)ptr;
+        samples = (opus_int16*)ptr;
         for(ALuint i = 0;i < total;++i)
         {
             // OpenAL : FL, FR, FC, LFE, RC, SL, SR
@@ -166,7 +167,7 @@ ALuint OpusFileDecoder::read(ALvoid *ptr, ALuint count)
     }
     else if(mSampleConfig == SampleConfig_X71)
     {
-        ALshort *samples = (ALshort*)ptr;
+        samples = (opus_int16*)ptr;
         for(ALuint i = 0;i < total;++i)
         {
             // OpenAL : FL, FR, FC, LFE, RL, RR, SL, SR

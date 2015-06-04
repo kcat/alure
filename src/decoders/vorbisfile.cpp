@@ -124,18 +124,20 @@ std::pair<uint64_t,uint64_t> VorbisFileDecoder::getLoopPoints() const
 ALuint VorbisFileDecoder::read(ALvoid *ptr, ALuint count)
 {
     ALuint total = 0;
+    ALshort *samples = (ALshort*)ptr;
     while(total < count)
     {
         int len = (count-total) * mVorbisInfo->channels * 2;
 #ifdef __BIG_ENDIAN__
-        long got = ov_read(mOggFile.get(), reinterpret_cast<char*>(ptr), len, 1, 2, 1, &mOggBitstream);
+        long got = ov_read(mOggFile.get(), reinterpret_cast<char*>(samples), len, 1, 2, 1, &mOggBitstream);
 #else
-        long got = ov_read(mOggFile.get(), reinterpret_cast<char*>(ptr), len, 0, 2, 1, &mOggBitstream);
+        long got = ov_read(mOggFile.get(), reinterpret_cast<char*>(samples), len, 0, 2, 1, &mOggBitstream);
 #endif
         if(got <= 0) break;
 
-        ptr = reinterpret_cast<char*>(ptr) + got;
-        got /= mVorbisInfo->channels * 2;
+        got /= 2;
+        samples += got;
+        got /= mVorbisInfo->channels;
         total += got;
     }
 
@@ -144,7 +146,7 @@ ALuint VorbisFileDecoder::read(ALvoid *ptr, ALuint count)
     // re-ordered.
     if(mSampleConfig == SampleConfig_X51)
     {
-        ALshort *samples = (ALshort*)ptr;
+        samples = (ALshort*)ptr;
         for(ALuint i = 0;i < total;++i)
         {
             // OpenAL : FL, FR, FC, LFE, RL, RR
@@ -156,7 +158,7 @@ ALuint VorbisFileDecoder::read(ALvoid *ptr, ALuint count)
     }
     else if(mSampleConfig == SampleConfig_X61)
     {
-        ALshort *samples = (ALshort*)ptr;
+        samples = (ALshort*)ptr;
         for(ALuint i = 0;i < total;++i)
         {
             // OpenAL : FL, FR, FC, LFE, RC, SL, SR
@@ -169,7 +171,7 @@ ALuint VorbisFileDecoder::read(ALvoid *ptr, ALuint count)
     }
     else if(mSampleConfig == SampleConfig_X71)
     {
-        ALshort *samples = (ALshort*)ptr;
+        samples = (ALshort*)ptr;
         for(ALuint i = 0;i < total;++i)
         {
             // OpenAL : FL, FR, FC, LFE, RL, RR, SL, SR
