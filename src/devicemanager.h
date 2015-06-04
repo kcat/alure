@@ -12,10 +12,10 @@ public:
     ALDeviceManager();
     virtual ~ALDeviceManager() { }
 
-    virtual bool queryExtension(const char *extname) final;
+    virtual bool queryExtension(const char *extname) const final;
 
-    virtual std::vector<std::string> enumerate(DeviceEnumeration type) final;
-    virtual std::string defaultDeviceName(DefaultDeviceType type) final;
+    virtual std::vector<std::string> enumerate(DeviceEnumeration type) const final;
+    virtual std::string defaultDeviceName(DefaultDeviceType type) const final;
 
     virtual Device *openPlayback(const std::string &name) final;
 };

@@ -191,12 +191,12 @@ public:
     static DeviceManager *get();
 
     /** Queries the existence of a non-device-specific ALC extension. */
-    virtual bool queryExtension(const char *extname) = 0;
+    virtual bool queryExtension(const char *extname) const = 0;
 
     /** Enumerates available device names of the given \param type. */
-    virtual std::vector<std::string> enumerate(DeviceEnumeration type) = 0;
+    virtual std::vector<std::string> enumerate(DeviceEnumeration type) const = 0;
     /** Retrieves the default device of the given \param type. */
-    virtual std::string defaultDeviceName(DefaultDeviceType type) = 0;
+    virtual std::string defaultDeviceName(DefaultDeviceType type) const = 0;
 
     /** Opens the playback device given by \param name, or the default if empty. */
     virtual Device *openPlayback(const std::string &name=std::string()) = 0;
@@ -211,37 +211,52 @@ enum PlaybackDeviceType {
 class Device {
 public:
     /** Retrieves the device name as given by \param type. */
-    virtual std::string getName(PlaybackDeviceType type) = 0;
+    virtual std::string getName(PlaybackDeviceType type) const = 0;
     /** Queries the existence of an ALC extension on this device. */
-    virtual bool queryExtension(const char *extname) = 0;
+    virtual bool queryExtension(const char *extname) const = 0;
 
     /**
      * Retrieves the ALC version supported by this device, as constructed by
      * \ref MakeVersion.
      */
-    virtual ALCuint getALCVersion() = 0;
+    virtual ALCuint getALCVersion() const = 0;
 
     /**
      * Retrieves the EFX version supported by this device, as constructed by
      * \ref MakeVersion. If the ALC_EXT_EFX extension is unsupported, this
      * will be 0.
      */
-    virtual ALCuint getEFXVersion() = 0;
+    virtual ALCuint getEFXVersion() const = 0;
 
     /** Retrieves the device's playback frequency, in hz. */
-    virtual ALCuint getFrequency() = 0;
+    virtual ALCuint getFrequency() const = 0;
 
     /**
      * Retrieves the maximum number of auxiliary source sends. If ALC_EXT_EFX
      * is unsupported, this will be 0.
      */
-    virtual ALCuint getMaxAuxiliarySends() = 0;
+    virtual ALCuint getMaxAuxiliarySends() const = 0;
 
     /**
      * Creates a new \ref Context on this device, using the specified
      * \param attributes.
      */
     virtual Context *createContext(ALCint *attributes=0) = 0;
+
+    /**
+     * Pauses device processing, stopping updates for its contexts. Multiple
+     * calls are allowed but it is not reference counted, so the device will
+     * resume after one \ref resumeDSP call.
+     *
+     * Requires the ALC_SOFT_pause_device extension.
+     */
+    virtual void pauseDSP() = 0;
+
+    /**
+     * Resumes device processing, restarting updates for its contexts. Multiple
+     * calls are allowed and will no-op.
+     */
+    virtual void resumeDSP() = 0;
 
     /**
      * Closes and frees the device. All previously-created contexts must first

@@ -18,6 +18,48 @@
 namespace alure
 {
 
+template<typename T, size_t N>
+static inline size_t countof(const T(&)[N])
+{ return N; }
+
+
+template<typename T>
+static inline void LoadALCFunc(ALCdevice *device, T **func, const char *name)
+{ *func = reinterpret_cast<T*>(alcGetProcAddress(device, name)); }
+
+
+static void LoadPauseDevice(ALDevice *device)
+{
+    LoadALCFunc(device->getDevice(), &device->alcDevicePauseSOFT, "alcDevicePauseSOFT");
+    LoadALCFunc(device->getDevice(), &device->alcDeviceResumeSOFT, "alcDeviceResumeSOFT");
+}
+
+static const struct {
+    enum ALCExtension extension;
+    const char name[32];
+    void (*loader)(ALDevice*);
+} ALCExtensionList[] = {
+    { SOFT_device_pause, "ALC_SOFT_pause_device", LoadPauseDevice },
+};
+
+
+void ALDevice::setupExts()
+{
+    for(size_t i = 0;i < countof(ALCExtensionList);i++)
+    {
+        mHasExt[ALCExtensionList[i].extension] = alcIsExtensionPresent(mDevice, ALCExtensionList[i].name);
+        if(mHasExt[ALCExtensionList[i].extension])
+            ALCExtensionList[i].loader(this);
+    }
+}
+
+
+ALDevice::ALDevice(ALCdevice* device)
+  : mDevice(device), mHasExt{false}, alcDevicePauseSOFT(nullptr), alcDeviceResumeSOFT(nullptr)
+{
+    setupExts();
+}
+
 void ALDevice::removeContext(ALContext *ctx)
 {
     std::vector<ALContext*>::iterator iter;
@@ -68,7 +110,7 @@ void ALDevice::removeBuffer(Buffer *buffer)
 }
 
 
-std::string ALDevice::getName(PlaybackDeviceType type)
+std::string ALDevice::getName(PlaybackDeviceType type) const
 {
     if(type == PlaybackDevType_Complete && !alcIsExtensionPresent(mDevice, "ALC_ENUMERATE_ALL_EXT"))
         type = PlaybackDevType_Basic;
@@ -79,12 +121,12 @@ std::string ALDevice::getName(PlaybackDeviceType type)
     return std::string(name ? name : "");
 }
 
-bool ALDevice::queryExtension(const char *extname)
+bool ALDevice::queryExtension(const char *extname) const
 {
     return alcIsExtensionPresent(mDevice, extname);
 }
 
-ALCuint ALDevice::getALCVersion()
+ALCuint ALDevice::getALCVersion() const
 {
     ALCint major=-1, minor=-1;
     alcGetIntegerv(mDevice, ALC_MAJOR_VERSION, 1, &major);
@@ -96,7 +138,7 @@ ALCuint ALDevice::getALCVersion()
     return MakeVersion((ALCushort)major, (ALCushort)minor);
 }
 
-ALCuint ALDevice::getEFXVersion()
+ALCuint ALDevice::getEFXVersion() const
 {
     if(!alcIsExtensionPresent(mDevice, "ALC_EXT_EFX"))
         return 0;
@@ -111,7 +153,7 @@ ALCuint ALDevice::getEFXVersion()
     return MakeVersion((ALCushort)major, (ALCushort)minor);
 }
 
-ALCuint ALDevice::getFrequency()
+ALCuint ALDevice::getFrequency() const
 {
     ALCint freq = -1;
     alcGetIntegerv(mDevice, ALC_FREQUENCY, 1, &freq);
@@ -120,7 +162,7 @@ ALCuint ALDevice::getFrequency()
     return freq;
 }
 
-ALCuint ALDevice::getMaxAuxiliarySends()
+ALCuint ALDevice::getMaxAuxiliarySends() const
 {
     if(!alcIsExtensionPresent(mDevice, "ALC_EXT_EFX"))
         return 0;
@@ -141,6 +183,21 @@ Context *ALDevice::createContext(ALCint *attribs)
     mContexts.push_back(ret);
     return ret;
 }
+
+
+void ALDevice::pauseDSP()
+{
+    if(!hasExtension(SOFT_device_pause))
+       throw std::runtime_error("ALC_SOFT_pause_device not supported");
+    alcDevicePauseSOFT(mDevice);
+}
+
+void ALDevice::resumeDSP()
+{
+    if(hasExtension(SOFT_device_pause))
+        alcDeviceResumeSOFT(mDevice);
+}
+
 
 void ALDevice::close()
 {

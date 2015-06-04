@@ -33,12 +33,12 @@ ALDeviceManager::ALDeviceManager()
         GetDeviceProc(&SetThreadContext, 0, "alcSetThreadContext");
 }
 
-bool ALDeviceManager::queryExtension(const char *extname)
+bool ALDeviceManager::queryExtension(const char *extname) const
 {
     return alcIsExtensionPresent(0, extname);
 }
 
-std::vector<std::string> ALDeviceManager::enumerate(DeviceEnumeration type)
+std::vector<std::string> ALDeviceManager::enumerate(DeviceEnumeration type) const
 {
     std::vector<std::string> list;
     if(type == DevEnum_Complete && !alcIsExtensionPresent(0, "ALC_ENUMERATE_ALL_EXT"))
@@ -52,7 +52,7 @@ std::vector<std::string> ALDeviceManager::enumerate(DeviceEnumeration type)
     return list;
 }
 
-std::string ALDeviceManager::defaultDeviceName(DefaultDeviceType type)
+std::string ALDeviceManager::defaultDeviceName(DefaultDeviceType type) const
 {
     if(type == DefaultDevType_Complete && !alcIsExtensionPresent(0, "ALC_ENUMERATE_ALL_EXT"))
         type = DefaultDevType_Basic;
