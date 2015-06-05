@@ -10,6 +10,7 @@
 #include <sstream>
 #include <fstream>
 #include <cstring>
+#include <map>
 
 #include "alc.h"
 
@@ -46,30 +47,48 @@ static inline size_t countof(const T(&)[N])
 
 
 typedef std::pair<std::string,SharedPtr<DecoderFactory>> FactoryPair;
-typedef std::vector<FactoryPair> FactoryMap;
-
-static FactoryPair sDefaultDecoders[] = {
-#ifdef HAVE_MPG123
-    { "_alure_int_mpg123", SharedPtr<DecoderFactory>(new Mpg123DecoderFactory) },
-#endif
-#ifdef HAVE_LIBSNDFILE
-    { "_alure_int_sndfile", SharedPtr<DecoderFactory>(new SndFileDecoderFactory) },
-#endif
-
-    { "_alure_int_wave", SharedPtr<DecoderFactory>(new WaveDecoderFactory) },
-
-#ifdef HAVE_OPUSFILE
-    { "_alure_int_opus", SharedPtr<DecoderFactory>(new OpusFileDecoderFactory) },
+static const FactoryPair sDefaultDecoders[] = {
+#ifdef HAVE_VORBISFILE
+    { "_alure_int_vorbis", SharedPtr<DecoderFactory>(new VorbisFileDecoderFactory) },
 #endif
 #ifdef HAVE_LIBFLAC
     { "_alure_int_flac", SharedPtr<DecoderFactory>(new FlacDecoderFactory) },
 #endif
-#ifdef HAVE_VORBISFILE
-    { "_alure_int_vorbis", SharedPtr<DecoderFactory>(new VorbisFileDecoderFactory) },
+#ifdef HAVE_OPUSFILE
+    { "_alure_int_opus", SharedPtr<DecoderFactory>(new OpusFileDecoderFactory) },
+#endif
+
+    { "_alure_int_wave", SharedPtr<DecoderFactory>(new WaveDecoderFactory) },
+
+#ifdef HAVE_LIBSNDFILE
+    { "_alure_int_sndfile", SharedPtr<DecoderFactory>(new SndFileDecoderFactory) },
+#endif
+#ifdef HAVE_MPG123
+    { "_alure_int_mpg123", SharedPtr<DecoderFactory>(new Mpg123DecoderFactory) },
 #endif
 };
-static FactoryMap sDecoders{ std::make_move_iterator(std::begin(sDefaultDecoders)),
-                             std::make_move_iterator(std::end(sDefaultDecoders)) };
+
+typedef std::map<std::string,SharedPtr<DecoderFactory>> FactoryMap;
+static FactoryMap sDecoders;
+
+template<typename T1, typename T2>
+static SharedPtr<Decoder> GetDecoder(const std::string &name, SharedPtr<std::istream> file, T1 start, T2 end)
+{
+    while(start != end)
+    {
+        DecoderFactory *factory = start->second.get();
+        SharedPtr<Decoder> decoder = factory->createDecoder(file);
+        if(decoder) return decoder;
+
+        file->clear();
+        if(!file->seekg(0))
+            throw std::runtime_error("Failed to rewind "+name+" for the next decoder factory");
+
+        ++start;
+    }
+
+    return SharedPtr<Decoder>(nullptr);
+}
 
 void RegisterDecoder(const std::string &name, SharedPtr<DecoderFactory> factory)
 {
@@ -86,21 +105,17 @@ void RegisterDecoder(const std::string &name, SharedPtr<DecoderFactory> factory)
         }
         iter++;
     }
-    sDecoders.push_back(std::make_pair(name, factory));
+    sDecoders.insert(std::make_pair(name, factory));
 }
 
 SharedPtr<DecoderFactory> UnregisterDecoder(const std::string &name)
 {
-    FactoryMap::iterator iter = sDecoders.begin();
-    while(iter != sDecoders.end())
+    FactoryMap::iterator iter = sDecoders.find(name);
+    if(iter != sDecoders.end())
     {
-        if(iter->first == name)
-        {
-            SharedPtr<DecoderFactory> factory = iter->second;
-            sDecoders.erase(iter);
-            return factory;
-        }
-        iter++;
+        SharedPtr<DecoderFactory> factory = iter->second;
+        sDecoders.erase(iter);
+        return factory;
     }
     return SharedPtr<DecoderFactory>(nullptr);
 }
@@ -327,19 +342,10 @@ SharedPtr<Decoder> ALContext::createDecoder(const std::string &name)
     SharedPtr<std::istream> file(FileIOFactory::get().openFile(name));
     if(!file.get()) throw std::runtime_error("Failed to open "+name);
 
-    FactoryMap::const_reverse_iterator iter = sDecoders.rbegin();
-    while(iter != sDecoders.rend())
-    {
-        DecoderFactory *factory = iter->second.get();
-        SharedPtr<Decoder> decoder = factory->createDecoder(file);
-        if(decoder.get()) return decoder;
+    SharedPtr<Decoder> decoder = GetDecoder(name, file, sDecoders.begin(), sDecoders.end());
+    if(!decoder) decoder = GetDecoder(name, file, std::begin(sDefaultDecoders), std::end(sDefaultDecoders));
+    if(decoder) return decoder;
 
-        file->clear();
-        if(!file->seekg(0))
-            throw std::runtime_error("Failed to rewind "+name+" for the next decoder factory");
-
-        ++iter;
-    }
     throw std::runtime_error("No decoder for "+name);
 }
 

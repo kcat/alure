@@ -665,10 +665,13 @@ public:
 
 /**
  * Registers a decoder factory for decoding audio. Registered factories are
- * used on a last-registered basis, e.g. if Factory1 is registered, then
- * Factory2 is registered, Factory2 will be used before Factory1. Alure retains
- * a reference to the DecoderFactory instance and will release it (potentially
- * destroying the object) when the library unloads.
+ * used in lexicographical order, e.g. if Factory1 is registered with name1 and
+ * Factory2 is registered with name2, Factory1 will be used before Factory2 if
+ * name1 < name2. Internal decoder factories are always used after registered
+ * ones.
+ *
+ * Alure retains a reference to the DecoderFactory instance and will release it
+ * (potentially destroying the object) when the library unloads.
  *
  * \param name A unique name identifying this decoder factory.
  * \param factory A DecoderFactory instance used to create Decoder instances.
