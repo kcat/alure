@@ -42,9 +42,9 @@ public:
     { }
     virtual ~Mpg123Decoder();
 
-    virtual ALuint getFrequency() final;
-    virtual SampleConfig getSampleConfig() final;
-    virtual SampleType getSampleType() final;
+    virtual ALuint getFrequency() const final;
+    virtual SampleConfig getSampleConfig() const final;
+    virtual SampleType getSampleType() const final;
 
     virtual uint64_t getLength() final;
     virtual uint64_t getPosition() final;
@@ -63,12 +63,12 @@ Mpg123Decoder::~Mpg123Decoder()
 }
 
 
-ALuint Mpg123Decoder::getFrequency()
+ALuint Mpg123Decoder::getFrequency() const
 {
     return mSampleRate;
 }
 
-SampleConfig Mpg123Decoder::getSampleConfig()
+SampleConfig Mpg123Decoder::getSampleConfig() const
 {
     if(mChannels == 1)
         return SampleConfig_Mono;
@@ -77,7 +77,7 @@ SampleConfig Mpg123Decoder::getSampleConfig()
     throw std::runtime_error("Unsupported sample configuration");
 }
 
-SampleType Mpg123Decoder::getSampleType()
+SampleType Mpg123Decoder::getSampleType() const
 {
     return SampleType_Int16;
 }

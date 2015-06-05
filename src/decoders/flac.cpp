@@ -168,9 +168,9 @@ public:
 
     bool open();
 
-    virtual ALuint getFrequency() final;
-    virtual SampleConfig getSampleConfig() final;
-    virtual SampleType getSampleType() final;
+    virtual ALuint getFrequency() const final;
+    virtual SampleConfig getSampleConfig() const final;
+    virtual SampleType getSampleType() const final;
 
     virtual uint64_t getLength() final;
     virtual uint64_t getPosition() final;
@@ -218,17 +218,17 @@ bool FlacDecoder::open()
 }
 
 
-ALuint FlacDecoder::getFrequency()
+ALuint FlacDecoder::getFrequency() const
 {
     return mFrequency;
 }
 
-SampleConfig FlacDecoder::getSampleConfig()
+SampleConfig FlacDecoder::getSampleConfig() const
 {
     return mSampleConfig;
 }
 
-SampleType FlacDecoder::getSampleType()
+SampleType FlacDecoder::getSampleType() const
 {
     return mSampleType;
 }

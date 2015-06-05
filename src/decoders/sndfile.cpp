@@ -72,9 +72,9 @@ public:
     { }
     virtual ~SndFileDecoder();
 
-    virtual ALuint getFrequency() final;
-    virtual SampleConfig getSampleConfig() final;
-    virtual SampleType getSampleType() final;
+    virtual ALuint getFrequency() const final;
+    virtual SampleConfig getSampleConfig() const final;
+    virtual SampleType getSampleType() const final;
 
     virtual uint64_t getLength() final;
     virtual uint64_t getPosition() final;
@@ -92,17 +92,17 @@ SndFileDecoder::~SndFileDecoder()
 }
 
 
-ALuint SndFileDecoder::getFrequency()
+ALuint SndFileDecoder::getFrequency() const
 {
     return mSndInfo.samplerate;
 }
 
-SampleConfig SndFileDecoder::getSampleConfig()
+SampleConfig SndFileDecoder::getSampleConfig() const
 {
     return mSampleConfig;
 }
 
-SampleType SndFileDecoder::getSampleType()
+SampleType SndFileDecoder::getSampleType() const
 {
     return mSampleType;
 }

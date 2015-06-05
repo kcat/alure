@@ -64,9 +64,9 @@ public:
     { }
     virtual ~VorbisFileDecoder();
 
-    virtual ALuint getFrequency() final;
-    virtual SampleConfig getSampleConfig() final;
-    virtual SampleType getSampleType() final;
+    virtual ALuint getFrequency() const final;
+    virtual SampleConfig getSampleConfig() const final;
+    virtual SampleType getSampleType() const final;
 
     virtual uint64_t getLength() final;
     virtual uint64_t getPosition() final;
@@ -83,17 +83,17 @@ VorbisFileDecoder::~VorbisFileDecoder()
 }
 
 
-ALuint VorbisFileDecoder::getFrequency()
+ALuint VorbisFileDecoder::getFrequency() const
 {
     return mVorbisInfo->rate;
 }
 
-SampleConfig VorbisFileDecoder::getSampleConfig()
+SampleConfig VorbisFileDecoder::getSampleConfig() const
 {
     return mSampleConfig;
 }
 
-SampleType VorbisFileDecoder::getSampleType()
+SampleType VorbisFileDecoder::getSampleType() const
 {
     return SampleType_Int16;
 }

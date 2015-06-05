@@ -112,14 +112,14 @@ public:
         mDumbfile = nullptr;
     }
 
-    virtual ALuint getFrequency() final
+    virtual ALuint getFrequency() const final
     { return mFrequency; }
-    virtual alure::SampleConfig getSampleConfig() final
+    virtual alure::SampleConfig getSampleConfig() const final
     {
         // We always have DUMB render to stereo
         return alure::SampleConfig_Stereo;
     }
-    virtual alure::SampleType getSampleType() final
+    virtual alure::SampleType getSampleType() const final
     {
         // DUMB renders to 8.24 normalized fixed point, which we convert to
         // signed 16-bit samples

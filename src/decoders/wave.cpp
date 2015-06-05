@@ -78,9 +78,9 @@ public:
     { }
     virtual ~WaveDecoder();
 
-    virtual ALuint getFrequency() final;
-    virtual SampleConfig getSampleConfig() final;
-    virtual SampleType getSampleType() final;
+    virtual ALuint getFrequency() const final;
+    virtual SampleConfig getSampleConfig() const final;
+    virtual SampleType getSampleType() const final;
 
     virtual uint64_t getLength() final;
     virtual uint64_t getPosition() final;
@@ -96,17 +96,17 @@ WaveDecoder::~WaveDecoder()
 }
 
 
-ALuint WaveDecoder::getFrequency()
+ALuint WaveDecoder::getFrequency() const
 {
     return mFrequency;
 }
 
-SampleConfig WaveDecoder::getSampleConfig()
+SampleConfig WaveDecoder::getSampleConfig() const
 {
     return mSampleConfig;
 }
 
-SampleType WaveDecoder::getSampleType()
+SampleType WaveDecoder::getSampleType() const
 {
     return mSampleType;
 }
@@ -127,7 +127,7 @@ bool WaveDecoder::seek(uint64_t pos)
 {
     std::streamsize offset = pos*mFrameSize + mStart;
     mFile->clear();
-    if(!mFile->seekg(offset))
+    if(offset > mEnd || !mFile->seekg(offset))
         return false;
     return true;
 }

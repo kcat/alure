@@ -61,9 +61,9 @@ public:
     { }
     virtual ~OpusFileDecoder();
 
-    virtual ALuint getFrequency() final;
-    virtual SampleConfig getSampleConfig() final;
-    virtual SampleType getSampleType() final;
+    virtual ALuint getFrequency() const final;
+    virtual SampleConfig getSampleConfig() const final;
+    virtual SampleType getSampleType() const final;
 
     virtual uint64_t getLength() final;
     virtual uint64_t getPosition() final;
@@ -80,18 +80,18 @@ OpusFileDecoder::~OpusFileDecoder()
 }
 
 
-ALuint OpusFileDecoder::getFrequency()
+ALuint OpusFileDecoder::getFrequency() const
 {
     // libopusfile always decodes to 48khz.
     return 48000;
 }
 
-SampleConfig OpusFileDecoder::getSampleConfig()
+SampleConfig OpusFileDecoder::getSampleConfig() const
 {
     return mSampleConfig;
 }
 
-SampleType OpusFileDecoder::getSampleType()
+SampleType OpusFileDecoder::getSampleType() const
 {
     return SampleType_Int16;
 }

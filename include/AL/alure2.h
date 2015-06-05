@@ -610,11 +610,11 @@ public:
     virtual ~Decoder() { }
 
     /** Retrieves the sample frequency, in hz, of the audio being decoded. */
-    virtual ALuint getFrequency() = 0;
+    virtual ALuint getFrequency() const = 0;
     /** Retrieves the channel configuration of the audio being decoded. */
-    virtual SampleConfig getSampleConfig() = 0;
+    virtual SampleConfig getSampleConfig() const = 0;
     /** Retrieves the sample type of the audio being decoded. */
-    virtual SampleType getSampleType() = 0;
+    virtual SampleType getSampleType() const = 0;
 
     /**
      * Retrieves the total length of the audio, in sample frames. If unknown,
