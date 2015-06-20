@@ -16,7 +16,9 @@ inline void Sleep(uint32_t ms)
 #endif
 
 #include <iostream>
+#include <sstream>
 #include <iomanip>
+#include <cstring>
 
 #include "alure2.h"
 
@@ -32,8 +34,21 @@ int main(int argc, char *argv[])
 
     for(int i = 1;i < argc;i++)
     {
+        float offset = 0.0f;
+        if(i+2 < argc && strcmp(argv[i], "-start") == 0)
+        {
+            std::stringstream sstr(argv[i+1]);
+            sstr >> offset;
+
+            i += 2;
+        }
+
         alure::SharedPtr<alure::Decoder> decoder(ctx->createDecoder(argv[i]));
         alure::Source *source = ctx->getSource();
+
+        if(offset > 0.0f)
+            source->setOffset(uint64_t(offset * decoder->getFrequency()));
+
         source->play(decoder, 32768, 4);
         std::cout<< "Playing "<<argv[i]<<" ("<<alure::GetSampleTypeName(decoder->getSampleType())<<", "
                                              <<alure::GetSampleConfigName(decoder->getSampleConfig())<<", "
@@ -52,7 +67,6 @@ int main(int argc, char *argv[])
 
         source->release();
         source = 0;
-        decoder.reset();
     }
 
     alure::Context::MakeCurrent(0);
