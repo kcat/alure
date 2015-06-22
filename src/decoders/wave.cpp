@@ -225,6 +225,7 @@ SharedPtr<Decoder> WaveDecoderFactory::createDecoder(SharedPtr<std::istream> fil
             return SharedPtr<Decoder>(nullptr);
         totalsize -= 8;
         size = std::min((size+1) & ~1u, totalsize);
+        totalsize -= size;
 
         if(memcmp(tag, "fmt ", 4) == 0)
         {
@@ -435,8 +436,8 @@ SharedPtr<Decoder> WaveDecoderFactory::createDecoder(SharedPtr<std::istream> fil
         }
 
     next_chunk:
-        file->ignore(size);
-        totalsize -= size;
+        if(size > 0)
+            file->ignore(size);
     }
 
     return SharedPtr<Decoder>(nullptr);
