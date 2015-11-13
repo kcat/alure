@@ -238,6 +238,36 @@ public:
     virtual ALCuint getMaxAuxiliarySends() const = 0;
 
     /**
+     * Enumerates available HRTF names. The names are sorted as OpenAL gives
+     * them, such that the index of a given name is the ID to use with
+     * ALC_HRTF_ID_SOFT.
+     *
+     * Requires the ALC_SOFT_HRTF extension.
+     */
+    virtual std::vector<std::string> enumerateHRTFNames() const = 0;
+
+    /**
+     * Retrieves whether HRTF is enabled on the device or not.
+     *
+     * Requires the ALC_SOFT_HRTF extension.
+     */
+    virtual bool isHRTFEnabled() const = 0;
+
+    /**
+     * Retrieves the name of the HRTF currently being used by this device.
+     *
+     * Requires the ALC_SOFT_HRTF extension.
+     */
+    virtual std::string getCurrentHRTF() const = 0;
+
+    /**
+     * Resets the device, using the specified \param attributes.
+     *
+     * Requires the ALC_SOFT_HRTF extension.
+     */
+    virtual void reset(ALCint *attributes) = 0;
+
+    /**
      * Creates a new \ref Context on this device, using the specified
      * \param attributes.
      */

@@ -18,6 +18,7 @@ class ALBuffer;
 
 enum ALCExtension {
     SOFT_device_pause,
+    SOFT_HRTF,
 
     ALC_EXTENSION_MAX
 };
@@ -48,6 +49,9 @@ public:
     LPALCDEVICEPAUSESOFT alcDevicePauseSOFT;
     LPALCDEVICERESUMESOFT alcDeviceResumeSOFT;
 
+    LPALCGETSTRINGISOFT alcGetStringiSOFT;
+    LPALCRESETDEVICESOFT alcResetDeviceSOFT;
+
     void removeContext(ALContext *ctx);
 
     Buffer *getBuffer(const std::string &name);
@@ -64,6 +68,11 @@ public:
     virtual ALCuint getFrequency() const final;
 
     virtual ALCuint getMaxAuxiliarySends() const final;
+
+    virtual std::vector<std::string> enumerateHRTFNames() const final;
+    virtual bool isHRTFEnabled() const final;
+    virtual std::string getCurrentHRTF() const final;
+    virtual void reset(ALCint *attributes) final;
 
     virtual Context *createContext(ALCint *attribs=0) final;
 

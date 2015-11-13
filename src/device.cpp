@@ -34,12 +34,19 @@ static void LoadPauseDevice(ALDevice *device)
     LoadALCFunc(device->getDevice(), &device->alcDeviceResumeSOFT, "alcDeviceResumeSOFT");
 }
 
+static void LoadHrtf(ALDevice *device)
+{
+    LoadALCFunc(device->getDevice(), &device->alcGetStringiSOFT, "alcGetStringiSOFT");
+    LoadALCFunc(device->getDevice(), &device->alcResetDeviceSOFT, "alcResetDeviceSOFT");
+}
+
 static const struct {
     enum ALCExtension extension;
     const char name[32];
     void (*loader)(ALDevice*);
 } ALCExtensionList[] = {
     { SOFT_device_pause, "ALC_SOFT_pause_device", LoadPauseDevice },
+    { SOFT_HRTF, "ALC_SOFT_HRTF", LoadHrtf },
 };
 
 
@@ -173,6 +180,52 @@ ALCuint ALDevice::getMaxAuxiliarySends() const
         throw std::runtime_error("Max auxiliary sends error");
     return sends;
 }
+
+
+std::vector<std::string> ALDevice::enumerateHRTFNames() const
+{
+    if(!hasExtension(SOFT_HRTF))
+        throw std::runtime_error("ALC_SOFT_HRTF not supported");
+
+    ALCint num_hrtfs = -1;
+    alcGetIntegerv(mDevice, ALC_NUM_HRTF_SPECIFIERS_SOFT, 1, &num_hrtfs);
+    if(num_hrtfs == -1)
+        throw std::runtime_error("HRTF specifier count error");
+
+    std::vector<std::string> hrtfs;
+    hrtfs.reserve(num_hrtfs);
+    for(int i = 0;i < num_hrtfs;++i)
+        hrtfs.push_back(alcGetStringiSOFT(mDevice, ALC_HRTF_SPECIFIER_SOFT, i));
+    return hrtfs;
+}
+
+bool ALDevice::isHRTFEnabled() const
+{
+    if(!hasExtension(SOFT_HRTF))
+        throw std::runtime_error("ALC_SOFT_HRTF not supported");
+
+    ALCint hrtf_state = -1;
+    alcGetIntegerv(mDevice, ALC_HRTF_SOFT, 1, &hrtf_state);
+    if(hrtf_state == -1)
+        throw std::runtime_error("HRTF state error");
+    return hrtf_state != ALC_FALSE;
+}
+
+std::string ALDevice::getCurrentHRTF() const
+{
+    if(!hasExtension(SOFT_HRTF))
+        throw std::runtime_error("ALC_SOFT_HRTF not supported");
+    return std::string(alcGetString(mDevice, ALC_HRTF_SPECIFIER_SOFT));
+}
+
+void ALDevice::reset(ALCint *attributes)
+{
+    if(!hasExtension(SOFT_HRTF))
+        throw std::runtime_error("ALC_SOFT_HRTF not supported");
+    if(!alcResetDeviceSOFT(mDevice, attributes))
+        throw std::runtime_error("Device reset error");
+}
+
 
 Context *ALDevice::createContext(ALCint *attribs)
 {
