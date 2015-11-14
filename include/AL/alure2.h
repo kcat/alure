@@ -368,6 +368,17 @@ public:
     virtual Buffer *getBuffer(const std::string &name) = 0;
 
     /**
+     * Creates and caches a \ref Buffer for the given audio file or resource
+     * \param name. Multiple calls with the same name will return the same
+     * \ref Buffer object.
+     *
+     * The returned \ref Buffer object will be scheduled for loading in a
+     * background thread, and must be checked with a call to
+     * \ref Buffer::getLoadStatus prior to being played.
+     */
+    virtual Buffer *getBufferThreadLoad(const std::string &name) = 0;
+
+    /**
      * Deletes the cached \ref Buffer object for the given audio file or
      * resource \param name. The buffer must not be in use by a \ref Source.
      */
@@ -424,6 +435,10 @@ enum SampleConfig {
 };
 const char *GetSampleConfigName(SampleConfig cfg);
 
+enum BufferLoadStatus {
+    BufferLoad_Pending,
+    BufferLoad_Ready
+};
 
 class Listener {
 public:
@@ -481,6 +496,14 @@ public:
      * context.
      */
     virtual std::vector<Source*> getSources() const = 0;
+
+    /**
+     * Queries the buffer's status. A return of \ref BufferLoad_Pending
+     * indicates the buffer is not finished loading and can't be used with a
+     * call to \ref Source::play. Buffers created with \ref Context::getBuffer
+     * will always return \ref BufferLoad_Ready.
+     */
+    virtual BufferLoadStatus getLoadStatus() = 0;
 
     /** Queries if the buffer is in use and can't be removed. */
     virtual bool isInUse() const = 0;

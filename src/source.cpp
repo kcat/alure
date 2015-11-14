@@ -238,6 +238,9 @@ void ALSource::play(Buffer *buffer)
     CheckContext(mContext);
     CheckContextDevice(albuf->getDevice());
 
+    if(!albuf->isReady())
+        throw std::runtime_error("Buffer is not ready");
+
     if(mId == 0)
     {
         mId = mContext->getSourceId(mPriority);

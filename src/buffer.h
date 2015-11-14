@@ -26,11 +26,15 @@ class ALBuffer : public Buffer {
     SampleConfig mSampleConfig;
     SampleType mSampleType;
 
+    BufferLoadStatus mLoadStatus;
+    volatile bool mIsLoaded;
+
     std::vector<Source*> mSources;
 
 public:
-    ALBuffer(ALDevice *device, ALuint id, ALuint freq, SampleConfig config, SampleType type)
-      : mDevice(device), mId(id), mFrequency(freq), mSampleConfig(config), mSampleType(type)
+    ALBuffer(ALDevice *device, ALuint id, ALuint freq, SampleConfig config, SampleType type, bool preloaded)
+      : mDevice(device), mId(id), mFrequency(freq), mSampleConfig(config), mSampleType(type),
+        mLoadStatus(preloaded?BufferLoad_Ready:BufferLoad_Pending), mIsLoaded(preloaded)
     { }
     virtual ~ALBuffer() { }
 
@@ -46,6 +50,8 @@ public:
         if(iter != mSources.cend()) mSources.erase(iter);
     }
 
+    bool isReady() const { return mLoadStatus == BufferLoad_Ready; }
+
     virtual ALuint getLength() const final;
 
     virtual ALuint getFrequency() const final;
@@ -59,6 +65,8 @@ public:
 
     virtual std::vector<Source*> getSources() const final
     { return mSources; }
+
+    virtual BufferLoadStatus getLoadStatus() final;
 
     virtual bool isInUse() const final { return (mSources.size() > 0); }
 };

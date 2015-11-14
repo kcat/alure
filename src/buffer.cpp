@@ -16,6 +16,8 @@ namespace alure
 
 void ALBuffer::cleanup()
 {
+    while(!mIsLoaded) {
+    }
     if(isInUse())
         throw std::runtime_error("Buffer is in use");
 
@@ -107,6 +109,20 @@ std::pair<ALuint,ALuint> ALBuffer::getLoopPoints() const
         throw std::runtime_error("Failed to get loop points");
 
     return std::make_pair(pts[0], pts[1]);
+}
+
+
+BufferLoadStatus ALBuffer::getLoadStatus()
+{
+    /* NOTE: LoadStatus is separate from IsLoaded to force the app to receive
+     * acknowledgement that the buffer is ready before using it. Otherwise, if
+     * the app decides to simply use it after a short wait there's no guarantee
+     * it'll be consistently ready in a consistent manner. It may work some
+     * times and fail others.
+     */
+    if(mLoadStatus == BufferLoad_Pending && mIsLoaded)
+        mLoadStatus = BufferLoad_Ready;
+    return mLoadStatus;
 }
 
 
