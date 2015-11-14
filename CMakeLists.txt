@@ -117,6 +117,9 @@ target_link_libraries(alure-stream alure2)
 add_executable(alure-reverb examples/alure-reverb.cpp)
 target_link_libraries(alure-reverb alure2)
 
+add_executable(alure-hrtf examples/alure-hrtf.cpp)
+target_link_libraries(alure-hrtf alure2)
+
 find_package(PhysFS)
 if(PHYSFS_FOUND)
     add_executable(alure-physfs examples/alure-physfs.cpp)
