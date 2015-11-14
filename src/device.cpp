@@ -239,6 +239,9 @@ void ALDevice::reset(ALCint *attributes)
 
 Context *ALDevice::createContext(ALCint *attribs)
 {
+    if(ALDeviceManager::get().getSingleContextMode() && !mContexts.empty())
+        throw std::runtime_error("Context already exists");
+
     ALCcontext *ctx = alcCreateContext(mDevice, attribs);
     if(!ctx) throw std::runtime_error("Failed to create context");
 
@@ -250,6 +253,8 @@ Context *ALDevice::createContext(ALCint *attribs)
 
 bool ALDevice::isAsyncSupported() const
 {
+    if(ALDeviceManager::get().getSingleContextMode())
+        return true;
     if(hasExtension(EXT_thread_local_context) && alcIsExtensionPresent(0, "ALC_EXT_thread_local_context"))
         return true;
     return false;

@@ -222,6 +222,12 @@ thread_local ALContext *ALContext::sThreadCurrentCtx;
 
 void ALContext::MakeCurrent(ALContext *context)
 {
+    std::unique_lock<std::mutex> lock1, lock2;
+    if(context)
+        lock1 = std::unique_lock<std::mutex>(context->mMutex);
+    if(sCurrentCtx)
+        lock2 = std::unique_lock<std::mutex>(sCurrentCtx->mMutex);
+
     if(alcMakeContextCurrent(context ? context->getContext() : 0) == ALC_FALSE)
         throw std::runtime_error("Call to alcMakeContextCurrent failed");
     if(context)
@@ -283,7 +289,7 @@ void ALContext::backgroundProc()
                                   pendbuf.mDecoder, pendbuf.mName);
         mPendingBuffers.clear();
 
-        mWakeThread.wait(lock);
+        mWakeThread.wait(lock, [this](){ return GetCurrent() == this; });
     }
     lock.unlock();
 }
