@@ -23,8 +23,14 @@ ALCboolean (ALC_APIENTRY*ALDeviceManager::SetThreadContext)(ALCcontext*);
 
 DeviceManager *DeviceManager::get()
 {
+    return &ALDeviceManager::get();
+}
+
+
+ALDeviceManager &ALDeviceManager::get()
+{
     static ALDeviceManager singleton;
-    return &singleton;
+    return singleton;
 }
 
 ALDeviceManager::ALDeviceManager()
