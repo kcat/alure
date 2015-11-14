@@ -50,6 +50,8 @@ public:
         if(iter != mSources.cend()) mSources.erase(iter);
     }
 
+    void load(ALuint frames, ALenum format, SharedPtr<Decoder> decoder, const std::string &name);
+
     void setLoaded() { mIsLoaded = true; }
     bool isReady() const { return mLoadStatus == BufferLoad_Ready; }
 

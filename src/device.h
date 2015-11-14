@@ -17,6 +17,7 @@ class ALBuffer;
 
 
 enum ALCExtension {
+    EXT_thread_local_context,
     SOFT_device_pause,
     SOFT_HRTF,
 
@@ -75,6 +76,8 @@ public:
     virtual void reset(ALCint *attributes) final;
 
     virtual Context *createContext(ALCint *attribs=0) final;
+
+    virtual bool isAsyncSupported() const final;
 
     virtual void pauseDSP() final;
     virtual void resumeDSP() final;

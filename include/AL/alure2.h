@@ -274,6 +274,12 @@ public:
     virtual Context *createContext(ALCint *attributes=0) = 0;
 
     /**
+     * Indicates whether asynchronous buffering is supported. This is needed
+     * for \ref Context::getBufferAsync to load buffers asynchronously.
+     */
+    virtual bool isAsyncSupported() const = 0;
+
+    /**
      * Pauses device processing, stopping updates for its contexts. Multiple
      * calls are allowed but it is not reference counted, so the device will
      * resume after one \ref resumeDSP call.
@@ -372,11 +378,11 @@ public:
      * \param name. Multiple calls with the same name will return the same
      * \ref Buffer object.
      *
-     * The returned \ref Buffer object will be scheduled for loading in a
-     * background thread, and must be checked with a call to
+     * The returned \ref Buffer object will be scheduled for loading
+     * asynchronously, and must be checked with a call to
      * \ref Buffer::getLoadStatus prior to being played.
      */
-    virtual Buffer *getBufferThreadLoad(const std::string &name) = 0;
+    virtual Buffer *getBufferAsync(const std::string &name) = 0;
 
     /**
      * Deletes the cached \ref Buffer object for the given audio file or

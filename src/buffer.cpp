@@ -30,6 +30,37 @@ void ALBuffer::cleanup()
     delete this;
 }
 
+
+void ALBuffer::load(ALuint frames, ALenum format, SharedPtr<Decoder> decoder, const std::string &name)
+{
+    std::vector<ALbyte> data(FramesToBytes(frames, mSampleConfig, mSampleType));
+
+    frames = decoder->read(&data[0], frames);
+    data.resize(FramesToBytes(frames, mSampleConfig, mSampleType));
+
+    std::pair<uint64_t,uint64_t> loop_pts = decoder->getLoopPoints();
+    if(loop_pts.first >= loop_pts.second)
+        loop_pts = std::make_pair(0, frames);
+    else
+    {
+        loop_pts.second = std::min<uint64_t>(loop_pts.second, frames);
+        loop_pts.first = std::min<uint64_t>(loop_pts.first, loop_pts.second-1);
+    }
+
+    SharedPtr<MessageHandler> msg = ALContext::GetCurrent()->getMessageHandler();
+    if(msg.get()) msg->bufferLoading(name, mSampleConfig, mSampleType, mFrequency, data);
+
+    alBufferData(mId, format, &data[0], data.size(), mFrequency);
+    if(ALContext::GetCurrent()->hasExtension(SOFT_loop_points))
+    {
+        ALint pts[2]{(ALint)loop_pts.first, (ALint)loop_pts.second};
+        alBufferiv(mId, AL_LOOP_POINTS_SOFT, pts);
+    }
+
+    mIsLoaded = true;
+}
+
+
 ALuint ALBuffer::getLength() const
 {
     CheckContextDevice(mDevice);

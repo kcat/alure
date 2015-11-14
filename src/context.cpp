@@ -279,39 +279,8 @@ void ALContext::backgroundProc()
     while(!mQuitThread)
     {
         for(PendingBuffer &pendbuf : mPendingBuffers)
-        {
-            std::vector<ALbyte> data(FramesToBytes(pendbuf.mFrames,
-                pendbuf.mBuffer->getSampleConfig(), pendbuf.mBuffer->getSampleType()
-            ));
-
-            ALuint got = pendbuf.mDecoder->read(&data[0], pendbuf.mFrames);
-            data.resize(FramesToBytes(got, pendbuf.mBuffer->getSampleConfig(), pendbuf.mBuffer->getSampleType()));
-
-            std::pair<uint64_t,uint64_t> loop_pts = pendbuf.mDecoder->getLoopPoints();
-            if(loop_pts.first >= loop_pts.second)
-                loop_pts = std::make_pair(0, got);
-            else
-            {
-                loop_pts.second = std::min<uint64_t>(loop_pts.second, got);
-                loop_pts.first = std::min<uint64_t>(loop_pts.first, loop_pts.second-1);
-            }
-
-            if(mMessage.get())
-                mMessage->bufferLoading(pendbuf.mName,
-                    pendbuf.mBuffer->getSampleConfig(), pendbuf.mBuffer->getSampleType(),
-                    pendbuf.mBuffer->getFrequency(), data
-                );
-
-            alBufferData(pendbuf.mBuffer->getId(), pendbuf.mFormat, &data[0], data.size(),
-                         pendbuf.mBuffer->getFrequency());
-            if(hasExtension(SOFT_loop_points))
-            {
-                ALint pts[2]{(ALint)loop_pts.first, (ALint)loop_pts.second};
-                alBufferiv(pendbuf.mBuffer->getId(), AL_LOOP_POINTS_SOFT, pts);
-            }
-
-            pendbuf.mBuffer->setLoaded();
-        }
+            pendbuf.mBuffer->load(pendbuf.mFrames, pendbuf.mFormat,
+                                  pendbuf.mDecoder, pendbuf.mName);
         mPendingBuffers.clear();
 
         mWakeThread.wait(lock);
@@ -472,9 +441,8 @@ Buffer *ALContext::getBuffer(const std::string &name)
     }
 }
 
-Buffer *ALContext::getBufferThreadLoad(const std::string &name)
+Buffer *ALContext::getBufferAsync(const std::string &name)
 {
-    // FIXME
     CheckContext(this);
 
     Buffer *buffer = mDevice->getBuffer(name);
@@ -498,12 +466,17 @@ Buffer *ALContext::getBufferThreadLoad(const std::string &name)
 
     ALBuffer *newbuf = new ALBuffer(mDevice, bid, srate, chans, type, false);
 
-    std::unique_lock<std::mutex> lock(mMutex);
-    if(mThread.get_id() == std::thread::id())
-        mThread = std::thread(std::mem_fn(&ALContext::backgroundProc), this);
-    mPendingBuffers.push_back(PendingBuffer{name, newbuf, decoder, format, frames});
-    lock.unlock();
-    mWakeThread.notify_all();
+    if(!mDevice->isAsyncSupported())
+        newbuf->load(frames, format, decoder, name);
+    else
+    {
+        std::unique_lock<std::mutex> lock(mMutex);
+        if(mThread.get_id() == std::thread::id())
+            mThread = std::thread(std::mem_fn(&ALContext::backgroundProc), this);
+        mPendingBuffers.push_back(PendingBuffer{name, newbuf, decoder, format, frames});
+        lock.unlock();
+        mWakeThread.notify_all();
+    }
 
     return mDevice->addBuffer(name, newbuf);
 }

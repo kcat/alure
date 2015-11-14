@@ -40,11 +40,14 @@ static void LoadHrtf(ALDevice *device)
     LoadALCFunc(device->getDevice(), &device->alcResetDeviceSOFT, "alcResetDeviceSOFT");
 }
 
+static void LoadNothing(ALDevice*) { }
+
 static const struct {
     enum ALCExtension extension;
     const char name[32];
     void (*loader)(ALDevice*);
 } ALCExtensionList[] = {
+    { EXT_thread_local_context, "ALC_EXT_thread_local_context", LoadNothing },
     { SOFT_device_pause, "ALC_SOFT_pause_device", LoadPauseDevice },
     { SOFT_HRTF, "ALC_SOFT_HRTF", LoadHrtf },
 };
@@ -235,6 +238,14 @@ Context *ALDevice::createContext(ALCint *attribs)
     ALContext *ret = new ALContext(ctx, this);
     mContexts.push_back(ret);
     return ret;
+}
+
+
+bool ALDevice::isAsyncSupported() const
+{
+    if(hasExtension(EXT_thread_local_context) && alcIsExtensionPresent(0, "ALC_EXT_thread_local_context"))
+        return true;
+    return false;
 }
 
 
