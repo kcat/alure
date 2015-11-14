@@ -270,9 +270,59 @@ void ALContext::setupExts()
 }
 
 
+void ALContext::backgroundProc()
+{
+    if(ALDeviceManager::SetThreadContext)
+        ALDeviceManager::SetThreadContext(getContext());
+
+    std::unique_lock<std::mutex> lock(mMutex);
+    while(!mQuitThread)
+    {
+        for(PendingBuffer &pendbuf : mPendingBuffers)
+        {
+            std::vector<ALbyte> data(FramesToBytes(pendbuf.mFrames,
+                pendbuf.mBuffer->getSampleConfig(), pendbuf.mBuffer->getSampleType()
+            ));
+
+            ALuint got = pendbuf.mDecoder->read(&data[0], pendbuf.mFrames);
+            data.resize(FramesToBytes(got, pendbuf.mBuffer->getSampleConfig(), pendbuf.mBuffer->getSampleType()));
+
+            std::pair<uint64_t,uint64_t> loop_pts = pendbuf.mDecoder->getLoopPoints();
+            if(loop_pts.first >= loop_pts.second)
+                loop_pts = std::make_pair(0, got);
+            else
+            {
+                loop_pts.second = std::min<uint64_t>(loop_pts.second, got);
+                loop_pts.first = std::min<uint64_t>(loop_pts.first, loop_pts.second-1);
+            }
+
+            if(mMessage.get())
+                mMessage->bufferLoading(pendbuf.mName,
+                    pendbuf.mBuffer->getSampleConfig(), pendbuf.mBuffer->getSampleType(),
+                    pendbuf.mBuffer->getFrequency(), data
+                );
+
+            alBufferData(pendbuf.mBuffer->getId(), pendbuf.mFormat, &data[0], data.size(),
+                         pendbuf.mBuffer->getFrequency());
+            if(hasExtension(SOFT_loop_points))
+            {
+                ALint pts[2]{(ALint)loop_pts.first, (ALint)loop_pts.second};
+                alBufferiv(pendbuf.mBuffer->getId(), AL_LOOP_POINTS_SOFT, pts);
+            }
+
+            pendbuf.mBuffer->setLoaded();
+        }
+        mPendingBuffers.clear();
+
+        mWakeThread.wait(lock);
+    }
+    lock.unlock();
+}
+
+
 ALContext::ALContext(ALCcontext *context, ALDevice *device)
   : mContext(context), mDevice(device), mRefs(0),
-    mHasExt{false},
+    mHasExt{false}, mQuitThread(false),
     alGetSourcei64vSOFT(0),
     alGenEffects(0), alDeleteEffects(0), alIsEffect(0),
     alEffecti(0), alEffectiv(0), alEffectf(0), alEffectfv(0),
@@ -302,6 +352,14 @@ void ALContext::destroy()
     if(mRefs.load() != 0)
         throw std::runtime_error("Context is in use");
 
+    if(mThread.joinable())
+    {
+        std::unique_lock<std::mutex> lock(mMutex);
+        mQuitThread = true;
+        lock.unlock();
+        mWakeThread.notify_all();
+        mThread.join();
+    }
     alcDestroyContext(mContext);
     mContext = 0;
     delete this;
@@ -327,6 +385,7 @@ Listener *ALContext::getListener()
 
 SharedPtr<MessageHandler> ALContext::setMessageHandler(SharedPtr<MessageHandler> handler)
 {
+    std::lock_guard<std::mutex> lock(mMutex);
     mMessage.swap(handler);
     return handler;
 }
@@ -359,8 +418,8 @@ Buffer *ALContext::getBuffer(const std::string &name)
     {
         // Ensure the buffer is loaded before returning. getBuffer guarantees
         // the returned buffer is loaded.
-        while(buffer->getLoadStatus() == BufferLoad_Pending) {
-        }
+        while(buffer->getLoadStatus() == BufferLoad_Pending)
+            std::this_thread::yield();
         return buffer;
     }
 
@@ -427,47 +486,26 @@ Buffer *ALContext::getBufferThreadLoad(const std::string &name)
     SampleConfig chans = decoder->getSampleConfig();
     SampleType type = decoder->getSampleType();
     ALuint frames = decoder->getLength();
-
-    std::vector<ALbyte> data(FramesToBytes(frames, chans, type));
-    frames = decoder->read(&data[0], frames);
     if(!frames) throw std::runtime_error("No samples for buffer");
-    data.resize(FramesToBytes(frames, chans, type));
 
-    std::pair<uint64_t,uint64_t> loop_pts = decoder->getLoopPoints();
-    if(loop_pts.first >= loop_pts.second)
-        loop_pts = std::make_pair(0, frames);
-    else
-    {
-        loop_pts.second = std::min<uint64_t>(loop_pts.second, frames);
-        loop_pts.first = std::min<uint64_t>(loop_pts.first, loop_pts.second-1);
-    }
-
-    // Get the format before calling the bufferLoading message handler, to
-    // ensure it's something OpenAL can handle.
     ALenum format = GetFormat(chans, type);
-
-    if(mMessage.get())
-        mMessage->bufferLoading(name, chans, type, srate, data);
 
     alGetError();
     ALuint bid = 0;
-    try {
-        alGenBuffers(1, &bid);
-        alBufferData(bid, format, &data[0], data.size(), srate);
-        if(hasExtension(SOFT_loop_points))
-        {
-            ALint pts[2]{(ALint)loop_pts.first, (ALint)loop_pts.second};
-            alBufferiv(bid, AL_LOOP_POINTS_SOFT, pts);
-        }
-        if(alGetError() != AL_NO_ERROR)
-            throw std::runtime_error("Failed to buffer data");
+    alGenBuffers(1, &bid);
+    if(alGetError() != AL_NO_ERROR)
+        throw std::runtime_error("Failed to buffer data");
 
-        return mDevice->addBuffer(name, new ALBuffer(mDevice, bid, srate, chans, type, false));
-    }
-    catch(...) {
-        alDeleteBuffers(1, &bid);
-        throw;
-    }
+    ALBuffer *newbuf = new ALBuffer(mDevice, bid, srate, chans, type, false);
+
+    std::unique_lock<std::mutex> lock(mMutex);
+    if(mThread.get_id() == std::thread::id())
+        mThread = std::thread(std::mem_fn(&ALContext::backgroundProc), this);
+    mPendingBuffers.push_back(PendingBuffer{name, newbuf, decoder, format, frames});
+    lock.unlock();
+    mWakeThread.notify_all();
+
+    return mDevice->addBuffer(name, newbuf);
 }
 
 

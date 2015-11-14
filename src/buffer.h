@@ -50,6 +50,7 @@ public:
         if(iter != mSources.cend()) mSources.erase(iter);
     }
 
+    void setLoaded() { mIsLoaded = true; }
     bool isReady() const { return mLoadStatus == BufferLoad_Ready; }
 
     virtual ALuint getLength() const final;

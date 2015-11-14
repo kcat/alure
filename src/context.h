@@ -3,7 +3,9 @@
 
 #include "main.h"
 
+#include <condition_variable>
 #include <stdexcept>
+#include <thread>
 #include <mutex>
 #include <stack>
 #include <queue>
@@ -62,6 +64,22 @@ private:
     SharedPtr<MessageHandler> mMessage;
 
     bool mHasExt[AL_EXTENSION_MAX];
+
+    typedef struct PendingBuffer {
+        std::string mName;
+        ALBuffer *mBuffer;
+        SharedPtr<Decoder> mDecoder;
+        ALenum mFormat;
+        ALuint mFrames;
+    } PendingBuffer;
+    std::vector<PendingBuffer> mPendingBuffers;
+
+    std::mutex mMutex;
+    std::condition_variable mWakeThread;
+
+    volatile bool mQuitThread;
+    std::thread mThread;
+    void backgroundProc();
 
     std::once_flag mSetExts;
     void setupExts();

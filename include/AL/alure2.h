@@ -458,7 +458,10 @@ public:
 
 class Buffer {
 public:
-    /** Retrieves the length of the buffer in sample frames. */
+    /**
+     * Retrieves the length of the buffer in sample frames. The buffer must be
+     * fully loaded before this method is called.
+     */
     virtual ALuint getLength() const = 0;
 
     /** Retrieves the buffer's frequency in hz. */
@@ -470,7 +473,10 @@ public:
     /** Retrieves the buffer's sample type. */
     virtual SampleType getSampleType() const = 0;
 
-    /** Retrieves the storage size used by the buffer, in bytes. */
+    /**
+     * Retrieves the storage size used by the buffer, in bytes. The buffer must
+     * be fully loaded before this method is called.
+     */
     virtual ALuint getSize() const = 0;
 
     /**
@@ -480,14 +486,18 @@ public:
      * \param start must be less than \param end, and \param end must be less
      * than or equal to \ref getLength().
      *
-     * The buffer must not be in use when this method is called.
+     * The buffer must not be in use when this method is called, and the buffer
+     * must be fully loaded.
      *
      * \param start The starting point, in sample frames (inclusive).
      * \param end The ending point, in sample frames (exclusive).
      */
     virtual void setLoopPoints(ALuint start, ALuint end) = 0;
 
-    /** Retrieves the current loop points as a [start,end) pair. */
+    /**
+     * Retrieves the current loop points as a [start,end) pair. The buffer must
+     * be fully loaded before this method is called.
+     */
     virtual std::pair<ALuint,ALuint> getLoopPoints() const = 0;
 
     /**
@@ -498,7 +508,7 @@ public:
     virtual std::vector<Source*> getSources() const = 0;
 
     /**
-     * Queries the buffer's status. A return of \ref BufferLoad_Pending
+     * Queries the buffer's load status. A return of \ref BufferLoad_Pending
      * indicates the buffer is not finished loading and can't be used with a
      * call to \ref Source::play. Buffers created with \ref Context::getBuffer
      * will always return \ref BufferLoad_Ready.

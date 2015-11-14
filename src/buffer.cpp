@@ -16,8 +16,8 @@ namespace alure
 
 void ALBuffer::cleanup()
 {
-    while(!mIsLoaded) {
-    }
+    while(!mIsLoaded)
+        std::this_thread::yield();
     if(isInUse())
         throw std::runtime_error("Buffer is in use");
 
@@ -33,6 +33,8 @@ void ALBuffer::cleanup()
 ALuint ALBuffer::getLength() const
 {
     CheckContextDevice(mDevice);
+    if(mLoadStatus != BufferLoad_Ready)
+        throw std::runtime_error("Buffer not loaded");
 
     ALint size=-1, bits=-1, chans=-1;
     alGetBufferi(mId, AL_SIZE, &size);
@@ -64,6 +66,8 @@ SampleType ALBuffer::getSampleType() const
 ALuint ALBuffer::getSize() const
 {
     CheckContextDevice(mDevice);
+    if(mLoadStatus != BufferLoad_Ready)
+        throw std::runtime_error("Buffer not loaded");
 
     ALint size = -1;
     alGetBufferi(mId, AL_SIZE, &size);
@@ -99,6 +103,8 @@ void ALBuffer::setLoopPoints(ALuint start, ALuint end)
 std::pair<ALuint,ALuint> ALBuffer::getLoopPoints() const
 {
     CheckContextDevice(mDevice);
+    if(mLoadStatus != BufferLoad_Ready)
+        throw std::runtime_error("Buffer not loaded");
 
     if(!ALContext::GetCurrent()->hasExtension(SOFT_loop_points))
         return std::make_pair(0, getLength());
@@ -117,8 +123,8 @@ BufferLoadStatus ALBuffer::getLoadStatus()
     /* NOTE: LoadStatus is separate from IsLoaded to force the app to receive
      * acknowledgement that the buffer is ready before using it. Otherwise, if
      * the app decides to simply use it after a short wait there's no guarantee
-     * it'll be consistently ready in a consistent manner. It may work some
-     * times and fail others.
+     * it'll be ready in a consistent manner. It may work some times and fail
+     * others.
      */
     if(mLoadStatus == BufferLoad_Pending && mIsLoaded)
         mLoadStatus = BufferLoad_Ready;
