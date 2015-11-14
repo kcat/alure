@@ -5,13 +5,19 @@
 
 namespace alure {
 
+class ALDevice;
+
 class ALDeviceManager : public DeviceManager {
+    std::vector<ALDevice*> mDevices;
+
     ALDeviceManager();
 
 public:
     static ALCboolean (ALC_APIENTRY*SetThreadContext)(ALCcontext*);
 
     static ALDeviceManager &get();
+
+    void remove(ALDevice *device);
 
     virtual ~ALDeviceManager() { }
 

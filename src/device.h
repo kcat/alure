@@ -39,7 +39,7 @@ private:
     std::once_flag mSetExts;
     void setupExts();
 
-    virtual ~ALDevice() { }
+    virtual ~ALDevice();
 public:
     ALDevice(ALCdevice *device);
 

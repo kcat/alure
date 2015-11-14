@@ -6,6 +6,7 @@
 
 #include <string.h>
 
+#include <algorithm>
 #include <stdexcept>
 
 #include "alc.h"
@@ -32,6 +33,14 @@ ALDeviceManager &ALDeviceManager::get()
     static ALDeviceManager singleton;
     return singleton;
 }
+
+
+void ALDeviceManager::remove(ALDevice *device)
+{
+    auto iter = std::find(mDevices.begin(), mDevices.end(), device);
+    if(iter != mDevices.end()) mDevices.erase(iter);
+}
+
 
 ALDeviceManager::ALDeviceManager()
 {
@@ -75,7 +84,8 @@ Device *ALDeviceManager::openPlayback(const std::string &name)
             throw std::runtime_error("Failed to open default device");
         throw std::runtime_error("Failed to open device \""+name+"\"");
     }
-    return new ALDevice(dev);
+    mDevices.push_back(new ALDevice(dev));
+    return mDevices.back();
 }
 
 }

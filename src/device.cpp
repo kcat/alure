@@ -11,6 +11,7 @@
 #include "alc.h"
 #include "alext.h"
 
+#include "devicemanager.h"
 #include "context.h"
 #include "buffer.h"
 
@@ -69,6 +70,12 @@ ALDevice::ALDevice(ALCdevice* device)
 {
     setupExts();
 }
+
+ALDevice::~ALDevice()
+{
+    ALDeviceManager::get().remove(this);
+}
+
 
 void ALDevice::removeContext(ALContext *ctx)
 {
