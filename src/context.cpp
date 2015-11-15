@@ -494,17 +494,12 @@ Buffer *ALContext::getBufferAsync(const std::string &name)
 
     ALBuffer *newbuf = new ALBuffer(mDevice, bid, srate, chans, type, false);
 
-    if(!decoder->isThreadSafe())
-        newbuf->load(frames, format, hasExtension(SOFT_loop_points), decoder, name);
-    else
-    {
-        std::unique_lock<std::mutex> lock(mMutex);
-        if(mThread.get_id() == std::thread::id())
-            mThread = std::thread(std::mem_fn(&ALContext::backgroundProc), this);
-        mPendingBuffers.push_back(PendingBuffer{name, newbuf, decoder, format, frames});
-        lock.unlock();
-        mWakeThread.notify_all();
-    }
+    std::unique_lock<std::mutex> lock(mMutex);
+    if(mThread.get_id() == std::thread::id())
+        mThread = std::thread(std::mem_fn(&ALContext::backgroundProc), this);
+    mPendingBuffers.push_back(PendingBuffer{name, newbuf, decoder, format, frames});
+    lock.unlock();
+    mWakeThread.notify_all();
 
     return mDevice->addBuffer(name, newbuf);
 }
