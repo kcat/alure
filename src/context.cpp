@@ -285,19 +285,34 @@ void ALContext::setupExts()
 void ALContext::backgroundProc()
 {
     if(ALDeviceManager::SetThreadContext && mDevice->hasExtension(EXT_thread_local_context))
-        Context::MakeThreadCurrent(this);
+        ALDeviceManager::SetThreadContext(getContext());
 
     std::unique_lock<std::mutex> lock(mMutex);
     while(!mQuitThread)
     {
         for(PendingBuffer &pendbuf : mPendingBuffers)
             pendbuf.mBuffer->load(pendbuf.mFrames, pendbuf.mFormat,
+                                  hasExtension(SOFT_loop_points),
                                   pendbuf.mDecoder, pendbuf.mName);
         mPendingBuffers.clear();
 
-        mWakeThread.wait(lock, [this](){ return GetCurrent() == this; });
+        auto source = mStreamingSources.begin();
+        while(source != mStreamingSources.end())
+        {
+            if(!(*source)->updateAsync())
+                source = mStreamingSources.erase(source);
+            else
+                ++source;
+        }
+
+        do {
+            mWakeThread.wait(lock);
+        } while(alcGetCurrentContext() != getContext());
     }
     lock.unlock();
+
+    if(ALDeviceManager::SetThreadContext)
+        ALDeviceManager::SetThreadContext(0);
 }
 
 
@@ -341,6 +356,7 @@ void ALContext::destroy()
         mWakeThread.notify_all();
         mThread.join();
     }
+
     alcDestroyContext(mContext);
     mContext = 0;
     delete this;
@@ -479,7 +495,7 @@ Buffer *ALContext::getBufferAsync(const std::string &name)
     ALBuffer *newbuf = new ALBuffer(mDevice, bid, srate, chans, type, false);
 
     if(!decoder->isThreadSafe())
-        newbuf->load(frames, format, decoder, name);
+        newbuf->load(frames, format, hasExtension(SOFT_loop_points), decoder, name);
     else
     {
         std::unique_lock<std::mutex> lock(mMutex);
@@ -560,6 +576,21 @@ void ALContext::freeSource(ALSource *source)
 }
 
 
+void ALContext::addStream(ALSource *source)
+{
+    std::lock_guard<std::mutex> lock(mMutex);
+    if(mThread.get_id() == std::thread::id())
+        mThread = std::thread(std::mem_fn(&ALContext::backgroundProc), this);
+    mStreamingSources.insert(source);
+}
+
+void ALContext::removeStream(ALSource *source)
+{
+    std::lock_guard<std::mutex> lock(mMutex);
+    mStreamingSources.erase(source);
+}
+
+
 AuxiliaryEffectSlot *ALContext::createAuxiliaryEffectSlot()
 {
     if(!hasExtension(EXT_EFX) || !alGenAuxiliaryEffectSlots)
@@ -631,6 +662,7 @@ void ALContext::update()
 {
     CheckContext(this);
     std::for_each(mUsedSources.begin(), mUsedSources.end(), std::mem_fun(&ALSource::updateNoCtxCheck));
+    mWakeThread.notify_all();
 }
 
 

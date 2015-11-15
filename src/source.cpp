@@ -151,7 +151,7 @@ public:
 
 
 ALSource::ALSource(ALContext *context)
-  : mContext(context), mId(0), mBuffer(0), mDirectFilter(AL_FILTER_NULL)
+  : mContext(context), mId(0), mBuffer(0), mIsAsync(false), mDirectFilter(AL_FILTER_NULL)
 {
     resetProperties();
 }
@@ -241,6 +241,9 @@ void ALSource::play(Buffer *buffer)
     if(!albuf->isReady())
         throw std::runtime_error("Buffer is not ready");
 
+    if(mIsAsync)
+        mContext->removeStream(this);
+    mIsAsync = false;
     if(mId == 0)
     {
         mId = mContext->getSourceId(mPriority);
@@ -278,6 +281,10 @@ void ALSource::play(SharedPtr<Decoder> decoder, ALuint updatelen, ALuint queuesi
     std::unique_ptr<ALBufferStream> stream(new ALBufferStream(decoder, updatelen, queuesize));
     stream->prepare();
 
+    if(mIsAsync)
+        mContext->removeStream(this);
+    mIsAsync = false;
+
     if(mId == 0)
     {
         mId = mContext->getSourceId(mPriority);
@@ -307,6 +314,9 @@ void ALSource::play(SharedPtr<Decoder> decoder, ALuint updatelen, ALuint queuesi
     }
     alSourcePlay(mId);
     mPaused = false;
+
+    mContext->addStream(this);
+    mIsAsync = true;
 }
 
 
@@ -314,6 +324,9 @@ void ALSource::stop()
 {
     CheckContext(mContext);
 
+    if(mIsAsync)
+        mContext->removeStream(this);
+    mIsAsync = false;
     if(mId != 0)
     {
         alSourceRewind(mId);
@@ -343,6 +356,7 @@ void ALSource::pause()
     CheckContext(mContext);
     if(mId != 0)
     {
+        std::lock_guard<std::mutex> lock(mMutex);
         alSourcePause(mId);
         ALint state = -1;
         alGetSourcei(mId, AL_SOURCE_STATE, &state);
@@ -426,17 +440,21 @@ void ALSource::updateNoCtxCheck()
 
     if(mStream)
     {
-        ALint queued = refillBufferStream();
-        if(queued == 0)
-            stop();
-        else if(!mPaused)
+        if(!mIsAsync)
         {
-            ALint state = -1;
-            alGetSourcei(mId, AL_SOURCE_STATE, &state);
-            if(state != AL_PLAYING)
+            std::lock_guard<std::mutex> lock(mMutex);
+            ALint queued = refillBufferStream();
+            if(queued == 0)
+                stop();
+            else if(!mPaused)
             {
-                refillBufferStream();
-                alSourcePlay(mId);
+                ALint state = -1;
+                alGetSourcei(mId, AL_SOURCE_STATE, &state);
+                if(state != AL_PLAYING)
+                {
+                    refillBufferStream();
+                    alSourcePlay(mId);
+                }
             }
         }
     }
@@ -447,6 +465,29 @@ void ALSource::updateNoCtxCheck()
         if(state != AL_PLAYING && state != AL_PAUSED)
             stop();
     }
+}
+
+bool ALSource::updateAsync()
+{
+    std::lock_guard<std::mutex> lock(mMutex);
+
+    ALint queued = refillBufferStream();
+    if(queued == 0)
+    {
+        mIsAsync = false;
+        return false;
+    }
+    if(!mPaused)
+    {
+        ALint state = -1;
+        alGetSourcei(mId, AL_SOURCE_STATE, &state);
+        if(state != AL_PLAYING)
+        {
+            refillBufferStream();
+            alSourcePlay(mId);
+        }
+    }
+    return true;
 }
 
 
@@ -476,6 +517,7 @@ void ALSource::setOffset(uint64_t offset)
     }
     else
     {
+        std::lock_guard<std::mutex> lock(mMutex);
         if(!mStream->seek(offset))
             throw std::runtime_error("Failed to seek to offset");
         alSourceStop(mId);
@@ -499,6 +541,7 @@ uint64_t ALSource::getOffset(uint64_t *latency) const
 
     if(mStream)
     {
+        std::lock_guard<std::mutex> lock(mMutex);
         ALint queued = 0, state = -1, srcpos = 0;
         alGetSourcei(mId, AL_BUFFERS_QUEUED, &queued);
         if(latency && mContext->hasExtension(SOFT_source_latency))
@@ -968,6 +1011,10 @@ void ALSource::setAuxiliarySendFilter(AuxiliaryEffectSlot *auxslot, ALuint send,
 void ALSource::release()
 {
     CheckContext(mContext);
+
+    if(mIsAsync)
+        mContext->removeStream(this);
+    mIsAsync = false;
 
     if(mId != 0)
     {

@@ -3,6 +3,7 @@
 
 #include "main.h"
 
+#include <mutex>
 #include <map>
 
 #include "al.h"
@@ -34,6 +35,9 @@ class ALSource : public Source {
 
     ALBuffer *mBuffer;
     std::unique_ptr<ALBufferStream> mStream;
+
+    mutable std::mutex mMutex;
+    volatile bool mIsAsync;
 
     bool mLooping;
     bool mPaused;
@@ -68,8 +72,10 @@ public:
     ALSource(ALContext *context);
     virtual ~ALSource();
 
-    void updateNoCtxCheck();
     ALuint getId() const { return mId; }
+
+    void updateNoCtxCheck();
+    bool updateAsync();
 
     virtual void play(Buffer *buffer) final;
     virtual void play(SharedPtr<Decoder> decoder, ALuint updatelen, ALuint queuesize) final;

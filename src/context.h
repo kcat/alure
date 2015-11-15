@@ -73,6 +73,7 @@ private:
         ALuint mFrames;
     } PendingBuffer;
     std::vector<PendingBuffer> mPendingBuffers;
+    std::set<ALSource*> mStreamingSources;
 
     std::mutex mMutex;
     std::condition_variable mWakeThread;
@@ -134,6 +135,9 @@ public:
 
     ALuint getSourceId(ALuint maxprio);
     void insertSourceId(ALuint id) { mSourceIds.push(id); }
+
+    void addStream(ALSource *source);
+    void removeStream(ALSource *source);
 
     void freeSource(ALSource *source);
 

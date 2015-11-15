@@ -31,7 +31,7 @@ void ALBuffer::cleanup()
 }
 
 
-void ALBuffer::load(ALuint frames, ALenum format, SharedPtr<Decoder> decoder, const std::string &name)
+void ALBuffer::load(ALuint frames, ALenum format, bool loop_points, SharedPtr<Decoder> decoder, const std::string &name)
 {
     std::vector<ALbyte> data(FramesToBytes(frames, mSampleConfig, mSampleType));
 
@@ -51,7 +51,7 @@ void ALBuffer::load(ALuint frames, ALenum format, SharedPtr<Decoder> decoder, co
     if(msg.get()) msg->bufferLoading(name, mSampleConfig, mSampleType, mFrequency, data);
 
     alBufferData(mId, format, &data[0], data.size(), mFrequency);
-    if(ALContext::GetCurrent()->hasExtension(SOFT_loop_points))
+    if(loop_points)
     {
         ALint pts[2]{(ALint)loop_pts.first, (ALint)loop_pts.second};
         alBufferiv(mId, AL_LOOP_POINTS_SOFT, pts);
