@@ -673,6 +673,12 @@ class Decoder {
 public:
     virtual ~Decoder() { }
 
+    /**
+     * Queries if the decoder is thread-safe. If so, it may be used from
+     * multiple threads to handle asynchronous decoding.
+     */
+    virtual bool isThreadSafe() const = 0;
+
     /** Retrieves the sample frequency, in hz, of the audio being decoded. */
     virtual ALuint getFrequency() const = 0;
     /** Retrieves the channel configuration of the audio being decoded. */

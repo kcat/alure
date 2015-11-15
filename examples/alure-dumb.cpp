@@ -112,6 +112,9 @@ public:
         mDumbfile = nullptr;
     }
 
+    virtual bool isThreadSafe() const final
+    { return true; }
+
     virtual ALuint getFrequency() const final
     { return mFrequency; }
     virtual alure::SampleConfig getSampleConfig() const final

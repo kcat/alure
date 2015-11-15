@@ -78,6 +78,8 @@ public:
     { }
     virtual ~WaveDecoder();
 
+    virtual bool isThreadSafe() const final { return true; }
+
     virtual ALuint getFrequency() const final;
     virtual SampleConfig getSampleConfig() const final;
     virtual SampleType getSampleType() const final;
