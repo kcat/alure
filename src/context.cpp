@@ -223,10 +223,10 @@ thread_local ALContext *ALContext::sThreadCurrentCtx;
 void ALContext::MakeCurrent(ALContext *context)
 {
     std::unique_lock<std::mutex> lock1, lock2;
-    if(context)
-        lock1 = std::unique_lock<std::mutex>(context->mMutex);
     if(sCurrentCtx)
-        lock2 = std::unique_lock<std::mutex>(sCurrentCtx->mMutex);
+        lock1 = std::unique_lock<std::mutex>(sCurrentCtx->mMutex);
+    if(context && context != sCurrentCtx)
+        lock2 = std::unique_lock<std::mutex>(context->mMutex);
 
     if(alcMakeContextCurrent(context ? context->getContext() : 0) == ALC_FALSE)
         throw std::runtime_error("Call to alcMakeContextCurrent failed");
@@ -241,6 +241,12 @@ void ALContext::MakeCurrent(ALContext *context)
     if(sThreadCurrentCtx)
         sThreadCurrentCtx->decRef();
     sThreadCurrentCtx = 0;
+
+    if(sCurrentCtx)
+    {
+        lock2.unlock();
+        sCurrentCtx->mWakeThread.notify_all();
+    }
 }
 
 void ALContext::MakeThreadCurrent(ALContext *context)
@@ -278,8 +284,8 @@ void ALContext::setupExts()
 
 void ALContext::backgroundProc()
 {
-    if(ALDeviceManager::SetThreadContext)
-        ALDeviceManager::SetThreadContext(getContext());
+    if(ALDeviceManager::SetThreadContext && mDevice->hasExtension(EXT_thread_local_context))
+        Context::MakeThreadCurrent(this);
 
     std::unique_lock<std::mutex> lock(mMutex);
     while(!mQuitThread)
@@ -472,17 +478,12 @@ Buffer *ALContext::getBufferAsync(const std::string &name)
 
     ALBuffer *newbuf = new ALBuffer(mDevice, bid, srate, chans, type, false);
 
-    if(!mDevice->isAsyncSupported())
-        newbuf->load(frames, format, decoder, name);
-    else
-    {
-        std::unique_lock<std::mutex> lock(mMutex);
-        if(mThread.get_id() == std::thread::id())
-            mThread = std::thread(std::mem_fn(&ALContext::backgroundProc), this);
-        mPendingBuffers.push_back(PendingBuffer{name, newbuf, decoder, format, frames});
-        lock.unlock();
-        mWakeThread.notify_all();
-    }
+    std::unique_lock<std::mutex> lock(mMutex);
+    if(mThread.get_id() == std::thread::id())
+        mThread = std::thread(std::mem_fn(&ALContext::backgroundProc), this);
+    mPendingBuffers.push_back(PendingBuffer{name, newbuf, decoder, format, frames});
+    lock.unlock();
+    mWakeThread.notify_all();
 
     return mDevice->addBuffer(name, newbuf);
 }

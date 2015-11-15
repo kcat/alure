@@ -35,14 +35,7 @@ ALDeviceManager &ALDeviceManager::get()
 }
 
 
-void ALDeviceManager::remove(ALDevice *device)
-{
-    auto iter = std::find(mDevices.begin(), mDevices.end(), device);
-    if(iter != mDevices.end()) mDevices.erase(iter);
-}
-
-
-ALDeviceManager::ALDeviceManager() : mSingleCtxMode(false)
+ALDeviceManager::ALDeviceManager()
 {
     if(alcIsExtensionPresent(0, "ALC_EXT_thread_local_context"))
         GetDeviceProc(&SetThreadContext, 0, "alcSetThreadContext");
@@ -76,24 +69,8 @@ std::string ALDeviceManager::defaultDeviceName(DefaultDeviceType type) const
 }
 
 
-void ALDeviceManager::setSingleContextMode(bool enable)
-{
-    if(!mDevices.empty())
-        throw std::runtime_error("Devices are open");
-
-    if(enable)
-        SetThreadContext = 0;
-    else if(alcIsExtensionPresent(0, "ALC_EXT_thread_local_context"))
-        GetDeviceProc(&SetThreadContext, 0, "alcSetThreadContext");
-    mSingleCtxMode = enable;
-}
-
-
 Device *ALDeviceManager::openPlayback(const std::string &name)
 {
-    if(mSingleCtxMode && !mDevices.empty())
-        throw std::runtime_error("Device already open");
-
     ALCdevice *dev = alcOpenDevice(name.c_str());
     if(!dev)
     {
@@ -101,8 +78,7 @@ Device *ALDeviceManager::openPlayback(const std::string &name)
             throw std::runtime_error("Failed to open default device");
         throw std::runtime_error("Failed to open device \""+name+"\"");
     }
-    mDevices.push_back(new ALDevice(dev));
-    return mDevices.back();
+    return new ALDevice(dev);
 }
 
 }

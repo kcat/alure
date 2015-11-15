@@ -77,8 +77,6 @@ public:
 
     virtual Context *createContext(ALCint *attribs=0) final;
 
-    virtual bool isAsyncSupported() const final;
-
     virtual void pauseDSP() final;
     virtual void resumeDSP() final;
 

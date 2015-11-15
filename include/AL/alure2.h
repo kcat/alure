@@ -198,21 +198,6 @@ public:
     /** Retrieves the default device of the given \param type. */
     virtual std::string defaultDeviceName(DefaultDeviceType type) const = 0;
 
-    /**
-     * Enables single-context mode. This allows asynchronous buffering when
-     * thread-local contexts aren't supported (see
-     * \ref Device::isAsyncSupported).
-     *
-     * While single-context mode is enabled, only one device can be open at a
-     * time. This also cannot be changed while devices are open. Additionally,
-     * the \ref Context::MakeThreadCurrent method will be unavailable even if
-     * thread-local contexts are supported.
-     */
-    virtual void setSingleContextMode(bool enable) = 0;
-
-    /** Retrieves whether single-context mode is enabled or not. */
-    virtual bool getSingleContextMode() const = 0;
-
     /** Opens the playback device given by \param name, or the default if empty. */
     virtual Device *openPlayback(const std::string &name=std::string()) = 0;
 };
@@ -288,16 +273,6 @@ public:
      * can be created at a time.
      */
     virtual Context *createContext(ALCint *attributes=0) = 0;
-
-    /**
-     * Indicates whether asynchronous buffering is supported. This is needed
-     * for \ref Context::getBufferAsync to load buffers asynchronously.
-     *
-     * Requires the ALC_EXT_thread_local_context extension to be supported on
-     * both the device and DeviceManager, or single-context mode to be enabled
-     * (see \ref DeviceManager::setSingleContextMode).
-     */
-    virtual bool isAsyncSupported() const = 0;
 
     /**
      * Pauses device processing, stopping updates for its contexts. Multiple
