@@ -54,8 +54,11 @@ class ALSource : public Source {
     ALfloat mConeOuterGain, mConeOuterGainHF;
     ALfloat mRolloffFactor, mRoomRolloffFactor;
     ALfloat mDopplerFactor;
-    bool mRelative;
     ALfloat mAirAbsorptionFactor;
+    bool mRelative;
+    bool mDryGainHFAuto;
+    bool mWetGainAuto;
+    bool mWetGainHFAuto;
 
     ALuint mDirectFilter;
     SendPropMap mEffectSlots;
@@ -151,6 +154,11 @@ public:
 
     virtual void setAirAbsorptionFactor(ALfloat factor) final;
     virtual ALfloat getAirAbsorptionFactor() const final { return mAirAbsorptionFactor; }
+
+    virtual void setGainAuto(bool directhf, bool send, bool sendhf) final;
+    virtual bool getDirectGainHFAuto() const final { return mDryGainHFAuto; }
+    virtual bool getSendGainAuto() const final { return mWetGainAuto; }
+    virtual bool getSendGainHFAuto() const final { return mWetGainHFAuto; }
 
     virtual void setDirectFilter(const FilterParams &filter) final;
     virtual void setSendFilter(ALuint send, const FilterParams &filter) final;

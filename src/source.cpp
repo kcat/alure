@@ -184,8 +184,11 @@ void ALSource::resetProperties()
     mRolloffFactor = 1.0f;
     mRoomRolloffFactor = 0.0f;
     mDopplerFactor = 1.0f;
-    mRelative = false;
     mAirAbsorptionFactor = 0.0f;
+    mRelative = false;
+    mDryGainHFAuto = true;
+    mWetGainAuto = true;
+    mWetGainHFAuto = true;
     if(mDirectFilter)
         mContext->alDeleteFilters(1, &mDirectFilter);
     mDirectFilter = 0;
@@ -227,6 +230,9 @@ void ALSource::applyProperties(bool looping, ALuint offset) const
         alSourcef(mId, AL_CONE_OUTER_GAINHF, mConeOuterGainHF);
         alSourcef(mId, AL_ROOM_ROLLOFF_FACTOR, mRoomRolloffFactor);
         alSourcef(mId, AL_AIR_ABSORPTION_FACTOR, mAirAbsorptionFactor);
+        alSourcei(mId, AL_DIRECT_FILTER_GAINHF_AUTO, mDryGainHFAuto ? AL_TRUE : AL_FALSE);
+        alSourcei(mId, AL_AUXILIARY_SEND_FILTER_GAIN_AUTO, mWetGainAuto ? AL_TRUE : AL_FALSE);
+        alSourcei(mId, AL_AUXILIARY_SEND_FILTER_GAINHF_AUTO, mWetGainHFAuto ? AL_TRUE : AL_FALSE);
         alSourcei(mId, AL_DIRECT_FILTER, mDirectFilter);
         for(const auto &i : mEffectSlots)
         {
@@ -843,15 +849,6 @@ void ALSource::setDopplerFactor(ALfloat factor)
     mDopplerFactor = factor;
 }
 
-void ALSource::setRelative(bool relative)
-{
-    CheckContext(mContext);
-    if(mId != 0)
-        alSourcei(mId, AL_SOURCE_RELATIVE, relative ? AL_TRUE : AL_FALSE);
-    mRelative = relative;
-}
-
-
 void ALSource::setAirAbsorptionFactor(ALfloat factor)
 {
     if(!(factor >= 0.0f && factor <= 10.0f))
@@ -860,6 +857,28 @@ void ALSource::setAirAbsorptionFactor(ALfloat factor)
     if(mId != 0 && mContext->hasExtension(EXT_EFX))
         alSourcef(mId, AL_AIR_ABSORPTION_FACTOR, factor);
     mAirAbsorptionFactor = factor;
+}
+
+void ALSource::setRelative(bool relative)
+{
+    CheckContext(mContext);
+    if(mId != 0)
+        alSourcei(mId, AL_SOURCE_RELATIVE, relative ? AL_TRUE : AL_FALSE);
+    mRelative = relative;
+}
+
+void ALSource::setGainAuto(bool directhf, bool send, bool sendhf)
+{
+    CheckContext(mContext);
+    if(mId != 0 && mContext->hasExtension(EXT_EFX))
+    {
+        alSourcei(mId, AL_DIRECT_FILTER_GAINHF_AUTO, directhf ? AL_TRUE : AL_FALSE);
+        alSourcei(mId, AL_AUXILIARY_SEND_FILTER_GAIN_AUTO, send ? AL_TRUE : AL_FALSE);
+        alSourcei(mId, AL_AUXILIARY_SEND_FILTER_GAINHF_AUTO, sendhf ? AL_TRUE : AL_FALSE);
+    }
+    mDryGainHFAuto = directhf;
+    mWetGainAuto = send;
+    mWetGainHFAuto = sendhf;
 }
 
 

@@ -630,6 +630,11 @@ public:
     virtual void setAirAbsorptionFactor(ALfloat factor) = 0;
     virtual ALfloat getAirAbsorptionFactor() const = 0;
 
+    virtual void setGainAuto(bool directhf, bool send, bool sendhf) = 0;
+    virtual bool getDirectGainHFAuto() const = 0;
+    virtual bool getSendGainAuto() const = 0;
+    virtual bool getSendGainHFAuto() const = 0;
+
     virtual void setDirectFilter(const FilterParams &filter) = 0;
     virtual void setSendFilter(ALuint send, const FilterParams &filter) = 0;
     virtual void setAuxiliarySend(AuxiliaryEffectSlot *slot, ALuint send) = 0;
