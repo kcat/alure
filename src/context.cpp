@@ -292,8 +292,7 @@ void ALContext::backgroundProc()
     {
         for(PendingBuffer &pendbuf : mPendingBuffers)
             pendbuf.mBuffer->load(pendbuf.mFrames, pendbuf.mFormat,
-                                  hasExtension(SOFT_loop_points),
-                                  pendbuf.mDecoder, pendbuf.mName);
+                                  pendbuf.mDecoder, pendbuf.mName, this);
         mPendingBuffers.clear();
 
         auto source = mStreamingSources.begin();

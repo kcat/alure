@@ -12,6 +12,7 @@
 namespace alure {
 
 class ALDevice;
+class ALContext;
 
 
 ALuint FramesToBytes(ALuint size, SampleConfig chans, SampleType type);
@@ -50,7 +51,7 @@ public:
         if(iter != mSources.cend()) mSources.erase(iter);
     }
 
-    void load(ALuint frames, ALenum format, bool loop_points, SharedPtr<Decoder> decoder, const std::string &name);
+    void load(ALuint frames, ALenum format, SharedPtr<Decoder> decoder, const std::string &name, ALContext *ctx);
 
     void setLoaded() { mIsLoaded = true; }
     bool isReady() const { return mLoadStatus == BufferLoad_Ready; }
