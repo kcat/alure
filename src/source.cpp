@@ -180,9 +180,12 @@ void ALSource::resetProperties()
     mConeInnerAngle = 360.0f;
     mConeOuterAngle = 360.0f;
     mConeOuterGain = 0.0f;
+    mConeOuterGainHF = 1.0f;
     mRolloffFactor = 1.0f;
+    mRoomRolloffFactor = 0.0f;
     mDopplerFactor = 1.0f;
     mRelative = false;
+    mAirAbsorptionFactor = 0.0f;
     if(mDirectFilter)
         mContext->alDeleteFilters(1, &mDirectFilter);
     mDirectFilter = 0;
@@ -221,6 +224,9 @@ void ALSource::applyProperties(bool looping, ALuint offset) const
     alSourcei(mId, AL_SOURCE_RELATIVE, mRelative ? AL_TRUE : AL_FALSE);
     if(mContext->hasExtension(EXT_EFX))
     {
+        alSourcef(mId, AL_CONE_OUTER_GAINHF, mConeOuterGainHF);
+        alSourcef(mId, AL_ROOM_ROLLOFF_FACTOR, mRoomRolloffFactor);
+        alSourcef(mId, AL_AIR_ABSORPTION_FACTOR, mAirAbsorptionFactor);
         alSourcei(mId, AL_DIRECT_FILTER, mDirectFilter);
         for(const auto &i : mEffectSlots)
         {
@@ -796,25 +802,35 @@ void ALSource::setConeAngles(ALfloat inner, ALfloat outer)
     mConeOuterAngle = outer;
 }
 
-void ALSource::setOuterConeGain(ALfloat gain)
+void ALSource::setOuterConeGains(ALfloat gain, ALfloat gainhf)
 {
-    if(!(gain >= 0.0f && gain <= 1.0f))
+    if(!(gain >= 0.0f && gain <= 1.0f && gainhf >= 0.0f && gainhf <= 1.0f))
         throw std::runtime_error("Outer cone gain out of range");
     CheckContext(mContext);
     if(mId != 0)
+    {
         alSourcef(mId, AL_CONE_OUTER_GAIN, gain);
+        if(mContext->hasExtension(EXT_EFX))
+            alSourcef(mId, AL_CONE_OUTER_GAINHF, gainhf);
+    }
     mConeOuterGain = gain;
+    mConeOuterGainHF = gainhf;
 }
 
 
-void ALSource::setRolloffFactor(ALfloat factor)
+void ALSource::setRolloffFactors(ALfloat factor, ALfloat roomfactor)
 {
-    if(!(factor >= 0.0f))
+    if(!(factor >= 0.0f && roomfactor >= 0.0f))
         throw std::runtime_error("Rolloff factor out of range");
     CheckContext(mContext);
     if(mId != 0)
+    {
         alSourcef(mId, AL_ROLLOFF_FACTOR, factor);
+        if(mContext->hasExtension(EXT_EFX))
+            alSourcef(mId, AL_ROOM_ROLLOFF_FACTOR, roomfactor);
+    }
     mRolloffFactor = factor;
+    mRoomRolloffFactor = roomfactor;
 }
 
 void ALSource::setDopplerFactor(ALfloat factor)
@@ -833,6 +849,17 @@ void ALSource::setRelative(bool relative)
     if(mId != 0)
         alSourcei(mId, AL_SOURCE_RELATIVE, relative ? AL_TRUE : AL_FALSE);
     mRelative = relative;
+}
+
+
+void ALSource::setAirAbsorptionFactor(ALfloat factor)
+{
+    if(!(factor >= 0.0f && factor <= 10.0f))
+        throw std::runtime_error("Absorption factor out of range");
+    CheckContext(mContext);
+    if(mId != 0 && mContext->hasExtension(EXT_EFX))
+        alSourcef(mId, AL_AIR_ABSORPTION_FACTOR, factor);
+    mAirAbsorptionFactor = factor;
 }
 
 

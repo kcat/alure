@@ -51,10 +51,11 @@ class ALSource : public Source {
     Vector3 mDirection;
     Vector3 mOrientation[2];
     ALfloat mConeInnerAngle, mConeOuterAngle;
-    ALfloat mConeOuterGain;
-    ALfloat mRolloffFactor;
+    ALfloat mConeOuterGain, mConeOuterGainHF;
+    ALfloat mRolloffFactor, mRoomRolloffFactor;
     ALfloat mDopplerFactor;
     bool mRelative;
+    ALfloat mAirAbsorptionFactor;
 
     ALuint mDirectFilter;
     SendPropMap mEffectSlots;
@@ -132,13 +133,13 @@ public:
     virtual ALfloat getInnerConeAngle() const final { return mConeInnerAngle; }
     virtual ALfloat getOuterConeAngle() const final { return mConeOuterAngle; }
 
-    virtual void setOuterConeGain(ALfloat gain) final;
-    virtual ALfloat getOuterConeGain() const final
-    { return mConeOuterGain; }
+    virtual void setOuterConeGains(ALfloat gain, ALfloat gainhf=1.0f) final;
+    virtual ALfloat getOuterConeGain() const final { return mConeOuterGain; }
+    virtual ALfloat getOuterConeGainHF() const final { return mConeOuterGainHF; }
 
-    virtual void setRolloffFactor(ALfloat factor) final;
-    virtual ALfloat getRolloffFactor() const final
-    { return mRolloffFactor; }
+    virtual void setRolloffFactors(ALfloat factor, ALfloat roomfactor=0.0f) final;
+    virtual ALfloat getRolloffFactor() const final { return mRolloffFactor; }
+    virtual ALfloat getRoomRolloffFactor() const final { return mRoomRolloffFactor; }
 
     virtual void setDopplerFactor(ALfloat factor) final;
     virtual ALfloat getDopplerFactor() const final
@@ -147,6 +148,9 @@ public:
     virtual void setRelative(bool relative) final;
     virtual bool getRelative() const final
     { return mRelative; }
+
+    virtual void setAirAbsorptionFactor(ALfloat factor) final;
+    virtual ALfloat getAirAbsorptionFactor() const final { return mAirAbsorptionFactor; }
 
     virtual void setDirectFilter(const FilterParams &filter) final;
     virtual void setSendFilter(ALuint send, const FilterParams &filter) final;

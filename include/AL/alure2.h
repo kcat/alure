@@ -613,17 +613,22 @@ public:
     virtual ALfloat getInnerConeAngle() const = 0;
     virtual ALfloat getOuterConeAngle() const = 0;
 
-    virtual void setOuterConeGain(ALfloat gain) = 0;
+    virtual void setOuterConeGains(ALfloat gain, ALfloat gainhf=1.0f) = 0;
     virtual ALfloat getOuterConeGain() const = 0;
+    virtual ALfloat getOuterConeGainHF() const = 0;
 
-    virtual void setRolloffFactor(ALfloat factor) = 0;
+    virtual void setRolloffFactors(ALfloat factor, ALfloat roomfactor=0.0f) = 0;
     virtual ALfloat getRolloffFactor() const = 0;
+    virtual ALfloat getRoomRolloffFactor() const = 0;
 
     virtual void setDopplerFactor(ALfloat factor) = 0;
     virtual ALfloat getDopplerFactor() const = 0;
 
     virtual void setRelative(bool relative) = 0;
     virtual bool getRelative() const = 0;
+
+    virtual void setAirAbsorptionFactor(ALfloat factor) = 0;
+    virtual ALfloat getAirAbsorptionFactor() const = 0;
 
     virtual void setDirectFilter(const FilterParams &filter) = 0;
     virtual void setSendFilter(ALuint send, const FilterParams &filter) = 0;
