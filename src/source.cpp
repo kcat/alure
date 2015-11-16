@@ -522,9 +522,7 @@ void ALSource::setOffset(uint64_t offset)
             throw std::runtime_error("Failed to seek to offset");
         alSourceStop(mId);
         ALint queued = refillBufferStream();
-        if(queued == 0)
-            stop();
-        else if(!mPaused)
+        if(queued > 0 && !mPaused)
             alSourcePlay(mId);
     }
 }
