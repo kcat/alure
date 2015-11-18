@@ -801,7 +801,8 @@ public:
     virtual ~MessageHandler() { }
 
     /**
-     * Called when a new buffer is about to be created and loaded.
+     * Called when a new buffer is about to be created and loaded. May be
+     * called asynchronously for buffers being loaded asynchronously.
      *
      * \param name The resource name, as passed to \ref Context::getBuffer.
      * \param channels Channel configuration of the given audio data.
