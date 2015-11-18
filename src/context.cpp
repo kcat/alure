@@ -306,7 +306,7 @@ void ALContext::backgroundProc()
 
         do {
             mWakeThread.wait(lock);
-        } while(alcGetCurrentContext() != getContext());
+        } while(!mQuitThread && alcGetCurrentContext() != getContext());
     }
     lock.unlock();
 
