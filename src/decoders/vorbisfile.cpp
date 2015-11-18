@@ -56,16 +56,16 @@ class VorbisFileDecoder : public Decoder {
     vorbis_info *mVorbisInfo;
     int mOggBitstream;
 
-    SampleConfig mSampleConfig;
+    ChannelConfig mChannelConfig;
 
 public:
-    VorbisFileDecoder(SharedPtr<std::istream> file, std::unique_ptr<OggVorbis_File>&& oggfile, vorbis_info *vorbisinfo, SampleConfig sconfig)
-      : mFile(file), mOggFile(std::move(oggfile)), mVorbisInfo(vorbisinfo), mOggBitstream(0), mSampleConfig(sconfig)
+    VorbisFileDecoder(SharedPtr<std::istream> file, std::unique_ptr<OggVorbis_File>&& oggfile, vorbis_info *vorbisinfo, ChannelConfig sconfig)
+      : mFile(file), mOggFile(std::move(oggfile)), mVorbisInfo(vorbisinfo), mOggBitstream(0), mChannelConfig(sconfig)
     { }
     virtual ~VorbisFileDecoder();
 
     virtual ALuint getFrequency() const final;
-    virtual SampleConfig getSampleConfig() const final;
+    virtual ChannelConfig getChannelConfig() const final;
     virtual SampleType getSampleType() const final;
 
     virtual uint64_t getLength() final;
@@ -88,9 +88,9 @@ ALuint VorbisFileDecoder::getFrequency() const
     return mVorbisInfo->rate;
 }
 
-SampleConfig VorbisFileDecoder::getSampleConfig() const
+ChannelConfig VorbisFileDecoder::getChannelConfig() const
 {
-    return mSampleConfig;
+    return mChannelConfig;
 }
 
 SampleType VorbisFileDecoder::getSampleType() const
@@ -144,7 +144,7 @@ ALuint VorbisFileDecoder::read(ALvoid *ptr, ALuint count)
     // 1, 2, and 4 channel files decode into the same channel order as
     // OpenAL, however 6 (5.1), 7 (6.1), and 8 (7.1) channel files need to be
     // re-ordered.
-    if(mSampleConfig == SampleConfig_X51)
+    if(mChannelConfig == ChannelConfig_X51)
     {
         samples = (ALshort*)ptr;
         for(ALuint i = 0;i < total;++i)
@@ -156,7 +156,7 @@ ALuint VorbisFileDecoder::read(ALvoid *ptr, ALuint count)
             std::swap(samples[i*6 + 4], samples[i*6 + 5]);
         }
     }
-    else if(mSampleConfig == SampleConfig_X61)
+    else if(mChannelConfig == ChannelConfig_X61)
     {
         samples = (ALshort*)ptr;
         for(ALuint i = 0;i < total;++i)
@@ -169,7 +169,7 @@ ALuint VorbisFileDecoder::read(ALvoid *ptr, ALuint count)
             std::swap(samples[i*7 + 5], samples[i*7 + 6]);
         }
     }
-    else if(mSampleConfig == SampleConfig_X71)
+    else if(mChannelConfig == ChannelConfig_X71)
     {
         samples = (ALshort*)ptr;
         for(ALuint i = 0;i < total;++i)
@@ -201,21 +201,21 @@ SharedPtr<Decoder> VorbisFileDecoderFactory::createDecoder(SharedPtr<std::istrea
         vorbisinfo = ov_info(oggfile.get(), -1);
         if(vorbisinfo)
         {
-            SampleConfig channels = SampleConfig_BFmt_WXYZ;
+            ChannelConfig channels = ChannelConfig_BFmt_WXYZ;
             if(vorbisinfo->channels == 1)
-                channels = SampleConfig_Mono;
+                channels = ChannelConfig_Mono;
             else if(vorbisinfo->channels == 2)
-                channels = SampleConfig_Stereo;
+                channels = ChannelConfig_Stereo;
             else if(vorbisinfo->channels == 4)
-                channels = SampleConfig_Quad;
+                channels = ChannelConfig_Quad;
             else if(vorbisinfo->channels == 6)
-                channels = SampleConfig_X51;
+                channels = ChannelConfig_X51;
             else if(vorbisinfo->channels == 7)
-                channels = SampleConfig_X61;
+                channels = ChannelConfig_X61;
             else if(vorbisinfo->channels == 8)
-                channels = SampleConfig_X71;
+                channels = ChannelConfig_X71;
 
-            if(channels != SampleConfig_BFmt_WXYZ)
+            if(channels != ChannelConfig_BFmt_WXYZ)
                 return SharedPtr<Decoder>(new VorbisFileDecoder(file, std::move(oggfile), vorbisinfo, channels));
         }
         ov_clear(oggfile.get());

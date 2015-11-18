@@ -72,7 +72,7 @@ public:
     void prepare()
     {
         ALuint srate = mDecoder->getFrequency();
-        SampleConfig chans = mDecoder->getSampleConfig();
+        ChannelConfig chans = mDecoder->getChannelConfig();
         SampleType type = mDecoder->getSampleType();
 
         mLoopPts = mDecoder->getLoopPoints();

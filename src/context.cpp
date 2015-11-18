@@ -422,7 +422,7 @@ Buffer *ALContext::getBuffer(const std::string &name)
     SharedPtr<Decoder> decoder(createDecoder(name));
 
     ALuint srate = decoder->getFrequency();
-    SampleConfig chans = decoder->getSampleConfig();
+    ChannelConfig chans = decoder->getChannelConfig();
     SampleType type = decoder->getSampleType();
     ALuint frames = decoder->getLength();
 
@@ -478,7 +478,7 @@ Buffer *ALContext::getBufferAsync(const std::string &name)
     SharedPtr<Decoder> decoder(createDecoder(name));
 
     ALuint srate = decoder->getFrequency();
-    SampleConfig chans = decoder->getSampleConfig();
+    ChannelConfig chans = decoder->getChannelConfig();
     SampleType type = decoder->getSampleType();
     ALuint frames = decoder->getLength();
     if(!frames) throw std::runtime_error("No samples for buffer");

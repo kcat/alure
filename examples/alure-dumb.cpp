@@ -114,10 +114,10 @@ public:
 
     virtual ALuint getFrequency() const final
     { return mFrequency; }
-    virtual alure::SampleConfig getSampleConfig() const final
+    virtual alure::ChannelConfig getChannelConfig() const final
     {
         // We always have DUMB render to stereo
-        return alure::SampleConfig_Stereo;
+        return alure::ChannelConfig_Stereo;
     }
     virtual alure::SampleType getSampleType() const final
     {
@@ -256,7 +256,7 @@ int main(int argc, char *argv[])
         alure::Source *source = ctx->getSource();
         source->play(decoder, 32768, 4);
         std::cout<< "Playing "<<argv[i]<<" ("<<alure::GetSampleTypeName(decoder->getSampleType())<<", "
-                                             <<alure::GetSampleConfigName(decoder->getSampleConfig())<<", "
+                                             <<alure::GetChannelConfigName(decoder->getChannelConfig())<<", "
                                              <<decoder->getFrequency()<<"hz)" <<std::endl;
 
         float invfreq = 1.0f / decoder->getFrequency();

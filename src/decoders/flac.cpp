@@ -15,7 +15,7 @@ class FlacDecoder : public Decoder {
     SharedPtr<std::istream> mFile;
 
     FLAC__StreamDecoder *mFlacFile;
-    SampleConfig mSampleConfig;
+    ChannelConfig mChannelConfig;
     SampleType mSampleType;
     ALuint mFrequency;
     ALuint mFrameSize;
@@ -66,9 +66,9 @@ class FlacDecoder : public Decoder {
             }
 
             if(frame->header.channels == 1)
-                self->mSampleConfig = SampleConfig_Mono;
+                self->mChannelConfig = ChannelConfig_Mono;
             else if(frame->header.channels == 2)
-                self->mSampleConfig = SampleConfig_Stereo;
+                self->mChannelConfig = ChannelConfig_Stereo;
             else
                 return FLAC__STREAM_DECODER_WRITE_STATUS_ABORT;
 
@@ -161,7 +161,7 @@ class FlacDecoder : public Decoder {
 
 public:
     FlacDecoder(SharedPtr<std::istream> file)
-      : mFile(file), mFlacFile(nullptr), mSampleConfig(SampleConfig_Mono), mSampleType(SampleType_Int16), mFrequency(0),
+      : mFile(file), mFlacFile(nullptr), mChannelConfig(ChannelConfig_Mono), mSampleType(SampleType_Int16), mFrequency(0),
         mFrameSize(0), mSamplePos(0), mOutBytes(nullptr), mOutMax(0), mOutLen(0)
     { }
     virtual ~FlacDecoder();
@@ -169,7 +169,7 @@ public:
     bool open();
 
     virtual ALuint getFrequency() const final;
-    virtual SampleConfig getSampleConfig() const final;
+    virtual ChannelConfig getChannelConfig() const final;
     virtual SampleType getSampleType() const final;
 
     virtual uint64_t getLength() final;
@@ -223,9 +223,9 @@ ALuint FlacDecoder::getFrequency() const
     return mFrequency;
 }
 
-SampleConfig FlacDecoder::getSampleConfig() const
+ChannelConfig FlacDecoder::getChannelConfig() const
 {
-    return mSampleConfig;
+    return mChannelConfig;
 }
 
 SampleType FlacDecoder::getSampleType() const

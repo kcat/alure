@@ -423,18 +423,18 @@ enum SampleType {
 };
 const char *GetSampleTypeName(SampleType type);
 
-enum SampleConfig {
-    SampleConfig_Mono,
-    SampleConfig_Stereo,
-    SampleConfig_Rear,
-    SampleConfig_Quad,
-    SampleConfig_X51,
-    SampleConfig_X61,
-    SampleConfig_X71,
-    SampleConfig_BFmt_WXY,
-    SampleConfig_BFmt_WXYZ
+enum ChannelConfig {
+    ChannelConfig_Mono,
+    ChannelConfig_Stereo,
+    ChannelConfig_Rear,
+    ChannelConfig_Quad,
+    ChannelConfig_X51,
+    ChannelConfig_X61,
+    ChannelConfig_X71,
+    ChannelConfig_BFmt_WXY,
+    ChannelConfig_BFmt_WXYZ
 };
-const char *GetSampleConfigName(SampleConfig cfg);
+const char *GetChannelConfigName(ChannelConfig cfg);
 
 enum BufferLoadStatus {
     BufferLoad_Pending,
@@ -469,7 +469,7 @@ public:
     virtual ALuint getFrequency() const = 0;
 
     /** Retrieves the buffer's sample configuration. */
-    virtual SampleConfig getSampleConfig() const = 0;
+    virtual ChannelConfig getChannelConfig() const = 0;
 
     /** Retrieves the buffer's sample type. */
     virtual SampleType getSampleType() const = 0;
@@ -686,7 +686,7 @@ public:
     /** Retrieves the sample frequency, in hz, of the audio being decoded. */
     virtual ALuint getFrequency() const = 0;
     /** Retrieves the channel configuration of the audio being decoded. */
-    virtual SampleConfig getSampleConfig() const = 0;
+    virtual ChannelConfig getChannelConfig() const = 0;
     /** Retrieves the sample type of the audio being decoded. */
     virtual SampleType getSampleType() const = 0;
 
@@ -809,7 +809,7 @@ public:
      * \param samplerate Sample rate of the given audio data.
      * \param data The audio data that is about to be fed to the OpenAL buffer.
      */
-    virtual void bufferLoading(const std::string &name, SampleConfig channels, SampleType type, ALuint samplerate, const std::vector<ALbyte> &data) = 0;
+    virtual void bufferLoading(const std::string &name, ChannelConfig channels, SampleType type, ALuint samplerate, const std::vector<ALbyte> &data) = 0;
 };
 
 } // namespace alure

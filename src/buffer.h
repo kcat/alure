@@ -15,8 +15,8 @@ class ALDevice;
 class ALContext;
 
 
-ALuint FramesToBytes(ALuint size, SampleConfig chans, SampleType type);
-ALenum GetFormat(SampleConfig chans, SampleType type);
+ALuint FramesToBytes(ALuint size, ChannelConfig chans, SampleType type);
+ALenum GetFormat(ChannelConfig chans, SampleType type);
 
 
 class ALBuffer : public Buffer {
@@ -24,7 +24,7 @@ class ALBuffer : public Buffer {
     ALuint mId;
 
     ALuint mFrequency;
-    SampleConfig mSampleConfig;
+    ChannelConfig mChannelConfig;
     SampleType mSampleType;
 
     BufferLoadStatus mLoadStatus;
@@ -33,8 +33,8 @@ class ALBuffer : public Buffer {
     std::vector<Source*> mSources;
 
 public:
-    ALBuffer(ALDevice *device, ALuint id, ALuint freq, SampleConfig config, SampleType type, bool preloaded)
-      : mDevice(device), mId(id), mFrequency(freq), mSampleConfig(config), mSampleType(type),
+    ALBuffer(ALDevice *device, ALuint id, ALuint freq, ChannelConfig config, SampleType type, bool preloaded)
+      : mDevice(device), mId(id), mFrequency(freq), mChannelConfig(config), mSampleType(type),
         mLoadStatus(preloaded?BufferLoad_Ready:BufferLoad_Pending), mIsLoaded(preloaded)
     { }
     virtual ~ALBuffer() { }
@@ -59,7 +59,7 @@ public:
     virtual ALuint getLength() const final;
 
     virtual ALuint getFrequency() const final;
-    virtual SampleConfig getSampleConfig() const final;
+    virtual ChannelConfig getChannelConfig() const final;
     virtual SampleType getSampleType() const final;
 
     virtual ALuint getSize() const final;

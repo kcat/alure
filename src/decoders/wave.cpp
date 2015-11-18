@@ -59,7 +59,7 @@ static ALushort read_le16(std::istream &stream)
 class WaveDecoder : public Decoder {
     SharedPtr<std::istream> mFile;
 
-    SampleConfig mSampleConfig;
+    ChannelConfig mChannelConfig;
     SampleType mSampleType;
     ALuint mFrequency;
     ALuint mFrameSize;
@@ -71,15 +71,15 @@ class WaveDecoder : public Decoder {
     std::istream::pos_type mStart, mEnd;
 
 public:
-    WaveDecoder(SharedPtr<std::istream> file, SampleConfig channels, SampleType type, ALuint frequency, ALuint framesize,
+    WaveDecoder(SharedPtr<std::istream> file, ChannelConfig channels, SampleType type, ALuint frequency, ALuint framesize,
                 std::istream::pos_type start, std::istream::pos_type end, ALuint loopstart, ALuint loopend)
-      : mFile(file), mSampleConfig(channels), mSampleType(type), mFrequency(frequency), mFrameSize(framesize),
+      : mFile(file), mChannelConfig(channels), mSampleType(type), mFrequency(frequency), mFrameSize(framesize),
         mLoopPts{loopstart,loopend}, mStart(start), mEnd(end)
     { }
     virtual ~WaveDecoder();
 
     virtual ALuint getFrequency() const final;
-    virtual SampleConfig getSampleConfig() const final;
+    virtual ChannelConfig getChannelConfig() const final;
     virtual SampleType getSampleType() const final;
 
     virtual uint64_t getLength() final;
@@ -101,9 +101,9 @@ ALuint WaveDecoder::getFrequency() const
     return mFrequency;
 }
 
-SampleConfig WaveDecoder::getSampleConfig() const
+ChannelConfig WaveDecoder::getChannelConfig() const
 {
-    return mSampleConfig;
+    return mChannelConfig;
 }
 
 SampleType WaveDecoder::getSampleType() const
@@ -201,7 +201,7 @@ ALuint WaveDecoder::read(ALvoid *ptr, ALuint count)
 
 SharedPtr<Decoder> WaveDecoderFactory::createDecoder(SharedPtr<std::istream> file)
 {
-    SampleConfig channels = SampleConfig_Mono;
+    ChannelConfig channels = ChannelConfig_Mono;
     SampleType type = SampleType_UInt8;
     ALuint frequency = 0;
     ALuint framesize = 0;
@@ -265,9 +265,9 @@ SharedPtr<Decoder> WaveDecoderFactory::createDecoder(SharedPtr<std::istream> fil
             if(fmttype == 0x0001)
             {
                 if(chancount == 1)
-                    channels = SampleConfig_Mono;
+                    channels = ChannelConfig_Mono;
                 else if(chancount == 2)
-                    channels = SampleConfig_Stereo;
+                    channels = ChannelConfig_Stereo;
                 else
                     goto next_chunk;
 
@@ -281,9 +281,9 @@ SharedPtr<Decoder> WaveDecoderFactory::createDecoder(SharedPtr<std::istream> fil
             else if(fmttype == 0x0003)
             {
                 if(chancount == 1)
-                    channels = SampleConfig_Mono;
+                    channels = ChannelConfig_Mono;
                 else if(chancount == 2)
-                    channels = SampleConfig_Stereo;
+                    channels = ChannelConfig_Stereo;
                 else
                     goto next_chunk;
 
@@ -295,9 +295,9 @@ SharedPtr<Decoder> WaveDecoderFactory::createDecoder(SharedPtr<std::istream> fil
             else if(fmttype == 0x0007)
             {
                 if(chancount == 1)
-                    channels = SampleConfig_Mono;
+                    channels = ChannelConfig_Mono;
                 else if(chancount == 2)
-                    channels = SampleConfig_Stereo;
+                    channels = ChannelConfig_Stereo;
                 else
                     goto next_chunk;
 
@@ -326,26 +326,26 @@ SharedPtr<Decoder> WaveDecoderFactory::createDecoder(SharedPtr<std::istream> fil
                         goto next_chunk;
 
                     if(chancount == 3)
-                        channels = SampleConfig_BFmt_WXY;
+                        channels = ChannelConfig_BFmt_WXY;
                     else if(chancount == 4)
-                        channels = SampleConfig_BFmt_WXYZ;
+                        channels = ChannelConfig_BFmt_WXYZ;
                     else
                         goto next_chunk;
                 }
                 else if(memcmp(subtype, SUBTYPE_PCM, 16) == 0 || memcmp(subtype, SUBTYPE_FLOAT, 16) == 0)
                 {
                     if(chancount == 1 && chanmask == CHANNELS_MONO)
-                        channels = SampleConfig_Mono;
+                        channels = ChannelConfig_Mono;
                     else if(chancount == 2 && chanmask == CHANNELS_STEREO)
-                        channels = SampleConfig_Stereo;
+                        channels = ChannelConfig_Stereo;
                     else if(chancount == 4 && chanmask == CHANNELS_QUAD)
-                        channels = SampleConfig_Quad;
+                        channels = ChannelConfig_Quad;
                     else if(chancount == 6 && (chanmask == CHANNELS_5DOT1 || chanmask == CHANNELS_5DOT1_REAR))
-                        channels = SampleConfig_X51;
+                        channels = ChannelConfig_X51;
                     else if(chancount == 7 && chanmask == CHANNELS_6DOT1)
-                        channels = SampleConfig_X61;
+                        channels = ChannelConfig_X61;
                     else if(chancount == 8 && chanmask == CHANNELS_7DOT1)
-                        channels = SampleConfig_X71;
+                        channels = ChannelConfig_X71;
                     else
                         goto next_chunk;
                 }

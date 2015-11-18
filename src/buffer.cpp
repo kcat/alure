@@ -33,10 +33,10 @@ void ALBuffer::cleanup()
 
 void ALBuffer::load(ALuint frames, ALenum format, SharedPtr<Decoder> decoder, const std::string &name, ALContext *ctx)
 {
-    std::vector<ALbyte> data(FramesToBytes(frames, mSampleConfig, mSampleType));
+    std::vector<ALbyte> data(FramesToBytes(frames, mChannelConfig, mSampleType));
 
     frames = decoder->read(&data[0], frames);
-    data.resize(FramesToBytes(frames, mSampleConfig, mSampleType));
+    data.resize(FramesToBytes(frames, mChannelConfig, mSampleType));
 
     std::pair<uint64_t,uint64_t> loop_pts = decoder->getLoopPoints();
     if(loop_pts.first >= loop_pts.second)
@@ -48,7 +48,7 @@ void ALBuffer::load(ALuint frames, ALenum format, SharedPtr<Decoder> decoder, co
     }
 
     SharedPtr<MessageHandler> msg = ctx->getMessageHandler();
-    if(msg.get()) msg->bufferLoading(name, mSampleConfig, mSampleType, mFrequency, data);
+    if(msg.get()) msg->bufferLoading(name, mChannelConfig, mSampleType, mFrequency, data);
 
     alBufferData(mId, format, &data[0], data.size(), mFrequency);
     if(ctx->hasExtension(SOFT_loop_points))
@@ -82,10 +82,10 @@ ALuint ALBuffer::getFrequency() const
     return mFrequency;
 }
 
-SampleConfig ALBuffer::getSampleConfig() const
+ChannelConfig ALBuffer::getChannelConfig() const
 {
     CheckContextDevice(mDevice);
-    return mSampleConfig;
+    return mChannelConfig;
 }
 
 SampleType ALBuffer::getSampleType() const
@@ -175,37 +175,37 @@ const char *GetSampleTypeName(SampleType type)
     throw std::runtime_error("Invalid type");
 }
 
-const char *GetSampleConfigName(SampleConfig cfg)
+const char *GetChannelConfigName(ChannelConfig cfg)
 {
     switch(cfg)
     {
-        case SampleConfig_Mono: return "Mono";
-        case SampleConfig_Stereo: return "Stereo";
-        case SampleConfig_Rear: return "Rear";
-        case SampleConfig_Quad: return "Quadrophonic";
-        case SampleConfig_X51: return "5.1 Surround";
-        case SampleConfig_X61: return "6.1 Surround";
-        case SampleConfig_X71: return "7.1 Surround";
-        case SampleConfig_BFmt_WXY: return "B-Format 2D";
-        case SampleConfig_BFmt_WXYZ: return "B-Format 3D";
+        case ChannelConfig_Mono: return "Mono";
+        case ChannelConfig_Stereo: return "Stereo";
+        case ChannelConfig_Rear: return "Rear";
+        case ChannelConfig_Quad: return "Quadrophonic";
+        case ChannelConfig_X51: return "5.1 Surround";
+        case ChannelConfig_X61: return "6.1 Surround";
+        case ChannelConfig_X71: return "7.1 Surround";
+        case ChannelConfig_BFmt_WXY: return "B-Format 2D";
+        case ChannelConfig_BFmt_WXYZ: return "B-Format 3D";
     }
     throw std::runtime_error("Invalid config");
 }
 
 
-ALuint FramesToBytes(ALuint size, SampleConfig chans, SampleType type)
+ALuint FramesToBytes(ALuint size, ChannelConfig chans, SampleType type)
 {
     switch(chans)
     {
-        case SampleConfig_Mono: size *= 1; break;
-        case SampleConfig_Stereo: size *= 2; break;
-        case SampleConfig_Rear: size *= 2; break;
-        case SampleConfig_Quad: size *= 4; break;
-        case SampleConfig_X51: size *= 6; break;
-        case SampleConfig_X61: size *= 7; break;
-        case SampleConfig_X71: size *= 8; break;
-        case SampleConfig_BFmt_WXY: size *= 3; break;
-        case SampleConfig_BFmt_WXYZ: size *= 4; break;
+        case ChannelConfig_Mono: size *= 1; break;
+        case ChannelConfig_Stereo: size *= 2; break;
+        case ChannelConfig_Rear: size *= 2; break;
+        case ChannelConfig_Quad: size *= 4; break;
+        case ChannelConfig_X51: size *= 6; break;
+        case ChannelConfig_X61: size *= 7; break;
+        case ChannelConfig_X71: size *= 8; break;
+        case ChannelConfig_BFmt_WXY: size *= 3; break;
+        case ChannelConfig_BFmt_WXYZ: size *= 4; break;
     }
     switch(type)
     {
@@ -218,7 +218,7 @@ ALuint FramesToBytes(ALuint size, SampleConfig chans, SampleType type)
     return size;
 }
 
-ALenum GetFormat(SampleConfig chans, SampleType type)
+ALenum GetFormat(ChannelConfig chans, SampleType type)
 {
 #define RETURN_FMT(x) do {                \
     ALenum fmt = alGetEnumValue(x);       \
@@ -227,80 +227,80 @@ ALenum GetFormat(SampleConfig chans, SampleType type)
 } while(0)
     if(type == SampleType_UInt8)
     {
-        if(chans == SampleConfig_Mono) return AL_FORMAT_MONO8;
-        if(chans == SampleConfig_Stereo) return AL_FORMAT_STEREO8;
+        if(chans == ChannelConfig_Mono) return AL_FORMAT_MONO8;
+        if(chans == ChannelConfig_Stereo) return AL_FORMAT_STEREO8;
         if(ALContext::GetCurrent()->hasExtension(EXT_MCFORMATS))
         {
-            if(chans == SampleConfig_Rear) RETURN_FMT("AL_FORMAT_REAR8");
-            if(chans == SampleConfig_Quad) RETURN_FMT("AL_FORMAT_QUAD8");
-            if(chans == SampleConfig_X51) RETURN_FMT("AL_FORMAT_51CHN8");
-            if(chans == SampleConfig_X61) RETURN_FMT("AL_FORMAT_61CHN8");
-            if(chans == SampleConfig_X71) RETURN_FMT("AL_FORMAT_71CHN8");
+            if(chans == ChannelConfig_Rear) RETURN_FMT("AL_FORMAT_REAR8");
+            if(chans == ChannelConfig_Quad) RETURN_FMT("AL_FORMAT_QUAD8");
+            if(chans == ChannelConfig_X51) RETURN_FMT("AL_FORMAT_51CHN8");
+            if(chans == ChannelConfig_X61) RETURN_FMT("AL_FORMAT_61CHN8");
+            if(chans == ChannelConfig_X71) RETURN_FMT("AL_FORMAT_71CHN8");
         }
         if(ALContext::GetCurrent()->hasExtension(EXT_BFORMAT))
         {
-            if(chans == SampleConfig_BFmt_WXY) RETURN_FMT("AL_FORMAT_BFORMAT2D_8");
-            if(chans == SampleConfig_BFmt_WXYZ) RETURN_FMT("AL_FORMAT_BFORMAT3D_8");
+            if(chans == ChannelConfig_BFmt_WXY) RETURN_FMT("AL_FORMAT_BFORMAT2D_8");
+            if(chans == ChannelConfig_BFmt_WXYZ) RETURN_FMT("AL_FORMAT_BFORMAT3D_8");
         }
     }
     else if(type == SampleType_Int16)
     {
-        if(chans == SampleConfig_Mono) return AL_FORMAT_MONO16;
-        if(chans == SampleConfig_Stereo) return AL_FORMAT_STEREO16;
+        if(chans == ChannelConfig_Mono) return AL_FORMAT_MONO16;
+        if(chans == ChannelConfig_Stereo) return AL_FORMAT_STEREO16;
         if(ALContext::GetCurrent()->hasExtension(EXT_MCFORMATS))
         {
-            if(chans == SampleConfig_Rear) RETURN_FMT("AL_FORMAT_REAR16");
-            if(chans == SampleConfig_Quad) RETURN_FMT("AL_FORMAT_QUAD16");
-            if(chans == SampleConfig_X51) RETURN_FMT("AL_FORMAT_51CHN16");
-            if(chans == SampleConfig_X61) RETURN_FMT("AL_FORMAT_61CHN16");
-            if(chans == SampleConfig_X71) RETURN_FMT("AL_FORMAT_71CHN16");
+            if(chans == ChannelConfig_Rear) RETURN_FMT("AL_FORMAT_REAR16");
+            if(chans == ChannelConfig_Quad) RETURN_FMT("AL_FORMAT_QUAD16");
+            if(chans == ChannelConfig_X51) RETURN_FMT("AL_FORMAT_51CHN16");
+            if(chans == ChannelConfig_X61) RETURN_FMT("AL_FORMAT_61CHN16");
+            if(chans == ChannelConfig_X71) RETURN_FMT("AL_FORMAT_71CHN16");
         }
         if(ALContext::GetCurrent()->hasExtension(EXT_BFORMAT))
         {
-            if(chans == SampleConfig_BFmt_WXY) RETURN_FMT("AL_FORMAT_BFORMAT2D_16");
-            if(chans == SampleConfig_BFmt_WXYZ) RETURN_FMT("AL_FORMAT_BFORMAT3D_16");
+            if(chans == ChannelConfig_BFmt_WXY) RETURN_FMT("AL_FORMAT_BFORMAT2D_16");
+            if(chans == ChannelConfig_BFmt_WXYZ) RETURN_FMT("AL_FORMAT_BFORMAT3D_16");
         }
     }
     else if(type == SampleType_Float32 && ALContext::GetCurrent()->hasExtension(EXT_FLOAT32))
     {
-        if(chans == SampleConfig_Mono) return AL_FORMAT_MONO_FLOAT32;
-        if(chans == SampleConfig_Stereo) return AL_FORMAT_STEREO_FLOAT32;
+        if(chans == ChannelConfig_Mono) return AL_FORMAT_MONO_FLOAT32;
+        if(chans == ChannelConfig_Stereo) return AL_FORMAT_STEREO_FLOAT32;
         if(ALContext::GetCurrent()->hasExtension(EXT_MCFORMATS))
         {
-            if(chans == SampleConfig_Rear) RETURN_FMT("AL_FORMAT_REAR32");
-            if(chans == SampleConfig_Quad) RETURN_FMT("AL_FORMAT_QUAD32");
-            if(chans == SampleConfig_X51) RETURN_FMT("AL_FORMAT_51CHN32");
-            if(chans == SampleConfig_X61) RETURN_FMT("AL_FORMAT_61CHN32");
-            if(chans == SampleConfig_X71) RETURN_FMT("AL_FORMAT_71CHN32");
+            if(chans == ChannelConfig_Rear) RETURN_FMT("AL_FORMAT_REAR32");
+            if(chans == ChannelConfig_Quad) RETURN_FMT("AL_FORMAT_QUAD32");
+            if(chans == ChannelConfig_X51) RETURN_FMT("AL_FORMAT_51CHN32");
+            if(chans == ChannelConfig_X61) RETURN_FMT("AL_FORMAT_61CHN32");
+            if(chans == ChannelConfig_X71) RETURN_FMT("AL_FORMAT_71CHN32");
         }
         if(ALContext::GetCurrent()->hasExtension(EXT_BFORMAT))
         {
-            if(chans == SampleConfig_BFmt_WXY) RETURN_FMT("AL_FORMAT_BFORMAT2D_FLOAT32");
-            if(chans == SampleConfig_BFmt_WXYZ) RETURN_FMT("AL_FORMAT_BFORMAT3D_FLOAT32");
+            if(chans == ChannelConfig_BFmt_WXY) RETURN_FMT("AL_FORMAT_BFORMAT2D_FLOAT32");
+            if(chans == ChannelConfig_BFmt_WXYZ) RETURN_FMT("AL_FORMAT_BFORMAT3D_FLOAT32");
         }
     }
     else if(type == SampleType_Mulaw && ALContext::GetCurrent()->hasExtension(EXT_MULAW))
     {
-        if(chans == SampleConfig_Mono) return AL_FORMAT_MONO_MULAW;
-        if(chans == SampleConfig_Stereo) return AL_FORMAT_STEREO_MULAW;
+        if(chans == ChannelConfig_Mono) return AL_FORMAT_MONO_MULAW;
+        if(chans == ChannelConfig_Stereo) return AL_FORMAT_STEREO_MULAW;
         if(ALContext::GetCurrent()->hasExtension(EXT_MULAW_MCFORMATS))
         {
-            if(chans == SampleConfig_Rear) RETURN_FMT("AL_FORMAT_REAR_MULAW");
-            if(chans == SampleConfig_Quad) RETURN_FMT("AL_FORMAT_QUAD_MULAW");
-            if(chans == SampleConfig_X51) RETURN_FMT("AL_FORMAT_51CHN_MULAW");
-            if(chans == SampleConfig_X61) RETURN_FMT("AL_FORMAT_61CHN_MULAW");
-            if(chans == SampleConfig_X71) RETURN_FMT("AL_FORMAT_71CHN_MULAW");
+            if(chans == ChannelConfig_Rear) RETURN_FMT("AL_FORMAT_REAR_MULAW");
+            if(chans == ChannelConfig_Quad) RETURN_FMT("AL_FORMAT_QUAD_MULAW");
+            if(chans == ChannelConfig_X51) RETURN_FMT("AL_FORMAT_51CHN_MULAW");
+            if(chans == ChannelConfig_X61) RETURN_FMT("AL_FORMAT_61CHN_MULAW");
+            if(chans == ChannelConfig_X71) RETURN_FMT("AL_FORMAT_71CHN_MULAW");
         }
         if(ALContext::GetCurrent()->hasExtension(EXT_MULAW_BFORMAT))
         {
-            if(chans == SampleConfig_BFmt_WXY) RETURN_FMT("AL_FORMAT_BFORMAT2D_MULAW");
-            if(chans == SampleConfig_BFmt_WXYZ) RETURN_FMT("AL_FORMAT_BFORMAT3D_MULAW");
+            if(chans == ChannelConfig_BFmt_WXY) RETURN_FMT("AL_FORMAT_BFORMAT2D_MULAW");
+            if(chans == ChannelConfig_BFmt_WXYZ) RETURN_FMT("AL_FORMAT_BFORMAT3D_MULAW");
         }
     }
 #undef RETURN_FMT
 
     std::stringstream sstr;
-    sstr<< "Format not supported ("<<GetSampleTypeName(type)<<", "<<GetSampleConfigName(chans)<<")";
+    sstr<< "Format not supported ("<<GetSampleTypeName(type)<<", "<<GetChannelConfigName(chans)<<")";
     throw std::runtime_error(sstr.str());
 }
 
