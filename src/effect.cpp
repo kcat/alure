@@ -66,7 +66,7 @@ void ALEffect::setReverbProperties(const EFXEAXREVERBPROPERTIES &props)
         SETPARAM(mId, LATE_REVERB_DELAY, props.flLateReverbDelay);
         SETPARAM(mId, AIR_ABSORPTION_GAINHF, props.flAirAbsorptionGainHF);
         SETPARAM(mId, ROOM_ROLLOFF_FACTOR, props.flRoomRolloffFactor);
-        mContext->alEffecti(mId, AL_EAXREVERB_DECAY_HFLIMIT, (props.iDecayHFLimit ? AL_TRUE : AL_FALSE));
+        mContext->alEffecti(mId, AL_REVERB_DECAY_HFLIMIT, (props.iDecayHFLimit ? AL_TRUE : AL_FALSE));
 #undef SETPARAM
     }
 }
