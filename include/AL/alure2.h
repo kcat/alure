@@ -811,6 +811,21 @@ public:
      * \param data The audio data that is about to be fed to the OpenAL buffer.
      */
     virtual void bufferLoading(const std::string &name, ChannelConfig channels, SampleType type, ALuint samplerate, const std::vector<ALbyte> &data) = 0;
+
+    /**
+     * Called when a resource isn't found, allowing the app to substitute in a
+     * different resource. For buffers created with \ref Context::getBuffer or
+     * \ref Context::getBufferAsync, the original name will still be used for
+     * the cache map so the app doesn't have to keep track of substituted
+     * resource names.
+     *
+     * This will be called again if the new name isn't found.
+     *
+     * \param name The resource name that was not found.
+     * \param newname The string to write in a resplacement resource name.
+     * \return True to look for a replacement resource, false to fail.
+     */
+    virtual bool resourceNotFound(const std::string &name, std::string &newname) = 0;
 };
 
 } // namespace alure

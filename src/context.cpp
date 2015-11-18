@@ -90,6 +90,14 @@ static SharedPtr<Decoder> GetDecoder(const std::string &name, SharedPtr<std::ist
     return SharedPtr<Decoder>(nullptr);
 }
 
+static SharedPtr<Decoder> GetDecoder(const std::string &name, SharedPtr<std::istream> file)
+{
+    SharedPtr<Decoder> decoder = GetDecoder(name, file, sDecoders.begin(), sDecoders.end());
+    if(!decoder) decoder = GetDecoder(name, file, std::begin(sDefaultDecoders), std::end(sDefaultDecoders));
+    if(!decoder) throw std::runtime_error("No decoder for "+name);
+    return decoder;
+}
+
 void RegisterDecoder(const std::string &name, SharedPtr<DecoderFactory> factory)
 {
     FactoryMap::iterator iter = sDecoders.begin();
@@ -395,13 +403,20 @@ SharedPtr<MessageHandler> ALContext::getMessageHandler() const
 SharedPtr<Decoder> ALContext::createDecoder(const std::string &name)
 {
     SharedPtr<std::istream> file(FileIOFactory::get().openFile(name));
-    if(!file.get()) throw std::runtime_error("Failed to open "+name);
+    if(file.get()) return GetDecoder(name, file);
 
-    SharedPtr<Decoder> decoder = GetDecoder(name, file, sDecoders.begin(), sDecoders.end());
-    if(!decoder) decoder = GetDecoder(name, file, std::begin(sDefaultDecoders), std::end(sDefaultDecoders));
-    if(decoder) return decoder;
+    // Resource not found. Try to find a substitute.
+    if(!mMessage.get()) throw std::runtime_error("Failed to open "+name);
+    std::string oldname = name;
+    do {
+        std::string newname;
+        if(!mMessage->resourceNotFound(oldname, newname))
+            throw std::runtime_error("Failed to open "+oldname);
+        file = FileIOFactory::get().openFile(newname);
+        oldname = std::move(newname);
+    } while(!file.get());
 
-    throw std::runtime_error("No decoder for "+name);
+    return GetDecoder(oldname, file);
 }
 
 
