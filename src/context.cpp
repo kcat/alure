@@ -656,7 +656,9 @@ void ALContext::update()
 {
     CheckContext(this);
     std::for_each(mUsedSources.begin(), mUsedSources.end(), std::mem_fun(&ALSource::updateNoCtxCheck));
-    mWakeThread.notify_all();
+    // For performance reasons, don't wait for the thread's mutex. This should
+    // be called often enough to keep up with any and all streams regardless.
+    wakeThread();
 }
 
 

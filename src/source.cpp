@@ -452,7 +452,14 @@ void ALSource::updateNoCtxCheck()
 
     if(mStream)
     {
-        if(!mIsAsync)
+        if(mIsAsync)
+        {
+            // For performance reasons, don't wait for the thread's mutex. This
+            // should be called often enough to keep up with the stream
+            // regardless.
+            ALContext::GetCurrent()->wakeThread();
+        }
+        else
         {
             std::lock_guard<std::mutex> lock(mMutex);
             ALint queued = refillBufferStream();

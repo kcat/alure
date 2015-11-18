@@ -95,6 +95,8 @@ public:
 
     bool hasExtension(ALExtension ext) const { return mHasExt[ext]; }
 
+    void wakeThread() { mWakeThread.notify_all(); }
+
     LPALGETSOURCEI64VSOFT alGetSourcei64vSOFT;
 
     LPALGENEFFECTS alGenEffects;
