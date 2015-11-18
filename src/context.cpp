@@ -71,8 +71,8 @@ static const FactoryPair sDefaultDecoders[] = {
 typedef std::map<std::string,SharedPtr<DecoderFactory>> FactoryMap;
 static FactoryMap sDecoders;
 
-template<typename T1, typename T2>
-static SharedPtr<Decoder> GetDecoder(const std::string &name, SharedPtr<std::istream> file, T1 start, T2 end)
+template<typename T>
+static SharedPtr<Decoder> GetDecoder(const std::string &name, SharedPtr<std::istream> file, T start, T end)
 {
     while(start != end)
     {
