@@ -269,8 +269,7 @@ public:
 
     /**
      * Creates a new \ref Context on this device, using the specified
-     * \param attributes. If single-context mode is enabled, only one context
-     * can be created at a time.
+     * \param attributes.
      */
     virtual Context *createContext(ALCint *attributes=0) = 0;
 
