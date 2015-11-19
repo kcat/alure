@@ -5,6 +5,7 @@
 
 #include <stdexcept>
 #include <sstream>
+#include <cstring>
 
 #include "al.h"
 #include "alext.h"
@@ -35,8 +36,19 @@ void ALBuffer::load(ALuint frames, ALenum format, SharedPtr<Decoder> decoder, co
 {
     std::vector<ALbyte> data(FramesToBytes(frames, mChannelConfig, mSampleType));
 
-    frames = decoder->read(&data[0], frames);
-    data.resize(FramesToBytes(frames, mChannelConfig, mSampleType));
+    ALuint got = decoder->read(data.data(), frames);
+    if(got > 0)
+    {
+        frames = got;
+        data.resize(FramesToBytes(frames, mChannelConfig, mSampleType));
+    }
+    else
+    {
+        int silence = 0;
+        if(mSampleType == SampleType_UInt8) silence = 0x80;
+        else if(mSampleType == SampleType_Mulaw) silence = 0x7f;
+        memset(data.data(), silence, data.size());
+    }
 
     std::pair<uint64_t,uint64_t> loop_pts = decoder->getLoopPoints();
     if(loop_pts.first >= loop_pts.second)
@@ -50,7 +62,7 @@ void ALBuffer::load(ALuint frames, ALenum format, SharedPtr<Decoder> decoder, co
     SharedPtr<MessageHandler> msg = ctx->getMessageHandler();
     if(msg.get()) msg->bufferLoading(name, mChannelConfig, mSampleType, mFrequency, data);
 
-    alBufferData(mId, format, &data[0], data.size(), mFrequency);
+    alBufferData(mId, format, data.data(), data.size(), mFrequency);
     if(ctx->hasExtension(SOFT_loop_points))
     {
         ALint pts[2]{(ALint)loop_pts.first, (ALint)loop_pts.second};
