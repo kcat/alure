@@ -25,14 +25,9 @@ enum ALCExtension {
 };
 
 class ALDevice : public Device {
-public:
-    typedef std::map<std::string,ALBuffer*> BufferMap;
-
-private:
     ALCdevice *mDevice;
 
     std::vector<ALContext*> mContexts;
-    BufferMap mBuffers;
 
     bool mHasExt[ALC_EXTENSION_MAX];
 
@@ -54,11 +49,6 @@ public:
     LPALCRESETDEVICESOFT alcResetDeviceSOFT;
 
     void removeContext(ALContext *ctx);
-
-    Buffer *getBuffer(const std::string &name);
-    Buffer *addBuffer(const std::string &name, ALBuffer *buffer);
-    void removeBuffer(const std::string &name);
-    void removeBuffer(Buffer *buffer);
 
     virtual std::string getName(PlaybackDeviceType type) const final;
     virtual bool queryExtension(const char *extname) const final;

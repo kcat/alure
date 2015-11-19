@@ -354,6 +354,8 @@ void ALContext::destroy()
 {
     if(mRefs.load() != 0)
         throw std::runtime_error("Context is in use");
+    if(!mBuffers.empty())
+        throw std::runtime_error("Trying to destroy a context with buffers");
 
     if(mThread.joinable())
     {
@@ -424,11 +426,12 @@ Buffer *ALContext::getBuffer(const std::string &name)
 {
     CheckContext(this);
 
-    Buffer *buffer = mDevice->getBuffer(name);
-    if(buffer)
+    BufferMap::const_iterator iter = mBuffers.find(name);
+    if(iter != mBuffers.end())
     {
         // Ensure the buffer is loaded before returning. getBuffer guarantees
         // the returned buffer is loaded.
+        ALBuffer *buffer = iter->second;
         while(buffer->getLoadStatus() == BufferLoad_Pending)
             std::this_thread::yield();
         return buffer;
@@ -475,7 +478,8 @@ Buffer *ALContext::getBuffer(const std::string &name)
         if(alGetError() != AL_NO_ERROR)
             throw std::runtime_error("Failed to buffer data");
 
-        return mDevice->addBuffer(name, new ALBuffer(mDevice, bid, srate, chans, type, true));
+        ALBuffer *buffer = new ALBuffer(mDevice, bid, srate, chans, type, true);
+        return mBuffers.insert(std::make_pair(name, buffer)).first->second;
     }
     catch(...) {
         alDeleteBuffers(1, &bid);
@@ -487,8 +491,8 @@ Buffer *ALContext::getBufferAsync(const std::string &name)
 {
     CheckContext(this);
 
-    Buffer *buffer = mDevice->getBuffer(name);
-    if(buffer) return buffer;
+    BufferMap::const_iterator iter = mBuffers.find(name);
+    if(iter != mBuffers.end()) return iter->second;
 
     SharedPtr<Decoder> decoder(createDecoder(name));
 
@@ -506,29 +510,46 @@ Buffer *ALContext::getBufferAsync(const std::string &name)
     if(alGetError() != AL_NO_ERROR)
         throw std::runtime_error("Failed to buffer data");
 
-    ALBuffer *newbuf = new ALBuffer(mDevice, bid, srate, chans, type, false);
+    ALBuffer *buffer = new ALBuffer(mDevice, bid, srate, chans, type, false);
 
     std::unique_lock<std::mutex> lock(mMutex);
     if(mThread.get_id() == std::thread::id())
         mThread = std::thread(std::mem_fn(&ALContext::backgroundProc), this);
-    mPendingBuffers.push_back(PendingBuffer{name, newbuf, decoder, format, frames});
+    mPendingBuffers.push_back(PendingBuffer{name, buffer, decoder, format, frames});
     lock.unlock();
     mWakeThread.notify_all();
 
-    return mDevice->addBuffer(name, newbuf);
+    return mBuffers.insert(std::make_pair(name, buffer)).first->second;
 }
 
 
 void ALContext::removeBuffer(const std::string &name)
 {
     CheckContext(this);
-    mDevice->removeBuffer(name);
+    BufferMap::iterator iter = mBuffers.find(name);
+    if(iter != mBuffers.end())
+    {
+        ALBuffer *albuf = iter->second;
+        albuf->cleanup();
+        mBuffers.erase(iter);
+    }
 }
 
 void ALContext::removeBuffer(Buffer *buffer)
 {
     CheckContext(this);
-    mDevice->removeBuffer(buffer);
+    BufferMap::iterator iter = mBuffers.begin();
+    while(iter != mBuffers.end())
+    {
+        ALBuffer *albuf = iter->second;
+        if(albuf == buffer)
+        {
+            albuf->cleanup();
+            mBuffers.erase(iter);
+            break;
+        }
+        ++iter;
+    }
 }
 
 

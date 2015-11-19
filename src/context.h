@@ -59,6 +59,9 @@ private:
     std::queue<ALSource*> mFreeSources;
     std::set<ALSource*> mUsedSources;
 
+    typedef std::map<std::string,ALBuffer*> BufferMap;
+    BufferMap mBuffers;
+
     RefCount mRefs;
 
     SharedPtr<MessageHandler> mMessage;
