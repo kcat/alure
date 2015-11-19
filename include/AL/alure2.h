@@ -656,18 +656,38 @@ public:
 class AuxiliaryEffectSlot {
 public:
     virtual void setGain(ALfloat gain) = 0;
+    /**
+     * If set to true, the reverb effect will automatically apply adjustments
+     * to the source's send slot based on the effect properties.
+     *
+     * Has no effect when using non-reverb effects. Default is true.
+     */
     virtual void setSendAuto(bool sendauto) = 0;
 
+    /**
+     * Updates the effect slot with a new \param effect. The given effect
+     * object may be altered or destroyed without affecting the effect slot.
+     */
     virtual void applyEffect(const Effect *effect) = 0;
 
+    /**
+     * Releases the effect slot, returning it to the system. It must not be in
+     * use by a source.
+     */
     virtual void release() = 0;
 
+    /** Determines if the effect slot is in use by a source. */
     virtual bool isInUse() const = 0;
 };
 
 
 class Effect {
 public:
+    /**
+     * Updates the effect with the specified reverb properties \param props. If
+     * the EAXReverb effect is not supported, it will automatically attempt to
+     * downgrade to the Standard Reverb effect.
+     */
     virtual void setReverbProperties(const EFXEAXREVERBPROPERTIES &props) = 0;
 
     virtual void destroy() = 0;
