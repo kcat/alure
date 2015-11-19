@@ -18,9 +18,22 @@ void ALEffect::setReverbProperties(const EFXEAXREVERBPROPERTIES &props)
 {
     CheckContext(mContext);
 
-    alGetError();
-    mContext->alEffecti(mId, AL_EFFECT_TYPE, AL_EFFECT_EAXREVERB);
-    if(alGetError() == AL_NO_ERROR)
+    if(mType != AL_EFFECT_EAXREVERB && mType != AL_EFFECT_REVERB)
+    {
+        alGetError();
+        mContext->alEffecti(mId, AL_EFFECT_TYPE, AL_EFFECT_EAXREVERB);
+        if(alGetError() == AL_NO_ERROR)
+            mType = AL_EFFECT_EAXREVERB;
+        else
+        {
+            mContext->alEffecti(mId, AL_EFFECT_TYPE, AL_EFFECT_REVERB);
+            if(alGetError() != AL_NO_ERROR)
+                throw std::runtime_error("Failed to set reverb type");
+            mType = AL_EFFECT_REVERB;
+        }
+    }
+
+    if(mType == AL_EFFECT_EAXREVERB)
     {
 #define SETPARAM(e,t,v) mContext->alEffectf((e), AL_EAXREVERB_##t, clamp((v), AL_EAXREVERB_MIN_##t, AL_EAXREVERB_MAX_##t))
         SETPARAM(mId, DENSITY, props.flDensity);
@@ -48,11 +61,8 @@ void ALEffect::setReverbProperties(const EFXEAXREVERBPROPERTIES &props)
         mContext->alEffecti(mId, AL_EAXREVERB_DECAY_HFLIMIT, (props.iDecayHFLimit ? AL_TRUE : AL_FALSE));
 #undef SETPARAM
     }
-    else
+    else if(mType == AL_EFFECT_REVERB)
     {
-        mContext->alEffecti(mId, AL_EFFECT_TYPE, AL_EFFECT_REVERB);
-        if(alGetError() != AL_NO_ERROR)
-            throw std::runtime_error("Failed to set reverb type");
 #define SETPARAM(e,t,v) mContext->alEffectf((e), AL_REVERB_##t, clamp((v), AL_REVERB_MIN_##t, AL_REVERB_MAX_##t))
         SETPARAM(mId, DENSITY, props.flDensity);
         SETPARAM(mId, DIFFUSION, props.flDiffusion);

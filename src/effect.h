@@ -10,9 +10,10 @@ class ALContext;
 class ALEffect : public Effect {
     ALContext *const mContext;
     ALuint mId;
+    ALenum mType;
 
 public:
-    ALEffect(ALContext *context, ALuint id) : mContext(context), mId(id)
+    ALEffect(ALContext *context, ALuint id) : mContext(context), mId(id), mType(AL_NONE)
     { }
     virtual ~ALEffect() { }
 
