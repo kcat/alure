@@ -188,6 +188,8 @@ public:
     virtual void setOrientation(ALfloat x1, ALfloat y1, ALfloat z1, ALfloat x2, ALfloat y2, ALfloat z2) final;
     virtual void setOrientation(const ALfloat *at, const ALfloat *up) final;
     virtual void setOrientation(const ALfloat *ori) final;
+
+    virtual void setMetersPerUnit(ALfloat m_u) final;
 };
 
 

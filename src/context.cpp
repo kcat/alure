@@ -730,6 +730,15 @@ void ALContext::setOrientation(const ALfloat *ori)
     alListenerfv(AL_ORIENTATION, ori);
 }
 
+void ALContext::setMetersPerUnit(ALfloat m_u)
+{
+    if(!(m_u > 0.0f))
+        throw std::runtime_error("Invalid meters per unit");
+    CheckContext(this);
+    if(hasExtension(EXT_EFX))
+        alListenerf(AL_METERS_PER_UNIT, m_u);
+}
+
 
 void Context::MakeCurrent(Context *context)
 {
