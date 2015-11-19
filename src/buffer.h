@@ -53,7 +53,6 @@ public:
 
     void load(ALuint frames, ALenum format, SharedPtr<Decoder> decoder, const std::string &name, ALContext *ctx);
 
-    void setLoaded() { mIsLoaded = true; }
     bool isReady() const { return mLoadStatus == BufferLoad_Ready; }
 
     virtual ALuint getLength() const final;
