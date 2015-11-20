@@ -295,7 +295,8 @@ void ALContext::backgroundProc()
     if(ALDeviceManager::SetThreadContext && mDevice->hasExtension(EXT_thread_local_context))
         ALDeviceManager::SetThreadContext(getContext());
 
-    std::chrono::steady_clock::time_point waketime = std::chrono::steady_clock::now();
+    std::chrono::steady_clock::time_point basetime = std::chrono::steady_clock::now();
+    std::chrono::milliseconds waketime(0);
     std::unique_lock<std::mutex> lock(mMutex);
     while(!mQuitThread)
     {
@@ -319,10 +320,10 @@ void ALContext::backgroundProc()
                 mWakeThread.wait(lock);
             else
             {
-                auto duration = std::chrono::duration<ALuint,std::ratio<1,1000>>(interval);
-                while(waketime <= std::chrono::steady_clock::now())
-                    waketime += duration;
-                mWakeThread.wait_until(lock, waketime);
+                auto now = std::chrono::steady_clock::now() - basetime;
+                auto duration = std::chrono::milliseconds(interval);
+                while((waketime - now).count() <= 0) waketime += duration;
+                mWakeThread.wait_until(lock, waketime + basetime);
             }
         } while(!mQuitThread && alcGetCurrentContext() != getContext());
     }
