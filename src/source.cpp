@@ -442,7 +442,17 @@ ALint ALSource::refillBufferStream()
 void ALSource::update()
 {
     CheckContext(mContext);
-    updateNoCtxCheck();
+    if(mId != 0)
+    {
+        updateNoCtxCheck();
+        if(mStream && mIsAsync)
+        {
+            // For performance reasons, don't wait for the thread's mutex. This
+            // should be called often enough to keep up with the stream
+            // regardless.
+            ALContext::GetCurrent()->wakeThread();
+        }
+    }
 }
 
 void ALSource::updateNoCtxCheck()
@@ -452,30 +462,8 @@ void ALSource::updateNoCtxCheck()
 
     if(mStream)
     {
-        if(mIsAsync)
-        {
-            // For performance reasons, don't wait for the thread's mutex. This
-            // should be called often enough to keep up with the stream
-            // regardless.
-            ALContext::GetCurrent()->wakeThread();
-        }
-        else
-        {
-            std::lock_guard<std::mutex> lock(mMutex);
-            ALint queued = refillBufferStream();
-            if(queued == 0)
-                stop();
-            else if(!mPaused)
-            {
-                ALint state = -1;
-                alGetSourcei(mId, AL_SOURCE_STATE, &state);
-                if(state != AL_PLAYING)
-                {
-                    refillBufferStream();
-                    alSourcePlay(mId);
-                }
-            }
-        }
+        if(!mIsAsync)
+            stop();
     }
     else
     {
