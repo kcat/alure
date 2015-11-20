@@ -195,7 +195,7 @@ void ALSource::resetProperties()
     for(auto &i : mEffectSlots)
     {
         if(i.second.mSlot)
-            i.second.mSlot->decRef();
+            i.second.mSlot->removeSourceSend(this, i.first);
         if(i.second.mFilter)
             mContext->alDeleteFilters(1, &i.second.mFilter);
     }
@@ -994,17 +994,15 @@ void ALSource::setAuxiliarySend(AuxiliaryEffectSlot *auxslot, ALuint send)
     SendPropMap::iterator siter = mEffectSlots.find(send);
     if(siter == mEffectSlots.end())
     {
-        if(!slot)
-            return;
-        slot->addRef();
+        if(!slot) return;
+        slot->addSourceSend(this, send);
         siter = mEffectSlots.insert(std::make_pair(send, SendProps(slot))).first;
     }
-    else
+    else if(siter->second.mSlot != slot)
     {
-        if(slot)
-            slot->addRef();
+        if(slot) slot->addSourceSend(this, send);
         if(siter->second.mSlot)
-            siter->second.mSlot->decRef();
+            siter->second.mSlot->removeSourceSend(this, send);
         siter->second.mSlot = slot;
     }
 
@@ -1037,17 +1035,18 @@ void ALSource::setAuxiliarySendFilter(AuxiliaryEffectSlot *auxslot, ALuint send,
         if(!filterid && !slot)
             return;
 
-        if(slot)
-            slot->addRef();
+        if(slot) slot->addSourceSend(this, send);
         siter = mEffectSlots.insert(std::make_pair(send, SendProps(slot, filterid))).first;
     }
     else
     {
-        if(slot)
-            slot->addRef();
-        if(siter->second.mSlot)
-            siter->second.mSlot->decRef();
-        siter->second.mSlot = slot;
+        if(siter->second.mSlot != slot)
+        {
+            if(slot) slot->addSourceSend(this, send);
+            if(siter->second.mSlot)
+                siter->second.mSlot->removeSourceSend(this, send);
+            siter->second.mSlot = slot;
+        }
         setFilterParams(siter->second.mFilter, filter);
     }
 
@@ -1090,7 +1089,7 @@ void ALSource::release()
     for(auto &i : mEffectSlots)
     {
         if(i.second.mSlot)
-            i.second.mSlot->decRef();
+            i.second.mSlot->removeSourceSend(this, i.first);
         if(i.second.mFilter)
             mContext->alDeleteFilters(1, &i.second.mFilter);
     }

@@ -655,6 +655,11 @@ public:
 };
 
 
+struct SourceSend {
+    Source *mSource;
+    ALuint mSend;
+};
+
 class AuxiliaryEffectSlot {
 public:
     virtual void setGain(ALfloat gain) = 0;
@@ -677,6 +682,13 @@ public:
      * use by a source.
      */
     virtual void release() = 0;
+
+    /**
+     * Retrieves each \ref Source object and its pairing send this effect slot
+     * is set on. Setting a different (or null) effect slot on each source's
+     * given send will allow the effect slot to be released.
+     */
+    virtual std::vector<SourceSend> getSourceSends() const = 0;
 
     /** Determines if the effect slot is in use by a source. */
     virtual bool isInUse() const = 0;
