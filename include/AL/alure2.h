@@ -315,13 +315,11 @@ public:
 
     /**
      * Makes the specified \param context current for OpenAL operations on the
-     * calling thread only. Requires the ALC_EXT_thread_local_context extension.
+     * calling thread only. Requires the ALC_EXT_thread_local_context extension
+     * on both the context's device and the \ref DeviceManager.
      */
     static void MakeThreadCurrent(Context *context);
-    /**
-     * Retrieves the thread-specific context used for OpenAL operations.
-     * Requires the ALC_EXT_thread_local_context extension.
-     */
+    /** Retrieves the thread-specific context used for OpenAL operations. */
     static Context *GetThreadCurrent();
 
     /**
