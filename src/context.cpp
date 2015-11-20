@@ -295,6 +295,7 @@ void ALContext::backgroundProc()
     if(ALDeviceManager::SetThreadContext && mDevice->hasExtension(EXT_thread_local_context))
         ALDeviceManager::SetThreadContext(getContext());
 
+    std::chrono::steady_clock::time_point waketime = std::chrono::steady_clock::now();
     std::unique_lock<std::mutex> lock(mMutex);
     while(!mQuitThread)
     {
@@ -313,7 +314,16 @@ void ALContext::backgroundProc()
         }
 
         do {
-            mWakeThread.wait(lock);
+            ALuint interval = mWakeInterval.load();
+            if(!interval)
+                mWakeThread.wait(lock);
+            else
+            {
+                auto duration = std::chrono::duration<ALuint,std::ratio<1,1000>>(interval);
+                while(waketime <= std::chrono::steady_clock::now())
+                    waketime += duration;
+                mWakeThread.wait_until(lock, waketime);
+            }
         } while(!mQuitThread && alcGetCurrentContext() != getContext());
     }
     lock.unlock();
@@ -325,7 +335,7 @@ void ALContext::backgroundProc()
 
 ALContext::ALContext(ALCcontext *context, ALDevice *device)
   : mContext(context), mDevice(device), mRefs(0),
-    mHasExt{false}, mQuitThread(false),
+    mHasExt{false}, mWakeInterval(0), mQuitThread(false),
     alGetSourcei64vSOFT(0),
     alGenEffects(0), alDeleteEffects(0), alIsEffect(0),
     alEffecti(0), alEffectiv(0), alEffectf(0), alEffectfv(0),
@@ -399,6 +409,19 @@ SharedPtr<MessageHandler> ALContext::setMessageHandler(SharedPtr<MessageHandler>
 SharedPtr<MessageHandler> ALContext::getMessageHandler() const
 {
     return mMessage;
+}
+
+
+void ALContext::setAsyncWakeInterval(ALuint msec)
+{
+    mWakeInterval.store(msec);
+    mMutex.lock(); mMutex.unlock();
+    mWakeThread.notify_all();
+}
+
+ALuint ALContext::getAsyncWakeInterval() const
+{
+    return mWakeInterval.load();
 }
 
 
@@ -692,9 +715,13 @@ void ALContext::update()
 {
     CheckContext(this);
     std::for_each(mUsedSources.begin(), mUsedSources.end(), std::mem_fun(&ALSource::updateNoCtxCheck));
-    // For performance reasons, don't wait for the thread's mutex. This should
-    // be called often enough to keep up with any and all streams regardless.
-    wakeThread();
+    if(!mWakeInterval.load())
+    {
+        // For performance reasons, don't wait for the thread's mutex. This
+        // should be called often enough to keep up with any and all streams
+        // regardless.
+        mWakeThread.notify_all();
+    }
 }
 
 

@@ -351,6 +351,19 @@ public:
     virtual SharedPtr<MessageHandler> getMessageHandler() const = 0;
 
     /**
+     * Specifies the desired interval (in milliseconds) that the background
+     * thread will be woken up to process tasks, e.g. keeping streaming sources
+     * filled. An interval of 0 means the background thread will only be woken
+     * up manually, for instance with calls to \ref update. The default is 0.
+     */
+    virtual void setAsyncWakeInterval(ALuint msec) = 0;
+
+    /**
+     * Retrieves the current interval used for waking up the background thread.
+     */
+    virtual ALuint getAsyncWakeInterval() const = 0;
+
+    /**
      * Creates a \ref Decoder instance for the given audio file or resource
      * \param name.
      */

@@ -78,6 +78,7 @@ private:
     std::vector<PendingBuffer> mPendingBuffers;
     std::set<ALSource*> mStreamingSources;
 
+    std::atomic<ALuint> mWakeInterval;
     std::mutex mMutex;
     std::condition_variable mWakeThread;
 
@@ -97,8 +98,6 @@ public:
     long decRef() { return --mRefs; }
 
     bool hasExtension(ALExtension ext) const { return mHasExt[ext]; }
-
-    void wakeThread() { mWakeThread.notify_all(); }
 
     LPALGETSOURCEI64VSOFT alGetSourcei64vSOFT;
 
@@ -157,6 +156,9 @@ public:
 
     virtual SharedPtr<MessageHandler> setMessageHandler(SharedPtr<MessageHandler> handler) final;
     virtual SharedPtr<MessageHandler> getMessageHandler() const final;
+
+    virtual void setAsyncWakeInterval(ALuint msec) final;
+    virtual ALuint getAsyncWakeInterval() const final;
 
     virtual SharedPtr<Decoder> createDecoder(const std::string &name) final;
 

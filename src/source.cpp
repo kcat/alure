@@ -442,17 +442,7 @@ ALint ALSource::refillBufferStream()
 void ALSource::update()
 {
     CheckContext(mContext);
-    if(mId != 0)
-    {
-        updateNoCtxCheck();
-        if(mStream && mIsAsync)
-        {
-            // For performance reasons, don't wait for the thread's mutex. This
-            // should be called often enough to keep up with the stream
-            // regardless.
-            ALContext::GetCurrent()->wakeThread();
-        }
-    }
+    updateNoCtxCheck();
 }
 
 void ALSource::updateNoCtxCheck()
