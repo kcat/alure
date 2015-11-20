@@ -636,9 +636,22 @@ public:
     virtual bool getSendGainAuto() const = 0;
     virtual bool getSendGainHFAuto() const = 0;
 
+    /** Sets the \param filter properties on the direct path signal. */
     virtual void setDirectFilter(const FilterParams &filter) = 0;
+    /**
+     * Sets the \param filter properties on the given \param send path signal.
+     * Any auxiliary effect slot on the send path remains in place.
+     */
     virtual void setSendFilter(ALuint send, const FilterParams &filter) = 0;
+    /**
+     * Connects the effect slot \param slot to the given \param send path. Any
+     * filter properties on the send path remain as they were.
+     */
     virtual void setAuxiliarySend(AuxiliaryEffectSlot *slot, ALuint send) = 0;
+    /**
+     * Connects the effect slot \param slot to the given \param send path,
+     * using the \param filter properties.
+     */
     virtual void setAuxiliarySendFilter(AuxiliaryEffectSlot *slot, ALuint send, const FilterParams &filter) = 0;
 
     /**
