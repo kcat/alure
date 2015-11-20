@@ -666,8 +666,8 @@ public:
     virtual void setAuxiliarySendFilter(AuxiliaryEffectSlot *slot, ALuint send, const FilterParams &filter) = 0;
 
     /**
-     * Updates the source, ensuring that streaming buffers are kept full and
-     * resources are released when playback is finished.
+     * Updates the source, ensuring that resources are released when playback
+     * is finished.
      */
     virtual void update() = 0;
 

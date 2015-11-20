@@ -36,8 +36,8 @@ class ALBufferStream {
     ALuint mCurrentIdx;
 
     std::pair<uint64_t,uint64_t> mLoopPts;
-    bool mHasLooped;
-    bool mDone;
+    volatile bool mHasLooped;
+    volatile bool mDone;
 
 public:
     ALBufferStream(SharedPtr<Decoder> decoder, ALuint updatelen, ALuint numupdates)
@@ -163,8 +163,8 @@ ALSource::~ALSource()
 
 void ALSource::resetProperties()
 {
-    mLooping = false;
     mPaused = false;
+    mLooping = false;
     mOffset = 0;
     mPitch = 1.0f;
     mGain = 1.0f;
@@ -339,6 +339,7 @@ void ALSource::stop()
     if(mIsAsync)
         mContext->removeStream(this);
     mIsAsync = false;
+
     if(mId != 0)
     {
         alSourceRewind(mId);
@@ -366,6 +367,8 @@ void ALSource::stop()
 void ALSource::pause()
 {
     CheckContext(mContext);
+    if(mPaused) return;
+
     if(mId != 0)
     {
         std::lock_guard<std::mutex> lock(mMutex);
@@ -517,7 +520,8 @@ void ALSource::setOffset(uint64_t offset)
         std::lock_guard<std::mutex> lock(mMutex);
         if(!mStream->seek(offset))
             throw std::runtime_error("Failed to seek to offset");
-        alSourceStop(mId);
+        alSourceRewind(mId);
+        alSourcei(mId, AL_BUFFER, 0);
         ALint queued = refillBufferStream();
         if(queued > 0 && !mPaused)
             alSourcePlay(mId);
@@ -554,7 +558,7 @@ uint64_t ALSource::getOffset(uint64_t *latency) const
         alGetSourcei(mId, AL_SOURCE_STATE, &state);
 
         uint64_t pos = mStream->getPosition();
-        if(state == AL_PLAYING || state == AL_PAUSED)
+        if(state != AL_STOPPED)
         {
             // The amount of samples in the queue waiting to play
             ALuint inqueue = queued*mStream->getUpdateLength() - srcpos;

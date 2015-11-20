@@ -39,8 +39,8 @@ class ALSource : public Source {
     mutable std::mutex mMutex;
     volatile bool mIsAsync;
 
+    volatile bool mPaused;
     bool mLooping;
-    bool mPaused;
     ALuint64SOFT mOffset;
     ALfloat mPitch;
     ALfloat mGain;
