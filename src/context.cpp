@@ -243,14 +243,14 @@ void ALContext::MakeCurrent(ALContext *context)
         context->addRef();
         std::call_once(context->mSetExts, std::mem_fn(&ALContext::setupExts), context);
     }
-    if(sCurrentCtx)
-        sCurrentCtx->decRef();
-    sCurrentCtx = context;
+    std::swap(sCurrentCtx, context);
+    if(context) context->decRef();
+
     if(sThreadCurrentCtx)
         sThreadCurrentCtx->decRef();
     sThreadCurrentCtx = 0;
 
-    if(sCurrentCtx)
+    if(sCurrentCtx && sCurrentCtx != context)
     {
         lock2.unlock();
         sCurrentCtx->mWakeThread.notify_all();
