@@ -75,7 +75,7 @@ void ALBuffer::load(ALuint frames, ALenum format, SharedPtr<Decoder> decoder, co
 
 ALuint ALBuffer::getLength() const
 {
-    CheckContextDevice(mDevice);
+    CheckContext(mContext);
     if(mLoadStatus != BufferLoad_Ready)
         throw std::runtime_error("Buffer not loaded");
 
@@ -88,27 +88,9 @@ ALuint ALBuffer::getLength() const
     return size / chans * 8 / bits;
 }
 
-ALuint ALBuffer::getFrequency() const
-{
-    CheckContextDevice(mDevice);
-    return mFrequency;
-}
-
-ChannelConfig ALBuffer::getChannelConfig() const
-{
-    CheckContextDevice(mDevice);
-    return mChannelConfig;
-}
-
-SampleType ALBuffer::getSampleType() const
-{
-    CheckContextDevice(mDevice);
-    return mSampleType;
-}
-
 ALuint ALBuffer::getSize() const
 {
-    CheckContextDevice(mDevice);
+    CheckContext(mContext);
     if(mLoadStatus != BufferLoad_Ready)
         throw std::runtime_error("Buffer not loaded");
 
@@ -126,7 +108,7 @@ void ALBuffer::setLoopPoints(ALuint start, ALuint end)
     if(isInUse())
         throw std::runtime_error("Buffer is in use");
 
-    if(!ALContext::GetCurrent()->hasExtension(SOFT_loop_points))
+    if(!mContext->hasExtension(SOFT_loop_points))
     {
         if(start != 0 || end != length)
             throw std::runtime_error("Loop points not supported");
@@ -145,11 +127,11 @@ void ALBuffer::setLoopPoints(ALuint start, ALuint end)
 
 std::pair<ALuint,ALuint> ALBuffer::getLoopPoints() const
 {
-    CheckContextDevice(mDevice);
+    CheckContext(mContext);
     if(mLoadStatus != BufferLoad_Ready)
         throw std::runtime_error("Buffer not loaded");
 
-    if(!ALContext::GetCurrent()->hasExtension(SOFT_loop_points))
+    if(!mContext->hasExtension(SOFT_loop_points))
         return std::make_pair(0, getLength());
 
     ALint pts[2]{-1,-1};

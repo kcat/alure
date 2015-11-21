@@ -11,7 +11,6 @@
 
 namespace alure {
 
-class ALDevice;
 class ALContext;
 
 
@@ -20,7 +19,7 @@ ALenum GetFormat(ChannelConfig chans, SampleType type);
 
 
 class ALBuffer : public Buffer {
-    ALDevice *const mDevice;
+    ALContext *const mContext;
     ALuint mId;
 
     ALuint mFrequency;
@@ -33,15 +32,15 @@ class ALBuffer : public Buffer {
     std::vector<Source*> mSources;
 
 public:
-    ALBuffer(ALDevice *device, ALuint id, ALuint freq, ChannelConfig config, SampleType type, bool preloaded)
-      : mDevice(device), mId(id), mFrequency(freq), mChannelConfig(config), mSampleType(type),
+    ALBuffer(ALContext *context, ALuint id, ALuint freq, ChannelConfig config, SampleType type, bool preloaded)
+      : mContext(context), mId(id), mFrequency(freq), mChannelConfig(config), mSampleType(type),
         mLoadStatus(preloaded?BufferLoad_Ready:BufferLoad_Pending), mIsLoaded(preloaded)
     { }
     virtual ~ALBuffer() { }
 
     void cleanup();
 
-    ALDevice *getDevice() { return mDevice; }
+    ALContext *getContext() { return mContext; }
     ALuint getId() const { return mId; }
 
     void addSource(Source *source) { mSources.push_back(source); }
@@ -57,9 +56,9 @@ public:
 
     virtual ALuint getLength() const final;
 
-    virtual ALuint getFrequency() const final;
-    virtual ChannelConfig getChannelConfig() const final;
-    virtual SampleType getSampleType() const final;
+    virtual ALuint getFrequency() const final { return mFrequency; }
+    virtual ChannelConfig getChannelConfig() const final { return mChannelConfig; }
+    virtual SampleType getSampleType() const final { return mSampleType; }
 
     virtual ALuint getSize() const final;
 

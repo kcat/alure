@@ -211,13 +211,6 @@ inline void CheckContext(ALContext *ctx)
         throw std::runtime_error("Called context is not current");
 }
 
-inline void CheckContextDevice(ALDevice *device)
-{
-    ALContext *ctx = ALContext::GetCurrent();
-    if(!ctx || device != ctx->getDevice())
-        throw std::runtime_error("Called device is not current");
-}
-
 } // namespace alure
 
 #endif /* CONTEXT_H */

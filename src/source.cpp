@@ -248,7 +248,7 @@ void ALSource::play(Buffer *buffer)
     ALBuffer *albuf = cast<ALBuffer*>(buffer);
     if(!albuf) throw std::runtime_error("Buffer is not valid");
     CheckContext(mContext);
-    CheckContextDevice(albuf->getDevice());
+    CheckContext(albuf->getContext());
 
     if(!albuf->isReady())
         throw std::runtime_error("Buffer is not ready");
