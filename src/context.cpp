@@ -11,6 +11,7 @@
 #include <fstream>
 #include <cstring>
 #include <map>
+#include <new>
 
 #include "alc.h"
 
@@ -232,9 +233,9 @@ void ALContext::MakeCurrent(ALContext *context)
 {
     std::unique_lock<std::mutex> lock1, lock2;
     if(sCurrentCtx)
-        lock1 = std::unique_lock<std::mutex>(sCurrentCtx->mMutex);
+        lock1 = std::unique_lock<std::mutex>(sCurrentCtx->mContextMutex);
     if(context && context != sCurrentCtx)
-        lock2 = std::unique_lock<std::mutex>(context->mMutex);
+        lock2 = std::unique_lock<std::mutex>(context->mContextMutex);
 
     if(alcMakeContextCurrent(context ? context->getContext() : 0) == ALC_FALSE)
         throw std::runtime_error("Call to alcMakeContextCurrent failed");
@@ -297,37 +298,59 @@ void ALContext::backgroundProc()
 
     std::chrono::steady_clock::time_point basetime = std::chrono::steady_clock::now();
     std::chrono::milliseconds waketime(0);
-    std::unique_lock<std::mutex> lock(mMutex);
+    std::unique_lock<std::mutex> ctxlock(mContextMutex);
     while(!mQuitThread)
     {
-        for(PendingBuffer &pendbuf : mPendingBuffers)
-            pendbuf.mBuffer->load(pendbuf.mFrames, pendbuf.mFormat,
-                                  pendbuf.mDecoder, pendbuf.mName, this);
-        mPendingBuffers.clear();
-
-        auto source = mStreamingSources.begin();
-        while(source != mStreamingSources.end())
         {
-            if(!(*source)->updateAsync())
-                source = mStreamingSources.erase(source);
-            else
-                ++source;
+            std::unique_lock<std::mutex> srclock(mSourceStreamMutex);
+            auto source = mStreamingSources.begin();
+            while(source != mStreamingSources.end())
+            {
+                if(!(*source)->updateAsync())
+                    source = mStreamingSources.erase(source);
+                else
+                    ++source;
+            }
+            srclock.unlock();
         }
 
-        do {
+        // Only do one pending buffer at a time. In case there's several large
+        // buffers to load, we still need to process streaming sources so they
+        // don't underrun.
+        ll_ringbuffer_data_t vec[2];
+        ll_ringbuffer_get_read_vector(mPendingBuffers, vec);
+        if(vec[0].len > 0)
+        {
+            PendingBuffer *pb = reinterpret_cast<PendingBuffer*>(vec[0].buf);
+            pb->mBuffer->load(pb->mFrames, pb->mFormat, pb->mDecoder, pb->mName, this);
+            pb->~PendingBuffer();
+            ll_ringbuffer_read_advance(mPendingBuffers, 1);
+            continue;
+        }
+
+        std::unique_lock<std::mutex> wakelock(mWakeMutex);
+        if(!mQuitThread && ll_ringbuffer_read_space(mPendingBuffers) == 0)
+        {
+            ctxlock.unlock();
+
             ALuint interval = mWakeInterval.load();
             if(!interval)
-                mWakeThread.wait(lock);
+                mWakeThread.wait(wakelock);
             else
             {
                 auto now = std::chrono::steady_clock::now() - basetime;
                 auto duration = std::chrono::milliseconds(interval);
                 while((waketime - now).count() <= 0) waketime += duration;
-                mWakeThread.wait_until(lock, waketime + basetime);
+                mWakeThread.wait_until(wakelock, waketime + basetime);
             }
-        } while(!mQuitThread && alcGetCurrentContext() != getContext());
+            wakelock.unlock();
+
+            ctxlock.lock();
+            while(!mQuitThread && alcGetCurrentContext() != getContext())
+                mWakeThread.wait(ctxlock);
+        }
     }
-    lock.unlock();
+    ctxlock.unlock();
 
     if(ALDeviceManager::SetThreadContext)
         ALDeviceManager::SetThreadContext(0);
@@ -336,7 +359,7 @@ void ALContext::backgroundProc()
 
 ALContext::ALContext(ALCcontext *context, ALDevice *device)
   : mContext(context), mDevice(device), mRefs(0),
-    mHasExt{false}, mWakeInterval(0), mQuitThread(false),
+    mHasExt{false}, mPendingBuffers(nullptr), mWakeInterval(0), mQuitThread(false),
     alGetSourcei64vSOFT(0),
     alGenEffects(0), alDeleteEffects(0), alIsEffect(0),
     alEffecti(0), alEffectiv(0), alEffectf(0), alEffectfv(0),
@@ -348,11 +371,13 @@ ALContext::ALContext(ALCcontext *context, ALDevice *device)
     alAuxiliaryEffectSloti(0), alAuxiliaryEffectSlotiv(0), alAuxiliaryEffectSlotf(0), alAuxiliaryEffectSlotfv(0),
     alGetAuxiliaryEffectSloti(0), alGetAuxiliaryEffectSlotiv(0), alGetAuxiliaryEffectSlotf(0), alGetAuxiliaryEffectSlotfv(0)
 {
+    mPendingBuffers = ll_ringbuffer_create(16, sizeof(PendingBuffer));
 }
 
 ALContext::~ALContext()
 {
     mDevice->removeContext(this);
+    ll_ringbuffer_free(mPendingBuffers);
 }
 
 
@@ -370,7 +395,7 @@ void ALContext::destroy()
 
     if(mThread.joinable())
     {
-        std::unique_lock<std::mutex> lock(mMutex);
+        std::unique_lock<std::mutex> lock(mWakeMutex);
         mQuitThread = true;
         lock.unlock();
         mWakeThread.notify_all();
@@ -402,7 +427,7 @@ Listener *ALContext::getListener()
 
 SharedPtr<MessageHandler> ALContext::setMessageHandler(SharedPtr<MessageHandler> handler)
 {
-    std::lock_guard<std::mutex> lock(mMutex);
+    std::lock_guard<std::mutex> lock(mContextMutex);
     mMessage.swap(handler);
     return handler;
 }
@@ -416,7 +441,7 @@ SharedPtr<MessageHandler> ALContext::getMessageHandler() const
 void ALContext::setAsyncWakeInterval(ALuint msec)
 {
     mWakeInterval.store(msec);
-    mMutex.lock(); mMutex.unlock();
+    mWakeMutex.lock(); mWakeMutex.unlock();
     mWakeThread.notify_all();
 }
 
@@ -536,11 +561,17 @@ Buffer *ALContext::getBufferAsync(const std::string &name)
 
     ALBuffer *buffer = new ALBuffer(mDevice, bid, srate, chans, type, false);
 
-    std::unique_lock<std::mutex> lock(mMutex);
     if(mThread.get_id() == std::thread::id())
         mThread = std::thread(std::mem_fn(&ALContext::backgroundProc), this);
-    mPendingBuffers.push_back(PendingBuffer{name, buffer, decoder, format, frames});
-    lock.unlock();
+
+    while(ll_ringbuffer_write_space(mPendingBuffers) == 0)
+        std::this_thread::yield();
+
+    ll_ringbuffer_data_t vec[2];
+    ll_ringbuffer_get_write_vector(mPendingBuffers, vec);
+    new(vec[0].buf) PendingBuffer{name, buffer, decoder, format, frames};
+    ll_ringbuffer_write_advance(mPendingBuffers, 1);
+    mWakeMutex.lock(); mWakeMutex.unlock();
     mWakeThread.notify_all();
 
     return mBuffers.insert(std::make_pair(name, buffer)).first->second;
@@ -632,7 +663,7 @@ void ALContext::freeSource(ALSource *source)
 
 void ALContext::addStream(ALSource *source)
 {
-    std::lock_guard<std::mutex> lock(mMutex);
+    std::lock_guard<std::mutex> lock(mSourceStreamMutex);
     if(mThread.get_id() == std::thread::id())
         mThread = std::thread(std::mem_fn(&ALContext::backgroundProc), this);
     mStreamingSources.insert(source);
@@ -640,7 +671,7 @@ void ALContext::addStream(ALSource *source)
 
 void ALContext::removeStream(ALSource *source)
 {
-    std::lock_guard<std::mutex> lock(mMutex);
+    std::lock_guard<std::mutex> lock(mSourceStreamMutex);
     mStreamingSources.erase(source);
 }
 

@@ -15,6 +15,7 @@
 #include "alext.h"
 
 #include "refcount.h"
+#include "ringbuf.h"
 #include "device.h"
 
 namespace alure {
@@ -74,13 +75,19 @@ private:
         SharedPtr<Decoder> mDecoder;
         ALenum mFormat;
         ALuint mFrames;
+
+        ~PendingBuffer() { }
     } PendingBuffer;
-    std::vector<PendingBuffer> mPendingBuffers;
+    ll_ringbuffer_t *mPendingBuffers;
+
     std::set<ALSource*> mStreamingSources;
+    std::mutex mSourceStreamMutex;
 
     std::atomic<ALuint> mWakeInterval;
-    std::mutex mMutex;
+    std::mutex mWakeMutex;
     std::condition_variable mWakeThread;
+
+    std::mutex mContextMutex;
 
     volatile bool mQuitThread;
     std::thread mThread;
