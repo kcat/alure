@@ -4,19 +4,21 @@
 #include <algorithm>
 
 #include "source.h"
+#include "context.h"
 
 namespace alure
 {
 
-ALSourceGroup::ALSourceGroup()
-  : mGain(1.0f)
+ALSourceGroup::ALSourceGroup(ALContext *context)
+  : mContext(context), mGain(1.0f)
 {
 }
 
 void ALSourceGroup::release()
 {
+    CheckContext(mContext);
     for(ALSource *source : mSources)
-        /*source->unsetGroup()*/;
+        source->unsetGroup();
 }
 
 std::vector<Source*> ALSourceGroup::getSources()
@@ -30,16 +32,18 @@ void ALSourceGroup::addSource(Source *source)
 {
     ALSource *alsrc = cast<ALSource*>(source);
     if(!alsrc) throw std::runtime_error("Source is not valid");
+    CheckContext(mContext);
 
     auto iter = std::lower_bound(mSources.begin(), mSources.end(), alsrc);
     if(iter != mSources.end() && *iter == alsrc) return;
 
     mSources.insert(iter, alsrc);
-    //alsrc->setGroup(this);
+    alsrc->setGroup(this);
 }
 
 void ALSourceGroup::addSources(const std::vector<Source*> &sources)
 {
+    CheckContext(mContext);
     if(sources.empty())
         return;
 
@@ -58,17 +62,18 @@ void ALSourceGroup::addSources(const std::vector<Source*> &sources)
         if(iter != mSources.end() && *iter == alsrc) continue;
 
         mSources.insert(iter, alsrc);
-        //alsrc->setGroup(this);
+        alsrc->setGroup(this);
     }
 }
 
 
 void ALSourceGroup::removeSource(Source *source)
 {
+    CheckContext(mContext);
     auto iter = std::lower_bound(mSources.begin(), mSources.end(), source);
     if(iter != mSources.end() && *iter == source)
     {
-        //(*iter)->unsetGroup();
+        (*iter)->unsetGroup();
         mSources.erase(iter);
     }
 }
@@ -80,7 +85,7 @@ void ALSourceGroup::removeSources(const std::vector<Source*> &sources)
         auto iter = std::lower_bound(mSources.begin(), mSources.end(), source);
         if(iter != mSources.end() && *iter == source)
         {
-            //(*iter)->unsetGroup();
+            (*iter)->unsetGroup();
             mSources.erase(iter);
         }
     }
@@ -91,9 +96,9 @@ void ALSourceGroup::setGain(ALfloat gain)
 {
     if(!(gain >= 0.0f))
         throw std::runtime_error("Gain out of range");
-    /*CheckContext(mContext);
+    CheckContext(mContext);
     for(ALSource *alsrc : mSources)
-        alsrc->groupGainUpdate(gain);*/
+        alsrc->groupGainUpdate(gain);
     mGain = gain;
 }
 

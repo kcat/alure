@@ -15,6 +15,7 @@ class ALContext;
 class ALBuffer;
 class ALBufferStream;
 class ALAuxiliaryEffectSlot;
+class ALSourceGroup;
 
 struct SendProps {
     ALAuxiliaryEffectSlot *mSlot;
@@ -35,6 +36,8 @@ class ALSource : public Source {
 
     ALBuffer *mBuffer;
     std::unique_ptr<ALBufferStream> mStream;
+
+    ALSourceGroup *mGroup;
 
     mutable std::mutex mMutex;
     volatile bool mIsAsync;
@@ -80,6 +83,12 @@ public:
 
     void updateNoCtxCheck();
     bool updateAsync();
+
+    void setGroup(ALSourceGroup *group);
+    void unsetGroup();
+
+    void groupUpdate();
+    void groupGainUpdate(ALfloat gain);
 
     virtual void play(Buffer *buffer) final;
     virtual void play(SharedPtr<Decoder> decoder, ALuint updatelen, ALuint queuesize) final;

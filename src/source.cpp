@@ -15,6 +15,7 @@
 #include "context.h"
 #include "buffer.h"
 #include "auxeffectslot.h"
+#include "sourcegroup.h"
 
 namespace alure
 {
@@ -151,7 +152,8 @@ public:
 
 
 ALSource::ALSource(ALContext *context)
-  : mContext(context), mId(0), mBuffer(0), mIsAsync(false), mDirectFilter(AL_FILTER_NULL)
+  : mContext(context), mId(0), mBuffer(0), mGroup(nullptr), mIsAsync(false),
+    mDirectFilter(AL_FILTER_NULL)
 {
     resetProperties();
 }
@@ -163,6 +165,10 @@ ALSource::~ALSource()
 
 void ALSource::resetProperties()
 {
+    if(mGroup)
+        mGroup->removeSource(this);
+    mGroup = nullptr;
+
     mPaused = false;
     mLooping = false;
     mOffset = 0;
@@ -209,7 +215,7 @@ void ALSource::applyProperties(bool looping, ALuint offset) const
     alSourcei(mId, AL_LOOPING, looping ? AL_TRUE : AL_FALSE);
     alSourcei(mId, AL_SAMPLE_OFFSET, offset);
     alSourcef(mId, AL_PITCH, mPitch);
-    alSourcef(mId, AL_GAIN, mGain);
+    alSourcef(mId, AL_GAIN, mGain * (mGroup ? mGroup->getGain() : 1.0f));
     alSourcef(mId, AL_MIN_GAIN, mMinGain);
     alSourcef(mId, AL_MAX_GAIN, mMaxGain);
     alSourcef(mId, AL_REFERENCE_DISTANCE, mRefDist);
@@ -240,6 +246,38 @@ void ALSource::applyProperties(bool looping, ALuint offset) const
             alSource3i(mId, AL_AUXILIARY_SEND_FILTER, slotid, i.first, i.second.mFilter);
         }
     }
+}
+
+
+void ALSource::setGroup(ALSourceGroup *group)
+{
+    if(mGroup)
+        mGroup->removeSource(this);
+    mGroup = group;
+    groupUpdate();
+}
+
+void ALSource::unsetGroup()
+{
+    mGroup = nullptr;
+    groupUpdate();
+}
+
+void ALSource::groupUpdate()
+{
+    if(mId)
+    {
+        if(mGroup)
+            alSourcef(mId, AL_GAIN, mGain * mGroup->getGain());
+        else
+            alSourcef(mId, AL_GAIN, mGain);
+    }
+}
+
+void ALSource::groupGainUpdate(ALfloat gain)
+{
+    if(mId)
+        alSourcef(mId, AL_GAIN, mGain * gain);
 }
 
 
@@ -635,7 +673,7 @@ void ALSource::setGain(ALfloat gain)
         throw std::runtime_error("Gain out of range");
     CheckContext(mContext);
     if(mId != 0)
-        alSourcef(mId, AL_GAIN, gain);
+        alSourcef(mId, AL_GAIN, gain * (mGroup ? mGroup->getGain() : 1.0f));
     mGain = gain;
 }
 

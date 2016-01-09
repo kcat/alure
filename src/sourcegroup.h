@@ -7,15 +7,18 @@
 namespace alure
 {
 
+class ALContext;
 class ALSource;
 
 class ALSourceGroup : public SourceGroup {
+    ALContext *const mContext;
+
     ALfloat mGain;
 
     std::vector<ALSource*> mSources;
 
 public:
-    ALSourceGroup();
+    ALSourceGroup(ALContext *context);
 
     virtual void addSource(Source *source) final;
     virtual void addSources(const std::vector<Source*> &sources) final;
