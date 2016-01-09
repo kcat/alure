@@ -679,6 +679,23 @@ public:
 };
 
 
+class SourceGroup {
+public:
+    virtual void addSource(Source *source) = 0;
+    virtual void addSources(const std::vector<Source*> &sources) = 0;
+
+    virtual void removeSource(Source *source) = 0;
+    virtual void removeSources(const std::vector<Source*> &sources) = 0;
+
+    virtual std::vector<Source*> getSources() = 0;
+
+    virtual void setGain(ALfloat gain) = 0;
+    virtual ALfloat getGain() const = 0;
+
+    virtual void release() = 0;
+};
+
+
 struct SourceSend {
     Source *mSource;
     ALuint mSend;

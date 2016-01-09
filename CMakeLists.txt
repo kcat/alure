@@ -43,6 +43,7 @@ set(alure_srcs src/devicemanager.cpp
                src/context.cpp
                src/buffer.cpp
                src/source.cpp
+               src/sourcegroup.cpp
                src/auxeffectslot.cpp
                src/effect.cpp
                src/ringbuf.cpp
