@@ -1,23 +1,8 @@
-#ifdef _WIN32
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-#else
-#include <errno.h>
-#include <time.h>
-#include <stdint.h>
-inline void Sleep(uint32_t ms)
-{
-    struct timespec ts, rem;
-    ts.tv_sec = ms / 1000;
-    ts.tv_nsec = (ms % 1000) * 1000000;
-    while(nanosleep(&ts, &rem) == -1 && errno == EINTR)
-        ts = rem;
-}
-#endif
-#include <string.h>
-
 #include <iostream>
 #include <iomanip>
+#include <cstring>
+#include <thread>
+#include <chrono>
 
 #include "alure2.h"
 
@@ -221,7 +206,7 @@ int main(int argc, char *argv[])
             std::cout<< "\r "<<std::setiosflags(std::ios::fixed)<<std::setprecision(2)<<
                         (source->getOffset()*invfreq)<<" / "<<(decoder->getLength()*invfreq);
             std::cout.flush();
-            Sleep(25);
+            std::this_thread::sleep_for(std::chrono::milliseconds(25));
             ctx->update();
         }
         std::cout<<std::endl;
