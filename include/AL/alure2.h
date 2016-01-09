@@ -684,17 +684,32 @@ public:
 
 class SourceGroup {
 public:
+    /**
+     * Adds \param source to the source group. A source may only be part of one
+     * group at a time, and will automatically be removed from its current
+     * group as needed.
+     */
     virtual void addSource(Source *source) = 0;
+    /** Adds a list of sources to the group at once. */
     virtual void addSources(const std::vector<Source*> &sources) = 0;
 
+    /** Removes \param source from the source group. */
     virtual void removeSource(Source *source) = 0;
+    /** Removes a list of sources from the source group. */
     virtual void removeSources(const std::vector<Source*> &sources) = 0;
 
+    /** Returns the list of sources currently in the group. */
     virtual std::vector<Source*> getSources() = 0;
 
+    /** Sets the source group gain, which accumulates with its sources. */
     virtual void setGain(ALfloat gain) = 0;
+    /** Gets the source group gain. */
     virtual ALfloat getGain() const = 0;
 
+    /**
+     * Releases the source group, removing all sources from it before being
+     * freed.
+     */
     virtual void release() = 0;
 };
 
