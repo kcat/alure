@@ -23,6 +23,7 @@ namespace alure {
 class ALDevice;
 class ALBuffer;
 class ALSource;
+class ALSourceGroup;
 
 enum ALExtension {
     EXT_EFX,
@@ -62,6 +63,9 @@ private:
 
     typedef std::map<std::string,ALBuffer*> BufferMap;
     BufferMap mBuffers;
+
+    typedef std::vector<ALSourceGroup*> SourceGroupList;
+    SourceGroupList mSourceGroups;
 
     RefCount mRefs;
 
@@ -151,6 +155,7 @@ public:
     void removeStream(ALSource *source);
 
     void freeSource(ALSource *source);
+    void freeSourceGroup(ALSourceGroup *group);
 
     virtual Device *getDevice() final;
 
@@ -179,6 +184,8 @@ public:
     virtual AuxiliaryEffectSlot *createAuxiliaryEffectSlot() final;
 
     virtual Effect *createEffect() final;
+
+    virtual SourceGroup *createSourceGroup() final;
 
     virtual void setDopplerFactor(ALfloat factor) final;
 

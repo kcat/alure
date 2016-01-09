@@ -14,13 +14,6 @@ ALSourceGroup::ALSourceGroup(ALContext *context)
 {
 }
 
-void ALSourceGroup::release()
-{
-    CheckContext(mContext);
-    for(ALSource *source : mSources)
-        source->unsetGroup();
-}
-
 std::vector<Source*> ALSourceGroup::getSources()
 {
     std::vector<Source*> ret;
@@ -102,5 +95,14 @@ void ALSourceGroup::setGain(ALfloat gain)
     mGain = gain;
 }
 
+
+void ALSourceGroup::release()
+{
+    CheckContext(mContext);
+    for(ALSource *source : mSources)
+        source->unsetGroup();
+    mContext->freeSourceGroup(this);
+    delete this;
+}
 
 } // namespace alure

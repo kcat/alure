@@ -19,6 +19,7 @@ class ALSourceGroup : public SourceGroup {
 
 public:
     ALSourceGroup(ALContext *context);
+    virtual ~ALSourceGroup () { }
 
     virtual void addSource(Source *source) final;
     virtual void addSources(const std::vector<Source*> &sources) final;

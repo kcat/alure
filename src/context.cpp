@@ -38,6 +38,7 @@
 #include "source.h"
 #include "auxeffectslot.h"
 #include "effect.h"
+#include <sourcegroup.h>
 
 namespace alure
 {
@@ -715,6 +716,22 @@ Effect *ALContext::createEffect()
         alDeleteEffects(1, &id);
         throw;
     }
+}
+
+
+SourceGroup *ALContext::createSourceGroup()
+{
+    ALSourceGroup *group = new ALSourceGroup(this);
+    auto iter = std::lower_bound(mSourceGroups.begin(), mSourceGroups.end(), group);
+    mSourceGroups.insert(iter, group);
+    return group;
+}
+
+void ALContext::freeSourceGroup(ALSourceGroup *group)
+{
+    auto iter = std::lower_bound(mSourceGroups.begin(), mSourceGroups.end(), group);
+    if(iter != mSourceGroups.end() && *iter != group)
+        mSourceGroups.erase(iter);
 }
 
 

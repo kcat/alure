@@ -46,6 +46,7 @@ class Context;
 class Listener;
 class Buffer;
 class Source;
+class SourceGroup;
 class AuxiliaryEffectSlot;
 class Effect;
 class Decoder;
@@ -409,6 +410,8 @@ public:
     virtual AuxiliaryEffectSlot *createAuxiliaryEffectSlot() = 0;
 
     virtual Effect *createEffect() = 0;
+
+    virtual SourceGroup *createSourceGroup() = 0;
 
     virtual void setDopplerFactor(ALfloat factor) = 0;
 
