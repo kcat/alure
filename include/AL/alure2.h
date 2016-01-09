@@ -886,11 +886,16 @@ public:
 
 /**
  * A message handler interface. Applications may derive from this and set an
- * instance on a context to receive messages.
+ * instance on a context to receive messages. The base methods are no-ops, so
+ * derived classes only need to implement methods for relevant messages.
+ *
+ * It's recommended that applications mark their handler methods using the
+ * override keyword, to ensure they're properly overriding the base methods in
+ * case they change.
  */
 class MessageHandler {
 public:
-    virtual ~MessageHandler() { }
+    virtual ~MessageHandler();
 
     /**
      * Called when a new buffer is about to be created and loaded. May be
@@ -902,7 +907,7 @@ public:
      * \param samplerate Sample rate of the given audio data.
      * \param data The audio data that is about to be fed to the OpenAL buffer.
      */
-    virtual void bufferLoading(const std::string &name, ChannelConfig channels, SampleType type, ALuint samplerate, const std::vector<ALbyte> &data) = 0;
+    virtual void bufferLoading(const std::string &name, ChannelConfig channels, SampleType type, ALuint samplerate, const std::vector<ALbyte> &data);
 
     /**
      * Called when a resource isn't found, allowing the app to substitute in a
@@ -917,7 +922,7 @@ public:
      * \param newname The string to write in a resplacement resource name.
      * \return True to look for a replacement resource, false to fail.
      */
-    virtual bool resourceNotFound(const std::string &name, std::string &newname) = 0;
+    virtual bool resourceNotFound(const std::string &name, std::string &newname);
 };
 
 } // namespace alure

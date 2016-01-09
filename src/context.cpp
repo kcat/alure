@@ -156,10 +156,24 @@ FileIOFactory &FileIOFactory::get()
 }
 
 
+// Default message handler methods are no-ops.
+MessageHandler::~MessageHandler()
+{
+}
+
+void MessageHandler::bufferLoading(const std::string&, ChannelConfig, SampleType, ALuint, const std::vector<ALbyte>&)
+{
+}
+
+bool MessageHandler::resourceNotFound(const std::string&, std::string&)
+{
+    return false;
+}
+
+
 template<typename T>
 static inline void LoadALFunc(T **func, const char *name)
 { *func = reinterpret_cast<T*>(alGetProcAddress(name)); }
-
 
 static void LoadNothing(ALContext*) { }
 
