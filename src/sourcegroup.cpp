@@ -49,6 +49,7 @@ void ALSourceGroup::addSources(const Vector<Source*> &sources)
         if(!alsrcs.back()) throw std::runtime_error("Source is not valid");
     }
 
+    Batcher batcher = mContext->getBatcher();
     for(ALSource *alsrc : alsrcs)
     {
         auto iter = std::lower_bound(mSources.begin(), mSources.end(), alsrc);
@@ -73,6 +74,7 @@ void ALSourceGroup::removeSource(Source *source)
 
 void ALSourceGroup::removeSources(const Vector<Source*> &sources)
 {
+    Batcher batcher = mContext->getBatcher();
     for(Source *source : sources)
     {
         auto iter = std::lower_bound(mSources.begin(), mSources.end(), source);
@@ -90,6 +92,7 @@ void ALSourceGroup::setGain(ALfloat gain)
     if(!(gain >= 0.0f))
         throw std::runtime_error("Gain out of range");
     CheckContext(mContext);
+    Batcher batcher = mContext->getBatcher();
     for(ALSource *alsrc : mSources)
         alsrc->groupGainUpdate(gain);
     mGain = gain;
@@ -99,6 +102,7 @@ void ALSourceGroup::setGain(ALfloat gain)
 void ALSourceGroup::release()
 {
     CheckContext(mContext);
+    Batcher batcher = mContext->getBatcher();
     for(ALSource *source : mSources)
         source->unsetGroup();
     mContext->freeSourceGroup(this);

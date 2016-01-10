@@ -374,7 +374,7 @@ void ALContext::backgroundProc()
 
 ALContext::ALContext(ALCcontext *context, ALDevice *device)
   : mContext(context), mDevice(device), mRefs(0),
-    mHasExt{false}, mPendingBuffers(nullptr), mWakeInterval(0), mQuitThread(false),
+    mHasExt{false}, mPendingBuffers(nullptr), mWakeInterval(0), mQuitThread(false), mIsBatching(false),
     alGetSourcei64vSOFT(0),
     alGenEffects(0), alDeleteEffects(0), alIsEffect(0),
     alEffecti(0), alEffectiv(0), alEffectf(0), alEffectfv(0),
@@ -426,11 +426,13 @@ void ALContext::destroy()
 void ALContext::startBatch()
 {
     alcSuspendContext(mContext);
+    mIsBatching = true;
 }
 
 void ALContext::endBatch()
 {
     alcProcessContext(mContext);
+    mIsBatching = false;
 }
 
 

@@ -42,6 +42,21 @@ enum ALExtension {
     AL_EXTENSION_MAX
 };
 
+// Batches OpenAL updates while the object is alive, if batching isn't already
+// in progress.
+class Batcher {
+    ALCcontext *mContext;
+
+public:
+    Batcher(ALCcontext *context) : mContext(context) { }
+    Batcher(Batcher&& rhs) : mContext(rhs.mContext) { rhs.mContext = nullptr; }
+    ~Batcher()
+    {
+        if(mContext)
+            alcProcessContext(mContext);
+    }
+};
+
 class ALContext : public Context, public Listener {
     static ALContext *sCurrentCtx;
     static thread_local ALContext *sThreadCurrentCtx;
@@ -100,6 +115,8 @@ private:
     std::once_flag mSetExts;
     void setupExts();
 
+    bool mIsBatching;
+
 public:
     ALContext(ALCcontext *context, ALDevice *device);
     virtual ~ALContext();
@@ -156,6 +173,14 @@ public:
 
     void freeSource(ALSource *source);
     void freeSourceGroup(ALSourceGroup *group);
+
+    Batcher getBatcher()
+    {
+        if(mIsBatching)
+            return Batcher(nullptr);
+        alcSuspendContext(mContext);
+        return Batcher(mContext);
+    }
 
     virtual Device *getDevice() final;
 
