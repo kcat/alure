@@ -77,7 +77,7 @@ class DumbDecoder : public alure::Decoder {
     DUH *mDuh;
     DUH_SIGRENDERER *mRenderer;
     ALuint mFrequency;
-    std::vector<sample_t> mSampleBuf;
+    alure::Vector<sample_t> mSampleBuf;
     uint64_t mStreamPos;
 
 public:

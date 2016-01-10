@@ -24,19 +24,19 @@ int main(int argc, char *argv[])
 
     // Enumerate (and display) the available HRTFs
     std::cout<< "Available HRTFs:" <<std::endl;
-    std::vector<std::string> hrtf_names = dev->enumerateHRTFNames();
-    for(const std::string &name : hrtf_names)
+    alure::Vector<alure::String> hrtf_names = dev->enumerateHRTFNames();
+    for(const alure::String &name : hrtf_names)
         std::cout<< "    "<<name <<std::endl;
 
     int i = 1;
-    std::vector<ALCint> attrs;
+    alure::Vector<ALCint> attrs;
     attrs.push_back(ALC_HRTF_SOFT);
     attrs.push_back(ALC_TRUE);
     if(argc-i > 1 && strcasecmp(argv[i], "-hrtf") == 0)
     {
         // Find the given HRTF and add it to the attributes list
         auto iter = std::find_if(hrtf_names.begin(), hrtf_names.end(),
-            [argv, i](const std::string &name) -> bool
+            [argv, i](const alure::String &name) -> bool
             { return name == argv[i+1]; }
         );
         if(iter == hrtf_names.end())
@@ -60,7 +60,7 @@ int main(int argc, char *argv[])
         {
             // Find the given HRTF and reset the device using it
             auto iter = std::find_if(hrtf_names.begin(), hrtf_names.end(),
-                [argv, i](const std::string &name) -> bool
+                [argv, i](const alure::String &name) -> bool
                 { return name == argv[i+1]; }
             );
             if(iter == hrtf_names.end())

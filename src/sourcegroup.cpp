@@ -14,9 +14,9 @@ ALSourceGroup::ALSourceGroup(ALContext *context)
 {
 }
 
-std::vector<Source*> ALSourceGroup::getSources()
+Vector<Source*> ALSourceGroup::getSources()
 {
-    std::vector<Source*> ret;
+    Vector<Source*> ret;
     std::copy(mSources.begin(), mSources.end(), std::back_inserter(ret));
     return ret;
 }
@@ -34,13 +34,13 @@ void ALSourceGroup::addSource(Source *source)
     alsrc->setGroup(this);
 }
 
-void ALSourceGroup::addSources(const std::vector<Source*> &sources)
+void ALSourceGroup::addSources(const Vector<Source*> &sources)
 {
     CheckContext(mContext);
     if(sources.empty())
         return;
 
-    std::vector<ALSource*> alsrcs;
+    Vector<ALSource*> alsrcs;
     alsrcs.reserve(sources.size());
 
     for(Source *source : sources)
@@ -71,7 +71,7 @@ void ALSourceGroup::removeSource(Source *source)
     }
 }
 
-void ALSourceGroup::removeSources(const std::vector<Source*> &sources)
+void ALSourceGroup::removeSources(const Vector<Source*> &sources)
 {
     for(Source *source : sources)
     {

@@ -46,9 +46,9 @@ bool ALDeviceManager::queryExtension(const char *extname) const
     return alcIsExtensionPresent(0, extname);
 }
 
-std::vector<std::string> ALDeviceManager::enumerate(DeviceEnumeration type) const
+Vector<String> ALDeviceManager::enumerate(DeviceEnumeration type) const
 {
-    std::vector<std::string> list;
+    Vector<String> list;
     if(type == DevEnum_Complete && !alcIsExtensionPresent(0, "ALC_ENUMERATE_ALL_EXT"))
         type = DevEnum_Basic;
     const ALCchar *names = alcGetString(0, type);
@@ -60,16 +60,16 @@ std::vector<std::string> ALDeviceManager::enumerate(DeviceEnumeration type) cons
     return list;
 }
 
-std::string ALDeviceManager::defaultDeviceName(DefaultDeviceType type) const
+String ALDeviceManager::defaultDeviceName(DefaultDeviceType type) const
 {
     if(type == DefaultDevType_Complete && !alcIsExtensionPresent(0, "ALC_ENUMERATE_ALL_EXT"))
         type = DefaultDevType_Basic;
     const ALCchar *name = alcGetString(0, type);
-    return std::string(name ? name : "");
+    return String(name ? name : "");
 }
 
 
-Device *ALDeviceManager::openPlayback(const std::string &name)
+Device *ALDeviceManager::openPlayback(const String &name)
 {
     ALCdevice *dev = alcOpenDevice(name.c_str());
     if(!dev)

@@ -61,10 +61,10 @@ private:
     std::queue<ALSource*> mFreeSources;
     std::set<ALSource*> mUsedSources;
 
-    typedef std::map<std::string,ALBuffer*> BufferMap;
+    typedef std::map<String,ALBuffer*> BufferMap;
     BufferMap mBuffers;
 
-    typedef std::vector<ALSourceGroup*> SourceGroupList;
+    typedef Vector<ALSourceGroup*> SourceGroupList;
     SourceGroupList mSourceGroups;
 
     RefCount mRefs;
@@ -74,7 +74,7 @@ private:
     bool mHasExt[AL_EXTENSION_MAX];
 
     typedef struct PendingBuffer {
-        std::string mName;
+        String mName;
         ALBuffer *mBuffer;
         SharedPtr<Decoder> mDecoder;
         ALenum mFormat;
@@ -172,11 +172,11 @@ public:
     virtual void setAsyncWakeInterval(ALuint msec) final;
     virtual ALuint getAsyncWakeInterval() const final;
 
-    virtual SharedPtr<Decoder> createDecoder(const std::string &name) final;
+    virtual SharedPtr<Decoder> createDecoder(const String &name) final;
 
-    virtual Buffer *getBuffer(const std::string &name) final;
-    virtual Buffer *getBufferAsync(const std::string &name) final;
-    virtual void removeBuffer(const std::string &name) final;
+    virtual Buffer *getBuffer(const String &name) final;
+    virtual Buffer *getBufferAsync(const String &name) final;
+    virtual void removeBuffer(const String &name) final;
     virtual void removeBuffer(Buffer *buffer) final;
 
     virtual Source *getSource() final;

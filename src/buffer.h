@@ -29,7 +29,7 @@ class ALBuffer : public Buffer {
     BufferLoadStatus mLoadStatus;
     volatile bool mIsLoaded;
 
-    std::vector<Source*> mSources;
+    Vector<Source*> mSources;
 
 public:
     ALBuffer(ALContext *context, ALuint id, ALuint freq, ChannelConfig config, SampleType type, bool preloaded)
@@ -50,7 +50,7 @@ public:
         if(iter != mSources.cend()) mSources.erase(iter);
     }
 
-    void load(ALuint frames, ALenum format, SharedPtr<Decoder> decoder, const std::string &name, ALContext *ctx);
+    void load(ALuint frames, ALenum format, SharedPtr<Decoder> decoder, const String &name, ALContext *ctx);
 
     bool isReady() const { return mLoadStatus == BufferLoad_Ready; }
 
@@ -65,8 +65,7 @@ public:
     virtual void setLoopPoints(ALuint start, ALuint end) final;
     virtual std::pair<ALuint,ALuint> getLoopPoints() const final;
 
-    virtual std::vector<Source*> getSources() const final
-    { return mSources; }
+    virtual Vector<Source*> getSources() const final { return mSources; }
 
     virtual BufferLoadStatus getLoadStatus() final;
 

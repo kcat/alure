@@ -154,7 +154,7 @@ SharedPtr<Decoder> SndFileDecoderFactory::createDecoder(SharedPtr<std::istream> 
     ChannelConfig sconfig;
     if(sndfile)
     {
-        std::vector<int> chanmap(sndinfo.channels);
+        Vector<int> chanmap(sndinfo.channels);
         if(sf_command(sndfile, SFC_GET_CHANNEL_MAP_INFO, &chanmap[0], chanmap.size()*sizeof(int)) == SF_TRUE)
         {
             if(sndinfo.channels == 1 && chanmap[0] == SF_CHANNEL_MAP_MONO)

@@ -78,14 +78,12 @@ ALDevice::~ALDevice()
 
 void ALDevice::removeContext(ALContext *ctx)
 {
-    std::vector<ALContext*>::iterator iter;
-    iter = std::find(mContexts.begin(), mContexts.end(), ctx);
-    if(iter != mContexts.end())
-        mContexts.erase(iter);
+    auto iter = std::find(mContexts.begin(), mContexts.end(), ctx);
+    if(iter != mContexts.end()) mContexts.erase(iter);
 }
 
 
-std::string ALDevice::getName(PlaybackDeviceType type) const
+String ALDevice::getName(PlaybackDeviceType type) const
 {
     if(type == PlaybackDevType_Complete && !alcIsExtensionPresent(mDevice, "ALC_ENUMERATE_ALL_EXT"))
         type = PlaybackDevType_Basic;
@@ -93,7 +91,7 @@ std::string ALDevice::getName(PlaybackDeviceType type) const
     const ALCchar *name = alcGetString(mDevice, type);
     if(alcGetError(mDevice) != ALC_NO_ERROR || !name)
         name = alcGetString(mDevice, PlaybackDevType_Basic);
-    return std::string(name ? name : "");
+    return String(name ? name : "");
 }
 
 bool ALDevice::queryExtension(const char *extname) const
@@ -150,7 +148,7 @@ ALCuint ALDevice::getMaxAuxiliarySends() const
 }
 
 
-std::vector<std::string> ALDevice::enumerateHRTFNames() const
+Vector<String> ALDevice::enumerateHRTFNames() const
 {
     if(!hasExtension(SOFT_HRTF))
         throw std::runtime_error("ALC_SOFT_HRTF not supported");
@@ -160,7 +158,7 @@ std::vector<std::string> ALDevice::enumerateHRTFNames() const
     if(num_hrtfs == -1)
         throw std::runtime_error("HRTF specifier count error");
 
-    std::vector<std::string> hrtfs;
+    Vector<String> hrtfs;
     hrtfs.reserve(num_hrtfs);
     for(int i = 0;i < num_hrtfs;++i)
         hrtfs.push_back(alcGetStringiSOFT(mDevice, ALC_HRTF_SPECIFIER_SOFT, i));
@@ -179,11 +177,11 @@ bool ALDevice::isHRTFEnabled() const
     return hrtf_state != ALC_FALSE;
 }
 
-std::string ALDevice::getCurrentHRTF() const
+String ALDevice::getCurrentHRTF() const
 {
     if(!hasExtension(SOFT_HRTF))
         throw std::runtime_error("ALC_SOFT_HRTF not supported");
-    return std::string(alcGetString(mDevice, ALC_HRTF_SPECIFIER_SOFT));
+    return String(alcGetString(mDevice, ALC_HRTF_SPECIFIER_SOFT));
 }
 
 void ALDevice::reset(ALCint *attributes)

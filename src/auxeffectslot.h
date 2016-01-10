@@ -20,7 +20,7 @@ class ALAuxiliaryEffectSlot : public AuxiliaryEffectSlot {
     ALContext *const mContext;
     ALuint mId;
 
-    std::vector<SourceSend> mSourceSends;
+    Vector<SourceSend> mSourceSends;
 
 public:
     ALAuxiliaryEffectSlot(ALContext *context, ALuint id)
@@ -45,7 +45,7 @@ public:
 
     virtual void release() final;
 
-    virtual std::vector<SourceSend> getSourceSends() const final { return mSourceSends; }
+    virtual Vector<SourceSend> getSourceSends() const final { return mSourceSends; }
 
     virtual bool isInUse() const final { return (mSourceSends.size() > 0); }
 };

@@ -32,9 +32,9 @@ void ALBuffer::cleanup()
 }
 
 
-void ALBuffer::load(ALuint frames, ALenum format, SharedPtr<Decoder> decoder, const std::string &name, ALContext *ctx)
+void ALBuffer::load(ALuint frames, ALenum format, SharedPtr<Decoder> decoder, const String &name, ALContext *ctx)
 {
-    std::vector<ALbyte> data(FramesToBytes(frames, mChannelConfig, mSampleType));
+    Vector<ALbyte> data(FramesToBytes(frames, mChannelConfig, mSampleType));
 
     ALuint got = decoder->read(data.data(), frames);
     if(got > 0)

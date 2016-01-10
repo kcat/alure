@@ -144,7 +144,7 @@ public:
         PHYSFS_deinit();
     }
 
-    virtual alure::SharedPtr<std::istream> openFile(const std::string &name)
+    virtual alure::SharedPtr<std::istream> openFile(const alure::String &name)
     {
         alure::SharedPtr<Stream> stream(new Stream(name.c_str()));
         if(stream->fail()) stream.reset();

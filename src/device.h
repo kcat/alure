@@ -27,7 +27,7 @@ enum ALCExtension {
 class ALDevice : public Device {
     ALCdevice *mDevice;
 
-    std::vector<ALContext*> mContexts;
+    Vector<ALContext*> mContexts;
 
     bool mHasExt[ALC_EXTENSION_MAX];
 
@@ -50,7 +50,7 @@ public:
 
     void removeContext(ALContext *ctx);
 
-    virtual std::string getName(PlaybackDeviceType type) const final;
+    virtual String getName(PlaybackDeviceType type) const final;
     virtual bool queryExtension(const char *extname) const final;
 
     virtual ALCuint getALCVersion() const final;
@@ -60,9 +60,9 @@ public:
 
     virtual ALCuint getMaxAuxiliarySends() const final;
 
-    virtual std::vector<std::string> enumerateHRTFNames() const final;
+    virtual Vector<String> enumerateHRTFNames() const final;
     virtual bool isHRTFEnabled() const final;
-    virtual std::string getCurrentHRTF() const final;
+    virtual String getCurrentHRTF() const final;
     virtual void reset(ALCint *attributes) final;
 
     virtual Context *createContext(ALCint *attribs=0) final;

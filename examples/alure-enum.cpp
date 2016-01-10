@@ -6,8 +6,8 @@
 int main()
 {
     alure::DeviceManager *devMgr = alure::DeviceManager::get();
-    std::vector<std::string> list;
-    std::string defname;
+    alure::Vector<alure::String> list;
+    alure::String defname;
 
     list = devMgr->enumerate(alure::DevEnum_Basic);
     defname = devMgr->defaultDeviceName(alure::DefaultDevType_Basic);

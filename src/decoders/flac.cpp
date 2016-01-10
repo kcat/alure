@@ -21,7 +21,7 @@ class FlacDecoder : public Decoder {
     ALuint mFrameSize;
     uint64_t mSamplePos;
 
-    std::vector<ALubyte> mData;
+    Vector<ALubyte> mData;
 
     ALubyte *mOutBytes;
     ALuint mOutMax;

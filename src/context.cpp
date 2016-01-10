@@ -48,7 +48,7 @@ static inline size_t countof(const T(&)[N])
 { return N; }
 
 
-typedef std::pair<std::string,SharedPtr<DecoderFactory>> FactoryPair;
+typedef std::pair<String,SharedPtr<DecoderFactory>> FactoryPair;
 static const FactoryPair sDefaultDecoders[] = {
 #ifdef HAVE_VORBISFILE
     { "_alure_int_vorbis", SharedPtr<DecoderFactory>(new VorbisFileDecoderFactory) },
@@ -70,11 +70,11 @@ static const FactoryPair sDefaultDecoders[] = {
 #endif
 };
 
-typedef std::map<std::string,SharedPtr<DecoderFactory>> FactoryMap;
+typedef std::map<String,SharedPtr<DecoderFactory>> FactoryMap;
 static FactoryMap sDecoders;
 
 template<typename T>
-static SharedPtr<Decoder> GetDecoder(const std::string &name, SharedPtr<std::istream> file, T start, T end)
+static SharedPtr<Decoder> GetDecoder(const String &name, SharedPtr<std::istream> file, T start, T end)
 {
     while(start != end)
     {
@@ -92,7 +92,7 @@ static SharedPtr<Decoder> GetDecoder(const std::string &name, SharedPtr<std::ist
     return SharedPtr<Decoder>(nullptr);
 }
 
-static SharedPtr<Decoder> GetDecoder(const std::string &name, SharedPtr<std::istream> file)
+static SharedPtr<Decoder> GetDecoder(const String &name, SharedPtr<std::istream> file)
 {
     SharedPtr<Decoder> decoder = GetDecoder(name, file, sDecoders.begin(), sDecoders.end());
     if(!decoder) decoder = GetDecoder(name, file, std::begin(sDefaultDecoders), std::end(sDefaultDecoders));
@@ -100,7 +100,7 @@ static SharedPtr<Decoder> GetDecoder(const std::string &name, SharedPtr<std::ist
     return decoder;
 }
 
-void RegisterDecoder(const std::string &name, SharedPtr<DecoderFactory> factory)
+void RegisterDecoder(const String &name, SharedPtr<DecoderFactory> factory)
 {
     FactoryMap::iterator iter = sDecoders.begin();
     while(iter != sDecoders.end())
@@ -118,7 +118,7 @@ void RegisterDecoder(const std::string &name, SharedPtr<DecoderFactory> factory)
     sDecoders.insert(std::make_pair(name, factory));
 }
 
-SharedPtr<DecoderFactory> UnregisterDecoder(const std::string &name)
+SharedPtr<DecoderFactory> UnregisterDecoder(const String &name)
 {
     FactoryMap::iterator iter = sDecoders.find(name);
     if(iter != sDecoders.end())
@@ -132,7 +132,7 @@ SharedPtr<DecoderFactory> UnregisterDecoder(const std::string &name)
 
 
 class DefaultFileIOFactory : public FileIOFactory {
-    virtual SharedPtr<std::istream> openFile(const std::string &name)
+    virtual SharedPtr<std::istream> openFile(const String &name)
     {
         SharedPtr<std::ifstream> file(new std::ifstream(name.c_str(), std::ios::binary));
         if(!file->is_open()) file.reset();
@@ -161,11 +161,11 @@ MessageHandler::~MessageHandler()
 {
 }
 
-void MessageHandler::bufferLoading(const std::string&, ChannelConfig, SampleType, ALuint, const std::vector<ALbyte>&)
+void MessageHandler::bufferLoading(const String&, ChannelConfig, SampleType, ALuint, const Vector<ALbyte>&)
 {
 }
 
-bool MessageHandler::resourceNotFound(const std::string&, std::string&)
+bool MessageHandler::resourceNotFound(const String&, String&)
 {
     return false;
 }
@@ -466,16 +466,16 @@ ALuint ALContext::getAsyncWakeInterval() const
 }
 
 
-SharedPtr<Decoder> ALContext::createDecoder(const std::string &name)
+SharedPtr<Decoder> ALContext::createDecoder(const String &name)
 {
     SharedPtr<std::istream> file(FileIOFactory::get().openFile(name));
     if(file.get()) return GetDecoder(name, file);
 
     // Resource not found. Try to find a substitute.
     if(!mMessage.get()) throw std::runtime_error("Failed to open "+name);
-    std::string oldname = name;
+    String oldname = name;
     do {
-        std::string newname;
+        String newname;
         if(!mMessage->resourceNotFound(oldname, newname))
             throw std::runtime_error("Failed to open "+oldname);
         file = FileIOFactory::get().openFile(newname);
@@ -486,7 +486,7 @@ SharedPtr<Decoder> ALContext::createDecoder(const std::string &name)
 }
 
 
-Buffer *ALContext::getBuffer(const std::string &name)
+Buffer *ALContext::getBuffer(const String &name)
 {
     CheckContext(this);
 
@@ -508,7 +508,7 @@ Buffer *ALContext::getBuffer(const std::string &name)
     SampleType type = decoder->getSampleType();
     ALuint frames = decoder->getLength();
 
-    std::vector<ALbyte> data(FramesToBytes(frames, chans, type));
+    Vector<ALbyte> data(FramesToBytes(frames, chans, type));
     frames = decoder->read(&data[0], frames);
     if(!frames) throw std::runtime_error("No samples for buffer");
     data.resize(FramesToBytes(frames, chans, type));
@@ -551,7 +551,7 @@ Buffer *ALContext::getBuffer(const std::string &name)
     }
 }
 
-Buffer *ALContext::getBufferAsync(const std::string &name)
+Buffer *ALContext::getBufferAsync(const String &name)
 {
     CheckContext(this);
 
@@ -593,7 +593,7 @@ Buffer *ALContext::getBufferAsync(const std::string &name)
 }
 
 
-void ALContext::removeBuffer(const std::string &name)
+void ALContext::removeBuffer(const String &name)
 {
     CheckContext(this);
     BufferMap::iterator iter = mBuffers.find(name);

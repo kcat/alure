@@ -17,10 +17,10 @@ public:
 
     virtual bool queryExtension(const char *extname) const final;
 
-    virtual std::vector<std::string> enumerate(DeviceEnumeration type) const final;
-    virtual std::string defaultDeviceName(DefaultDeviceType type) const final;
+    virtual Vector<String> enumerate(DeviceEnumeration type) const final;
+    virtual String defaultDeviceName(DefaultDeviceType type) const final;
 
-    virtual Device *openPlayback(const std::string &name) final;
+    virtual Device *openPlayback(const String &name) final;
 };
 
 } // namespace alure

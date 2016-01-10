@@ -15,19 +15,19 @@ class ALSourceGroup : public SourceGroup {
 
     ALfloat mGain;
 
-    std::vector<ALSource*> mSources;
+    Vector<ALSource*> mSources;
 
 public:
     ALSourceGroup(ALContext *context);
     virtual ~ALSourceGroup () { }
 
     virtual void addSource(Source *source) final;
-    virtual void addSources(const std::vector<Source*> &sources) final;
+    virtual void addSources(const Vector<Source*> &sources) final;
 
     virtual void removeSource(Source *source) final;
-    virtual void removeSources(const std::vector<Source*> &sources) final;
+    virtual void removeSources(const Vector<Source*> &sources) final;
 
-    virtual std::vector<Source*> getSources() final;
+    virtual Vector<Source*> getSources() final;
 
     virtual void setGain(ALfloat gain) final;
     virtual ALfloat getGain() const final { return mGain; }

@@ -30,10 +30,10 @@ class ALBufferStream {
     ALuint mFrequency;
     ALuint mFrameSize;
 
-    std::vector<ALbyte> mData;
+    Vector<ALbyte> mData;
     ALuint mSilence;
 
-    std::vector<ALuint> mBufferIds;
+    Vector<ALuint> mBufferIds;
     ALuint mCurrentIdx;
 
     std::pair<uint64_t,uint64_t> mLoopPts;

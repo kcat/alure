@@ -59,6 +59,15 @@ class MessageHandler;
 template<typename T>
 using SharedPtr = std::shared_ptr<T>;
 
+// A Vector implementation, defaults to C++'s std::vector. If this is changed,
+// you must recompile the library.
+template<typename T>
+using Vector = std::vector<T>;
+
+// A String implementation, default's to C++'s std::string. If this is changed,
+// you must recompile the library.
+using String = std::string;
+
 
 struct FilterParams {
     ALfloat mGain;
@@ -195,12 +204,12 @@ public:
     virtual bool queryExtension(const char *extname) const = 0;
 
     /** Enumerates available device names of the given \param type. */
-    virtual std::vector<std::string> enumerate(DeviceEnumeration type) const = 0;
+    virtual Vector<String> enumerate(DeviceEnumeration type) const = 0;
     /** Retrieves the default device of the given \param type. */
-    virtual std::string defaultDeviceName(DefaultDeviceType type) const = 0;
+    virtual String defaultDeviceName(DefaultDeviceType type) const = 0;
 
     /** Opens the playback device given by \param name, or the default if empty. */
-    virtual Device *openPlayback(const std::string &name=std::string()) = 0;
+    virtual Device *openPlayback(const String &name=String()) = 0;
 };
 
 
@@ -212,7 +221,7 @@ enum PlaybackDeviceType {
 class Device {
 public:
     /** Retrieves the device name as given by \param type. */
-    virtual std::string getName(PlaybackDeviceType type) const = 0;
+    virtual String getName(PlaybackDeviceType type) const = 0;
     /** Queries the existence of an ALC extension on this device. */
     virtual bool queryExtension(const char *extname) const = 0;
 
@@ -245,7 +254,7 @@ public:
      *
      * Requires the ALC_SOFT_HRTF extension.
      */
-    virtual std::vector<std::string> enumerateHRTFNames() const = 0;
+    virtual Vector<String> enumerateHRTFNames() const = 0;
 
     /**
      * Retrieves whether HRTF is enabled on the device or not.
@@ -259,7 +268,7 @@ public:
      *
      * Requires the ALC_SOFT_HRTF extension.
      */
-    virtual std::string getCurrentHRTF() const = 0;
+    virtual String getCurrentHRTF() const = 0;
 
     /**
      * Resets the device, using the specified \param attributes.
@@ -368,7 +377,7 @@ public:
      * Creates a \ref Decoder instance for the given audio file or resource
      * \param name.
      */
-    virtual SharedPtr<Decoder> createDecoder(const std::string &name) = 0;
+    virtual SharedPtr<Decoder> createDecoder(const String &name) = 0;
 
     // Functions below require the context to be current
 
@@ -377,7 +386,7 @@ public:
      * \param name. Multiple calls with the same name will return the same
      * \ref Buffer object.
      */
-    virtual Buffer *getBuffer(const std::string &name) = 0;
+    virtual Buffer *getBuffer(const String &name) = 0;
 
     /**
      * Creates and caches a \ref Buffer for the given audio file or resource
@@ -388,13 +397,13 @@ public:
      * asynchronously, and must be checked with a call to
      * \ref Buffer::getLoadStatus prior to being played.
      */
-    virtual Buffer *getBufferAsync(const std::string &name) = 0;
+    virtual Buffer *getBufferAsync(const String &name) = 0;
 
     /**
      * Deletes the cached \ref Buffer object for the given audio file or
      * resource \param name. The buffer must not be in use by a \ref Source.
      */
-    virtual void removeBuffer(const std::string &name) = 0;
+    virtual void removeBuffer(const String &name) = 0;
     /**
      * Deletes the given cached \param buffer instance. The buffer must not be
      * in use by a \ref Source.
@@ -521,7 +530,7 @@ public:
      * the returned sources will allow the buffer to be removed from the
      * context.
      */
-    virtual std::vector<Source*> getSources() const = 0;
+    virtual Vector<Source*> getSources() const = 0;
 
     /**
      * Queries the buffer's load status. A return of \ref BufferLoad_Pending
@@ -691,15 +700,15 @@ public:
      */
     virtual void addSource(Source *source) = 0;
     /** Adds a list of sources to the group at once. */
-    virtual void addSources(const std::vector<Source*> &sources) = 0;
+    virtual void addSources(const Vector<Source*> &sources) = 0;
 
     /** Removes \param source from the source group. */
     virtual void removeSource(Source *source) = 0;
     /** Removes a list of sources from the source group. */
-    virtual void removeSources(const std::vector<Source*> &sources) = 0;
+    virtual void removeSources(const Vector<Source*> &sources) = 0;
 
     /** Returns the list of sources currently in the group. */
-    virtual std::vector<Source*> getSources() = 0;
+    virtual Vector<Source*> getSources() = 0;
 
     /** Sets the source group gain, which accumulates with its sources. */
     virtual void setGain(ALfloat gain) = 0;
@@ -747,7 +756,7 @@ public:
      * is set on. Setting a different (or null) effect slot on each source's
      * given send will allow the effect slot to be released.
      */
-    virtual std::vector<SourceSend> getSourceSends() const = 0;
+    virtual Vector<SourceSend> getSourceSends() const = 0;
 
     /** Determines if the effect slot is in use by a source. */
     virtual bool isInUse() const = 0;
@@ -842,7 +851,7 @@ public:
  * \param name A unique name identifying this decoder factory.
  * \param factory A DecoderFactory instance used to create Decoder instances.
  */
-void RegisterDecoder(const std::string &name, SharedPtr<DecoderFactory> factory);
+void RegisterDecoder(const String &name, SharedPtr<DecoderFactory> factory);
 
 /**
  * Unregisters a decoder factory by name. Alure gives a reference to the
@@ -854,7 +863,7 @@ void RegisterDecoder(const std::string &name, SharedPtr<DecoderFactory> factory)
  * \return The unregistered decoder factory instance, or 0 (nullptr) if a
  * decoder factory with the given name doesn't exist.
  */
-SharedPtr<DecoderFactory> UnregisterDecoder(const std::string &name);
+SharedPtr<DecoderFactory> UnregisterDecoder(const String &name);
 
 
 /**
@@ -880,7 +889,7 @@ public:
     virtual ~FileIOFactory() { }
 
     /** Opens a read-only binary file for the given \param name. */
-    virtual SharedPtr<std::istream> openFile(const std::string &name) = 0;
+    virtual SharedPtr<std::istream> openFile(const String &name) = 0;
 };
 
 
@@ -907,7 +916,7 @@ public:
      * \param samplerate Sample rate of the given audio data.
      * \param data The audio data that is about to be fed to the OpenAL buffer.
      */
-    virtual void bufferLoading(const std::string &name, ChannelConfig channels, SampleType type, ALuint samplerate, const std::vector<ALbyte> &data);
+    virtual void bufferLoading(const String &name, ChannelConfig channels, SampleType type, ALuint samplerate, const Vector<ALbyte> &data);
 
     /**
      * Called when a resource isn't found, allowing the app to substitute in a
@@ -922,7 +931,7 @@ public:
      * \param newname The string to write in a resplacement resource name.
      * \return True to look for a replacement resource, false to fail.
      */
-    virtual bool resourceNotFound(const std::string &name, std::string &newname);
+    virtual bool resourceNotFound(const String &name, String &newname);
 };
 
 } // namespace alure
