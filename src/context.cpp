@@ -374,7 +374,8 @@ void ALContext::backgroundProc()
 
 ALContext::ALContext(ALCcontext *context, ALDevice *device)
   : mContext(context), mDevice(device), mRefs(0),
-    mHasExt{false}, mPendingBuffers(nullptr), mWakeInterval(0), mQuitThread(false), mIsBatching(false),
+    mHasExt{false}, mPendingBuffers(nullptr), mWakeInterval(0), mQuitThread(false),
+    mIsBatching(false),
     alGetSourcei64vSOFT(0),
     alGenEffects(0), alDeleteEffects(0), alIsEffect(0),
     alEffecti(0), alEffectiv(0), alEffectf(0), alEffectfv(0),
@@ -667,13 +668,16 @@ Source *ALContext::getSource()
         source = mFreeSources.back();
         mFreeSources.pop();
     }
-    mUsedSources.insert(source);
+    auto iter = std::lower_bound(mUsedSources.begin(), mUsedSources.end(), source);
+    if(iter == mUsedSources.end() || *iter != source)
+        mUsedSources.insert(iter, source);
     return source;
 }
 
 void ALContext::freeSource(ALSource *source)
 {
-    mUsedSources.erase(source);
+    auto iter = std::lower_bound(mUsedSources.begin(), mUsedSources.end(), source);
+    if(iter != mUsedSources.end() && *iter == source) mUsedSources.erase(iter);
     mFreeSources.push(source);
 }
 

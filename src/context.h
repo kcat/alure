@@ -74,7 +74,7 @@ private:
 
     ALDevice *const mDevice;
     std::queue<ALSource*> mFreeSources;
-    std::set<ALSource*> mUsedSources;
+    Vector<ALSource*> mUsedSources;
 
     typedef std::map<String,ALBuffer*> BufferMap;
     BufferMap mBuffers;
