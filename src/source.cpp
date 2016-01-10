@@ -214,8 +214,18 @@ void ALSource::applyProperties(bool looping, ALuint offset) const
 {
     alSourcei(mId, AL_LOOPING, looping ? AL_TRUE : AL_FALSE);
     alSourcei(mId, AL_SAMPLE_OFFSET, offset);
-    alSourcef(mId, AL_PITCH, mPitch * (mGroup ? mGroup->getPitch() : 1.0f));
-    alSourcef(mId, AL_GAIN, mGain * (mGroup ? mGroup->getGain() : 1.0f));
+    if(mGroup)
+    {
+        SourceGroupProps props;
+        mGroup->applyPropTree(props);
+        alSourcef(mId, AL_PITCH, mPitch * props.mPitch);
+        alSourcef(mId, AL_GAIN, mGain * props.mGain);
+    }
+    else
+    {
+        alSourcef(mId, AL_PITCH, mPitch);
+        alSourcef(mId, AL_GAIN, mGain);
+    }
     alSourcef(mId, AL_MIN_GAIN, mMinGain);
     alSourcef(mId, AL_MAX_GAIN, mMaxGain);
     alSourcef(mId, AL_REFERENCE_DISTANCE, mRefDist);
@@ -269,8 +279,10 @@ void ALSource::groupUpdate()
     {
         if(mGroup)
         {
-            alSourcef(mId, AL_PITCH, mPitch * mGroup->getPitch());
-            alSourcef(mId, AL_GAIN, mGain * mGroup->getGain());
+            SourceGroupProps props;
+            mGroup->applyPropTree(props);
+            alSourcef(mId, AL_PITCH, mPitch * props.mPitch);
+            alSourcef(mId, AL_GAIN, mGain * props.mGain);
         }
         else
         {
@@ -280,16 +292,13 @@ void ALSource::groupUpdate()
     }
 }
 
-void ALSource::groupGainUpdate(ALfloat gain)
+void ALSource::groupPropUpdate(ALfloat gain, ALfloat pitch)
 {
     if(mId)
-        alSourcef(mId, AL_GAIN, mGain * gain);
-}
-
-void ALSource::groupPitchUpdate(ALfloat pitch)
-{
-    if(mId)
+    {
         alSourcef(mId, AL_PITCH, mPitch * pitch);
+        alSourcef(mId, AL_GAIN, mGain * gain);
+    }
 }
 
 
@@ -674,7 +683,7 @@ void ALSource::setPitch(ALfloat pitch)
         throw std::runtime_error("Pitch out of range");
     CheckContext(mContext);
     if(mId != 0)
-        alSourcef(mId, AL_PITCH, pitch * (mGroup ? mGroup->getPitch() : 1.0f));
+        alSourcef(mId, AL_PITCH, pitch * (mGroup ? mGroup->getAppliedPitch() : 1.0f));
     mPitch = pitch;
 }
 
@@ -685,7 +694,7 @@ void ALSource::setGain(ALfloat gain)
         throw std::runtime_error("Gain out of range");
     CheckContext(mContext);
     if(mId != 0)
-        alSourcef(mId, AL_GAIN, gain * (mGroup ? mGroup->getGain() : 1.0f));
+        alSourcef(mId, AL_GAIN, gain * (mGroup ? mGroup->getAppliedGain() : 1.0f));
     mGain = gain;
 }
 

@@ -699,16 +699,28 @@ public:
      * group as needed.
      */
     virtual void addSource(Source *source) = 0;
-    /** Adds a list of sources to the group at once. */
-    virtual void addSources(const Vector<Source*> &sources) = 0;
-
     /** Removes \param source from the source group. */
     virtual void removeSource(Source *source) = 0;
+
+    /** Adds a list of sources to the group at once. */
+    virtual void addSources(const Vector<Source*> &sources) = 0;
     /** Removes a list of sources from the source group. */
     virtual void removeSources(const Vector<Source*> &sources) = 0;
 
+    /**
+     * Adds \param group as a subgroup of the source group. This method will
+     * throw an exception if \param group is being added to a group is has as a
+     * sub-group (i.e. it would create a circular sub-group chain).
+     */
+    virtual void addSubGroup(SourceGroup *group) = 0;
+    /** Removes \param group from the source group. */
+    virtual void removeSubGroup(SourceGroup *group) = 0;
+
     /** Returns the list of sources currently in the group. */
     virtual Vector<Source*> getSources() = 0;
+
+    /** Returns the list of subgroups currently in the group. */
+    virtual Vector<SourceGroup*> getSubGroups() = 0;
 
     /** Sets the source group gain, which accumulates with its sources. */
     virtual void setGain(ALfloat gain) = 0;

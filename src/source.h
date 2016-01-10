@@ -88,8 +88,7 @@ public:
     void unsetGroup();
 
     void groupUpdate();
-    void groupGainUpdate(ALfloat gain);
-    void groupPitchUpdate(ALfloat pitch);
+    void groupPropUpdate(ALfloat gain, ALfloat pitch);
 
     virtual void play(Buffer *buffer) final;
     virtual void play(SharedPtr<Decoder> decoder, ALuint updatelen, ALuint queuesize) final;
