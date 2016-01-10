@@ -214,7 +214,7 @@ void ALSource::applyProperties(bool looping, ALuint offset) const
 {
     alSourcei(mId, AL_LOOPING, looping ? AL_TRUE : AL_FALSE);
     alSourcei(mId, AL_SAMPLE_OFFSET, offset);
-    alSourcef(mId, AL_PITCH, mPitch);
+    alSourcef(mId, AL_PITCH, mPitch * (mGroup ? mGroup->getPitch() : 1.0f));
     alSourcef(mId, AL_GAIN, mGain * (mGroup ? mGroup->getGain() : 1.0f));
     alSourcef(mId, AL_MIN_GAIN, mMinGain);
     alSourcef(mId, AL_MAX_GAIN, mMaxGain);
@@ -268,9 +268,15 @@ void ALSource::groupUpdate()
     if(mId)
     {
         if(mGroup)
+        {
+            alSourcef(mId, AL_PITCH, mPitch * mGroup->getPitch());
             alSourcef(mId, AL_GAIN, mGain * mGroup->getGain());
+        }
         else
+        {
+            alSourcef(mId, AL_PITCH, mPitch);
             alSourcef(mId, AL_GAIN, mGain);
+        }
     }
 }
 
@@ -278,6 +284,12 @@ void ALSource::groupGainUpdate(ALfloat gain)
 {
     if(mId)
         alSourcef(mId, AL_GAIN, mGain * gain);
+}
+
+void ALSource::groupPitchUpdate(ALfloat pitch)
+{
+    if(mId)
+        alSourcef(mId, AL_PITCH, mPitch * pitch);
 }
 
 
@@ -662,7 +674,7 @@ void ALSource::setPitch(ALfloat pitch)
         throw std::runtime_error("Pitch out of range");
     CheckContext(mContext);
     if(mId != 0)
-        alSourcef(mId, AL_PITCH, pitch);
+        alSourcef(mId, AL_PITCH, pitch * (mGroup ? mGroup->getPitch() : 1.0f));
     mPitch = pitch;
 }
 

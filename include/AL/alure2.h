@@ -715,6 +715,11 @@ public:
     /** Gets the source group gain. */
     virtual ALfloat getGain() const = 0;
 
+    /** Sets the source group pitch, which accumulates with its sources. */
+    virtual void setPitch(ALfloat pitch) = 0;
+    /** Gets the source group pitch. */
+    virtual ALfloat getPitch() const = 0;
+
     /**
      * Releases the source group, removing all sources from it before being
      * freed.

@@ -14,6 +14,7 @@ class ALSourceGroup : public SourceGroup {
     ALContext *const mContext;
 
     ALfloat mGain;
+    ALfloat mPitch;
 
     Vector<ALSource*> mSources;
 
@@ -31,6 +32,9 @@ public:
 
     virtual void setGain(ALfloat gain) final;
     virtual ALfloat getGain() const final { return mGain; }
+
+    virtual void setPitch(ALfloat pitch) final;
+    virtual ALfloat getPitch() const final { return mPitch; }
 
     virtual void release() final;
 };

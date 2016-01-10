@@ -10,7 +10,7 @@ namespace alure
 {
 
 ALSourceGroup::ALSourceGroup(ALContext *context)
-  : mContext(context), mGain(1.0f)
+  : mContext(context), mGain(1.0f), mPitch(1.0f)
 {
 }
 
@@ -96,6 +96,17 @@ void ALSourceGroup::setGain(ALfloat gain)
     for(ALSource *alsrc : mSources)
         alsrc->groupGainUpdate(gain);
     mGain = gain;
+}
+
+void ALSourceGroup::setPitch(ALfloat pitch)
+{
+    if(!(pitch > 0.0f))
+        throw std::runtime_error("Pitch out of range");
+    CheckContext(mContext);
+    Batcher batcher = mContext->getBatcher();
+    for(ALSource *alsrc : mSources)
+        alsrc->groupPitchUpdate(pitch);
+    mPitch = pitch;
 }
 
 
