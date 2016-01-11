@@ -38,8 +38,21 @@ void ALSourceGroup::unsetParentGroup()
     update(1.0f, 1.0f);
 }
 
+void ALSourceGroup::update(ALfloat gain, ALfloat pitch)
+{
+    mParentProps.mGain = gain;
+    mParentProps.mPitch = pitch;
 
-bool ALSourceGroup::findInSubGroups(ALSourceGroup *group)
+    gain *= mGain;
+    pitch *= mPitch;
+    for(ALSource *alsrc : mSources)
+        alsrc->groupPropUpdate(gain, pitch);
+    for(ALSourceGroup *group : mSubGroups)
+        group->update(gain, pitch);
+}
+
+
+bool ALSourceGroup::findInSubGroups(ALSourceGroup *group) const
 {
     auto iter = std::lower_bound(mSubGroups.begin(), mSubGroups.end(), group);
     if(iter != mSubGroups.end() && *iter == group) return true;
@@ -50,17 +63,6 @@ bool ALSourceGroup::findInSubGroups(ALSourceGroup *group)
             return true;
     }
     return false;
-}
-
-
-void ALSourceGroup::update(ALfloat gain, ALfloat pitch)
-{
-    gain *= mGain;
-    pitch *= mPitch;
-    for(ALSource *alsrc : mSources)
-        alsrc->groupPropUpdate(gain, pitch);
-    for(ALSourceGroup *group : mSubGroups)
-        group->update(gain, pitch);
 }
 
 
@@ -180,15 +182,13 @@ void ALSourceGroup::setGain(ALfloat gain)
         throw std::runtime_error("Gain out of range");
     CheckContext(mContext);
     mGain = gain;
+    gain *= mParentProps.mGain;
+    ALfloat pitch = mPitch * mParentProps.mPitch;
     Batcher batcher = mContext->getBatcher();
-    if(!mParent)
-        update(1.0f, 1.0f);
-    else
-    {
-        SourceGroupProps props;
-        mParent->applyPropTree(props);
-        update(props.mGain, props.mPitch);
-    }
+    for(ALSource *alsrc : mSources)
+        alsrc->groupPropUpdate(gain, pitch);
+    for(ALSourceGroup *group : mSubGroups)
+        group->update(gain, pitch);
 }
 
 void ALSourceGroup::setPitch(ALfloat pitch)
@@ -197,15 +197,13 @@ void ALSourceGroup::setPitch(ALfloat pitch)
         throw std::runtime_error("Pitch out of range");
     CheckContext(mContext);
     mPitch = pitch;
+    ALfloat gain = mGain * mParentProps.mGain;
+    pitch *= mParentProps.mPitch;
     Batcher batcher = mContext->getBatcher();
-    if(!mParent)
-        update(1.0f, 1.0f);
-    else
-    {
-        SourceGroupProps props;
-        mParent->applyPropTree(props);
-        update(props.mGain, props.mPitch);
-    }
+    for(ALSource *alsrc : mSources)
+        alsrc->groupPropUpdate(gain, pitch);
+    for(ALSourceGroup *group : mSubGroups)
+        group->update(gain, pitch);
 }
 
 

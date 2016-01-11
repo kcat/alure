@@ -23,20 +23,8 @@ class ALSourceGroup : public SourceGroup, SourceGroupProps {
     Vector<ALSource*> mSources;
     Vector<ALSourceGroup*> mSubGroups;
 
+    SourceGroupProps mParentProps;
     ALSourceGroup *mParent;
-
-public:
-    ALSourceGroup(ALContext *context);
-    virtual ~ALSourceGroup () { }
-
-    void update(ALfloat gain, ALfloat pitch);
-
-    void setParentGroup(ALSourceGroup *group);
-    void unsetParentGroup();
-
-    void eraseSubGroup(ALSourceGroup *group);
-
-    bool findInSubGroups(ALSourceGroup *group);
 
     void applyPropTree(SourceGroupProps &props) const
     {
@@ -45,10 +33,22 @@ public:
         if(mParent)
             mParent->applyPropTree(props);
     }
-    ALfloat getAppliedGain() const
-    { return mGain * (mParent ? mParent->getAppliedGain() : 1.0f); }
-    ALfloat getAppliedPitch() const
-    { return mPitch * (mParent ? mParent->getAppliedPitch() : 1.0f); }
+
+    void update(ALfloat gain, ALfloat pitch);
+
+    void setParentGroup(ALSourceGroup *group);
+    void unsetParentGroup();
+
+    void eraseSubGroup(ALSourceGroup *group);
+
+    bool findInSubGroups(ALSourceGroup *group) const;
+
+public:
+    ALSourceGroup(ALContext *context);
+    virtual ~ALSourceGroup () { }
+
+    ALfloat getAppliedGain() const { return mGain * mParentProps.mGain; }
+    ALfloat getAppliedPitch() const { return mPitch * mParentProps.mPitch; }
 
     virtual void addSource(Source *source) final;
     virtual void removeSource(Source *source) final;

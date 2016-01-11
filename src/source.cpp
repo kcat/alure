@@ -216,10 +216,8 @@ void ALSource::applyProperties(bool looping, ALuint offset) const
     alSourcei(mId, AL_SAMPLE_OFFSET, offset);
     if(mGroup)
     {
-        SourceGroupProps props;
-        mGroup->applyPropTree(props);
-        alSourcef(mId, AL_PITCH, mPitch * props.mPitch);
-        alSourcef(mId, AL_GAIN, mGain * props.mGain);
+        alSourcef(mId, AL_PITCH, mPitch * mGroup->getAppliedPitch());
+        alSourcef(mId, AL_GAIN, mGain * mGroup->getAppliedGain());
     }
     else
     {
@@ -279,10 +277,8 @@ void ALSource::groupUpdate()
     {
         if(mGroup)
         {
-            SourceGroupProps props;
-            mGroup->applyPropTree(props);
-            alSourcef(mId, AL_PITCH, mPitch * props.mPitch);
-            alSourcef(mId, AL_GAIN, mGain * props.mGain);
+            alSourcef(mId, AL_PITCH, mPitch * mGroup->getAppliedPitch());
+            alSourcef(mId, AL_GAIN, mGain * mGroup->getAppliedGain());
         }
         else
         {
