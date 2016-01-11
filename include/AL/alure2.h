@@ -709,7 +709,7 @@ public:
 
     /**
      * Adds \param group as a subgroup of the source group. This method will
-     * throw an exception if \param group is being added to a group is has as a
+     * throw an exception if \param group is being added to a group it has as a
      * sub-group (i.e. it would create a circular sub-group chain).
      */
     virtual void addSubGroup(SourceGroup *group) = 0;
