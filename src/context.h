@@ -170,6 +170,7 @@ public:
 
     void addStream(ALSource *source);
     void removeStream(ALSource *source);
+    void removeStreamNoLock(ALSource *source);
 
     void freeSource(ALSource *source);
     void freeSourceGroup(ALSourceGroup *group);

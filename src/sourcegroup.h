@@ -49,6 +49,9 @@ class ALSourceGroup : public SourceGroup, SourceGroupProps {
     void collectPausedSourceIds(Vector<ALuint> &sourceids) const;
     void updatePlayingStatus() const;
 
+    void collectSourceIds(Vector<ALuint> &sourceids) const;
+    void updateStoppedStatus() const;
+
 public:
     ALSourceGroup(ALContext *context);
     virtual ~ALSourceGroup () { }
@@ -77,6 +80,8 @@ public:
 
     virtual void pauseAll() const final;
     virtual void resumeAll() const final;
+
+    virtual void stopAll() const final;
 
     virtual void release() final;
 };

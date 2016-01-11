@@ -279,6 +279,42 @@ void ALSourceGroup::resumeAll() const
 }
 
 
+void ALSourceGroup::collectSourceIds(Vector<ALuint> &sourceids) const
+{
+    for(ALSource *alsrc : mSources)
+    {
+        if(ALuint id = alsrc->getId())
+            sourceids.push_back(id);
+    }
+    for(ALSourceGroup *group : mSubGroups)
+        group->collectSourceIds(sourceids);
+}
+
+void ALSourceGroup::updateStoppedStatus() const
+{
+    for(ALSource *alsrc : mSources)
+        alsrc->makeStopped();
+    for(ALSourceGroup *group : mSubGroups)
+        group->updateStoppedStatus();
+}
+
+void ALSourceGroup::stopAll() const
+{
+    CheckContext(mContext);
+    auto lock = mContext->getSourceStreamLock();
+
+    Vector<ALuint> sourceids;
+    sourceids.reserve(16);
+    collectSourceIds(sourceids);
+    if(!sourceids.empty())
+    {
+        alSourceRewindv(sourceids.size(), sourceids.data());
+        updateStoppedStatus();
+    }
+    lock.unlock();
+}
+
+
 void ALSourceGroup::release()
 {
     CheckContext(mContext);

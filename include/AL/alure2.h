@@ -743,6 +743,9 @@ public:
      */
     virtual void resumeAll() const = 0;
 
+    /** Stops all sources that are under this group, including sub-groups. */
+    virtual void stopAll() const = 0;
+
     /**
      * Releases the source group, removing all sources from it before being
      * freed.

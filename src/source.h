@@ -92,6 +92,7 @@ public:
 
     void checkPaused();
     void unsetPaused() { mPaused = false; }
+    void makeStopped();
 
     virtual void play(Buffer *buffer) final;
     virtual void play(SharedPtr<Decoder> decoder, ALuint updatelen, ALuint queuesize) final;

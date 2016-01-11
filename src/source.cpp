@@ -387,6 +387,34 @@ void ALSource::play(SharedPtr<Decoder> decoder, ALuint updatelen, ALuint queuesi
 }
 
 
+void ALSource::makeStopped()
+{
+    if(mIsAsync)
+        mContext->removeStreamNoLock(this);
+    mIsAsync = false;
+
+    if(mId != 0)
+    {
+        alSourcei(mId, AL_BUFFER, 0);
+        if(mContext->hasExtension(EXT_EFX))
+        {
+            alSourcei(mId, AL_DIRECT_FILTER, AL_FILTER_NULL);
+            for(auto &i : mEffectSlots)
+                alSource3i(mId, AL_AUXILIARY_SEND_FILTER, 0, i.first, AL_FILTER_NULL);
+        }
+        mContext->insertSourceId(mId);
+        mId = 0;
+    }
+
+    if(mBuffer)
+        mBuffer->removeSource(this);
+    mBuffer = 0;
+
+    mStream.reset();
+
+    mPaused = false;
+}
+
 void ALSource::stop()
 {
     CheckContext(mContext);

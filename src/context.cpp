@@ -696,6 +696,11 @@ void ALContext::removeStream(ALSource *source)
     mStreamingSources.erase(source);
 }
 
+void ALContext::removeStreamNoLock(ALSource *source)
+{
+    mStreamingSources.erase(source);
+}
+
 
 AuxiliaryEffectSlot *ALContext::createAuxiliaryEffectSlot()
 {
