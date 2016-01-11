@@ -22,9 +22,9 @@ static inline void GetDeviceProc(T **func, ALCdevice *device, const char *name)
 
 ALCboolean (ALC_APIENTRY*ALDeviceManager::SetThreadContext)(ALCcontext*);
 
-DeviceManager *DeviceManager::get()
+DeviceManager &DeviceManager::get()
 {
-    return &ALDeviceManager::get();
+    return ALDeviceManager::get();
 }
 
 

@@ -198,7 +198,7 @@ enum DefaultDeviceType {
 class DeviceManager {
 public:
     /** Retrieves the DeviceManager instance. */
-    static DeviceManager *get();
+    static DeviceManager &get();
 
     /** Queries the existence of a non-device-specific ALC extension. */
     virtual bool queryExtension(const char *extname) const = 0;

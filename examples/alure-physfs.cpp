@@ -184,9 +184,9 @@ int main(int argc, char *argv[])
     // our custom factory.
     alure::FileIOFactory::set(alure::SharedPtr<alure::FileIOFactory>(new FileFactory(argv[0])));
 
-    alure::DeviceManager *devMgr = alure::DeviceManager::get();
+    alure::DeviceManager &devMgr = alure::DeviceManager::get();
 
-    alure::Device *dev = devMgr->openPlayback();
+    alure::Device *dev = devMgr.openPlayback();
     std::cout<< "Opened \""<<dev->getName(alure::PlaybackDevType_Basic)<<"\"" <<std::endl;
 
     alure::Context *ctx = dev->createContext();
