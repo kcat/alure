@@ -43,6 +43,12 @@ class ALSourceGroup : public SourceGroup, SourceGroupProps {
 
     bool findInSubGroups(ALSourceGroup *group) const;
 
+    void collectPlayingSourceIds(Vector<ALuint> &sourceids) const;
+    void updatePausedStatus() const;
+
+    void collectPausedSourceIds(Vector<ALuint> &sourceids) const;
+    void updatePlayingStatus() const;
+
 public:
     ALSourceGroup(ALContext *context);
     virtual ~ALSourceGroup () { }
@@ -68,6 +74,9 @@ public:
 
     virtual void setPitch(ALfloat pitch) final;
     virtual ALfloat getPitch() const final { return mPitch; }
+
+    virtual void pauseAll() const final;
+    virtual void resumeAll() const final;
 
     virtual void release() final;
 };

@@ -419,6 +419,18 @@ void ALSource::stop()
 }
 
 
+void ALSource::checkPaused()
+{
+    if(mPaused || mId == 0)
+        return;
+
+    ALint state = -1;
+    alGetSourcei(mId, AL_SOURCE_STATE, &state);
+    // Streaming sources may be in a stopped state if underrun
+    mPaused = (state == AL_PAUSED) ||
+              (state == AL_STOPPED && mStream && mStream->hasMoreData());
+}
+
 void ALSource::pause()
 {
     CheckContext(mContext);

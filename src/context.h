@@ -182,6 +182,9 @@ public:
         return Batcher(mContext);
     }
 
+    std::unique_lock<std::mutex> getSourceStreamLock()
+    { return std::unique_lock<std::mutex>(mSourceStreamMutex); }
+
     virtual Device *getDevice() final;
 
     virtual void destroy() final;

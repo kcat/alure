@@ -733,6 +733,17 @@ public:
     virtual ALfloat getPitch() const = 0;
 
     /**
+     * Pauses all currently-playing sources that are under this group,
+     * including sub-groups.
+     */
+    virtual void pauseAll() const = 0;
+    /**
+     * Resumes all paused sources that are under this group, including
+     * sub-groups.
+     */
+    virtual void resumeAll() const = 0;
+
+    /**
      * Releases the source group, removing all sources from it before being
      * freed.
      */

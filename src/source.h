@@ -90,6 +90,9 @@ public:
     void groupUpdate();
     void groupPropUpdate(ALfloat gain, ALfloat pitch);
 
+    void checkPaused();
+    void unsetPaused() { mPaused = false; }
+
     virtual void play(Buffer *buffer) final;
     virtual void play(SharedPtr<Decoder> decoder, ALuint updatelen, ALuint queuesize) final;
     virtual void stop() final;

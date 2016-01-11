@@ -207,6 +207,78 @@ void ALSourceGroup::setPitch(ALfloat pitch)
 }
 
 
+void ALSourceGroup::collectPlayingSourceIds(Vector<ALuint> &sourceids) const
+{
+    for(ALSource *alsrc : mSources)
+    {
+        if(alsrc->isPlaying())
+            sourceids.push_back(alsrc->getId());
+    }
+    for(ALSourceGroup *group : mSubGroups)
+        group->collectPlayingSourceIds(sourceids);
+}
+
+void ALSourceGroup::updatePausedStatus() const
+{
+    for(ALSource *alsrc : mSources)
+        alsrc->checkPaused();
+    for(ALSourceGroup *group : mSubGroups)
+        group->updatePausedStatus();
+}
+
+void ALSourceGroup::pauseAll() const
+{
+    CheckContext(mContext);
+    auto lock = mContext->getSourceStreamLock();
+
+    Vector<ALuint> sourceids;
+    sourceids.reserve(16);
+    collectPlayingSourceIds(sourceids);
+    if(!sourceids.empty())
+    {
+        alSourcePausev(sourceids.size(), sourceids.data());
+        updatePausedStatus();
+    }
+    lock.unlock();
+}
+
+
+void ALSourceGroup::collectPausedSourceIds(Vector<ALuint> &sourceids) const
+{
+    for(ALSource *alsrc : mSources)
+    {
+        if(alsrc->isPaused())
+            sourceids.push_back(alsrc->getId());
+    }
+    for(ALSourceGroup *group : mSubGroups)
+        group->collectPausedSourceIds(sourceids);
+}
+
+void ALSourceGroup::updatePlayingStatus() const
+{
+    for(ALSource *alsrc : mSources)
+        alsrc->unsetPaused();
+    for(ALSourceGroup *group : mSubGroups)
+        group->updatePlayingStatus();
+}
+
+void ALSourceGroup::resumeAll() const
+{
+    CheckContext(mContext);
+    auto lock = mContext->getSourceStreamLock();
+
+    Vector<ALuint> sourceids;
+    sourceids.reserve(16);
+    collectPausedSourceIds(sourceids);
+    if(!sourceids.empty())
+    {
+        alSourcePlayv(sourceids.size(), sourceids.data());
+        updatePlayingStatus();
+    }
+    lock.unlock();
+}
+
+
 void ALSourceGroup::release()
 {
     CheckContext(mContext);
