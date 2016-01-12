@@ -102,9 +102,10 @@ CONFIGURE_FILE(
 
 add_library(alure2 SHARED ${alure_srcs})
 target_link_libraries(alure2 ${alure_libs})
+set_property(TARGET alure2 APPEND PROPERTY COMPILE_DEFINITIONS ALURE_BUILD_DLL)
 
 add_library(alure2_s STATIC ${alure_srcs})
-set_property(TARGET alure2_s APPEND PROPERTY COMPILE_DEFINITIONS ALURE_STATIC_LIB)
+set_property(TARGET alure2_s APPEND PROPERTY COMPILE_DEFINITIONS ALURE_STATIC_LIB ALURE_BUILD_STATIC)
 
 
 add_executable(alure-enum examples/alure-enum.cpp)

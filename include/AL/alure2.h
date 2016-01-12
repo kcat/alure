@@ -9,6 +9,20 @@
 #include "alc.h"
 #include "al.h"
 
+#ifdef _WIN32
+#if defined(ALURE_BUILD_STATIC) || defined(ALURE_STATIC_LIB)
+#define ALURE_API
+#elif defined(ALURE_BUILD_DLL)
+#define ALURE_API __declspec(dllexport)
+#else
+#define ALURE_API __declspec(dllimport)
+#endif
+
+#else
+
+#define ALURE_API
+#endif
+
 #ifndef EFXEAXREVERBPROPERTIES_DEFINED
 #define EFXEAXREVERBPROPERTIES_DEFINED
 typedef struct {
@@ -76,7 +90,7 @@ struct FilterParams {
 };
 
 
-class Vector3 {
+class ALURE_API Vector3 {
     ALfloat mValue[3];
 
 public:
@@ -195,7 +209,7 @@ enum DefaultDeviceType {
  * A class managing \ref Device objects and other related functionality. This
  * class is a singleton, only one instance will exist in a process.
  */
-class DeviceManager {
+class ALURE_API DeviceManager {
 public:
     /** Retrieves the DeviceManager instance. */
     static DeviceManager &get();
@@ -218,7 +232,7 @@ enum PlaybackDeviceType {
     PlaybackDevType_Complete = ALC_ALL_DEVICES_SPECIFIER
 };
 
-class Device {
+class ALURE_API Device {
 public:
     /** Retrieves the device name as given by \param type. */
     virtual String getName(PlaybackDeviceType type) const = 0;
@@ -316,7 +330,7 @@ enum DistanceModel {
     DistanceModel_None  = AL_NONE,
 };
 
-class Context {
+class ALURE_API Context {
 public:
     /** Makes the specified \param context current for OpenAL operations. */
     static void MakeCurrent(Context *context);
@@ -443,7 +457,7 @@ enum SampleType {
     SampleType_Float32,
     SampleType_Mulaw
 };
-const char *GetSampleTypeName(SampleType type);
+ALURE_API const char *GetSampleTypeName(SampleType type);
 
 enum ChannelConfig {
     ChannelConfig_Mono,
@@ -456,14 +470,14 @@ enum ChannelConfig {
     ChannelConfig_BFmt_WXY,
     ChannelConfig_BFmt_WXYZ
 };
-const char *GetChannelConfigName(ChannelConfig cfg);
+ALURE_API const char *GetChannelConfigName(ChannelConfig cfg);
 
 enum BufferLoadStatus {
     BufferLoad_Pending,
     BufferLoad_Ready
 };
 
-class Listener {
+class ALURE_API Listener {
 public:
     virtual void setGain(ALfloat gain) = 0;
 
@@ -481,7 +495,7 @@ public:
 };
 
 
-class Buffer {
+class ALURE_API Buffer {
 public:
     /**
      * Retrieves the length of the buffer in sample frames. The buffer must be
@@ -545,7 +559,7 @@ public:
 };
 
 
-class Source {
+class ALURE_API Source {
 public:
     /**
      * Plays the source using \param buffer. The same buffer may be played from
@@ -691,7 +705,7 @@ public:
 };
 
 
-class SourceGroup {
+class ALURE_API SourceGroup {
 public:
     /**
      * Adds \param source to the source group. A source may only be part of one
@@ -759,7 +773,7 @@ struct SourceSend {
     ALuint mSend;
 };
 
-class AuxiliaryEffectSlot {
+class ALURE_API AuxiliaryEffectSlot {
 public:
     virtual void setGain(ALfloat gain) = 0;
     /**
@@ -794,7 +808,7 @@ public:
 };
 
 
-class Effect {
+class ALURE_API Effect {
 public:
     /**
      * Updates the effect with the specified reverb properties \param props. If
@@ -811,7 +825,7 @@ public:
  * Audio decoder interface. Applications may derive from this, implementing the
  * necessary methods, and use it in places the API wants a Decoder object.
  */
-class Decoder {
+class ALURE_API Decoder {
 public:
     virtual ~Decoder() { }
 
@@ -858,7 +872,7 @@ public:
  * implementing the necessary methods, and use it in places the API wants a
  * DecoderFactory object.
  */
-class DecoderFactory {
+class ALURE_API DecoderFactory {
 public:
     virtual ~DecoderFactory() { }
 
@@ -882,7 +896,7 @@ public:
  * \param name A unique name identifying this decoder factory.
  * \param factory A DecoderFactory instance used to create Decoder instances.
  */
-void RegisterDecoder(const String &name, SharedPtr<DecoderFactory> factory);
+ALURE_API void RegisterDecoder(const String &name, SharedPtr<DecoderFactory> factory);
 
 /**
  * Unregisters a decoder factory by name. Alure gives a reference to the
@@ -894,7 +908,7 @@ void RegisterDecoder(const String &name, SharedPtr<DecoderFactory> factory);
  * \return The unregistered decoder factory instance, or 0 (nullptr) if a
  * decoder factory with the given name doesn't exist.
  */
-SharedPtr<DecoderFactory> UnregisterDecoder(const String &name);
+ALURE_API SharedPtr<DecoderFactory> UnregisterDecoder(const String &name);
 
 
 /**
@@ -902,7 +916,7 @@ SharedPtr<DecoderFactory> UnregisterDecoder(const String &name);
  * instance to be used by the audio decoders. By default, the library uses
  * standard I/O.
  */
-class FileIOFactory {
+class ALURE_API FileIOFactory {
 public:
     /**
      * Sets the \param factory instance to be used by the audio decoders. If a
@@ -933,7 +947,7 @@ public:
  * override keyword, to ensure they're properly overriding the base methods in
  * case they change.
  */
-class MessageHandler {
+class ALURE_API MessageHandler {
 public:
     virtual ~MessageHandler();
 
