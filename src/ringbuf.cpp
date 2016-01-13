@@ -44,9 +44,7 @@ ll_ringbuffer_t *ll_ringbuffer_create(size_t sz, size_t elem_sz)
        std::numeric_limits<size_t>::max()-sizeof(ll_ringbuffer_t) < power_of_two*elem_sz)
         return nullptr;
 
-    ll_ringbuffer_t *rb = (ll_ringbuffer_t*)aligned_alloc(16, sizeof(ll_ringbuffer_t) + power_of_two*elem_sz);
-    if(!rb) return nullptr;
-
+    ll_ringbuffer_t *rb = reinterpret_cast<ll_ringbuffer_t*>(new char[sizeof(ll_ringbuffer_t) + power_of_two*elem_sz]);
     rb->size = power_of_two;
     rb->size_mask = rb->size - 1;
     rb->elem_size = elem_sz;
@@ -65,7 +63,7 @@ void ll_ringbuffer_free(ll_ringbuffer_t *rb)
         if(rb->mlocked)
             munlock(rb, sizeof(*rb) + rb->size*rb->elem_size);
 #endif /* USE_MLOCK */
-        free(rb);
+        delete[] reinterpret_cast<char*>(rb);
     }
 }
 
