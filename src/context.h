@@ -196,7 +196,8 @@ public:
     virtual Listener *getListener() final;
 
     virtual SharedPtr<MessageHandler> setMessageHandler(SharedPtr<MessageHandler> handler) final;
-    virtual SharedPtr<MessageHandler> getMessageHandler() const final;
+    virtual SharedPtr<MessageHandler> getMessageHandler() const final
+    { return mMessage; }
 
     virtual void setAsyncWakeInterval(ALuint msec) final;
     virtual ALuint getAsyncWakeInterval() const final;

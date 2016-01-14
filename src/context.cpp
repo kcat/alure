@@ -450,11 +450,6 @@ SharedPtr<MessageHandler> ALContext::setMessageHandler(SharedPtr<MessageHandler>
     return handler;
 }
 
-SharedPtr<MessageHandler> ALContext::getMessageHandler() const
-{
-    return mMessage;
-}
-
 
 void ALContext::setAsyncWakeInterval(ALuint msec)
 {
