@@ -161,6 +161,10 @@ MessageHandler::~MessageHandler()
 {
 }
 
+void MessageHandler::deviceDisconnected(Device*)
+{
+}
+
 void MessageHandler::sourceStopped(Source*, bool)
 {
 }
@@ -242,6 +246,8 @@ static const struct {
 
     { SOFT_loop_points,    "AL_SOFT_loop_points",    LoadNothing },
     { SOFT_source_latency, "AL_SOFT_source_latency", LoadSourceLatency },
+
+    { EXT_disconnect, "ALC_EXT_disconnect", LoadNothing },
 };
 
 
@@ -379,7 +385,7 @@ void ALContext::backgroundProc()
 ALContext::ALContext(ALCcontext *context, ALDevice *device)
   : mContext(context), mDevice(device), mRefs(0),
     mHasExt{false}, mPendingBuffers(nullptr), mWakeInterval(0), mQuitThread(false),
-    mIsBatching(false),
+    mIsConnected(true), mIsBatching(false),
     alGetSourcei64vSOFT(0),
     alGenEffects(0), alDeleteEffects(0), alIsEffect(0),
     alEffecti(0), alEffectiv(0), alEffectf(0), alEffectfv(0),
@@ -798,6 +804,14 @@ void ALContext::update()
         // should be called often enough to keep up with any and all streams
         // regardless.
         mWakeThread.notify_all();
+    }
+
+    if(hasExtension(EXT_disconnect) && mIsConnected)
+    {
+        ALCint connected;
+        alcGetIntegerv(alcGetContextsDevice(mContext), ALC_CONNECTED, 1, &connected);
+        if(!connected && mMessage.get()) mMessage->deviceDisconnected(mDevice);
+        mIsConnected = connected;
     }
 }
 

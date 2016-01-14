@@ -952,6 +952,24 @@ public:
     virtual ~MessageHandler();
 
     /**
+     * Called when the given \param device has been disconnected and is no
+     * longer usable for output. As per the ALC_EXT_disconnect specification,
+     * disconnected devices remain valid, however all playing sources are
+     * automatically stopped, any sources that are attempted to play will
+     * immediately stop, and new contexts may not be created on the device.
+     *
+     * Note that connection status is checked during \ref Context::update
+     * calls, so that method must be called regularly to be notified when a
+     * device is disconnected. This method may not be called if the device
+     * lacks support for the ALC_EXT_disconnect extension.
+     *
+     * WARNING: Do not attempt to clean up resources within this callback
+     * method, as Alure is in the middle of doing updates. Instead, flag the
+     * device as having been lost and do cleanup later.
+     */
+    virtual void deviceDisconnected(Device *device);
+
+    /**
      * Called when the given \param source stops playback. If \param forced is
      * true, the source was stopped because either there were no more system
      * sources and a higher-priority source needs to play, or it's part of a

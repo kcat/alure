@@ -39,6 +39,8 @@ enum ALExtension {
     SOFT_loop_points,
     SOFT_source_latency,
 
+    EXT_disconnect,
+
     AL_EXTENSION_MAX
 };
 
@@ -115,6 +117,7 @@ private:
     std::once_flag mSetExts;
     void setupExts();
 
+    bool mIsConnected;
     bool mIsBatching;
 
 public:
