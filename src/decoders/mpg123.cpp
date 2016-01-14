@@ -109,18 +109,21 @@ std::pair<uint64_t,uint64_t> Mpg123Decoder::getLoopPoints() const
 
 ALuint Mpg123Decoder::read(ALvoid *ptr, ALuint count)
 {
+    unsigned char *dst = reinterpret_cast<unsigned char*>(ptr);
+    ALuint bytes = count * mChannels * 2;
     ALuint total = 0;
-    while(total < count)
+    while(total < bytes)
     {
         size_t got = 0;
-        int ret = mpg123_read(mMpg123, reinterpret_cast<unsigned char*>(ptr), count*mChannels*2, &got);
+        int ret = mpg123_read(mMpg123, dst+total, bytes-total, &got);
         if((ret != MPG123_OK && ret != MPG123_DONE) || got == 0)
             break;
-        total += got / mChannels / 2;
+
+        total += got;
         if(ret == MPG123_DONE)
             break;
     }
-    return total;
+    return total / mChannels / 2;
 }
 
 
