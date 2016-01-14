@@ -952,6 +952,19 @@ public:
     virtual ~MessageHandler();
 
     /**
+     * Called when the given \param source stops playback. If \param forced is
+     * true, the source was stopped because either there were no more system
+     * sources and a higher-priority source needs to play, or it's part of a
+     * \ref SourceGroup (or sub-group thereof) that had its
+     * \ref SourceGroup::stopAll method called.
+     *
+     * Sources that stopped automatically will be detected upon a call to
+     * \ref Context::update or \ref Source::update, and will have \param forced
+     * set to false.
+     */
+    virtual void sourceStopped(Source *source, bool forced);
+
+    /**
      * Called when a new buffer is about to be created and loaded. May be
      * called asynchronously for buffers being loaded asynchronously.
      *

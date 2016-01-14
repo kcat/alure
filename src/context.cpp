@@ -161,6 +161,10 @@ MessageHandler::~MessageHandler()
 {
 }
 
+void MessageHandler::sourceStopped(Source*, bool)
+{
+}
+
 void MessageHandler::bufferLoading(const String&, ChannelConfig, SampleType, ALuint, const Vector<ALbyte>&)
 {
 }
@@ -640,7 +644,11 @@ ALuint ALContext::getSourceId(ALuint maxprio)
                 lowest = src;
         }
         if(lowest && lowest->getPriority() < maxprio)
+        {
             lowest->stop();
+            if(mMessage.get())
+                mMessage->sourceStopped(lowest, true);
+        }
     }
     if(mSourceIds.empty())
         throw std::runtime_error("No available sources");
