@@ -101,7 +101,7 @@ private:
     } PendingBuffer;
     ll_ringbuffer_t *mPendingBuffers;
 
-    std::set<ALSource*> mStreamingSources;
+    Vector<ALSource*> mStreamingSources;
     std::mutex mSourceStreamMutex;
 
     std::atomic<ALuint> mWakeInterval;

@@ -696,18 +696,24 @@ void ALContext::addStream(ALSource *source)
     std::lock_guard<std::mutex> lock(mSourceStreamMutex);
     if(mThread.get_id() == std::thread::id())
         mThread = std::thread(std::mem_fn(&ALContext::backgroundProc), this);
-    mStreamingSources.insert(source);
+    auto iter = std::lower_bound(mStreamingSources.begin(), mStreamingSources.end(), source);
+    if(iter == mStreamingSources.end() || *iter != source)
+        mStreamingSources.insert(iter, source);
 }
 
 void ALContext::removeStream(ALSource *source)
 {
     std::lock_guard<std::mutex> lock(mSourceStreamMutex);
-    mStreamingSources.erase(source);
+    auto iter = std::lower_bound(mStreamingSources.begin(), mStreamingSources.end(), source);
+    if(iter != mStreamingSources.end() && *iter == source)
+        mStreamingSources.erase(iter);
 }
 
 void ALContext::removeStreamNoLock(ALSource *source)
 {
-    mStreamingSources.erase(source);
+    auto iter = std::lower_bound(mStreamingSources.begin(), mStreamingSources.end(), source);
+    if(iter != mStreamingSources.end() && *iter == source)
+        mStreamingSources.erase(iter);
 }
 
 
