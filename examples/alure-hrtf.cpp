@@ -14,7 +14,7 @@ int main(int argc, char *argv[])
     alure::DeviceManager &devMgr = alure::DeviceManager::get();
 
     alure::Device *dev = devMgr.openPlayback();
-    std::cout<< "Opened \""<<dev->getName(alure::PlaybackDevType_Basic)<<"\"" <<std::endl;
+    std::cout<< "Opened \""<<dev->getName()<<"\"" <<std::endl;
 
     if(!dev->queryExtension("ALC_SOFT_HRTF"))
     {

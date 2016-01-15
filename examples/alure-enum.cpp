@@ -32,7 +32,7 @@ int main()
 
     ALCuint version;
     alure::Device *dev = devMgr.openPlayback();
-    std::cout<< "Info for device \""<<dev->getName(alure::PlaybackDevType_Complete)<<"\":" <<std::endl;
+    std::cout<< "Info for device \""<<dev->getName(alure::PlaybackDeviceName_Complete)<<"\":" <<std::endl;
     version = dev->getALCVersion();
     std::cout<< "ALC version: "<<alure::MajorVersion(version)<<"."<<alure::MinorVersion(version) <<std::endl;
     version = dev->getEFXVersion();

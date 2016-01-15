@@ -50,7 +50,7 @@ public:
 
     void removeContext(ALContext *ctx);
 
-    virtual String getName(PlaybackDeviceType type) const final;
+    virtual String getName(PlaybackDeviceName type) const final;
     virtual bool queryExtension(const char *extname) const final;
 
     virtual ALCuint getALCVersion() const final;

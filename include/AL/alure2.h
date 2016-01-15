@@ -227,15 +227,15 @@ public:
 };
 
 
-enum PlaybackDeviceType {
-    PlaybackDevType_Basic = ALC_DEVICE_SPECIFIER,
-    PlaybackDevType_Complete = ALC_ALL_DEVICES_SPECIFIER
+enum PlaybackDeviceName {
+    PlaybackDeviceName_Basic = ALC_DEVICE_SPECIFIER,
+    PlaybackDeviceName_Complete = ALC_ALL_DEVICES_SPECIFIER
 };
 
 class ALURE_API Device {
 public:
     /** Retrieves the device name as given by \param type. */
-    virtual String getName(PlaybackDeviceType type) const = 0;
+    virtual String getName(PlaybackDeviceName type=PlaybackDeviceName_Basic) const = 0;
     /** Queries the existence of an ALC extension on this device. */
     virtual bool queryExtension(const char *extname) const = 0;
 
