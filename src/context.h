@@ -75,6 +75,7 @@ private:
     std::stack<ALuint> mSourceIds;
 
     ALDevice *const mDevice;
+    std::deque<ALSource> mAllSources;
     std::queue<ALSource*> mFreeSources;
     Vector<ALSource*> mUsedSources;
 

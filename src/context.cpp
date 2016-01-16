@@ -671,7 +671,10 @@ Source *ALContext::getSource()
 
     ALSource *source = 0;
     if(mFreeSources.empty())
-        source = new ALSource(this);
+    {
+        mAllSources.emplace_back(this);
+        source = &mAllSources.back();
+    }
     else
     {
         source = mFreeSources.back();
