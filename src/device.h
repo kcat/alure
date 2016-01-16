@@ -63,9 +63,9 @@ public:
     virtual Vector<String> enumerateHRTFNames() const final;
     virtual bool isHRTFEnabled() const final;
     virtual String getCurrentHRTF() const final;
-    virtual void reset(ALCint *attributes) final;
+    virtual void reset(const ALCint *attributes) final;
 
-    virtual Context *createContext(ALCint *attribs=0) final;
+    virtual Context *createContext(const ALCint *attribs=0) final;
 
     virtual void pauseDSP() final;
     virtual void resumeDSP() final;

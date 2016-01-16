@@ -289,13 +289,13 @@ public:
      *
      * Requires the ALC_SOFT_HRTF extension.
      */
-    virtual void reset(ALCint *attributes) = 0;
+    virtual void reset(const ALCint *attributes) = 0;
 
     /**
      * Creates a new \ref Context on this device, using the specified
      * \param attributes.
      */
-    virtual Context *createContext(ALCint *attributes=0) = 0;
+    virtual Context *createContext(const ALCint *attributes=0) = 0;
 
     /**
      * Pauses device processing, stopping updates for its contexts. Multiple

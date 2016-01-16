@@ -184,7 +184,7 @@ String ALDevice::getCurrentHRTF() const
     return String(alcGetString(mDevice, ALC_HRTF_SPECIFIER_SOFT));
 }
 
-void ALDevice::reset(ALCint *attributes)
+void ALDevice::reset(const ALCint *attributes)
 {
     if(!hasExtension(SOFT_HRTF))
         throw std::runtime_error("ALC_SOFT_HRTF not supported");
@@ -193,7 +193,7 @@ void ALDevice::reset(ALCint *attributes)
 }
 
 
-Context *ALDevice::createContext(ALCint *attribs)
+Context *ALDevice::createContext(const ALCint *attribs)
 {
     ALCcontext *ctx = alcCreateContext(mDevice, attribs);
     if(!ctx) throw std::runtime_error("Failed to create context");
