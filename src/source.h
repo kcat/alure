@@ -58,6 +58,8 @@ class ALSource : public Source {
     ALfloat mRolloffFactor, mRoomRolloffFactor;
     ALfloat mDopplerFactor;
     ALfloat mAirAbsorptionFactor;
+    ALfloat mRadius;
+    ALfloat mStereoAngles[2];
     bool mRelative;
     bool mDryGainHFAuto;
     bool mWetGainAuto;
@@ -164,6 +166,13 @@ public:
     virtual void setRelative(bool relative) final;
     virtual bool getRelative() const final
     { return mRelative; }
+
+    virtual void setRadius(ALfloat radius) final;
+    virtual ALfloat getRadius() const final { return mRadius; }
+
+    virtual void setStereoAngles(ALfloat leftAngle, ALfloat rightAngle) final;
+    virtual std::pair<ALfloat,ALfloat> getStereoAngles() const final
+    { return std::make_pair(mStereoAngles[0], mStereoAngles[1]); }
 
     virtual void setAirAbsorptionFactor(ALfloat factor) final;
     virtual ALfloat getAirAbsorptionFactor() const final { return mAirAbsorptionFactor; }

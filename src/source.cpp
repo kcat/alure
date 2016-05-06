@@ -190,8 +190,11 @@ void ALSource::resetProperties()
     mRolloffFactor = 1.0f;
     mRoomRolloffFactor = 0.0f;
     mDopplerFactor = 1.0f;
-    mAirAbsorptionFactor = 0.0f;
     mRelative = false;
+    mRadius = 0.0f;
+    mStereoAngles[0] =  F_PI / 6.0f;
+    mStereoAngles[1] = -F_PI / 6.0f;
+    mAirAbsorptionFactor = 0.0f;
     mDryGainHFAuto = true;
     mWetGainAuto = true;
     mWetGainHFAuto = true;
@@ -238,6 +241,10 @@ void ALSource::applyProperties(bool looping, ALuint offset) const
     alSourcef(mId, AL_CONE_OUTER_GAIN, mConeOuterGain);
     alSourcef(mId, AL_ROLLOFF_FACTOR, mRolloffFactor);
     alSourcef(mId, AL_DOPPLER_FACTOR, mDopplerFactor);
+    if(mContext->hasExtension(EXT_SOURCE_RADIUS))
+        alSourcef(mId, AL_SOURCE_RADIUS, mRadius);
+    if(mContext->hasExtension(EXT_STEREO_ANGLES))
+        alSourcefv(mId, AL_STEREO_ANGLES, mStereoAngles);
     alSourcei(mId, AL_SOURCE_RELATIVE, mRelative ? AL_TRUE : AL_FALSE);
     if(mContext->hasExtension(EXT_EFX))
     {
@@ -952,6 +959,28 @@ void ALSource::setAirAbsorptionFactor(ALfloat factor)
     if(mId != 0 && mContext->hasExtension(EXT_EFX))
         alSourcef(mId, AL_AIR_ABSORPTION_FACTOR, factor);
     mAirAbsorptionFactor = factor;
+}
+
+void ALSource::setRadius(ALfloat radius)
+{
+    if(!(mRadius >= 0.0f))
+        throw std::runtime_error("Radius out of range");
+    CheckContext(mContext);
+    if(mId != 0 && mContext->hasExtension(EXT_SOURCE_RADIUS))
+        alSourcef(mId, AL_SOURCE_RADIUS, radius);
+    mRadius = radius;
+}
+
+void ALSource::setStereoAngles(ALfloat leftAngle, ALfloat rightAngle)
+{
+    CheckContext(mContext);
+    if(mId != 0 && mContext->hasExtension(EXT_STEREO_ANGLES))
+    {
+        ALfloat angles[2] = { leftAngle, rightAngle };
+        alSourcefv(mId, AL_STEREO_ANGLES, angles);
+    }
+    mStereoAngles[0] = leftAngle;
+    mStereoAngles[1] = rightAngle;
 }
 
 void ALSource::setRelative(bool relative)

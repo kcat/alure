@@ -18,6 +18,8 @@
 #include "ringbuf.h"
 #include "device.h"
 
+#define F_PI (3.14159265358979323846f)
+
 namespace alure {
 
 class ALDevice;
@@ -40,6 +42,9 @@ enum ALExtension {
     SOFT_source_latency,
 
     EXT_disconnect,
+
+    EXT_SOURCE_RADIUS,
+    EXT_STEREO_ANGLES,
 
     AL_EXTENSION_MAX
 };

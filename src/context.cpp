@@ -248,6 +248,9 @@ static const struct {
     { SOFT_source_latency, "AL_SOFT_source_latency", LoadSourceLatency },
 
     { EXT_disconnect, "ALC_EXT_disconnect", LoadNothing },
+
+    { EXT_SOURCE_RADIUS, "AL_EXT_SOURCE_RADIUS", LoadNothing },
+    { EXT_STEREO_ANGLES, "AL_EXT_STEREO_ANGLES", LoadNothing },
 };
 
 

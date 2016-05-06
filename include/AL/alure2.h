@@ -665,6 +665,12 @@ public:
     virtual void setRelative(bool relative) = 0;
     virtual bool getRelative() const = 0;
 
+    virtual void setRadius(ALfloat radius) = 0;
+    virtual ALfloat getRadius() const = 0;
+
+    virtual void setStereoAngles(ALfloat leftAngle, ALfloat rightAngle) = 0;
+    virtual std::pair<ALfloat,ALfloat> getStereoAngles() const = 0;
+
     virtual void setAirAbsorptionFactor(ALfloat factor) = 0;
     virtual ALfloat getAirAbsorptionFactor() const = 0;
 
