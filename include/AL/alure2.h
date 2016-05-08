@@ -614,60 +614,143 @@ public:
      */
     virtual uint64_t getOffset(uint64_t *latency=0) const = 0;
 
+    /**
+     * Specifies if the source should loop on the \ref Buffer or \ref Decoder
+     * object's loop points.
+     */
     virtual void setLooping(bool looping) = 0;
     virtual bool getLooping() const = 0;
 
+    /**
+     * Specifies a linear pitch shift base. A value of 1.0 is the default
+     * normal speed.
+     */
     virtual void setPitch(ALfloat pitch) = 0;
     virtual ALfloat getPitch() const = 0;
 
+    /**
+     * Specifies the base linear gain. A value of 1.0 is the default normal
+     * volume.
+     */
     virtual void setGain(ALfloat gain) = 0;
     virtual ALfloat getGain() const = 0;
 
+    /**
+     * Specifies the minimum and maximum gain. The source's gain is clamped to
+     * this range after distance attenuation and cone attenuation are applied
+     * to the gain base, although before the filter gain adjustements.
+     */
     virtual void setGainRange(ALfloat mingain, ALfloat maxgain) = 0;
     virtual ALfloat getMinGain() const = 0;
     virtual ALfloat getMaxGain() const = 0;
 
+    /**
+     * Specifies the reference distance and maximum distance the source will
+     * use for the current distance model. For Clamped distance models, the
+     * source's calculated distance is clamped to the specified range before
+     * applying distance-related attenuation.
+     *
+     * For all distance models, the reference distance is the distance at which
+     * the source's volume will not have any extra attenuation (an effective
+     * gain multiplier of 1).
+     */
     virtual void setDistanceRange(ALfloat refdist, ALfloat maxdist) = 0;
     virtual ALfloat getReferenceDistance() const = 0;
     virtual ALfloat getMaxDistance() const = 0;
 
+    /** Specifies the source's 3D position. */
     virtual void setPosition(ALfloat x, ALfloat y, ALfloat z) = 0;
     virtual void setPosition(const ALfloat *pos) = 0;
     virtual Vector3 getPosition() const = 0;
 
+    /**
+     * Specifies the source's 3D velocity, in units per second. As with OpenAL,
+     * this does not actually alter the source's position, and instead just
+     * alters the pitch as determined by the doppler effect.
+     */
     virtual void setVelocity(ALfloat x, ALfloat y, ALfloat z) = 0;
     virtual void setVelocity(const ALfloat *vel) = 0;
     virtual Vector3 getVelocity() const = 0;
 
+    /**
+     * Specifies the source's 3D facing direction. Deprecated in favor of
+     * \ref setOrientation.
+     */
     virtual void setDirection(ALfloat x, ALfloat y, ALfloat z) = 0;
     virtual void setDirection(const ALfloat *dir) = 0;
     virtual Vector3 getDirection() const = 0;
 
+    /**
+     * Specifies the source's 3D orientation. Note: unlike the AL_EXT_BFORMAT
+     * extension this property comes from, this also affects the facing
+     * direction, superceding \ref setDirection.
+     */
     virtual void setOrientation(ALfloat x1, ALfloat y1, ALfloat z1, ALfloat x2, ALfloat y2, ALfloat z2) = 0;
     virtual void setOrientation(const ALfloat *at, const ALfloat *up) = 0;
     virtual void setOrientation(const ALfloat *ori) = 0;
 
+    /**
+     * Specifies the source's cone angles, in degrees. The inner angle is the
+     * area within which the listener will hear the source with no extra
+     * attenuation, while the listener being outside of the outer angle will
+     * hear the source attenuated according to the outer cone gains.
+     */
     virtual void setConeAngles(ALfloat inner, ALfloat outer) = 0;
     virtual ALfloat getInnerConeAngle() const = 0;
     virtual ALfloat getOuterConeAngle() const = 0;
 
+    /**
+     * Specifies the linear gain multiplier when the listener is outside of the
+     * source's outer cone area. The specified \param gain applies to all
+     * frequencies, while \param gainhf applies extra attenuation to high
+     * frequencies.
+     *
+     * \param gainhf has no effect without the ALC_EXT_EFX extension.
+     */
     virtual void setOuterConeGains(ALfloat gain, ALfloat gainhf=1.0f) = 0;
     virtual ALfloat getOuterConeGain() const = 0;
     virtual ALfloat getOuterConeGainHF() const = 0;
 
+    /**
+     * Specifies the rolloff factors for the direct and send paths. This is
+     * effectively a distance scaling relative to the reference distance. Note:
+     * the room rolloff factor is 0 by default, disabling distance attenuation
+     * for send paths. This is because the reverb engine will, by default,
+     * apply a more realistic room attenuation based on the reverb decay time
+     * and direct path attenuation.
+     */
     virtual void setRolloffFactors(ALfloat factor, ALfloat roomfactor=0.0f) = 0;
     virtual ALfloat getRolloffFactor() const = 0;
     virtual ALfloat getRoomRolloffFactor() const = 0;
 
+    /**
+     * Specifies the doppler factor for the doppler effect's pitch shift. This
+     * effectively scales the source and listener velocities for the doppler
+     * calculation.
+     */
     virtual void setDopplerFactor(ALfloat factor) = 0;
     virtual ALfloat getDopplerFactor() const = 0;
 
+    /** Specifies if the source properties are relative to the listener. */
     virtual void setRelative(bool relative) = 0;
     virtual bool getRelative() const = 0;
 
+    /**
+     * Specifies the source's radius. This causes the source to behave as if
+     * every point within the spherical area emits sound.
+     *
+     * Has no effect without the AL_EXT_SOURCE_RADIUS extension.
+     */
     virtual void setRadius(ALfloat radius) = 0;
     virtual ALfloat getRadius() const = 0;
 
+    /**
+     * Specifies the left and right channel angles, in radians, when playing a
+     * stereo buffer or stream. The angles go counter-clockwise, with 0 being
+     * in front and positive values going left.
+     *
+     * Has no effect without the AL_EXT_STEREO_ANGLES extension.
+     */
     virtual void setStereoAngles(ALfloat leftAngle, ALfloat rightAngle) = 0;
     virtual std::pair<ALfloat,ALfloat> getStereoAngles() const = 0;
 
