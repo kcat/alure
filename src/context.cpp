@@ -173,9 +173,9 @@ void MessageHandler::bufferLoading(const String&, ChannelConfig, SampleType, ALu
 {
 }
 
-bool MessageHandler::resourceNotFound(const String&, String&)
+String MessageHandler::resourceNotFound(const String&)
 {
-    return false;
+    return String();
 }
 
 
@@ -486,8 +486,8 @@ SharedPtr<Decoder> ALContext::createDecoder(const String &name)
     if(!mMessage.get()) throw std::runtime_error("Failed to open "+name);
     String oldname = name;
     do {
-        String newname;
-        if(!mMessage->resourceNotFound(oldname, newname))
+        String newname(mMessage->resourceNotFound(oldname));
+        if(newname.empty())
             throw std::runtime_error("Failed to open "+oldname);
         file = FileIOFactory::get().openFile(newname);
         oldname = std::move(newname);

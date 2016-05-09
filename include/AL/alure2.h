@@ -1093,10 +1093,10 @@ public:
      * This will be called again if the new name isn't found.
      *
      * \param name The resource name that was not found.
-     * \param newname The string to write in a resplacement resource name.
-     * \return True to look for a replacement resource, false to fail.
+     * \return The resplacement resource name to use instead. Returning an
+     *         empty string means to stop trying.
      */
-    virtual bool resourceNotFound(const String &name, String &newname);
+    virtual String resourceNotFound(const String &name);
 };
 
 } // namespace alure
