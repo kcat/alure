@@ -50,6 +50,8 @@ static inline size_t countof(const T(&)[N])
 
 typedef std::pair<String,SharedPtr<DecoderFactory>> FactoryPair;
 static const FactoryPair sDefaultDecoders[] = {
+    { "_alure_int_wave", SharedPtr<DecoderFactory>(new WaveDecoderFactory) },
+
 #ifdef HAVE_VORBISFILE
     { "_alure_int_vorbis", SharedPtr<DecoderFactory>(new VorbisFileDecoderFactory) },
 #endif
@@ -59,9 +61,6 @@ static const FactoryPair sDefaultDecoders[] = {
 #ifdef HAVE_OPUSFILE
     { "_alure_int_opus", SharedPtr<DecoderFactory>(new OpusFileDecoderFactory) },
 #endif
-
-    { "_alure_int_wave", SharedPtr<DecoderFactory>(new WaveDecoderFactory) },
-
 #ifdef HAVE_LIBSNDFILE
     { "_alure_int_sndfile", SharedPtr<DecoderFactory>(new SndFileDecoderFactory) },
 #endif
