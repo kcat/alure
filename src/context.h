@@ -64,6 +64,8 @@ public:
     }
 };
 
+typedef std::unique_ptr<ll_ringbuffer_t,decltype(*ll_ringbuffer_free)> RingBufferPtr;
+
 class ALContext : public Context, public Listener {
     static ALContext *sCurrentCtx;
     static thread_local ALContext *sThreadCurrentCtx;
@@ -105,7 +107,7 @@ private:
 
         ~PendingBuffer() { }
     } PendingBuffer;
-    ll_ringbuffer_t *mPendingBuffers;
+    RingBufferPtr mPendingBuffers;
 
     Vector<ALSource*> mStreamingSources;
     std::mutex mSourceStreamMutex;

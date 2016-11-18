@@ -345,18 +345,18 @@ void ALContext::backgroundProc()
         // buffers to load, we still need to process streaming sources so they
         // don't underrun.
         ll_ringbuffer_data_t vec[2];
-        ll_ringbuffer_get_read_vector(mPendingBuffers, vec);
+        ll_ringbuffer_get_read_vector(mPendingBuffers.get(), vec);
         if(vec[0].len > 0)
         {
             PendingBuffer *pb = reinterpret_cast<PendingBuffer*>(vec[0].buf);
             pb->mBuffer->load(pb->mFrames, pb->mFormat, pb->mDecoder, pb->mName, this);
             pb->~PendingBuffer();
-            ll_ringbuffer_read_advance(mPendingBuffers, 1);
+            ll_ringbuffer_read_advance(mPendingBuffers.get(), 1);
             continue;
         }
 
         std::unique_lock<std::mutex> wakelock(mWakeMutex);
-        if(!mQuitThread && ll_ringbuffer_read_space(mPendingBuffers) == 0)
+        if(!mQuitThread && ll_ringbuffer_read_space(mPendingBuffers.get()) == 0)
         {
             ctxlock.unlock();
 
@@ -386,8 +386,8 @@ void ALContext::backgroundProc()
 
 ALContext::ALContext(ALCcontext *context, ALDevice *device)
   : mContext(context), mDevice(device), mRefs(0),
-    mHasExt{false}, mPendingBuffers(nullptr), mWakeInterval(0), mQuitThread(false),
-    mIsConnected(true), mIsBatching(false),
+    mHasExt{false}, mPendingBuffers(ll_ringbuffer_create(16, sizeof(PendingBuffer)), ll_ringbuffer_free),
+    mWakeInterval(0), mQuitThread(false), mIsConnected(true), mIsBatching(false),
     alGetSourcei64vSOFT(0),
     alGenEffects(0), alDeleteEffects(0), alIsEffect(0),
     alEffecti(0), alEffectiv(0), alEffectf(0), alEffectfv(0),
@@ -399,13 +399,11 @@ ALContext::ALContext(ALCcontext *context, ALDevice *device)
     alAuxiliaryEffectSloti(0), alAuxiliaryEffectSlotiv(0), alAuxiliaryEffectSlotf(0), alAuxiliaryEffectSlotfv(0),
     alGetAuxiliaryEffectSloti(0), alGetAuxiliaryEffectSlotiv(0), alGetAuxiliaryEffectSlotf(0), alGetAuxiliaryEffectSlotfv(0)
 {
-    mPendingBuffers = ll_ringbuffer_create(16, sizeof(PendingBuffer));
 }
 
 ALContext::~ALContext()
 {
     mDevice->removeContext(this);
-    ll_ringbuffer_free(mPendingBuffers);
 }
 
 
@@ -589,13 +587,13 @@ Buffer *ALContext::getBufferAsync(const String &name)
     if(mThread.get_id() == std::thread::id())
         mThread = std::thread(std::mem_fn(&ALContext::backgroundProc), this);
 
-    while(ll_ringbuffer_write_space(mPendingBuffers) == 0)
+    while(ll_ringbuffer_write_space(mPendingBuffers.get()) == 0)
         std::this_thread::yield();
 
     ll_ringbuffer_data_t vec[2];
-    ll_ringbuffer_get_write_vector(mPendingBuffers, vec);
+    ll_ringbuffer_get_write_vector(mPendingBuffers.get(), vec);
     new(vec[0].buf) PendingBuffer{name, buffer, decoder, format, frames};
-    ll_ringbuffer_write_advance(mPendingBuffers, 1);
+    ll_ringbuffer_write_advance(mPendingBuffers.get(), 1);
     mWakeMutex.lock(); mWakeMutex.unlock();
     mWakeThread.notify_all();
 
