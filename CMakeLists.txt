@@ -8,7 +8,7 @@ include(CheckCXXSourceCompiles)
 
 find_package(OpenAL REQUIRED)
 
-include_directories(${alure_SOURCE_DIR}/include/AL ${alure_SOURCE_DIR}/src ${alure_BINARY_DIR} ${OPENAL_INCLUDE_DIR})
+include_directories(${alure_SOURCE_DIR}/include ${alure_SOURCE_DIR}/include/AL ${alure_SOURCE_DIR}/src ${alure_BINARY_DIR} ${OPENAL_INCLUDE_DIR})
 
 option(ALURE_USE_RTTI  "Enable run-time type information"  OFF)
 option(ALURE_STATIC_GCCRT "Static-link libgcc and libstdc++ runtimes" OFF)
