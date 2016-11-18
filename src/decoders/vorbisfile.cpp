@@ -196,32 +196,38 @@ SharedPtr<Decoder> VorbisFileDecoderFactory::createDecoder(SharedPtr<std::istrea
 
     vorbis_info *vorbisinfo = nullptr;
     std::unique_ptr<OggVorbis_File> oggfile(new OggVorbis_File());
-    if(ov_open_callbacks(file.get(), oggfile.get(), NULL, 0, streamIO) == 0)
-    {
-        vorbisinfo = ov_info(oggfile.get(), -1);
-        if(vorbisinfo)
-        {
-            ChannelConfig channels = ChannelConfig_BFmt_WXYZ;
-            if(vorbisinfo->channels == 1)
-                channels = ChannelConfig_Mono;
-            else if(vorbisinfo->channels == 2)
-                channels = ChannelConfig_Stereo;
-            else if(vorbisinfo->channels == 4)
-                channels = ChannelConfig_Quad;
-            else if(vorbisinfo->channels == 6)
-                channels = ChannelConfig_X51;
-            else if(vorbisinfo->channels == 7)
-                channels = ChannelConfig_X61;
-            else if(vorbisinfo->channels == 8)
-                channels = ChannelConfig_X71;
+    if(ov_open_callbacks(file.get(), oggfile.get(), NULL, 0, streamIO) != 0)
+        return SharedPtr<Decoder>(nullptr);
 
-            if(channels != ChannelConfig_BFmt_WXYZ)
-                return SharedPtr<Decoder>(new VorbisFileDecoder(file, std::move(oggfile), vorbisinfo, channels));
-        }
+    vorbisinfo = ov_info(oggfile.get(), -1);
+    if(!vorbisinfo)
+    {
         ov_clear(oggfile.get());
+        return SharedPtr<Decoder>(nullptr);
     }
 
-    return SharedPtr<Decoder>(nullptr);
+    ChannelConfig channels = ChannelConfig_Mono;
+    if(vorbisinfo->channels == 1)
+        channels = ChannelConfig_Mono;
+    else if(vorbisinfo->channels == 2)
+        channels = ChannelConfig_Stereo;
+    else if(vorbisinfo->channels == 4)
+        channels = ChannelConfig_Quad;
+    else if(vorbisinfo->channels == 6)
+        channels = ChannelConfig_X51;
+    else if(vorbisinfo->channels == 7)
+        channels = ChannelConfig_X61;
+    else if(vorbisinfo->channels == 8)
+        channels = ChannelConfig_X71;
+    else
+    {
+        ov_clear(oggfile.get());
+        return SharedPtr<Decoder>(nullptr);
+    }
+
+    return SharedPtr<Decoder>(new VorbisFileDecoder(
+        file, std::move(oggfile), vorbisinfo, channels
+    ));
 }
 
 }
