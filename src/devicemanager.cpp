@@ -43,7 +43,7 @@ ALDeviceManager::ALDeviceManager()
 
 bool ALDeviceManager::queryExtension(const char *extname) const
 {
-    return alcIsExtensionPresent(0, extname);
+    return alcIsExtensionPresent(nullptr, extname);
 }
 
 Vector<String> ALDeviceManager::enumerate(DeviceEnumeration type) const
@@ -54,7 +54,7 @@ Vector<String> ALDeviceManager::enumerate(DeviceEnumeration type) const
     const ALCchar *names = alcGetString(0, type);
     while(names && *names)
     {
-        list.push_back(names);
+        list.emplace_back(names);
         names += strlen(names)+1;
     }
     return list;
@@ -64,8 +64,8 @@ String ALDeviceManager::defaultDeviceName(DefaultDeviceType type) const
 {
     if(type == DefaultDevType_Complete && !alcIsExtensionPresent(0, "ALC_ENUMERATE_ALL_EXT"))
         type = DefaultDevType_Basic;
-    const ALCchar *name = alcGetString(0, type);
-    return String(name ? name : "");
+    const ALCchar *name = alcGetString(nullptr, type);
+    return name ? String(name) : String();
 }
 
 

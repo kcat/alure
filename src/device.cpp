@@ -91,7 +91,7 @@ String ALDevice::getName(PlaybackDeviceName type) const
     const ALCchar *name = alcGetString(mDevice, type);
     if(alcGetError(mDevice) != ALC_NO_ERROR || !name)
         name = alcGetString(mDevice, PlaybackDeviceName_Basic);
-    return String(name ? name : "");
+    return name ? String(name) : String();
 }
 
 bool ALDevice::queryExtension(const char *extname) const
@@ -106,9 +106,10 @@ ALCuint ALDevice::getALCVersion() const
     alcGetIntegerv(mDevice, ALC_MINOR_VERSION, 1, &minor);
     if(major < 0 || minor < 0)
         throw std::runtime_error("ALC version error");
-    major = std::min<ALCint>(major, std::numeric_limits<ALCushort>::max());
-    minor = std::min<ALCint>(minor, std::numeric_limits<ALCushort>::max());
-    return MakeVersion((ALCushort)major, (ALCushort)minor);
+    return MakeVersion(
+        (ALCushort)std::min<ALCint>(major, std::numeric_limits<ALCushort>::max()),
+        (ALCushort)std::min<ALCint>(minor, std::numeric_limits<ALCushort>::max())
+    );
 }
 
 ALCuint ALDevice::getEFXVersion() const
@@ -121,9 +122,10 @@ ALCuint ALDevice::getEFXVersion() const
     alcGetIntegerv(mDevice, ALC_EFX_MINOR_VERSION, 1, &minor);
     if(major < 0 || minor < 0)
         throw std::runtime_error("EFX version error");
-    major = std::min<ALCint>(major, std::numeric_limits<ALCushort>::max());
-    minor = std::min<ALCint>(minor, std::numeric_limits<ALCushort>::max());
-    return MakeVersion((ALCushort)major, (ALCushort)minor);
+    return MakeVersion(
+        (ALCushort)std::min<ALCint>(major, std::numeric_limits<ALCushort>::max()),
+        (ALCushort)std::min<ALCint>(minor, std::numeric_limits<ALCushort>::max())
+    );
 }
 
 ALCuint ALDevice::getFrequency() const
@@ -142,7 +144,7 @@ ALCuint ALDevice::getMaxAuxiliarySends() const
 
     ALCint sends=-1;
     alcGetIntegerv(mDevice, ALC_MAX_AUXILIARY_SENDS, 1, &sends);
-    if(sends == -1)
+    if(sends < 0)
         throw std::runtime_error("Max auxiliary sends error");
     return sends;
 }
@@ -155,13 +157,13 @@ Vector<String> ALDevice::enumerateHRTFNames() const
 
     ALCint num_hrtfs = -1;
     alcGetIntegerv(mDevice, ALC_NUM_HRTF_SPECIFIERS_SOFT, 1, &num_hrtfs);
-    if(num_hrtfs == -1)
+    if(num_hrtfs < 0)
         throw std::runtime_error("HRTF specifier count error");
 
     Vector<String> hrtfs;
     hrtfs.reserve(num_hrtfs);
     for(int i = 0;i < num_hrtfs;++i)
-        hrtfs.push_back(alcGetStringiSOFT(mDevice, ALC_HRTF_SPECIFIER_SOFT, i));
+        hrtfs.emplace_back(alcGetStringiSOFT(mDevice, ALC_HRTF_SPECIFIER_SOFT, i));
     return hrtfs;
 }
 

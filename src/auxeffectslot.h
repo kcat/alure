@@ -28,7 +28,8 @@ public:
     { }
     virtual ~ALAuxiliaryEffectSlot() { }
 
-    void addSourceSend(Source *source, ALuint send) { mSourceSends.push_back({source, send}); }
+    void addSourceSend(Source *source, ALuint send)
+    { mSourceSends.emplace_back((SourceSend){source, send}); }
     void removeSourceSend(Source *source, ALuint send)
     {
         auto iter = std::find(mSourceSends.cbegin(), mSourceSends.cend(), SourceSend{source, send});
