@@ -17,6 +17,7 @@
 #include "refcount.h"
 #include "ringbuf.h"
 #include "device.h"
+#include "source.h"
 
 #define F_PI (3.14159265358979323846f)
 
@@ -24,7 +25,6 @@ namespace alure {
 
 class ALDevice;
 class ALBuffer;
-class ALSource;
 class ALSourceGroup;
 
 enum ALExtension {
