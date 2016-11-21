@@ -1,14 +1,14 @@
 # - FindOpus.cmake
 # Find the native opus includes and libraries
 #
-# OPUS_INCLUDE_DIR - where to find opus/opus.h, etc.
+# OPUS_INCLUDE_DIRS - where to find opus/opus.h, etc.
 # OPUS_LIBRARIES - List of libraries when using libopus(file).
 # OPUS_FOUND - True if libopus found.
 
-if(OPUS_INCLUDE_DIR)
+if(OPUS_INCLUDE_DIR AND OPUS_LIBRARY AND OPUSFILE_LIBRARY)
     # Already in cache, be silent
     set(OPUS_FIND_QUIETLY TRUE)
-endif(OPUS_INCLUDE_DIR)
+endif(OPUS_INCLUDE_DIR AND OPUS_LIBRARY AND OPUSFILE_LIBRARY)
 
 find_path(OPUS_INCLUDE_DIR
     NAMES opusfile.h
@@ -33,6 +33,5 @@ find_package_handle_standard_args(OPUS DEFAULT_MSG
 
 if(OPUS_FOUND)
     set(OPUS_LIBRARIES ${OPUSFILE_LIBRARY} ${OPUS_LIBRARY})
+    set(OPUS_INCLUDE_DIRS ${OPUS_INCLUDE_DIR})
 endif(OPUS_FOUND)
-
-mark_as_advanced(OPUS_INCLUDE_DIR OPUS_LIBRARY OPUSFILE_LIBRARY)

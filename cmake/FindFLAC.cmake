@@ -1,7 +1,7 @@
 # - FindFLAC.cmake
 # Find the native FLAC includes and libraries
 #
-# FLAC_INCLUDE_DIR - where to find FLAC headers.
+# FLAC_INCLUDE_DIRS - where to find FLAC headers.
 # FLAC_LIBRARIES - List of libraries when using libFLAC.
 # FLAC_FOUND - True if libFLAC found.
 
@@ -26,6 +26,5 @@ if(FLAC_FOUND)
     if(WIN32)
         set(FLAC_LIBRARIES ${FLAC_LIBRARIES} wsock32)
     endif(WIN32)
+    set(FLAC_INCLUDE_DIRS ${FLAC_INCLUDE_DIR})
 endif(FLAC_FOUND)
-
-mark_as_advanced(FLAC_INCLUDE_DIR FLAC_LIBRARY)
