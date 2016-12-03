@@ -1,3 +1,9 @@
+/*
+ * An example showing how to read files using custom I/O routines. This
+ * specific example uses PhysFS to read files from zip, 7z, and some other
+ * archive formats.
+ */
+
 #include <iostream>
 #include <sstream>
 #include <iomanip>

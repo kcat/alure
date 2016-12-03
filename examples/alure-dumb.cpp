@@ -1,3 +1,8 @@
+/*
+ * An example showing how to use an external decoder to play files through the
+ * DUMB library.
+ */
+
 #include <iostream>
 #include <iomanip>
 #include <cstring>

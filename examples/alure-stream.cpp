@@ -1,3 +1,7 @@
+/*
+ * A simple example showing how to stream a file through a source.
+ */
+
 #include <iostream>
 #include <sstream>
 #include <iomanip>

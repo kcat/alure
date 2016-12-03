@@ -1,3 +1,8 @@
+/*
+ * An example showing how to enable HRTF rendering, using the ALC_SOFT_HRTF
+ * extension.
+ */
+
 #include <algorithm>
 #include <iostream>
 #include <sstream>

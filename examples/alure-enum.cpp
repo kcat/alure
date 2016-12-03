@@ -1,3 +1,7 @@
+/*
+ * An example showing how to enumerate available devices and show its
+ * capabilities.
+ */
 
 #include <iostream>
 

@@ -1,3 +1,7 @@
+/*
+ * An example showing how to load and apply a reverb effect to a source.
+ */
+
 #include <iostream>
 #include <iomanip>
 #include <cstring>

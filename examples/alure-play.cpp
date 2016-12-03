@@ -1,3 +1,7 @@
+/*
+ * A simple example showing how to load and play a sound.
+ */
+
 #include <iostream>
 #include <iomanip>
 #include <thread>
