@@ -107,13 +107,13 @@ public:
     virtual alure::ChannelConfig getChannelConfig() const final
     {
         // We always have DUMB render to stereo
-        return alure::ChannelConfig_Stereo;
+        return alure::ChannelConfig::Stereo;
     }
     virtual alure::SampleType getSampleType() const final
     {
         // DUMB renders to 8.24 normalized fixed point, which we convert to
         // signed 16-bit samples
-        return alure::SampleType_Int16;
+        return alure::SampleType::Int16;
     }
 
     virtual uint64_t getLength() final

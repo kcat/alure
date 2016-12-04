@@ -95,7 +95,7 @@ ChannelConfig VorbisFileDecoder::getChannelConfig() const
 
 SampleType VorbisFileDecoder::getSampleType() const
 {
-    return SampleType_Int16;
+    return SampleType::Int16;
 }
 
 
@@ -144,7 +144,7 @@ ALuint VorbisFileDecoder::read(ALvoid *ptr, ALuint count)
     // 1, 2, and 4 channel files decode into the same channel order as
     // OpenAL, however 6 (5.1), 7 (6.1), and 8 (7.1) channel files need to be
     // re-ordered.
-    if(mChannelConfig == ChannelConfig_X51)
+    if(mChannelConfig == ChannelConfig::X51)
     {
         samples = (ALshort*)ptr;
         for(ALuint i = 0;i < total;++i)
@@ -156,7 +156,7 @@ ALuint VorbisFileDecoder::read(ALvoid *ptr, ALuint count)
             std::swap(samples[i*6 + 4], samples[i*6 + 5]);
         }
     }
-    else if(mChannelConfig == ChannelConfig_X61)
+    else if(mChannelConfig == ChannelConfig::X61)
     {
         samples = (ALshort*)ptr;
         for(ALuint i = 0;i < total;++i)
@@ -169,7 +169,7 @@ ALuint VorbisFileDecoder::read(ALvoid *ptr, ALuint count)
             std::swap(samples[i*7 + 5], samples[i*7 + 6]);
         }
     }
-    else if(mChannelConfig == ChannelConfig_X71)
+    else if(mChannelConfig == ChannelConfig::X71)
     {
         samples = (ALshort*)ptr;
         for(ALuint i = 0;i < total;++i)
@@ -206,19 +206,19 @@ SharedPtr<Decoder> VorbisFileDecoderFactory::createDecoder(SharedPtr<std::istrea
         return SharedPtr<Decoder>(nullptr);
     }
 
-    ChannelConfig channels = ChannelConfig_Mono;
+    ChannelConfig channels = ChannelConfig::Mono;
     if(vorbisinfo->channels == 1)
-        channels = ChannelConfig_Mono;
+        channels = ChannelConfig::Mono;
     else if(vorbisinfo->channels == 2)
-        channels = ChannelConfig_Stereo;
+        channels = ChannelConfig::Stereo;
     else if(vorbisinfo->channels == 4)
-        channels = ChannelConfig_Quad;
+        channels = ChannelConfig::Quad;
     else if(vorbisinfo->channels == 6)
-        channels = ChannelConfig_X51;
+        channels = ChannelConfig::X51;
     else if(vorbisinfo->channels == 7)
-        channels = ChannelConfig_X61;
+        channels = ChannelConfig::X61;
     else if(vorbisinfo->channels == 8)
-        channels = ChannelConfig_X71;
+        channels = ChannelConfig::X71;
     else
     {
         ov_clear(oggfile.get());

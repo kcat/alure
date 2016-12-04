@@ -504,7 +504,7 @@ Buffer *ALContext::getBuffer(const String &name)
         // Ensure the buffer is loaded before returning. getBuffer guarantees
         // the returned buffer is loaded.
         ALBuffer *buffer = iter->second;
-        while(buffer->getLoadStatus() == BufferLoad_Pending)
+        while(buffer->getLoadStatus() == BufferLoadStatus::Pending)
             std::this_thread::yield();
         return buffer;
     }
@@ -799,7 +799,7 @@ void ALContext::setSpeedOfSound(ALfloat speed)
 void ALContext::setDistanceModel(DistanceModel model)
 {
     CheckContext(this);
-    alDistanceModel(model);
+    alDistanceModel((ALenum)model);
 }
 
 

@@ -29,7 +29,7 @@ class FlacDecoder : public Decoder {
 
     void CopySamples(ALubyte *output, ALuint todo, const FLAC__Frame *frame, const FLAC__int32 *const buffer[], ALuint offset)
     {
-        if(mSampleType == SampleType_UInt8)
+        if(mSampleType == SampleType::UInt8)
         {
             ALubyte *samples = output;
             for(ALuint c = 0;c < frame->header.channels;c++)
@@ -58,17 +58,17 @@ class FlacDecoder : public Decoder {
         {
             ALuint bps = frame->header.bits_per_sample;
             if(bps == 8)
-                self->mSampleType = SampleType_UInt8;
+                self->mSampleType = SampleType::UInt8;
             else
             {
-                self->mSampleType = SampleType_Int16;
+                self->mSampleType = SampleType::Int16;
                 bps = 16;
             }
 
             if(frame->header.channels == 1)
-                self->mChannelConfig = ChannelConfig_Mono;
+                self->mChannelConfig = ChannelConfig::Mono;
             else if(frame->header.channels == 2)
-                self->mChannelConfig = ChannelConfig_Stereo;
+                self->mChannelConfig = ChannelConfig::Stereo;
             else
                 return FLAC__STREAM_DECODER_WRITE_STATUS_ABORT;
 
@@ -161,8 +161,9 @@ class FlacDecoder : public Decoder {
 
 public:
     FlacDecoder(SharedPtr<std::istream> file)
-      : mFile(file), mFlacFile(nullptr), mChannelConfig(ChannelConfig_Mono), mSampleType(SampleType_Int16), mFrequency(0),
-        mFrameSize(0), mSamplePos(0), mOutBytes(nullptr), mOutMax(0), mOutLen(0)
+      : mFile(file), mFlacFile(nullptr), mChannelConfig(ChannelConfig::Mono),
+        mSampleType(SampleType::Int16), mFrequency(0), mFrameSize(0), mSamplePos(0),
+        mOutBytes(nullptr), mOutMax(0), mOutLen(0)
     { }
     virtual ~FlacDecoder();
 

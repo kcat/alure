@@ -34,7 +34,8 @@ class ALBuffer : public Buffer {
 public:
     ALBuffer(ALContext *context, ALuint id, ALuint freq, ChannelConfig config, SampleType type, bool preloaded)
       : mContext(context), mId(id), mFrequency(freq), mChannelConfig(config), mSampleType(type),
-        mLoadStatus(preloaded?BufferLoad_Ready:BufferLoad_Pending), mIsLoaded(preloaded)
+        mLoadStatus(preloaded ? BufferLoadStatus::Ready : BufferLoadStatus::Pending),
+        mIsLoaded(preloaded)
     { }
     virtual ~ALBuffer() { }
 
@@ -52,7 +53,7 @@ public:
 
     void load(ALuint frames, ALenum format, SharedPtr<Decoder> decoder, const String &name, ALContext *ctx);
 
-    bool isReady() const { return mLoadStatus == BufferLoad_Ready; }
+    bool isReady() const { return mLoadStatus == BufferLoadStatus::Ready; }
 
     virtual ALuint getLength() const final;
 

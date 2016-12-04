@@ -193,16 +193,16 @@ inline ALCuint MinorVersion(ALCuint version)
 { return version&0xffff; }
 
 
-enum DeviceEnumeration {
-    DevEnum_Basic = ALC_DEVICE_SPECIFIER,
-    DevEnum_Complete = ALC_ALL_DEVICES_SPECIFIER,
-    DevEnum_Capture = ALC_CAPTURE_DEVICE_SPECIFIER
+enum class DeviceEnumeration {
+    Basic = ALC_DEVICE_SPECIFIER,
+    Complete = ALC_ALL_DEVICES_SPECIFIER,
+    Capture = ALC_CAPTURE_DEVICE_SPECIFIER
 };
 
-enum DefaultDeviceType {
-    DefaultDevType_Basic = ALC_DEFAULT_DEVICE_SPECIFIER,
-    DefaultDevType_Complete = ALC_DEFAULT_ALL_DEVICES_SPECIFIER,
-    DefaultDevType_Capture = ALC_CAPTURE_DEFAULT_DEVICE_SPECIFIER
+enum class DefaultDeviceType {
+    Basic = ALC_DEFAULT_DEVICE_SPECIFIER,
+    Complete = ALC_DEFAULT_ALL_DEVICES_SPECIFIER,
+    Capture = ALC_CAPTURE_DEFAULT_DEVICE_SPECIFIER
 };
 
 /**
@@ -227,15 +227,15 @@ public:
 };
 
 
-enum PlaybackDeviceName {
-    PlaybackDeviceName_Basic = ALC_DEVICE_SPECIFIER,
-    PlaybackDeviceName_Complete = ALC_ALL_DEVICES_SPECIFIER
+enum class PlaybackDeviceName {
+    Basic = ALC_DEVICE_SPECIFIER,
+    Complete = ALC_ALL_DEVICES_SPECIFIER
 };
 
 class ALURE_API Device {
 public:
     /** Retrieves the device name as given by \param type. */
-    virtual String getName(PlaybackDeviceName type=PlaybackDeviceName_Basic) const = 0;
+    virtual String getName(PlaybackDeviceName type=PlaybackDeviceName::Basic) const = 0;
     /** Queries the existence of an ALC extension on this device. */
     virtual bool queryExtension(const char *extname) const = 0;
 
@@ -320,14 +320,14 @@ public:
 };
 
 
-enum DistanceModel {
-    DistanceModel_InverseClamped  = AL_INVERSE_DISTANCE_CLAMPED,
-    DistanceModel_LinearClamped   = AL_LINEAR_DISTANCE_CLAMPED,
-    DistanceModel_ExponentClamped = AL_EXPONENT_DISTANCE_CLAMPED,
-    DistanceModel_Inverse  = AL_INVERSE_DISTANCE,
-    DistanceModel_Linear   = AL_LINEAR_DISTANCE,
-    DistanceModel_Exponent = AL_EXPONENT_DISTANCE,
-    DistanceModel_None  = AL_NONE,
+enum class DistanceModel {
+    InverseClamped  = AL_INVERSE_DISTANCE_CLAMPED,
+    LinearClamped   = AL_LINEAR_DISTANCE_CLAMPED,
+    ExponentClamped = AL_EXPONENT_DISTANCE_CLAMPED,
+    Inverse  = AL_INVERSE_DISTANCE,
+    Linear   = AL_LINEAR_DISTANCE,
+    Exponent = AL_EXPONENT_DISTANCE,
+    None  = AL_NONE,
 };
 
 class ALURE_API Context {
@@ -451,30 +451,30 @@ public:
 };
 
 
-enum SampleType {
-    SampleType_UInt8,
-    SampleType_Int16,
-    SampleType_Float32,
-    SampleType_Mulaw
+enum class SampleType {
+    UInt8,
+    Int16,
+    Float32,
+    Mulaw
 };
 ALURE_API const char *GetSampleTypeName(SampleType type);
 
-enum ChannelConfig {
-    ChannelConfig_Mono,
-    ChannelConfig_Stereo,
-    ChannelConfig_Rear,
-    ChannelConfig_Quad,
-    ChannelConfig_X51,
-    ChannelConfig_X61,
-    ChannelConfig_X71,
-    ChannelConfig_BFmt_WXY,
-    ChannelConfig_BFmt_WXYZ
+enum class ChannelConfig {
+    Mono,
+    Stereo,
+    Rear,
+    Quad,
+    X51,
+    X61,
+    X71,
+    BFmt_WXY,
+    BFmt_WXYZ
 };
 ALURE_API const char *GetChannelConfigName(ChannelConfig cfg);
 
-enum BufferLoadStatus {
-    BufferLoad_Pending,
-    BufferLoad_Ready
+enum class BufferLoadStatus {
+    Pending,
+    Ready
 };
 
 class ALURE_API Listener {

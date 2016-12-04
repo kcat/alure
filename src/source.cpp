@@ -88,8 +88,8 @@ public:
         mFrameSize = FramesToBytes(1, chans, type);
 
         mData.resize(mUpdateLen * mFrameSize);
-        if(type == SampleType_UInt8) mSilence = 0x80;
-        else if(type == SampleType_Mulaw) mSilence = 0x7f;
+        if(type == SampleType::UInt8) mSilence = 0x80;
+        else if(type == SampleType::Mulaw) mSilence = 0x7f;
         else mSilence = 0x00;
 
         mBufferIds.assign(mNumUpdates, 0);

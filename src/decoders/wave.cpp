@@ -151,7 +151,7 @@ ALuint WaveDecoder::read(ALvoid *ptr, ALuint count)
 #ifdef __BIG_ENDIAN__
         switch(mSampleType)
         {
-            case SampleType_Float32:
+            case SampleType::Float32:
                 while(total < len && mFile->good() && !mFile->eof())
                 {
                     char temp[256];
@@ -168,7 +168,7 @@ ALuint WaveDecoder::read(ALvoid *ptr, ALuint count)
                 total /= mFrameSize;
                 break;
 
-            case SampleType_Int16:
+            case SampleType::Int16:
                 while(total < len && mFile->good() && !mFile->eof())
                 {
                     char temp[256];
@@ -185,8 +185,8 @@ ALuint WaveDecoder::read(ALvoid *ptr, ALuint count)
                 total /= mFrameSize;
                 break;
 
-            case SampleType_UInt8:
-            case SampleType_Mulaw:
+            case SampleType::UInt8:
+            case SampleType::Mulaw:
 #else
         {
 #endif
@@ -201,8 +201,8 @@ ALuint WaveDecoder::read(ALvoid *ptr, ALuint count)
 
 SharedPtr<Decoder> WaveDecoderFactory::createDecoder(SharedPtr<std::istream> file)
 {
-    ChannelConfig channels = ChannelConfig_Mono;
-    SampleType type = SampleType_UInt8;
+    ChannelConfig channels = ChannelConfig::Mono;
+    SampleType type = SampleType::UInt8;
     ALuint frequency = 0;
     ALuint framesize = 0;
     ALuint loop_pts[2]{0, 0};
@@ -265,44 +265,44 @@ SharedPtr<Decoder> WaveDecoderFactory::createDecoder(SharedPtr<std::istream> fil
             if(fmttype == 0x0001)
             {
                 if(chancount == 1)
-                    channels = ChannelConfig_Mono;
+                    channels = ChannelConfig::Mono;
                 else if(chancount == 2)
-                    channels = ChannelConfig_Stereo;
+                    channels = ChannelConfig::Stereo;
                 else
                     goto next_chunk;
 
                 if(bitdepth == 8)
-                    type = SampleType_UInt8;
+                    type = SampleType::UInt8;
                 else if(bitdepth == 16)
-                    type = SampleType_Int16;
+                    type = SampleType::Int16;
                 else
                     goto next_chunk;
             }
             else if(fmttype == 0x0003)
             {
                 if(chancount == 1)
-                    channels = ChannelConfig_Mono;
+                    channels = ChannelConfig::Mono;
                 else if(chancount == 2)
-                    channels = ChannelConfig_Stereo;
+                    channels = ChannelConfig::Stereo;
                 else
                     goto next_chunk;
 
                 if(bitdepth == 32)
-                    type = SampleType_Float32;
+                    type = SampleType::Float32;
                 else
                     goto next_chunk;
             }
             else if(fmttype == 0x0007)
             {
                 if(chancount == 1)
-                    channels = ChannelConfig_Mono;
+                    channels = ChannelConfig::Mono;
                 else if(chancount == 2)
-                    channels = ChannelConfig_Stereo;
+                    channels = ChannelConfig::Stereo;
                 else
                     goto next_chunk;
 
                 if(bitdepth == 8)
-                    type = SampleType_Mulaw;
+                    type = SampleType::Mulaw;
                 else
                     goto next_chunk;
             }
@@ -326,26 +326,26 @@ SharedPtr<Decoder> WaveDecoderFactory::createDecoder(SharedPtr<std::istream> fil
                         goto next_chunk;
 
                     if(chancount == 3)
-                        channels = ChannelConfig_BFmt_WXY;
+                        channels = ChannelConfig::BFmt_WXY;
                     else if(chancount == 4)
-                        channels = ChannelConfig_BFmt_WXYZ;
+                        channels = ChannelConfig::BFmt_WXYZ;
                     else
                         goto next_chunk;
                 }
                 else if(memcmp(subtype, SUBTYPE_PCM, 16) == 0 || memcmp(subtype, SUBTYPE_FLOAT, 16) == 0)
                 {
                     if(chancount == 1 && chanmask == CHANNELS_MONO)
-                        channels = ChannelConfig_Mono;
+                        channels = ChannelConfig::Mono;
                     else if(chancount == 2 && chanmask == CHANNELS_STEREO)
-                        channels = ChannelConfig_Stereo;
+                        channels = ChannelConfig::Stereo;
                     else if(chancount == 4 && chanmask == CHANNELS_QUAD)
-                        channels = ChannelConfig_Quad;
+                        channels = ChannelConfig::Quad;
                     else if(chancount == 6 && (chanmask == CHANNELS_5DOT1 || chanmask == CHANNELS_5DOT1_REAR))
-                        channels = ChannelConfig_X51;
+                        channels = ChannelConfig::X51;
                     else if(chancount == 7 && chanmask == CHANNELS_6DOT1)
-                        channels = ChannelConfig_X61;
+                        channels = ChannelConfig::X61;
                     else if(chancount == 8 && chanmask == CHANNELS_7DOT1)
-                        channels = ChannelConfig_X71;
+                        channels = ChannelConfig::X71;
                     else
                         goto next_chunk;
                 }
@@ -353,16 +353,16 @@ SharedPtr<Decoder> WaveDecoderFactory::createDecoder(SharedPtr<std::istream> fil
                 if(memcmp(subtype, SUBTYPE_PCM, 16) == 0 || memcmp(subtype, SUBTYPE_BFORMAT_PCM, 16) == 0)
                 {
                     if(bitdepth == 8)
-                        type = SampleType_UInt8;
+                        type = SampleType::UInt8;
                     else if(bitdepth == 16)
-                        type = SampleType_Int16;
+                        type = SampleType::Int16;
                     else
                         goto next_chunk;
                 }
                 else if(memcmp(subtype, SUBTYPE_FLOAT, 16) == 0 || memcmp(subtype, SUBTYPE_BFORMAT_FLOAT, 16) == 0)
                 {
                     if(bitdepth == 32)
-                        type = SampleType_Float32;
+                        type = SampleType::Float32;
                     else
                         goto next_chunk;
                 }

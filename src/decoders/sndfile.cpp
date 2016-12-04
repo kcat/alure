@@ -134,9 +134,9 @@ std::pair<uint64_t,uint64_t> SndFileDecoder::getLoopPoints() const
 ALuint SndFileDecoder::read(ALvoid *ptr, ALuint count)
 {
     sf_count_t got = 0;
-    if(mSampleType == SampleType_Int16)
+    if(mSampleType == SampleType::Int16)
         got = sf_readf_short(mSndFile, static_cast<short*>(ptr), count);
-    else if(mSampleType == SampleType_Float32)
+    else if(mSampleType == SampleType::Float32)
         got = sf_readf_float(mSndFile, static_cast<float*>(ptr), count);
     return (ALuint)std::max<sf_count_t>(got, 0);
 }
@@ -150,102 +150,93 @@ SharedPtr<Decoder> SndFileDecoderFactory::createDecoder(SharedPtr<std::istream> 
     };
     SF_INFO sndinfo;
     SNDFILE *sndfile = sf_open_virtual(&vio, SFM_READ, &sndinfo, file.get());
+    if(!sndfile) return SharedPtr<Decoder>(nullptr);
 
     ChannelConfig sconfig;
-    if(sndfile)
+    Vector<int> chanmap(sndinfo.channels);
+    if(sf_command(sndfile, SFC_GET_CHANNEL_MAP_INFO, &chanmap[0], chanmap.size()*sizeof(int)) == SF_TRUE)
     {
-        Vector<int> chanmap(sndinfo.channels);
-        if(sf_command(sndfile, SFC_GET_CHANNEL_MAP_INFO, &chanmap[0], chanmap.size()*sizeof(int)) == SF_TRUE)
+        auto matches = [](const Vector<int> &first, std::initializer_list<int> second) -> bool
         {
-            if(sndinfo.channels == 1 && chanmap[0] == SF_CHANNEL_MAP_MONO)
-                sconfig = ChannelConfig_Mono;
-            else if(sndinfo.channels == 2 &&
-                    chanmap[0] == SF_CHANNEL_MAP_LEFT && chanmap[1] == SF_CHANNEL_MAP_RIGHT)
-                sconfig = ChannelConfig_Stereo;
-            else if(sndinfo.channels == 2 &&
-                    chanmap[0] == SF_CHANNEL_MAP_REAR_LEFT && chanmap[1] == SF_CHANNEL_MAP_REAR_RIGHT)
-                sconfig = ChannelConfig_Rear;
-            else if(sndinfo.channels == 4 &&
-                    chanmap[0] == SF_CHANNEL_MAP_LEFT && chanmap[1] == SF_CHANNEL_MAP_RIGHT &&
-                    chanmap[2] == SF_CHANNEL_MAP_REAR_LEFT && chanmap[3] == SF_CHANNEL_MAP_REAR_RIGHT)
-                sconfig = ChannelConfig_Quad;
-            else if(sndinfo.channels == 6 &&
-                    chanmap[0] == SF_CHANNEL_MAP_LEFT && chanmap[1] == SF_CHANNEL_MAP_RIGHT &&
-                    chanmap[2] == SF_CHANNEL_MAP_CENTER && chanmap[3] == SF_CHANNEL_MAP_LFE &&
-                    chanmap[4] == SF_CHANNEL_MAP_REAR_LEFT && chanmap[5] == SF_CHANNEL_MAP_REAR_RIGHT)
-                sconfig = ChannelConfig_X51;
-            else if(sndinfo.channels == 6 &&
-                    chanmap[0] == SF_CHANNEL_MAP_LEFT && chanmap[1] == SF_CHANNEL_MAP_RIGHT &&
-                    chanmap[2] == SF_CHANNEL_MAP_CENTER && chanmap[3] == SF_CHANNEL_MAP_LFE &&
-                    chanmap[4] == SF_CHANNEL_MAP_SIDE_LEFT && chanmap[5] == SF_CHANNEL_MAP_SIDE_RIGHT)
-                sconfig = ChannelConfig_X51;
-            else if(sndinfo.channels == 7 &&
-                    chanmap[0] == SF_CHANNEL_MAP_LEFT && chanmap[1] == SF_CHANNEL_MAP_RIGHT &&
-                    chanmap[2] == SF_CHANNEL_MAP_CENTER && chanmap[3] == SF_CHANNEL_MAP_LFE &&
-                    chanmap[4] == SF_CHANNEL_MAP_REAR_CENTER && chanmap[5] == SF_CHANNEL_MAP_SIDE_LEFT &&
-                    chanmap[6] == SF_CHANNEL_MAP_SIDE_RIGHT)
-                sconfig = ChannelConfig_X61;
-            else if(sndinfo.channels == 8 &&
-                    chanmap[0] == SF_CHANNEL_MAP_LEFT && chanmap[1] == SF_CHANNEL_MAP_RIGHT &&
-                    chanmap[2] == SF_CHANNEL_MAP_CENTER && chanmap[3] == SF_CHANNEL_MAP_LFE &&
-                    chanmap[4] == SF_CHANNEL_MAP_REAR_LEFT && chanmap[5] == SF_CHANNEL_MAP_REAR_RIGHT &&
-                    chanmap[6] == SF_CHANNEL_MAP_SIDE_LEFT && chanmap[7] == SF_CHANNEL_MAP_SIDE_RIGHT)
-                sconfig = ChannelConfig_X51;
-            else if(sndinfo.channels == 3 &&
-                    chanmap[0] == SF_CHANNEL_MAP_AMBISONIC_B_W && chanmap[1] == SF_CHANNEL_MAP_AMBISONIC_B_X &&
-                    chanmap[2] == SF_CHANNEL_MAP_AMBISONIC_B_Y)
-                sconfig = ChannelConfig_BFmt_WXY;
-            else if(sndinfo.channels == 4 &&
-                    chanmap[0] == SF_CHANNEL_MAP_AMBISONIC_B_W && chanmap[1] == SF_CHANNEL_MAP_AMBISONIC_B_X &&
-                    chanmap[2] == SF_CHANNEL_MAP_AMBISONIC_B_Y && chanmap[3] == SF_CHANNEL_MAP_AMBISONIC_B_Z)
-                sconfig = ChannelConfig_BFmt_WXYZ;
-            else
-            {
-                sf_close(sndfile);
-                return 0;
-            }
-        }
-        else if(sf_command(sndfile, SFC_WAVEX_GET_AMBISONIC, 0, 0) == SF_AMBISONIC_B_FORMAT)
-        {
-            if(sndinfo.channels == 3)
-                sconfig = ChannelConfig_BFmt_WXY;
-            else if(sndinfo.channels == 4)
-                sconfig = ChannelConfig_BFmt_WXYZ;
-            else
-            {
-                sf_close(sndfile);
-                return 0;
-            }
-        }
-        else if(sndinfo.channels == 1)
-            sconfig = ChannelConfig_Mono;
-        else if(sndinfo.channels == 2)
-            sconfig = ChannelConfig_Stereo;
+            if(first.size() != second.size())
+                return false;
+            return std::mismatch(first.begin(), first.end(), second.begin()).first == first.end();
+        };
+
+        if(matches(chanmap, {SF_CHANNEL_MAP_MONO}))
+            sconfig = ChannelConfig::Mono;
+        else if(matches(chanmap, {SF_CHANNEL_MAP_LEFT, SF_CHANNEL_MAP_RIGHT}))
+            sconfig = ChannelConfig::Stereo;
+        else if(matches(chanmap, {SF_CHANNEL_MAP_REAR_LEFT, SF_CHANNEL_MAP_REAR_RIGHT}))
+            sconfig = ChannelConfig::Rear;
+        else if(matches(chanmap, {SF_CHANNEL_MAP_LEFT, SF_CHANNEL_MAP_RIGHT,
+                                  SF_CHANNEL_MAP_REAR_LEFT, SF_CHANNEL_MAP_REAR_RIGHT}))
+            sconfig = ChannelConfig::Quad;
+        else if(matches(chanmap, {SF_CHANNEL_MAP_LEFT, SF_CHANNEL_MAP_RIGHT,
+                                  SF_CHANNEL_MAP_CENTER, SF_CHANNEL_MAP_LFE,
+                                  SF_CHANNEL_MAP_REAR_LEFT, SF_CHANNEL_MAP_REAR_RIGHT}) ||
+                matches(chanmap, {SF_CHANNEL_MAP_LEFT, SF_CHANNEL_MAP_RIGHT,
+                                  SF_CHANNEL_MAP_CENTER, SF_CHANNEL_MAP_LFE,
+                                  SF_CHANNEL_MAP_SIDE_LEFT, SF_CHANNEL_MAP_SIDE_RIGHT}))
+            sconfig = ChannelConfig::X51;
+        else if(matches(chanmap, {SF_CHANNEL_MAP_LEFT, SF_CHANNEL_MAP_RIGHT,
+                                  SF_CHANNEL_MAP_CENTER, SF_CHANNEL_MAP_LFE,
+                                  SF_CHANNEL_MAP_REAR_CENTER, SF_CHANNEL_MAP_SIDE_LEFT,
+                                  SF_CHANNEL_MAP_SIDE_RIGHT}))
+            sconfig = ChannelConfig::X61;
+        else if(matches(chanmap, {SF_CHANNEL_MAP_LEFT, SF_CHANNEL_MAP_RIGHT,
+                                  SF_CHANNEL_MAP_CENTER, SF_CHANNEL_MAP_LFE,
+                                  SF_CHANNEL_MAP_REAR_LEFT, SF_CHANNEL_MAP_REAR_RIGHT,
+                                  SF_CHANNEL_MAP_SIDE_LEFT, SF_CHANNEL_MAP_SIDE_RIGHT}))
+            sconfig = ChannelConfig::X71;
+        else if(matches(chanmap, {SF_CHANNEL_MAP_AMBISONIC_B_W, SF_CHANNEL_MAP_AMBISONIC_B_X,
+                                  SF_CHANNEL_MAP_AMBISONIC_B_Y}))
+            sconfig = ChannelConfig::BFmt_WXY;
+        else if(matches(chanmap, {SF_CHANNEL_MAP_AMBISONIC_B_W, SF_CHANNEL_MAP_AMBISONIC_B_X,
+                                  SF_CHANNEL_MAP_AMBISONIC_B_Y, SF_CHANNEL_MAP_AMBISONIC_B_Z}))
+            sconfig = ChannelConfig::BFmt_WXYZ;
         else
         {
             sf_close(sndfile);
-            return 0;
+            return nullptr;
         }
     }
-
-    SampleType stype = SampleType_Int16;
-    if(sndfile)
+    else if(sf_command(sndfile, SFC_WAVEX_GET_AMBISONIC, 0, 0) == SF_AMBISONIC_B_FORMAT)
     {
-        switch(sndinfo.format&SF_FORMAT_SUBMASK)
+        if(sndinfo.channels == 3)
+            sconfig = ChannelConfig::BFmt_WXY;
+        else if(sndinfo.channels == 4)
+            sconfig = ChannelConfig::BFmt_WXYZ;
+        else
         {
-            case SF_FORMAT_FLOAT:
-            case SF_FORMAT_DOUBLE:
-            case SF_FORMAT_VORBIS:
-                stype = SampleType_Float32;
-                break;
-
-            default:
-                stype = SampleType_Int16;
-                break;
+            sf_close(sndfile);
+            return nullptr;
         }
     }
+    else if(sndinfo.channels == 1)
+        sconfig = ChannelConfig::Mono;
+    else if(sndinfo.channels == 2)
+        sconfig = ChannelConfig::Stereo;
+    else
+    {
+        sf_close(sndfile);
+        return nullptr;
+    }
 
-    if(!sndfile) return SharedPtr<Decoder>(nullptr);
+    SampleType stype = SampleType::Int16;
+    switch(sndinfo.format&SF_FORMAT_SUBMASK)
+    {
+        case SF_FORMAT_FLOAT:
+        case SF_FORMAT_DOUBLE:
+        case SF_FORMAT_VORBIS:
+            stype = SampleType::Float32;
+            break;
+
+        default:
+            stype = SampleType::Int16;
+            break;
+    }
+
     return SharedPtr<Decoder>(new SndFileDecoder(file, sndfile, sndinfo, sconfig, stype));
 }
 

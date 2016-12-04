@@ -85,12 +85,12 @@ void ALDevice::removeContext(ALContext *ctx)
 
 String ALDevice::getName(PlaybackDeviceName type) const
 {
-    if(type == PlaybackDeviceName_Complete && !alcIsExtensionPresent(mDevice, "ALC_ENUMERATE_ALL_EXT"))
-        type = PlaybackDeviceName_Basic;
+    if(type == PlaybackDeviceName::Complete && !alcIsExtensionPresent(mDevice, "ALC_ENUMERATE_ALL_EXT"))
+        type = PlaybackDeviceName::Basic;
     alcGetError(mDevice);
-    const ALCchar *name = alcGetString(mDevice, type);
+    const ALCchar *name = alcGetString(mDevice, (ALenum)type);
     if(alcGetError(mDevice) != ALC_NO_ERROR || !name)
-        name = alcGetString(mDevice, PlaybackDeviceName_Basic);
+        name = alcGetString(mDevice, (ALenum)PlaybackDeviceName::Basic);
     return name ? String(name) : String();
 }
 

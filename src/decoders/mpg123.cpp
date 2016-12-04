@@ -71,15 +71,15 @@ ALuint Mpg123Decoder::getFrequency() const
 ChannelConfig Mpg123Decoder::getChannelConfig() const
 {
     if(mChannels == 1)
-        return ChannelConfig_Mono;
+        return ChannelConfig::Mono;
     if(mChannels == 2)
-        return ChannelConfig_Stereo;
+        return ChannelConfig::Stereo;
     throw std::runtime_error("Unsupported sample configuration");
 }
 
 SampleType Mpg123Decoder::getSampleType() const
 {
-    return SampleType_Int16;
+    return SampleType::Int16;
 }
 
 

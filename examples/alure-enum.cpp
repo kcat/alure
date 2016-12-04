@@ -13,22 +13,22 @@ int main(int argc, char *argv[])
     alure::Vector<alure::String> list;
     alure::String defname;
 
-    list = devMgr.enumerate(alure::DevEnum_Basic);
-    defname = devMgr.defaultDeviceName(alure::DefaultDevType_Basic);
+    list = devMgr.enumerate(alure::DeviceEnumeration::Basic);
+    defname = devMgr.defaultDeviceName(alure::DefaultDeviceType::Basic);
     std::cout<< "Available basic devices:\n";
     for(const auto &name : list)
         std::cout<< "  "<<name<<((defname==name)?"  [DEFAULT]":"") <<'\n';
     std::cout<<std::endl;
 
-    list = devMgr.enumerate(alure::DevEnum_Complete);
-    defname = devMgr.defaultDeviceName(alure::DefaultDevType_Complete);
+    list = devMgr.enumerate(alure::DeviceEnumeration::Complete);
+    defname = devMgr.defaultDeviceName(alure::DefaultDeviceType::Complete);
     std::cout<< "Available devices:\n";
     for(const auto &name : list)
         std::cout<< "  "<<name<<((defname==name)?"  [DEFAULT]":"") <<'\n';
     std::cout<<std::endl;
 
-    list = devMgr.enumerate(alure::DevEnum_Capture);
-    defname = devMgr.defaultDeviceName(alure::DefaultDevType_Capture);
+    list = devMgr.enumerate(alure::DeviceEnumeration::Capture);
+    defname = devMgr.defaultDeviceName(alure::DefaultDeviceType::Capture);
     std::cout<< "Available capture devices:\n";
     for(const auto &name : list)
         std::cout<< "  "<<name<<((defname==name)?"  [DEFAULT]":"") <<'\n';
@@ -44,7 +44,7 @@ int main(int argc, char *argv[])
         }
         return devMgr.openPlayback();
     }();
-    std::cout<< "Info for device \""<<dev->getName(alure::PlaybackDeviceName_Complete)<<"\":" <<std::endl;
+    std::cout<< "Info for device \""<<dev->getName(alure::PlaybackDeviceName::Complete)<<"\":" <<std::endl;
     ALCuint version = dev->getALCVersion();
     std::cout<< "ALC version: "<<alure::MajorVersion(version)<<"."<<alure::MinorVersion(version) <<std::endl;
     version = dev->getEFXVersion();
