@@ -186,10 +186,9 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    // Set our custom factory for file IO (Alure holds a reference to the factory
-    // instance). From now on, all filenames given to Alure will be used with
-    // our custom factory.
-    alure::FileIOFactory::set(alure::MakeShared<FileFactory>(argv[0]));
+    // Set our custom factory for file IO. From now on, all filenames given to
+    // Alure will be used with our custom factory.
+    alure::FileIOFactory::set(alure::MakeUnique<FileFactory>(argv[0]));
 
     alure::DeviceManager &devMgr = alure::DeviceManager::get();
 

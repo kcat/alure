@@ -43,27 +43,27 @@
 namespace alure
 {
 
-static const std::pair<String,SharedPtr<DecoderFactory>> sDefaultDecoders[] = {
-    { "_alure_int_wave", MakeShared<WaveDecoderFactory>() },
+static const std::pair<String,UniquePtr<DecoderFactory>> sDefaultDecoders[] = {
+    { "_alure_int_wave", MakeUnique<WaveDecoderFactory>() },
 
 #ifdef HAVE_VORBISFILE
-    { "_alure_int_vorbis", MakeShared<VorbisFileDecoderFactory>() },
+    { "_alure_int_vorbis", MakeUnique<VorbisFileDecoderFactory>() },
 #endif
 #ifdef HAVE_LIBFLAC
-    { "_alure_int_flac", MakeShared<FlacDecoderFactory>() },
+    { "_alure_int_flac", MakeUnique<FlacDecoderFactory>() },
 #endif
 #ifdef HAVE_OPUSFILE
-    { "_alure_int_opus", MakeShared<OpusFileDecoderFactory>() },
+    { "_alure_int_opus", MakeUnique<OpusFileDecoderFactory>() },
 #endif
 #ifdef HAVE_LIBSNDFILE
-    { "_alure_int_sndfile", MakeShared<SndFileDecoderFactory>() },
+    { "_alure_int_sndfile", MakeUnique<SndFileDecoderFactory>() },
 #endif
 #ifdef HAVE_MPG123
-    { "_alure_int_mpg123", MakeShared<Mpg123DecoderFactory>() },
+    { "_alure_int_mpg123", MakeUnique<Mpg123DecoderFactory>() },
 #endif
 };
 
-static std::map<String,SharedPtr<DecoderFactory>> sDecoders;
+static std::map<String,UniquePtr<DecoderFactory>> sDecoders;
 
 
 template<typename T>
@@ -93,32 +93,21 @@ static SharedPtr<Decoder> GetDecoder(const String &name, SharedPtr<std::istream>
     return decoder;
 }
 
-void RegisterDecoder(const String &name, SharedPtr<DecoderFactory> factory)
+void RegisterDecoder(const String &name, UniquePtr<DecoderFactory> factory)
 {
-    auto iter = sDecoders.begin();
-    while(iter != sDecoders.end())
-    {
-        if(iter->first == name)
-            throw std::runtime_error("Decoder factory \""+name+"\" already registered");
-        if(iter->second.get() == factory.get())
-        {
-            std::stringstream sstr;
-            sstr<< "Decoder factory instance "<<factory<<" already registered";
-            throw std::runtime_error(sstr.str());
-        }
-        iter++;
-    }
-    sDecoders.insert(std::make_pair(name, factory));
+    while(sDecoders.find(name) != sDecoders.end())
+        throw std::runtime_error("Decoder factory \""+name+"\" already registered");
+    sDecoders.insert(std::make_pair(name, std::move(factory)));
 }
 
-SharedPtr<DecoderFactory> UnregisterDecoder(const String &name)
+UniquePtr<DecoderFactory> UnregisterDecoder(const String &name)
 {
     auto iter = sDecoders.find(name);
     if(iter != sDecoders.end())
     {
-        SharedPtr<DecoderFactory> factory = iter->second;
+        UniquePtr<DecoderFactory> factory = std::move(iter->second);
         sDecoders.erase(iter);
-        return factory;
+        return std::move(factory);
     }
     return nullptr;
 }
@@ -134,8 +123,8 @@ class DefaultFileIOFactory : public FileIOFactory {
 };
 static DefaultFileIOFactory sDefaultFileFactory;
 
-static SharedPtr<FileIOFactory> sFileFactory;
-SharedPtr<FileIOFactory> FileIOFactory::set(SharedPtr<FileIOFactory> factory)
+static UniquePtr<FileIOFactory> sFileFactory;
+UniquePtr<FileIOFactory> FileIOFactory::set(UniquePtr<FileIOFactory> factory)
 {
     std::swap(sFileFactory, factory);
     return factory;

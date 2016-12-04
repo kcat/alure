@@ -224,9 +224,8 @@ class DumbFactory : public alure::DecoderFactory {
 
 int main(int argc, char *argv[])
 {
-    // Set our custom factory for decoding modules (Alure keeps a reference to the factory
-    // instance).
-    alure::RegisterDecoder("dumb", alure::MakeShared<DumbFactory>());
+    // Set our custom factory for decoding modules.
+    alure::RegisterDecoder("dumb", alure::MakeUnique<DumbFactory>());
 
     alure::DeviceManager &devMgr = alure::DeviceManager::get();
 

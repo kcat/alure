@@ -78,6 +78,20 @@ constexpr inline SharedPtr<T> MakeShared(Args&&... args)
     return std::make_shared<T>(std::forward<Args>(args)...);
 }
 
+// A UniquePtr implementation, defaults to C++11's std::unique_ptr. If this is
+// changed, you must recompile the library.
+template<typename T>
+using UniquePtr = std::unique_ptr<T>;
+template<typename T, typename... Args>
+constexpr inline UniquePtr<T> MakeUnique(Args&&... args)
+{
+#if __cplusplus >= 201402L
+    return std::make_unique<T>(std::forward<Args>(args)...);
+#else
+    return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
+#endif
+}
+
 // A Vector implementation, defaults to C++'s std::vector. If this is changed,
 // you must recompile the library.
 template<typename T>
@@ -997,11 +1011,11 @@ public:
  * \param name A unique name identifying this decoder factory.
  * \param factory A DecoderFactory instance used to create Decoder instances.
  */
-ALURE_API void RegisterDecoder(const String &name, SharedPtr<DecoderFactory> factory);
+ALURE_API void RegisterDecoder(const String &name, UniquePtr<DecoderFactory> factory);
 
 /**
- * Unregisters a decoder factory by name. Alure gives a reference to the
- * instance back to the application and releases its own.
+ * Unregisters a decoder factory by name. Alure returns the instance back to
+ * the application.
  *
  * \param name The unique name identifying a previously-registered decoder
  * factory.
@@ -1009,7 +1023,7 @@ ALURE_API void RegisterDecoder(const String &name, SharedPtr<DecoderFactory> fac
  * \return The unregistered decoder factory instance, or 0 (nullptr) if a
  * decoder factory with the given name doesn't exist.
  */
-ALURE_API SharedPtr<DecoderFactory> UnregisterDecoder(const String &name);
+ALURE_API UniquePtr<DecoderFactory> UnregisterDecoder(const String &name);
 
 
 /**
@@ -1024,7 +1038,7 @@ public:
      * previous factory was set, it's returned to the application. Passing in a
      * NULL factory reverts to the default.
      */
-    static SharedPtr<FileIOFactory> set(SharedPtr<FileIOFactory> factory);
+    static UniquePtr<FileIOFactory> set(UniquePtr<FileIOFactory> factory);
 
     /**
      * Gets the current FileIOFactory instance being used by the audio
