@@ -46,7 +46,7 @@ static void LoadNothing(ALDevice*) { }
 static const struct {
     enum ALCExtension extension;
     const char name[32];
-    void (*loader)(ALDevice*);
+    void (&loader)(ALDevice*);
 } ALCExtensionList[] = {
     { EXT_thread_local_context, "ALC_EXT_thread_local_context", LoadNothing },
     { SOFT_device_pause, "ALC_SOFT_pause_device", LoadPauseDevice },
@@ -56,11 +56,10 @@ static const struct {
 
 void ALDevice::setupExts()
 {
-    for(size_t i = 0;i < countof(ALCExtensionList);i++)
+    for(const auto &entry : ALCExtensionList)
     {
-        mHasExt[ALCExtensionList[i].extension] = alcIsExtensionPresent(mDevice, ALCExtensionList[i].name);
-        if(mHasExt[ALCExtensionList[i].extension])
-            ALCExtensionList[i].loader(this);
+        mHasExt[entry.extension] = alcIsExtensionPresent(mDevice, entry.name);
+        if(mHasExt[entry.extension]) entry.loader(this);
     }
 }
 

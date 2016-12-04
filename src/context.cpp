@@ -43,13 +43,7 @@
 namespace alure
 {
 
-template<typename T, size_t N>
-static inline size_t countof(const T(&)[N])
-{ return N; }
-
-
-typedef std::pair<String,SharedPtr<DecoderFactory>> FactoryPair;
-static const FactoryPair sDefaultDecoders[] = {
+static const std::pair<String,SharedPtr<DecoderFactory>> sDefaultDecoders[] = {
     { "_alure_int_wave", MakeShared<WaveDecoderFactory>() },
 
 #ifdef HAVE_VORBISFILE
@@ -69,8 +63,8 @@ static const FactoryPair sDefaultDecoders[] = {
 #endif
 };
 
-typedef std::map<String,SharedPtr<DecoderFactory>> FactoryMap;
-static FactoryMap sDecoders;
+static std::map<String,SharedPtr<DecoderFactory>> sDecoders;
+
 
 template<typename T>
 static SharedPtr<Decoder> GetDecoder(const String &name, SharedPtr<std::istream> file, T start, T end)
@@ -101,7 +95,7 @@ static SharedPtr<Decoder> GetDecoder(const String &name, SharedPtr<std::istream>
 
 void RegisterDecoder(const String &name, SharedPtr<DecoderFactory> factory)
 {
-    FactoryMap::iterator iter = sDecoders.begin();
+    auto iter = sDecoders.begin();
     while(iter != sDecoders.end())
     {
         if(iter->first == name)
@@ -119,14 +113,14 @@ void RegisterDecoder(const String &name, SharedPtr<DecoderFactory> factory)
 
 SharedPtr<DecoderFactory> UnregisterDecoder(const String &name)
 {
-    FactoryMap::iterator iter = sDecoders.find(name);
+    auto iter = sDecoders.find(name);
     if(iter != sDecoders.end())
     {
         SharedPtr<DecoderFactory> factory = iter->second;
         sDecoders.erase(iter);
         return factory;
     }
-    return SharedPtr<DecoderFactory>(nullptr);
+    return nullptr;
 }
 
 
@@ -143,7 +137,7 @@ static DefaultFileIOFactory sDefaultFileFactory;
 static SharedPtr<FileIOFactory> sFileFactory;
 SharedPtr<FileIOFactory> FileIOFactory::set(SharedPtr<FileIOFactory> factory)
 {
-    sFileFactory.swap(factory);
+    std::swap(sFileFactory, factory);
     return factory;
 }
 
@@ -231,7 +225,7 @@ static void LoadSourceLatency(ALContext *ctx)
 static const struct {
     enum ALExtension extension;
     const char name[32];
-    void (*loader)(ALContext*);
+    void (&loader)(ALContext*);
 } ALExtensionList[] = {
     { EXT_EFX, "ALC_EXT_EFX", LoadEFX },
 
@@ -253,8 +247,8 @@ static const struct {
 };
 
 
-ALContext *ALContext::sCurrentCtx = 0;
-thread_local ALContext *ALContext::sThreadCurrentCtx;
+ALContext *ALContext::sCurrentCtx = nullptr;
+thread_local ALContext *ALContext::sThreadCurrentCtx = nullptr;
 
 void ALContext::MakeCurrent(ALContext *context)
 {
@@ -289,7 +283,7 @@ void ALContext::MakeThreadCurrent(ALContext *context)
 {
     if(!ALDeviceManager::SetThreadContext)
         throw std::runtime_error("Thread-local contexts unsupported");
-    if(ALDeviceManager::SetThreadContext(context ? context->getContext() : 0) == ALC_FALSE)
+    if(ALDeviceManager::SetThreadContext(context ? context->getContext() : nullptr) == ALC_FALSE)
         throw std::runtime_error("Call to alcSetThreadContext failed");
     if(context)
     {
@@ -304,16 +298,13 @@ void ALContext::MakeThreadCurrent(ALContext *context)
 void ALContext::setupExts()
 {
     ALCdevice *device = mDevice->getDevice();
-    for(size_t i = 0;i < countof(ALExtensionList);i++)
+    std::fill(std::begin(mHasExt), std::end(mHasExt), false);
+    for(const auto &entry : ALExtensionList)
     {
-        mHasExt[ALExtensionList[i].extension] = false;
-        if(strncmp(ALExtensionList[i].name, "ALC", 3) == 0)
-            mHasExt[ALExtensionList[i].extension] = alcIsExtensionPresent(device, ALExtensionList[i].name);
-        else
-            mHasExt[ALExtensionList[i].extension] = alIsExtensionPresent(ALExtensionList[i].name);
-
-        if(mHasExt[ALExtensionList[i].extension])
-            ALExtensionList[i].loader(this);
+        mHasExt[entry.extension] = (strncmp(entry.name, "ALC", 3) == 0) ?
+                                   alcIsExtensionPresent(device, entry.name) :
+                                   alIsExtensionPresent(entry.name);
+        if(mHasExt[entry.extension]) entry.loader(this);
     }
 }
 
@@ -329,7 +320,7 @@ void ALContext::backgroundProc()
     while(!mQuitThread)
     {
         {
-            std::unique_lock<std::mutex> srclock(mSourceStreamMutex);
+            std::lock_guard<std::mutex> srclock(mSourceStreamMutex);
             auto source = mStreamingSources.begin();
             while(source != mStreamingSources.end())
             {
@@ -338,7 +329,6 @@ void ALContext::backgroundProc()
                 else
                     ++source;
             }
-            srclock.unlock();
         }
 
         // Only do one pending buffer at a time. In case there's several large
@@ -380,7 +370,7 @@ void ALContext::backgroundProc()
     ctxlock.unlock();
 
     if(ALDeviceManager::SetThreadContext)
-        ALDeviceManager::SetThreadContext(0);
+        ALDeviceManager::SetThreadContext(nullptr);
 }
 
 
@@ -429,7 +419,7 @@ void ALContext::destroy()
     }
 
     alcDestroyContext(mContext);
-    mContext = 0;
+    mContext = nullptr;
     delete this;
 }
 
@@ -476,7 +466,7 @@ ALuint ALContext::getAsyncWakeInterval() const
 
 SharedPtr<Decoder> ALContext::createDecoder(const String &name)
 {
-    SharedPtr<std::istream> file(FileIOFactory::get().openFile(name));
+    auto file = FileIOFactory::get().openFile(name);
     if(file.get()) return GetDecoder(name, file);
 
     // Resource not found. Try to find a substitute.
@@ -498,7 +488,7 @@ Buffer *ALContext::getBuffer(const String &name)
 {
     CheckContext(this);
 
-    BufferMap::const_iterator iter = mBuffers.find(name);
+    auto iter = mBuffers.find(name);
     if(iter != mBuffers.end())
     {
         // Ensure the buffer is loaded before returning. getBuffer guarantees
@@ -509,7 +499,7 @@ Buffer *ALContext::getBuffer(const String &name)
         return buffer;
     }
 
-    SharedPtr<Decoder> decoder(createDecoder(name));
+    auto decoder = createDecoder(name);
 
     ALuint srate = decoder->getFrequency();
     ChannelConfig chans = decoder->getChannelConfig();
@@ -563,10 +553,10 @@ Buffer *ALContext::getBufferAsync(const String &name)
 {
     CheckContext(this);
 
-    BufferMap::const_iterator iter = mBuffers.find(name);
+    auto iter = mBuffers.find(name);
     if(iter != mBuffers.end()) return iter->second;
 
-    SharedPtr<Decoder> decoder(createDecoder(name));
+    auto decoder = createDecoder(name);
 
     ALuint srate = decoder->getFrequency();
     ChannelConfig chans = decoder->getChannelConfig();
@@ -604,7 +594,7 @@ Buffer *ALContext::getBufferAsync(const String &name)
 void ALContext::removeBuffer(const String &name)
 {
     CheckContext(this);
-    BufferMap::iterator iter = mBuffers.find(name);
+    auto iter = mBuffers.find(name);
     if(iter != mBuffers.end())
     {
         ALBuffer *albuf = iter->second;
@@ -616,7 +606,7 @@ void ALContext::removeBuffer(const String &name)
 void ALContext::removeBuffer(Buffer *buffer)
 {
     CheckContext(this);
-    BufferMap::iterator iter = mBuffers.begin();
+    auto iter = mBuffers.begin();
     while(iter != mBuffers.end())
     {
         ALBuffer *albuf = iter->second;
@@ -643,7 +633,7 @@ ALuint ALContext::getSourceId(ALuint maxprio)
         if(alGetError() == AL_NO_ERROR)
             return id;
 
-        ALSource *lowest = 0;
+        ALSource *lowest = nullptr;
         for(ALSource *src : mUsedSources)
         {
             if(src->getId() != 0 && (!lowest || src->getPriority() < lowest->getPriority()))
@@ -669,7 +659,7 @@ Source *ALContext::getSource()
 {
     CheckContext(this);
 
-    ALSource *source = 0;
+    ALSource *source;
     if(mFreeSources.empty())
     {
         mAllSources.emplace_back(this);
@@ -806,7 +796,7 @@ void ALContext::setDistanceModel(DistanceModel model)
 void ALContext::update()
 {
     CheckContext(this);
-    std::for_each(mUsedSources.begin(), mUsedSources.end(), std::mem_fun(&ALSource::updateNoCtxCheck));
+    std::for_each(mUsedSources.begin(), mUsedSources.end(), std::mem_fn(&ALSource::updateNoCtxCheck));
     if(!mWakeInterval.load())
     {
         // For performance reasons, don't wait for the thread's mutex. This
@@ -890,7 +880,7 @@ void ALContext::setMetersPerUnit(ALfloat m_u)
 
 void Context::MakeCurrent(Context *context)
 {
-    ALContext *ctx = 0;
+    ALContext *ctx = nullptr;
     if(context)
     {
         ctx = cast<ALContext*>(context);
@@ -906,7 +896,7 @@ Context *Context::GetCurrent()
 
 void Context::MakeThreadCurrent(Context *context)
 {
-    ALContext *ctx = 0;
+    ALContext *ctx = nullptr;
     if(context)
     {
         ctx = cast<ALContext*>(context);

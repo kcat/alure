@@ -57,11 +57,15 @@ class Batcher {
 public:
     Batcher(ALCcontext *context) : mContext(context) { }
     Batcher(Batcher&& rhs) : mContext(rhs.mContext) { rhs.mContext = nullptr; }
+    Batcher(const Batcher&) = delete;
     ~Batcher()
     {
         if(mContext)
             alcProcessContext(mContext);
     }
+
+    Batcher& operator=(Batcher&&) = delete;
+    Batcher& operator=(const Batcher&) = delete;
 };
 
 typedef std::unique_ptr<ll_ringbuffer_t,decltype(*ll_ringbuffer_free)> RingBufferPtr;
@@ -86,11 +90,9 @@ private:
     std::queue<ALSource*> mFreeSources;
     Vector<ALSource*> mUsedSources;
 
-    typedef std::map<String,ALBuffer*> BufferMap;
-    BufferMap mBuffers;
+    std::map<String,ALBuffer*> mBuffers;
 
-    typedef Vector<ALSourceGroup*> SourceGroupList;
-    SourceGroupList mSourceGroups;
+    Vector<ALSourceGroup*> mSourceGroups;
 
     RefCount mRefs;
 
@@ -98,7 +100,7 @@ private:
 
     bool mHasExt[AL_EXTENSION_MAX];
 
-    typedef struct PendingBuffer {
+    struct PendingBuffer {
         String mName;
         ALBuffer *mBuffer;
         SharedPtr<Decoder> mDecoder;
@@ -106,7 +108,7 @@ private:
         ALuint mFrames;
 
         ~PendingBuffer() { }
-    } PendingBuffer;
+    };
     RingBufferPtr mPendingBuffers;
 
     Vector<ALSource*> mStreamingSources;
