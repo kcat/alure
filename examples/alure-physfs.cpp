@@ -21,10 +21,9 @@ namespace
 
 // Inherit from std::streambuf to handle custom I/O (PhysFS for this example)
 class StreamBuf : public std::streambuf {
-    static const size_t sBufferSize = 4096;
-
+    using BufferArrayT = std::array<char,4096>;
+    BufferArrayT mBuffer;
     PHYSFS_File *mFile;
-    char mBuffer[sBufferSize];
 
     virtual int_type underflow()
     {
@@ -32,8 +31,10 @@ class StreamBuf : public std::streambuf {
         {
             // Read in the next chunk of data, and set the read pointers on
             // success
-            PHYSFS_sint64 got = PHYSFS_read(mFile, mBuffer, sizeof(mBuffer[0]), sBufferSize);
-            if(got != -1) setg(mBuffer, mBuffer, mBuffer+got);
+            PHYSFS_sint64 got = PHYSFS_read(mFile,
+                mBuffer.data(), sizeof(BufferArrayT::value_type), mBuffer.size()
+            );
+            if(got != -1) setg(mBuffer.data(), mBuffer.data(), mBuffer.data()+got);
         }
         if(gptr() == egptr())
             return traits_type::eof();
@@ -152,7 +153,7 @@ public:
 
     virtual alure::SharedPtr<std::istream> openFile(const alure::String &name)
     {
-        alure::SharedPtr<Stream> stream(new Stream(name.c_str()));
+        auto stream = alure::MakeShared<Stream>(name.c_str());
         if(stream->fail()) stream.reset();
         return stream;
     }
@@ -188,7 +189,7 @@ int main(int argc, char *argv[])
     // Set our custom factory for file IO (Alure holds a reference to the factory
     // instance). From now on, all filenames given to Alure will be used with
     // our custom factory.
-    alure::FileIOFactory::set(alure::SharedPtr<alure::FileIOFactory>(new FileFactory(argv[0])));
+    alure::FileIOFactory::set(alure::MakeShared<FileFactory>(argv[0]));
 
     alure::DeviceManager &devMgr = alure::DeviceManager::get();
 

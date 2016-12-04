@@ -211,19 +211,19 @@ SharedPtr<Decoder> WaveDecoderFactory::createDecoder(SharedPtr<std::istream> fil
 
     char tag[4]{};
     if(!file->read(tag, 4) || file->gcount() != 4 || memcmp(tag, "RIFF", 4) != 0)
-        return SharedPtr<Decoder>(nullptr);
+        return nullptr;
     ALuint totalsize = read_le32(*file) & ~1u;
     if(!file->read(tag, 4) || file->gcount() != 4 || memcmp(tag, "WAVE", 4) != 0)
-        return SharedPtr<Decoder>(nullptr);
+        return nullptr;
 
     while(file->good() && !file->eof() && totalsize > 8)
     {
         if(!file->read(tag, 4) || file->gcount() != 4)
-            return SharedPtr<Decoder>(nullptr);
+            return nullptr;
         ALuint size = read_le32(*file);
-        if(size < 2)
-            return SharedPtr<Decoder>(nullptr);
+        if(size < 2) return nullptr;
         totalsize -= 8;
+
         size = std::min((size+1) & ~1u, totalsize);
         totalsize -= size;
 
@@ -427,11 +427,11 @@ SharedPtr<Decoder> WaveDecoderFactory::createDecoder(SharedPtr<std::istream> fil
             {
                 /* Loop points are byte offsets relative to the data start.
                  * Convert to sample frame offsets. */
-                return SharedPtr<Decoder>(new WaveDecoder(file,
+                return MakeShared<WaveDecoder>(file,
                     channels, type, frequency, framesize, start, end,
                     loop_pts[0] / blockalign * framealign,
                     loop_pts[1] / blockalign * framealign
-                ));
+                );
             }
         }
 
@@ -440,7 +440,7 @@ SharedPtr<Decoder> WaveDecoderFactory::createDecoder(SharedPtr<std::istream> fil
             file->ignore(size);
     }
 
-    return SharedPtr<Decoder>(nullptr);
+    return nullptr;
 }
 
 }

@@ -148,7 +148,7 @@ Mpg123DecoderFactory::~Mpg123DecoderFactory()
 SharedPtr<Decoder> Mpg123DecoderFactory::createDecoder(SharedPtr<std::istream> file)
 {
     if(!mIsInited)
-        return SharedPtr<Decoder>(nullptr);
+        return nullptr;
 
     mpg123_handle *mpg123 = mpg123_new(0, 0);
     if(mpg123)
@@ -166,7 +166,7 @@ SharedPtr<Decoder> Mpg123DecoderFactory::createDecoder(SharedPtr<std::istream> f
                    mpg123_format(mpg123, srate, channels, MPG123_ENC_SIGNED_16) == MPG123_OK)
                 {
                     // All OK
-                    return SharedPtr<Decoder>(new Mpg123Decoder(file, mpg123, channels, srate));
+                    return MakeShared<Mpg123Decoder>(file, mpg123, channels, srate);
                 }
             }
             mpg123_close(mpg123);
@@ -174,7 +174,7 @@ SharedPtr<Decoder> Mpg123DecoderFactory::createDecoder(SharedPtr<std::istream> f
         mpg123_delete(mpg123);
     }
 
-    return SharedPtr<Decoder>(nullptr);
+    return nullptr;
 }
 
 }

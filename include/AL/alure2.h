@@ -72,6 +72,11 @@ class MessageHandler;
 // changed, you must recompile the library.
 template<typename T>
 using SharedPtr = std::shared_ptr<T>;
+template<typename T, typename... Args>
+constexpr inline SharedPtr<T> MakeShared(Args&&... args)
+{
+    return std::make_shared<T>(std::forward<Args>(args)...);
+}
 
 // A Vector implementation, defaults to C++'s std::vector. If this is changed,
 // you must recompile the library.
@@ -176,20 +181,20 @@ static_assert(sizeof(Vector3) == sizeof(ALfloat[3]), "Bad Vector3 size");
  * Creates a version number value using the specified \param major and
  * \param minor values.
  */
-inline ALCuint MakeVersion(ALCushort major, ALCushort minor)
+constexpr inline ALCuint MakeVersion(ALCushort major, ALCushort minor)
 { return (major<<16) | minor; }
 
 /**
  * Retrieves the major version of a version number value created by
  * \ref MakeVersion.
  */
-inline ALCuint MajorVersion(ALCuint version)
+constexpr inline ALCuint MajorVersion(ALCuint version)
 { return version>>16; }
 /**
  * Retrieves the minor version of a version number value created by
  * \ref MakeVersion.
  */
-inline ALCuint MinorVersion(ALCuint version)
+constexpr inline ALCuint MinorVersion(ALCuint version)
 { return version&0xffff; }
 
 

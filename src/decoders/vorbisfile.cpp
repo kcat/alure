@@ -197,13 +197,13 @@ SharedPtr<Decoder> VorbisFileDecoderFactory::createDecoder(SharedPtr<std::istrea
     vorbis_info *vorbisinfo = nullptr;
     std::unique_ptr<OggVorbis_File> oggfile(new OggVorbis_File());
     if(ov_open_callbacks(file.get(), oggfile.get(), NULL, 0, streamIO) != 0)
-        return SharedPtr<Decoder>(nullptr);
+        return nullptr;
 
     vorbisinfo = ov_info(oggfile.get(), -1);
     if(!vorbisinfo)
     {
         ov_clear(oggfile.get());
-        return SharedPtr<Decoder>(nullptr);
+        return nullptr;
     }
 
     ChannelConfig channels = ChannelConfig::Mono;
@@ -222,12 +222,12 @@ SharedPtr<Decoder> VorbisFileDecoderFactory::createDecoder(SharedPtr<std::istrea
     else
     {
         ov_clear(oggfile.get());
-        return SharedPtr<Decoder>(nullptr);
+        return nullptr;
     }
 
-    return SharedPtr<Decoder>(new VorbisFileDecoder(
+    return MakeShared<VorbisFileDecoder>(
         file, std::move(oggfile), vorbisinfo, channels
-    ));
+    );
 }
 
 }

@@ -50,22 +50,22 @@ static inline size_t countof(const T(&)[N])
 
 typedef std::pair<String,SharedPtr<DecoderFactory>> FactoryPair;
 static const FactoryPair sDefaultDecoders[] = {
-    { "_alure_int_wave", SharedPtr<DecoderFactory>(new WaveDecoderFactory) },
+    { "_alure_int_wave", MakeShared<WaveDecoderFactory>() },
 
 #ifdef HAVE_VORBISFILE
-    { "_alure_int_vorbis", SharedPtr<DecoderFactory>(new VorbisFileDecoderFactory) },
+    { "_alure_int_vorbis", MakeShared<VorbisFileDecoderFactory>() },
 #endif
 #ifdef HAVE_LIBFLAC
-    { "_alure_int_flac", SharedPtr<DecoderFactory>(new FlacDecoderFactory) },
+    { "_alure_int_flac", MakeShared<FlacDecoderFactory>() },
 #endif
 #ifdef HAVE_OPUSFILE
-    { "_alure_int_opus", SharedPtr<DecoderFactory>(new OpusFileDecoderFactory) },
+    { "_alure_int_opus", MakeShared<OpusFileDecoderFactory>() },
 #endif
 #ifdef HAVE_LIBSNDFILE
-    { "_alure_int_sndfile", SharedPtr<DecoderFactory>(new SndFileDecoderFactory) },
+    { "_alure_int_sndfile", MakeShared<SndFileDecoderFactory>() },
 #endif
 #ifdef HAVE_MPG123
-    { "_alure_int_mpg123", SharedPtr<DecoderFactory>(new Mpg123DecoderFactory) },
+    { "_alure_int_mpg123", MakeShared<Mpg123DecoderFactory>() },
 #endif
 };
 
@@ -78,7 +78,7 @@ static SharedPtr<Decoder> GetDecoder(const String &name, SharedPtr<std::istream>
     while(start != end)
     {
         DecoderFactory *factory = start->second.get();
-        SharedPtr<Decoder> decoder = factory->createDecoder(file);
+        auto decoder = factory->createDecoder(file);
         if(decoder) return decoder;
 
         file->clear();
@@ -88,12 +88,12 @@ static SharedPtr<Decoder> GetDecoder(const String &name, SharedPtr<std::istream>
         ++start;
     }
 
-    return SharedPtr<Decoder>(nullptr);
+    return nullptr;
 }
 
 static SharedPtr<Decoder> GetDecoder(const String &name, SharedPtr<std::istream> file)
 {
-    SharedPtr<Decoder> decoder = GetDecoder(name, file, sDecoders.begin(), sDecoders.end());
+    auto decoder = GetDecoder(name, file, sDecoders.begin(), sDecoders.end());
     if(!decoder) decoder = GetDecoder(name, file, std::begin(sDefaultDecoders), std::end(sDefaultDecoders));
     if(!decoder) throw std::runtime_error("No decoder for "+name);
     return decoder;
@@ -133,7 +133,7 @@ SharedPtr<DecoderFactory> UnregisterDecoder(const String &name)
 class DefaultFileIOFactory : public FileIOFactory {
     virtual SharedPtr<std::istream> openFile(const String &name)
     {
-        SharedPtr<std::ifstream> file(new std::ifstream(name.c_str(), std::ios::binary));
+        auto file = MakeShared<std::ifstream>(name.c_str(), std::ios::binary);
         if(!file->is_open()) file.reset();
         return file;
     }

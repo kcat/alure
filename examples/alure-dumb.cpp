@@ -145,12 +145,11 @@ public:
         ALuint ret = 0;
 
         mSampleBuf.resize(count*2);
-        sample_t *samples[] = {
-            mSampleBuf.data()
-        };
+        std::array<sample_t*,1> samples{{mSampleBuf.data()}};
 
         dumb_silence(samples[0], mSampleBuf.size());
-        ret = duh_sigrenderer_generate_samples(mRenderer, 1.0f, 65536.0f/mFrequency, count, samples);
+        ret = duh_sigrenderer_generate_samples(mRenderer, 1.0f, 65536.0f/mFrequency, count,
+                                               samples.data());
         for(ALuint i = 0;i < ret*2;i++)
         {
             sample_t smp = samples[0][i]>>8;
@@ -168,12 +167,9 @@ public:
 class DumbFactory : public alure::DecoderFactory {
     virtual alure::SharedPtr<alure::Decoder> createDecoder(alure::SharedPtr<std::istream> file)
     {
-        static DUH* (*funcs[])(DUMBFILE*) = {
-            dumb_read_it,
-            dumb_read_xm,
-            dumb_read_s3m,
-            nullptr
-        };
+        static const std::array<DUH*(*)(DUMBFILE*),3> init_funcs{{
+            dumb_read_it, dumb_read_xm, dumb_read_s3m
+        }};
 
         std::unique_ptr<DUMBFILE_SYSTEM> dfs(new DUMBFILE_SYSTEM);
         dfs->open = nullptr;
@@ -191,14 +187,14 @@ class DumbFactory : public alure::DecoderFactory {
         DUH_SIGRENDERER *renderer;
         DUH *duh;
 
-        for(size_t i = 0;funcs[i];i++)
+        for(auto init : init_funcs)
         {
-            if((duh=funcs[i](dfile)) != nullptr)
+            if((duh=init(dfile)) != nullptr)
             {
                 if((renderer=duh_start_sigrenderer(duh, 0, 2, 0)) != nullptr)
-                    return alure::SharedPtr<alure::Decoder>(new DumbDecoder(
+                    return alure::MakeShared<DumbDecoder>(
                         file, std::move(dfs), dfile, duh, renderer, freq
-                    ));
+                    );
 
                 unload_duh(duh);
                 duh = nullptr;
@@ -210,9 +206,9 @@ class DumbFactory : public alure::DecoderFactory {
         if((duh=dumb_read_mod(dfile, 1)) != nullptr)
         {
             if((renderer=duh_start_sigrenderer(duh, 0, 2, 0)) != nullptr)
-                return alure::SharedPtr<alure::Decoder>(new DumbDecoder(
+                return alure::MakeShared<DumbDecoder>(
                     file, std::move(dfs), dfile, duh, renderer, freq
-                ));
+                );
 
             unload_duh(duh);
             duh = nullptr;
@@ -230,7 +226,7 @@ int main(int argc, char *argv[])
 {
     // Set our custom factory for decoding modules (Alure keeps a reference to the factory
     // instance).
-    alure::RegisterDecoder("dumb", alure::SharedPtr<alure::DecoderFactory>(new DumbFactory));
+    alure::RegisterDecoder("dumb", alure::MakeShared<DumbFactory>());
 
     alure::DeviceManager &devMgr = alure::DeviceManager::get();
 

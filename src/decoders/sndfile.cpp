@@ -150,7 +150,7 @@ SharedPtr<Decoder> SndFileDecoderFactory::createDecoder(SharedPtr<std::istream> 
     };
     SF_INFO sndinfo;
     SNDFILE *sndfile = sf_open_virtual(&vio, SFM_READ, &sndinfo, file.get());
-    if(!sndfile) return SharedPtr<Decoder>(nullptr);
+    if(!sndfile) return nullptr;
 
     ChannelConfig sconfig;
     Vector<int> chanmap(sndinfo.channels);
@@ -237,7 +237,7 @@ SharedPtr<Decoder> SndFileDecoderFactory::createDecoder(SharedPtr<std::istream> 
             break;
     }
 
-    return SharedPtr<Decoder>(new SndFileDecoder(file, sndfile, sndinfo, sconfig, stype));
+    return MakeShared<SndFileDecoder>(file, sndfile, sndinfo, sconfig, stype);
 }
 
 }

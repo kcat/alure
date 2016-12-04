@@ -191,7 +191,7 @@ SharedPtr<Decoder> OpusFileDecoderFactory::createDecoder(SharedPtr<std::istream>
     };
 
     OggOpusFile *oggfile = op_open_callbacks(file.get(), &streamIO, nullptr, 0, nullptr);
-    if(!oggfile) return SharedPtr<Decoder>(nullptr);
+    if(!oggfile) return nullptr;
 
     int num_chans = op_head(oggfile, -1)->channel_count;
     ChannelConfig channels = ChannelConfig::Mono;
@@ -210,10 +210,10 @@ SharedPtr<Decoder> OpusFileDecoderFactory::createDecoder(SharedPtr<std::istream>
     else
     {
         op_free(oggfile);
-        return SharedPtr<Decoder>(nullptr);
+        return nullptr;
     }
 
-    return SharedPtr<Decoder>(new OpusFileDecoder(file, oggfile, channels));
+    return MakeShared<OpusFileDecoder>(file, oggfile, channels);
 }
 
 }

@@ -288,7 +288,7 @@ ALuint FlacDecoder::read(ALvoid *ptr, ALuint count)
 
 SharedPtr<Decoder> FlacDecoderFactory::createDecoder(SharedPtr<std::istream> file)
 {
-    SharedPtr<FlacDecoder> decoder(new FlacDecoder(file));
+    SharedPtr<FlacDecoder> decoder{MakeShared<FlacDecoder>(file)};
     if(!decoder->open()) decoder.reset();
     return decoder;
 }
