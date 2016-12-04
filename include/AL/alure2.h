@@ -96,82 +96,89 @@ struct FilterParams {
 
 
 class ALURE_API Vector3 {
-    ALfloat mValue[3];
+    std::array<ALfloat,3> mValue;
 
 public:
-    Vector3() { }
-    Vector3(const Vector3 &rhs) : mValue{rhs.mValue[0], rhs.mValue[1], rhs.mValue[2]}
+    constexpr Vector3() noexcept
+      : mValue{{0.0f, 0.0f, 0.0f}}
     { }
-    Vector3(ALfloat val) : mValue{val, val, val}
+    constexpr Vector3(const Vector3 &rhs) noexcept
+      : mValue{{rhs.mValue[0], rhs.mValue[1], rhs.mValue[2]}}
     { }
-    Vector3(ALfloat x, ALfloat y, ALfloat z) : mValue{x, y, z}
+    constexpr Vector3(ALfloat val) noexcept
+      : mValue{{val, val, val}}
     { }
-    Vector3(const ALfloat *vec) : mValue{vec[0], vec[1], vec[2]}
+    constexpr Vector3(ALfloat x, ALfloat y, ALfloat z) noexcept
+      : mValue{{x, y, z}}
+    { }
+    Vector3(const ALfloat *vec) noexcept
+      : mValue{{vec[0], vec[1], vec[2]}}
     { }
 
-    const ALfloat *getPtr() const
-    { return mValue; }
+    const ALfloat *getPtr() const noexcept
+    { return mValue.data(); }
 
-    ALfloat& operator[](size_t i)
+    ALfloat& operator[](size_t i) noexcept
     { return mValue[i]; }
-    const ALfloat& operator[](size_t i) const
+    constexpr const ALfloat& operator[](size_t i) const noexcept
     { return mValue[i]; }
 
-#define ALURE_DECL_OP(op)                           \
-    Vector3 operator op(const Vector3 &rhs) const   \
-    {                                               \
-        return Vector3(mValue[0] op rhs.mValue[0],  \
-                       mValue[1] op rhs.mValue[1],  \
-                       mValue[2] op rhs.mValue[2]); \
+#define ALURE_DECL_OP(op)                                            \
+    constexpr Vector3 operator op(const Vector3 &rhs) const noexcept \
+    {                                                                \
+        return Vector3(mValue[0] op rhs.mValue[0],                   \
+                       mValue[1] op rhs.mValue[1],                   \
+                       mValue[2] op rhs.mValue[2]);                  \
     }
     ALURE_DECL_OP(+)
     ALURE_DECL_OP(-)
     ALURE_DECL_OP(*)
     ALURE_DECL_OP(/)
 #undef ALURE_DECL_OP
-#define ALURE_DECL_OP(op)                    \
-    Vector3& operator op(const Vector3 &rhs) \
-    {                                        \
-        mValue[0] op rhs.mValue[0];          \
-        mValue[1] op rhs.mValue[1];          \
-        mValue[2] op rhs.mValue[2];          \
-        return *this;                        \
+#define ALURE_DECL_OP(op)                             \
+    Vector3& operator op(const Vector3 &rhs) noexcept \
+    {                                                 \
+        mValue[0] op rhs.mValue[0];                   \
+        mValue[1] op rhs.mValue[1];                   \
+        mValue[2] op rhs.mValue[2];                   \
+        return *this;                                 \
     }
     ALURE_DECL_OP(+=)
     ALURE_DECL_OP(-=)
     ALURE_DECL_OP(*=)
     ALURE_DECL_OP(/=)
+
 #undef ALURE_DECL_OP
-#define ALURE_DECL_OP(op)                    \
-    Vector3 operator op(ALfloat scale) const \
-    {                                        \
-        return Vector3(mValue[0] op scale,   \
-                       mValue[1] op scale,   \
-                       mValue[2] op scale);  \
+#define ALURE_DECL_OP(op)                                       \
+    constexpr Vector3 operator op(ALfloat scale) const noexcept \
+    {                                                           \
+        return Vector3(mValue[0] op scale,                      \
+                       mValue[1] op scale,                      \
+                       mValue[2] op scale);                     \
     }
     ALURE_DECL_OP(*)
     ALURE_DECL_OP(/)
 #undef ALURE_DECL_OP
-#define ALURE_DECL_OP(op)               \
-    Vector3& operator op(ALfloat scale) \
-    {                                   \
-        mValue[0] op scale;             \
-        mValue[1] op scale;             \
-        mValue[2] op scale;             \
-        return *this;                   \
+#define ALURE_DECL_OP(op)                        \
+    Vector3& operator op(ALfloat scale) noexcept \
+    {                                            \
+        mValue[0] op scale;                      \
+        mValue[1] op scale;                      \
+        mValue[2] op scale;                      \
+        return *this;                            \
     }
     ALURE_DECL_OP(*=)
     ALURE_DECL_OP(/=)
 #undef ALURE_DECL_OP
 
-    ALfloat getLengthSquared() const
+    constexpr ALfloat getLengthSquared() const noexcept
     { return mValue[0]*mValue[0] + mValue[1]*mValue[1] + mValue[2]*mValue[2]; }
-    ALfloat getLength() const
-    { return sqrtf(getLengthSquared()); }
+    constexpr ALfloat getLength() const noexcept
+    { return std::sqrt(getLengthSquared()); }
 
-    ALfloat getDistanceSquared(const Vector3 &pos) const
+    constexpr ALfloat getDistanceSquared(const Vector3 &pos) const noexcept
     { return (pos - *this).getLengthSquared(); }
-    ALfloat getDistance(const Vector3 &pos) const
+    constexpr ALfloat getDistance(const Vector3 &pos) const noexcept
     { return (pos - *this).getLength(); }
 };
 static_assert(sizeof(Vector3) == sizeof(ALfloat[3]), "Bad Vector3 size");
