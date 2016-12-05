@@ -31,7 +31,7 @@ class ALBufferStream {
     ALuint mFrameSize;
 
     Vector<ALbyte> mData;
-    ALuint mSilence;
+    ALbyte mSilence;
 
     Vector<ALuint> mBufferIds;
     ALuint mCurrentIdx;
@@ -138,9 +138,8 @@ public:
         if(frames < mUpdateLen)
         {
             mDone = true;
-            if(frames == 0)
-                return false;
-            memset(&mData[frames*mFrameSize], mSilence, (mUpdateLen-frames)*mFrameSize);
+            if(frames == 0) return false;
+            std::fill(mData.begin() + frames*mFrameSize, mData.end(), mSilence);
         }
 
         alBufferData(mBufferIds[mCurrentIdx], mFormat, &mData[0], mData.size(), mFrequency);

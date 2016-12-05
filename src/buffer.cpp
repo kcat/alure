@@ -44,10 +44,10 @@ void ALBuffer::load(ALuint frames, ALenum format, SharedPtr<Decoder> decoder, co
     }
     else
     {
-        int silence = 0;
+        ALbyte silence = 0;
         if(mSampleType == SampleType::UInt8) silence = 0x80;
         else if(mSampleType == SampleType::Mulaw) silence = 0x7f;
-        memset(data.data(), silence, data.size());
+        std::fill(data.begin(), data.end(), silence);
     }
 
     std::pair<uint64_t,uint64_t> loop_pts = decoder->getLoopPoints();
