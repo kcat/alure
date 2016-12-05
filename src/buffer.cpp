@@ -59,8 +59,9 @@ void ALBuffer::load(ALuint frames, ALenum format, SharedPtr<Decoder> decoder, co
         loop_pts.first = std::min<uint64_t>(loop_pts.first, loop_pts.second-1);
     }
 
-    SharedPtr<MessageHandler> msg = ctx->getMessageHandler();
-    if(msg.get()) msg->bufferLoading(name, mChannelConfig, mSampleType, mFrequency, data);
+    ctx->send(&MessageHandler::bufferLoading,
+        name, mChannelConfig, mSampleType, mFrequency, data
+    );
 
     alBufferData(mId, format, data.data(), data.size(), mFrequency);
     if(ctx->hasExtension(SOFT_loop_points))

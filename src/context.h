@@ -199,6 +199,10 @@ public:
     std::unique_lock<std::mutex> getSourceStreamLock()
     { return std::unique_lock<std::mutex>(mSourceStreamMutex); }
 
+    template<typename R, typename... Args>
+    void send(R MessageHandler::* func, Args&&... args)
+    { if(mMessage.get()) (mMessage.get()->*func)(std::forward<Args>(args)...); }
+
     Device *getDevice() override final;
 
     void destroy() override final;

@@ -421,8 +421,7 @@ void ALSource::makeStopped()
 
     mPaused = false;
 
-    SharedPtr<MessageHandler> msg = mContext->getMessageHandler();
-    if(msg.get()) msg->sourceStopped(this, true);
+    mContext->send(&MessageHandler::sourceStopped, this, true);
 }
 
 void ALSource::stop()
@@ -563,8 +562,7 @@ void ALSource::updateNoCtxCheck()
         if(!mIsAsync)
         {
             stop();
-            SharedPtr<MessageHandler> msg = mContext->getMessageHandler();
-            if(msg.get()) msg->sourceStopped(this, false);
+            mContext->send(&MessageHandler::sourceStopped, this, false);
         }
     }
     else
@@ -574,8 +572,7 @@ void ALSource::updateNoCtxCheck()
         if(state != AL_PLAYING && state != AL_PAUSED)
         {
             stop();
-            SharedPtr<MessageHandler> msg = mContext->getMessageHandler();
-            if(msg.get()) msg->sourceStopped(this, false);
+            mContext->send(&MessageHandler::sourceStopped, this, false);
         }
     }
 }
