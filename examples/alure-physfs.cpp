@@ -21,7 +21,7 @@ namespace
 
 // Inherit from std::streambuf to handle custom I/O (PhysFS for this example)
 class StreamBuf : public std::streambuf {
-    using BufferArrayT = std::array<char,4096>;
+    using BufferArrayT = std::array<traits_type::char_type,4096>;
     BufferArrayT mBuffer;
     PHYSFS_File *mFile;
 
@@ -38,7 +38,7 @@ class StreamBuf : public std::streambuf {
         }
         if(gptr() == egptr())
             return traits_type::eof();
-        return (*gptr())&0xFF;
+        return traits_type::to_int_type(*gptr());
     }
 
     virtual pos_type seekoff(off_type offset, std::ios_base::seekdir whence, std::ios_base::openmode mode)
