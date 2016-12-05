@@ -594,19 +594,7 @@ void ALContext::removeBuffer(const String &name)
 
 void ALContext::removeBuffer(Buffer *buffer)
 {
-    CheckContext(this);
-    auto iter = mBuffers.begin();
-    while(iter != mBuffers.end())
-    {
-        ALBuffer *albuf = iter->second;
-        if(albuf == buffer)
-        {
-            albuf->cleanup();
-            mBuffers.erase(iter);
-            break;
-        }
-        ++iter;
-    }
+    removeBuffer(buffer->getName());
 }
 
 
