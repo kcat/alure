@@ -486,15 +486,24 @@ enum class SampleType {
 ALURE_API const char *GetSampleTypeName(SampleType type);
 
 enum class ChannelConfig {
+    /** 1-channel mono sound. */
     Mono,
+    /** 2-channel stereo sound. */
     Stereo,
+    /** 2-channel rear sound (back-left and back-right). */
     Rear,
+    /** 4-channel surround sound. */
     Quad,
+    /** 5.1 surround sound. */
     X51,
+    /** 6.1 surround sound. */
     X61,
+    /** 7.1 surround sound. */
     X71,
-    BFmt_WXY,
-    BFmt_WXYZ
+    /** 3-channel B-Format, using FuMa channel ordering and scaling. */
+    BFormat2D,
+    /** 4-channel B-Format, using FuMa channel ordering and scaling. */
+    BFormat3D
 };
 ALURE_API const char *GetChannelConfigName(ChannelConfig cfg);
 

@@ -191,10 +191,10 @@ SharedPtr<Decoder> SndFileDecoderFactory::createDecoder(SharedPtr<std::istream> 
             sconfig = ChannelConfig::X71;
         else if(matches(chanmap, {SF_CHANNEL_MAP_AMBISONIC_B_W, SF_CHANNEL_MAP_AMBISONIC_B_X,
                                   SF_CHANNEL_MAP_AMBISONIC_B_Y}))
-            sconfig = ChannelConfig::BFmt_WXY;
+            sconfig = ChannelConfig::BFormat2D;
         else if(matches(chanmap, {SF_CHANNEL_MAP_AMBISONIC_B_W, SF_CHANNEL_MAP_AMBISONIC_B_X,
                                   SF_CHANNEL_MAP_AMBISONIC_B_Y, SF_CHANNEL_MAP_AMBISONIC_B_Z}))
-            sconfig = ChannelConfig::BFmt_WXYZ;
+            sconfig = ChannelConfig::BFormat3D;
         else
         {
             sf_close(sndfile);
@@ -204,9 +204,9 @@ SharedPtr<Decoder> SndFileDecoderFactory::createDecoder(SharedPtr<std::istream> 
     else if(sf_command(sndfile, SFC_WAVEX_GET_AMBISONIC, 0, 0) == SF_AMBISONIC_B_FORMAT)
     {
         if(sndinfo.channels == 3)
-            sconfig = ChannelConfig::BFmt_WXY;
+            sconfig = ChannelConfig::BFormat2D;
         else if(sndinfo.channels == 4)
-            sconfig = ChannelConfig::BFmt_WXYZ;
+            sconfig = ChannelConfig::BFormat3D;
         else
         {
             sf_close(sndfile);

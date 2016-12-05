@@ -326,9 +326,9 @@ SharedPtr<Decoder> WaveDecoderFactory::createDecoder(SharedPtr<std::istream> fil
                         goto next_chunk;
 
                     if(chancount == 3)
-                        channels = ChannelConfig::BFmt_WXY;
+                        channels = ChannelConfig::BFormat2D;
                     else if(chancount == 4)
-                        channels = ChannelConfig::BFmt_WXYZ;
+                        channels = ChannelConfig::BFormat3D;
                     else
                         goto next_chunk;
                 }

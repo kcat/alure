@@ -180,8 +180,8 @@ const char *GetChannelConfigName(ChannelConfig cfg)
         case ChannelConfig::X51: return "5.1 Surround";
         case ChannelConfig::X61: return "6.1 Surround";
         case ChannelConfig::X71: return "7.1 Surround";
-        case ChannelConfig::BFmt_WXY: return "B-Format 2D";
-        case ChannelConfig::BFmt_WXYZ: return "B-Format 3D";
+        case ChannelConfig::BFormat2D: return "B-Format 2D";
+        case ChannelConfig::BFormat3D: return "B-Format 3D";
     }
     throw std::runtime_error("Invalid config");
 }
@@ -198,8 +198,8 @@ ALuint FramesToBytes(ALuint size, ChannelConfig chans, SampleType type)
         case ChannelConfig::X51: size *= 6; break;
         case ChannelConfig::X61: size *= 7; break;
         case ChannelConfig::X71: size *= 8; break;
-        case ChannelConfig::BFmt_WXY: size *= 3; break;
-        case ChannelConfig::BFmt_WXYZ: size *= 4; break;
+        case ChannelConfig::BFormat2D: size *= 3; break;
+        case ChannelConfig::BFormat3D: size *= 4; break;
     }
     switch(type)
     {
@@ -233,8 +233,8 @@ ALenum GetFormat(ChannelConfig chans, SampleType type)
         }
         if(ALContext::GetCurrent()->hasExtension(EXT_BFORMAT))
         {
-            if(chans == ChannelConfig::BFmt_WXY) RETURN_FMT("AL_FORMAT_BFORMAT2D_8");
-            if(chans == ChannelConfig::BFmt_WXYZ) RETURN_FMT("AL_FORMAT_BFORMAT3D_8");
+            if(chans == ChannelConfig::BFormat2D) RETURN_FMT("AL_FORMAT_BFORMAT2D_8");
+            if(chans == ChannelConfig::BFormat3D) RETURN_FMT("AL_FORMAT_BFORMAT3D_8");
         }
     }
     else if(type == SampleType::Int16)
@@ -251,8 +251,8 @@ ALenum GetFormat(ChannelConfig chans, SampleType type)
         }
         if(ALContext::GetCurrent()->hasExtension(EXT_BFORMAT))
         {
-            if(chans == ChannelConfig::BFmt_WXY) RETURN_FMT("AL_FORMAT_BFORMAT2D_16");
-            if(chans == ChannelConfig::BFmt_WXYZ) RETURN_FMT("AL_FORMAT_BFORMAT3D_16");
+            if(chans == ChannelConfig::BFormat2D) RETURN_FMT("AL_FORMAT_BFORMAT2D_16");
+            if(chans == ChannelConfig::BFormat3D) RETURN_FMT("AL_FORMAT_BFORMAT3D_16");
         }
     }
     else if(type == SampleType::Float32 && ALContext::GetCurrent()->hasExtension(EXT_FLOAT32))
@@ -269,8 +269,8 @@ ALenum GetFormat(ChannelConfig chans, SampleType type)
         }
         if(ALContext::GetCurrent()->hasExtension(EXT_BFORMAT))
         {
-            if(chans == ChannelConfig::BFmt_WXY) RETURN_FMT("AL_FORMAT_BFORMAT2D_FLOAT32");
-            if(chans == ChannelConfig::BFmt_WXYZ) RETURN_FMT("AL_FORMAT_BFORMAT3D_FLOAT32");
+            if(chans == ChannelConfig::BFormat2D) RETURN_FMT("AL_FORMAT_BFORMAT2D_FLOAT32");
+            if(chans == ChannelConfig::BFormat3D) RETURN_FMT("AL_FORMAT_BFORMAT3D_FLOAT32");
         }
     }
     else if(type == SampleType::Mulaw && ALContext::GetCurrent()->hasExtension(EXT_MULAW))
@@ -287,8 +287,8 @@ ALenum GetFormat(ChannelConfig chans, SampleType type)
         }
         if(ALContext::GetCurrent()->hasExtension(EXT_MULAW_BFORMAT))
         {
-            if(chans == ChannelConfig::BFmt_WXY) RETURN_FMT("AL_FORMAT_BFORMAT2D_MULAW");
-            if(chans == ChannelConfig::BFmt_WXYZ) RETURN_FMT("AL_FORMAT_BFORMAT3D_MULAW");
+            if(chans == ChannelConfig::BFormat2D) RETURN_FMT("AL_FORMAT_BFORMAT2D_MULAW");
+            if(chans == ChannelConfig::BFormat3D) RETURN_FMT("AL_FORMAT_BFORMAT3D_MULAW");
         }
     }
 #undef RETURN_FMT
