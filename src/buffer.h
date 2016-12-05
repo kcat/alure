@@ -27,7 +27,7 @@ class ALBuffer : public Buffer {
     SampleType mSampleType;
 
     BufferLoadStatus mLoadStatus;
-    volatile bool mIsLoaded;
+    std::atomic<bool> mIsLoaded;
 
     Vector<Source*> mSources;
 

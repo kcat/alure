@@ -17,7 +17,7 @@ namespace alure
 
 void ALBuffer::cleanup()
 {
-    while(!mIsLoaded)
+    while(!mIsLoaded.load(std::memory_order_acquire))
         std::this_thread::yield();
     if(isInUse())
         throw std::runtime_error("Buffer is in use");
@@ -70,7 +70,7 @@ void ALBuffer::load(ALuint frames, ALenum format, SharedPtr<Decoder> decoder, co
         alBufferiv(mId, AL_LOOP_POINTS_SOFT, pts);
     }
 
-    mIsLoaded = true;
+    mIsLoaded.store(true, std::memory_order_release);
 }
 
 
@@ -152,7 +152,7 @@ BufferLoadStatus ALBuffer::getLoadStatus()
      * it'll be ready in a consistent manner. It may work some times and fail
      * others.
      */
-    if(mLoadStatus == BufferLoadStatus::Pending && mIsLoaded)
+    if(mLoadStatus == BufferLoadStatus::Pending && mIsLoaded.load(std::memory_order_acquire))
         mLoadStatus = BufferLoadStatus::Ready;
     return mLoadStatus;
 }

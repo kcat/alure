@@ -3,6 +3,7 @@
 
 #include "main.h"
 
+#include <atomic>
 #include <mutex>
 #include <map>
 
@@ -40,9 +41,9 @@ class ALSource : public Source {
     ALSourceGroup *mGroup;
 
     mutable std::mutex mMutex;
-    volatile bool mIsAsync;
+    std::atomic<bool> mIsAsync;
 
-    volatile bool mPaused;
+    std::atomic<bool> mPaused;
     bool mLooping;
     ALuint64SOFT mOffset;
     ALfloat mPitch;

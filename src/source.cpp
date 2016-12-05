@@ -169,7 +169,7 @@ void ALSource::resetProperties()
         mGroup->removeSource(this);
     mGroup = nullptr;
 
-    mPaused = false;
+    mPaused.store(false, std::memory_order_release);
     mLooping = false;
     mOffset = 0;
     mPitch = 1.0f;
@@ -315,9 +315,12 @@ void ALSource::play(Buffer *buffer)
     if(!albuf->isReady())
         throw std::runtime_error("Buffer is not ready");
 
-    if(mIsAsync)
+    if(mIsAsync.load(std::memory_order_acquire))
+    {
         mContext->removeStream(this);
-    mIsAsync = false;
+        mIsAsync.store(false, std::memory_order_release);
+    }
+
     if(mId == 0)
     {
         mId = mContext->getSourceId(mPriority);
@@ -341,7 +344,7 @@ void ALSource::play(Buffer *buffer)
 
     alSourcei(mId, AL_BUFFER, mBuffer->getId());
     alSourcePlay(mId);
-    mPaused = false;
+    mPaused.store(false, std::memory_order_release);
 }
 
 void ALSource::play(SharedPtr<Decoder> decoder, ALuint updatelen, ALuint queuesize)
@@ -355,9 +358,11 @@ void ALSource::play(SharedPtr<Decoder> decoder, ALuint updatelen, ALuint queuesi
     std::unique_ptr<ALBufferStream> stream(new ALBufferStream(decoder, updatelen, queuesize));
     stream->prepare();
 
-    if(mIsAsync)
+    if(mIsAsync.load(std::memory_order_acquire))
+    {
         mContext->removeStream(this);
-    mIsAsync = false;
+        mIsAsync.store(false, std::memory_order_release);
+    }
 
     if(mId == 0)
     {
@@ -387,18 +392,20 @@ void ALSource::play(SharedPtr<Decoder> decoder, ALuint updatelen, ALuint queuesi
             break;
     }
     alSourcePlay(mId);
-    mPaused = false;
+    mPaused.store(false, std::memory_order_release);
 
     mContext->addStream(this);
-    mIsAsync = true;
+    mIsAsync.store(true, std::memory_order_release);
 }
 
 
 void ALSource::makeStopped()
 {
-    if(mIsAsync)
+    if(mIsAsync.load(std::memory_order_acquire))
+    {
         mContext->removeStreamNoLock(this);
-    mIsAsync = false;
+        mIsAsync.store(false, std::memory_order_release);
+    }
 
     if(mId != 0)
     {
@@ -419,7 +426,7 @@ void ALSource::makeStopped()
 
     mStream.reset();
 
-    mPaused = false;
+    mPaused.store(false, std::memory_order_release);
 
     mContext->send(&MessageHandler::sourceStopped, this, true);
 }
@@ -428,9 +435,11 @@ void ALSource::stop()
 {
     CheckContext(mContext);
 
-    if(mIsAsync)
+    if(mIsAsync.load(std::memory_order_acquire))
+    {
         mContext->removeStream(this);
-    mIsAsync = false;
+        mIsAsync.store(false, std::memory_order_release);
+    }
 
     if(mId != 0)
     {
@@ -452,26 +461,28 @@ void ALSource::stop()
 
     mStream.reset();
 
-    mPaused = false;
+    mPaused.store(false, std::memory_order_release);
 }
 
 
 void ALSource::checkPaused()
 {
-    if(mPaused || mId == 0)
+    if(mPaused.load(std::memory_order_acquire) || mId == 0)
         return;
 
     ALint state = -1;
     alGetSourcei(mId, AL_SOURCE_STATE, &state);
     // Streaming sources may be in a stopped state if underrun
-    mPaused = (state == AL_PAUSED) ||
-              (state == AL_STOPPED && mStream && mStream->hasMoreData());
+    mPaused.store((state == AL_PAUSED) ||
+                  (state == AL_STOPPED && mStream && mStream->hasMoreData()),
+                  std::memory_order_release);
 }
 
 void ALSource::pause()
 {
     CheckContext(mContext);
-    if(mPaused) return;
+    if(mPaused.load(std::memory_order_acquire))
+        return;
 
     if(mId != 0)
     {
@@ -480,19 +491,21 @@ void ALSource::pause()
         ALint state = -1;
         alGetSourcei(mId, AL_SOURCE_STATE, &state);
         // Streaming sources may be in a stopped state if underrun
-        mPaused = (state == AL_PAUSED) ||
-                  (state == AL_STOPPED && mStream && mStream->hasMoreData());
+        mPaused.store((state == AL_PAUSED) ||
+                      (state == AL_STOPPED && mStream && mStream->hasMoreData()),
+                      std::memory_order_release);
     }
 }
 
 void ALSource::resume()
 {
     CheckContext(mContext);
-    if(!mPaused) return;
+    if(!mPaused.load(std::memory_order_acquire))
+        return;
 
     if(mId != 0)
         alSourcePlay(mId);
-    mPaused = false;
+    mPaused.store(false, std::memory_order_release);
 }
 
 
@@ -506,7 +519,8 @@ bool ALSource::isPlaying() const
     if(state == -1)
         throw std::runtime_error("Source state error");
 
-    return state == AL_PLAYING || (!mPaused && mStream && mStream->hasMoreData());
+    return state == AL_PLAYING || (!mPaused.load(std::memory_order_acquire) &&
+                                   mStream && mStream->hasMoreData());
 }
 
 bool ALSource::isPaused() const
@@ -519,7 +533,7 @@ bool ALSource::isPaused() const
     if(state == -1)
         throw std::runtime_error("Source state error");
 
-    return state == AL_PAUSED || mPaused;
+    return state == AL_PAUSED || mPaused.load(std::memory_order_acquire);
 }
 
 
@@ -559,7 +573,7 @@ void ALSource::updateNoCtxCheck()
 
     if(mStream)
     {
-        if(!mIsAsync)
+        if(!mIsAsync.load(std::memory_order_acquire))
         {
             stop();
             mContext->send(&MessageHandler::sourceStopped, this, false);
@@ -584,10 +598,10 @@ bool ALSource::updateAsync()
     ALint queued = refillBufferStream();
     if(queued == 0)
     {
-        mIsAsync = false;
+        mIsAsync.store(false, std::memory_order_release);
         return false;
     }
-    if(!mPaused)
+    if(!mPaused.load(std::memory_order_acquire))
     {
         ALint state = -1;
         alGetSourcei(mId, AL_SOURCE_STATE, &state);
@@ -1176,9 +1190,11 @@ void ALSource::release()
 {
     CheckContext(mContext);
 
-    if(mIsAsync)
+    if(mIsAsync.load(std::memory_order_acquire))
+    {
         mContext->removeStream(this);
-    mIsAsync = false;
+        mIsAsync.store(false, std::memory_order_release);
+    }
 
     if(mId != 0)
     {
