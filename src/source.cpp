@@ -37,8 +37,8 @@ class ALBufferStream {
     ALuint mCurrentIdx;
 
     std::pair<uint64_t,uint64_t> mLoopPts;
-    volatile bool mHasLooped;
-    volatile bool mDone;
+    std::atomic<bool> mHasLooped;
+    std::atomic<bool> mDone;
 
 public:
     ALBufferStream(SharedPtr<Decoder> decoder, ALuint updatelen, ALuint numupdates)
@@ -65,8 +65,8 @@ public:
     {
         if(!mDecoder->seek(pos))
             return false;
-        mHasLooped = false;
-        mDone = false;
+        mHasLooped.store(false, std::memory_order_release);
+        mDone.store(false, std::memory_order_release);
         return true;
     }
 
@@ -99,11 +99,12 @@ public:
     uint64_t getLoopStart() const { return mLoopPts.first; }
     uint64_t getLoopEnd() const { return mLoopPts.second; }
 
-    bool hasLooped() const { return mHasLooped; }
-    bool hasMoreData() const { return !mDone; }
+    bool hasLooped() const { return mHasLooped.load(std::memory_order_acquire); }
+    bool hasMoreData() const { return !mDone.load(std::memory_order_acquire); }
     bool streamMoreData(ALuint srcid, bool loop)
     {
-        if(mDone) return false;
+        if(mDone.load(std::memory_order_acquire))
+            return false;
 
         ALuint len = mUpdateLen;
         uint64_t pos = mDecoder->getPosition();
@@ -127,7 +128,7 @@ public:
             do {
                 if(!mDecoder->seek(mLoopPts.first))
                     break;
-                mHasLooped = true;
+                mHasLooped.store(true, std::memory_order_release);
 
                 len = std::min<uint64_t>(mUpdateLen-frames, mLoopPts.second-mLoopPts.first);
                 ALuint got = mDecoder->read(&mData[frames*mFrameSize], len);
@@ -137,7 +138,7 @@ public:
         }
         if(frames < mUpdateLen)
         {
-            mDone = true;
+            mDone.store(true, std::memory_order_release);
             if(frames == 0) return false;
             std::fill(mData.begin() + frames*mFrameSize, mData.end(), mSilence);
         }
