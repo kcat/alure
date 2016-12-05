@@ -56,6 +56,7 @@ static const struct {
 
 void ALDevice::setupExts()
 {
+    std::fill(std::begin(mHasExt), std::end(mHasExt), false);
     for(const auto &entry : ALCExtensionList)
     {
         mHasExt[entry.extension] = alcIsExtensionPresent(mDevice, entry.name);
@@ -65,7 +66,7 @@ void ALDevice::setupExts()
 
 
 ALDevice::ALDevice(ALCdevice* device)
-  : mDevice(device), mHasExt{false}, alcDevicePauseSOFT(nullptr), alcDeviceResumeSOFT(nullptr)
+  : mDevice(device), alcDevicePauseSOFT(nullptr), alcDeviceResumeSOFT(nullptr)
 {
     setupExts();
 }
