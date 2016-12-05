@@ -54,6 +54,9 @@ class ALSourceGroup : public SourceGroup, SourceGroupProps {
 
 public:
     ALSourceGroup(ALContext *context);
+    // Avoid a warning about deleting an object with virtual functions but no
+    // virtual destructor.
+    virtual ~ALSourceGroup() { }
 
     ALfloat getAppliedGain() const { return mGain * mParentProps.mGain; }
     ALfloat getAppliedPitch() const { return mPitch * mParentProps.mPitch; }
