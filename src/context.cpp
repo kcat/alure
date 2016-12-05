@@ -529,7 +529,7 @@ Buffer *ALContext::getBuffer(const String &name)
         if(alGetError() != AL_NO_ERROR)
             throw std::runtime_error("Failed to buffer data");
 
-        ALBuffer *buffer = new ALBuffer(this, bid, srate, chans, type, true);
+        ALBuffer *buffer = new ALBuffer(this, bid, srate, chans, type, true, name);
         return mBuffers.insert(std::make_pair(name, buffer)).first->second;
     }
     catch(...) {
@@ -561,7 +561,7 @@ Buffer *ALContext::getBufferAsync(const String &name)
     if(alGetError() != AL_NO_ERROR)
         throw std::runtime_error("Failed to buffer data");
 
-    ALBuffer *buffer = new ALBuffer(this, bid, srate, chans, type, false);
+    ALBuffer *buffer = new ALBuffer(this, bid, srate, chans, type, false, name);
 
     if(mThread.get_id() == std::thread::id())
         mThread = std::thread(std::mem_fn(&ALContext::backgroundProc), this);

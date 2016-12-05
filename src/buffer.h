@@ -31,11 +31,13 @@ class ALBuffer : public Buffer {
 
     Vector<Source*> mSources;
 
+    String mName;
+
 public:
-    ALBuffer(ALContext *context, ALuint id, ALuint freq, ChannelConfig config, SampleType type, bool preloaded)
+    ALBuffer(ALContext *context, ALuint id, ALuint freq, ChannelConfig config, SampleType type, bool preloaded, const String &name)
       : mContext(context), mId(id), mFrequency(freq), mChannelConfig(config), mSampleType(type),
         mLoadStatus(preloaded ? BufferLoadStatus::Ready : BufferLoadStatus::Pending),
-        mIsLoaded(preloaded)
+        mIsLoaded(preloaded), mName(name)
     { }
     virtual ~ALBuffer() { }
 
@@ -69,6 +71,8 @@ public:
     Vector<Source*> getSources() const override final { return mSources; }
 
     BufferLoadStatus getLoadStatus() override final;
+
+    const String &getName() const override final { return mName; }
 
     bool isInUse() const override final { return (mSources.size() > 0); }
 };

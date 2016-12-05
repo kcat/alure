@@ -589,6 +589,9 @@ public:
      */
     virtual BufferLoadStatus getLoadStatus() = 0;
 
+    /** Retrieves the name the buffer was created with. */
+    virtual const String &getName() const = 0;
+
     /** Queries if the buffer is in use and can't be removed. */
     virtual bool isInUse() const = 0;
 };
