@@ -13,14 +13,12 @@ public:
 
     static ALDeviceManager &get();
 
-    virtual ~ALDeviceManager() { }
+    bool queryExtension(const char *extname) const override final;
 
-    virtual bool queryExtension(const char *extname) const final;
+    Vector<String> enumerate(DeviceEnumeration type) const override final;
+    String defaultDeviceName(DefaultDeviceType type) const override final;
 
-    virtual Vector<String> enumerate(DeviceEnumeration type) const final;
-    virtual String defaultDeviceName(DefaultDeviceType type) const final;
-
-    virtual Device *openPlayback(const String &name) final;
+    Device *openPlayback(const String &name) override final;
 };
 
 } // namespace alure

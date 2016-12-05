@@ -39,16 +39,16 @@ public:
     ALContext *getContext() { return mContext; }
     const ALuint &getId() const { return mId; }
 
-    virtual void setGain(ALfloat gain) final;
-    virtual void setSendAuto(bool sendauto) final;
+    void setGain(ALfloat gain) override final;
+    void setSendAuto(bool sendauto) override final;
 
-    virtual void applyEffect(const Effect *effect) final;
+    void applyEffect(const Effect *effect) override final;
 
-    virtual void release() final;
+    void release() override final;
 
-    virtual Vector<SourceSend> getSourceSends() const final { return mSourceSends; }
+    Vector<SourceSend> getSourceSends() const override final { return mSourceSends; }
 
-    virtual bool isInUse() const final { return (mSourceSends.size() > 0); }
+    bool isInUse() const override final { return (mSourceSends.size() > 0); }
 };
 
 } // namespace alure

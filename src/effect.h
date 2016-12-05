@@ -15,11 +15,10 @@ class ALEffect : public Effect {
 public:
     ALEffect(ALContext *context, ALuint id) : mContext(context), mId(id), mType(AL_NONE)
     { }
-    virtual ~ALEffect() { }
 
-    virtual void setReverbProperties(const EFXEAXREVERBPROPERTIES &props) final;
+    void setReverbProperties(const EFXEAXREVERBPROPERTIES &props) override final;
 
-    virtual void destroy() final;
+    void destroy() override final;
 
     ALContext *getContext() const { return mContext; }
     ALuint getId() const { return mId; }

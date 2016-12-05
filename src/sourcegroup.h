@@ -54,36 +54,35 @@ class ALSourceGroup : public SourceGroup, SourceGroupProps {
 
 public:
     ALSourceGroup(ALContext *context);
-    virtual ~ALSourceGroup () { }
 
     ALfloat getAppliedGain() const { return mGain * mParentProps.mGain; }
     ALfloat getAppliedPitch() const { return mPitch * mParentProps.mPitch; }
 
-    virtual void addSource(Source *source) final;
-    virtual void removeSource(Source *source) final;
+    void addSource(Source *source) override final;
+    void removeSource(Source *source) override final;
 
-    virtual void addSources(const Vector<Source*> &sources) final;
-    virtual void removeSources(const Vector<Source*> &sources) final;
+    void addSources(const Vector<Source*> &sources) override final;
+    void removeSources(const Vector<Source*> &sources) override final;
 
-    virtual void addSubGroup(SourceGroup *group) final;
-    virtual void removeSubGroup(SourceGroup *group) final;
+    void addSubGroup(SourceGroup *group) override final;
+    void removeSubGroup(SourceGroup *group) override final;
 
-    virtual Vector<Source*> getSources() final;
+    Vector<Source*> getSources() override final;
 
-    virtual Vector<SourceGroup*> getSubGroups() final;
+    Vector<SourceGroup*> getSubGroups() override final;
 
-    virtual void setGain(ALfloat gain) final;
-    virtual ALfloat getGain() const final { return mGain; }
+    void setGain(ALfloat gain) override final;
+    ALfloat getGain() const override final { return mGain; }
 
-    virtual void setPitch(ALfloat pitch) final;
-    virtual ALfloat getPitch() const final { return mPitch; }
+    void setPitch(ALfloat pitch) override final;
+    ALfloat getPitch() const override final { return mPitch; }
 
-    virtual void pauseAll() const final;
-    virtual void resumeAll() const final;
+    void pauseAll() const override final;
+    void resumeAll() const override final;
 
-    virtual void stopAll() const final;
+    void stopAll() const override final;
 
-    virtual void release() final;
+    void release() override final;
 };
 
 } // namespace alure2

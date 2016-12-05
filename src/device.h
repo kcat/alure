@@ -50,27 +50,27 @@ public:
 
     void removeContext(ALContext *ctx);
 
-    virtual String getName(PlaybackDeviceName type) const final;
-    virtual bool queryExtension(const char *extname) const final;
+    String getName(PlaybackDeviceName type) const override final;
+    bool queryExtension(const char *extname) const override final;
 
-    virtual ALCuint getALCVersion() const final;
-    virtual ALCuint getEFXVersion() const final;
+    ALCuint getALCVersion() const override final;
+    ALCuint getEFXVersion() const override final;
 
-    virtual ALCuint getFrequency() const final;
+    ALCuint getFrequency() const override final;
 
-    virtual ALCuint getMaxAuxiliarySends() const final;
+    ALCuint getMaxAuxiliarySends() const override final;
 
-    virtual Vector<String> enumerateHRTFNames() const final;
-    virtual bool isHRTFEnabled() const final;
-    virtual String getCurrentHRTF() const final;
-    virtual void reset(const ALCint *attributes) final;
+    Vector<String> enumerateHRTFNames() const override final;
+    bool isHRTFEnabled() const override final;
+    String getCurrentHRTF() const override final;
+    void reset(const ALCint *attributes) override final;
 
-    virtual Context *createContext(const ALCint *attribs=0) final;
+    Context *createContext(const ALCint *attribs=0) override final;
 
-    virtual void pauseDSP() final;
-    virtual void resumeDSP() final;
+    void pauseDSP() override final;
+    void resumeDSP() override final;
 
-    virtual void close() final;
+    void close() override final;
 };
 
 } // namespace alure

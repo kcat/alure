@@ -199,59 +199,59 @@ public:
     std::unique_lock<std::mutex> getSourceStreamLock()
     { return std::unique_lock<std::mutex>(mSourceStreamMutex); }
 
-    virtual Device *getDevice() final;
+    Device *getDevice() override final;
 
-    virtual void destroy() final;
+    void destroy() override final;
 
-    virtual void startBatch() final;
-    virtual void endBatch() final;
+    void startBatch() override final;
+    void endBatch() override final;
 
-    virtual Listener *getListener() final;
+    Listener *getListener() override final;
 
-    virtual SharedPtr<MessageHandler> setMessageHandler(SharedPtr<MessageHandler> handler) final;
-    virtual SharedPtr<MessageHandler> getMessageHandler() const final
+    SharedPtr<MessageHandler> setMessageHandler(SharedPtr<MessageHandler> handler) override final;
+    SharedPtr<MessageHandler> getMessageHandler() const override final
     { return mMessage; }
 
-    virtual void setAsyncWakeInterval(ALuint msec) final;
-    virtual ALuint getAsyncWakeInterval() const final;
+    void setAsyncWakeInterval(ALuint msec) override final;
+    ALuint getAsyncWakeInterval() const override final;
 
-    virtual SharedPtr<Decoder> createDecoder(const String &name) final;
+    SharedPtr<Decoder> createDecoder(const String &name) override final;
 
-    virtual Buffer *getBuffer(const String &name) final;
-    virtual Buffer *getBufferAsync(const String &name) final;
-    virtual void removeBuffer(const String &name) final;
-    virtual void removeBuffer(Buffer *buffer) final;
+    Buffer *getBuffer(const String &name) override final;
+    Buffer *getBufferAsync(const String &name) override final;
+    void removeBuffer(const String &name) override final;
+    void removeBuffer(Buffer *buffer) override final;
 
-    virtual Source *getSource() final;
+    Source *getSource() override final;
 
-    virtual AuxiliaryEffectSlot *createAuxiliaryEffectSlot() final;
+    AuxiliaryEffectSlot *createAuxiliaryEffectSlot() override final;
 
-    virtual Effect *createEffect() final;
+    Effect *createEffect() override final;
 
-    virtual SourceGroup *createSourceGroup() final;
+    SourceGroup *createSourceGroup() override final;
 
-    virtual void setDopplerFactor(ALfloat factor) final;
+    void setDopplerFactor(ALfloat factor) override final;
 
-    virtual void setSpeedOfSound(ALfloat speed) final;
+    void setSpeedOfSound(ALfloat speed) override final;
 
-    virtual void setDistanceModel(DistanceModel model) final;
+    void setDistanceModel(DistanceModel model) override final;
 
-    virtual void update() final;
+    void update() override final;
 
     // Listener methods
-    virtual void setGain(ALfloat gain) final;
+    void setGain(ALfloat gain) final;
 
-    virtual void setPosition(ALfloat x, ALfloat y, ALfloat z) final;
-    virtual void setPosition(const ALfloat *pos) final;
+    void setPosition(ALfloat x, ALfloat y, ALfloat z) override final;
+    void setPosition(const ALfloat *pos) override final;
 
-    virtual void setVelocity(ALfloat x, ALfloat y, ALfloat z) final;
-    virtual void setVelocity(const ALfloat *vel) final;
+    void setVelocity(ALfloat x, ALfloat y, ALfloat z) override final;
+    void setVelocity(const ALfloat *vel) override final;
 
-    virtual void setOrientation(ALfloat x1, ALfloat y1, ALfloat z1, ALfloat x2, ALfloat y2, ALfloat z2) final;
-    virtual void setOrientation(const ALfloat *at, const ALfloat *up) final;
-    virtual void setOrientation(const ALfloat *ori) final;
+    void setOrientation(ALfloat x1, ALfloat y1, ALfloat z1, ALfloat x2, ALfloat y2, ALfloat z2) override final;
+    void setOrientation(const ALfloat *at, const ALfloat *up) override final;
+    void setOrientation(const ALfloat *ori) override final;
 
-    virtual void setMetersPerUnit(ALfloat m_u) final;
+    void setMetersPerUnit(ALfloat m_u) override final;
 };
 
 

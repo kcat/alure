@@ -55,22 +55,22 @@ public:
 
     bool isReady() const { return mLoadStatus == BufferLoadStatus::Ready; }
 
-    virtual ALuint getLength() const final;
+    ALuint getLength() const override final;
 
-    virtual ALuint getFrequency() const final { return mFrequency; }
-    virtual ChannelConfig getChannelConfig() const final { return mChannelConfig; }
-    virtual SampleType getSampleType() const final { return mSampleType; }
+    ALuint getFrequency() const override final { return mFrequency; }
+    ChannelConfig getChannelConfig() const override final { return mChannelConfig; }
+    SampleType getSampleType() const override final { return mSampleType; }
 
-    virtual ALuint getSize() const final;
+    ALuint getSize() const override final;
 
-    virtual void setLoopPoints(ALuint start, ALuint end) final;
-    virtual std::pair<ALuint,ALuint> getLoopPoints() const final;
+    void setLoopPoints(ALuint start, ALuint end) override final;
+    std::pair<ALuint,ALuint> getLoopPoints() const override final;
 
-    virtual Vector<Source*> getSources() const final { return mSources; }
+    Vector<Source*> getSources() const override final { return mSources; }
 
-    virtual BufferLoadStatus getLoadStatus() final;
+    BufferLoadStatus getLoadStatus() override final;
 
-    virtual bool isInUse() const final { return (mSources.size() > 0); }
+    bool isInUse() const override final { return (mSources.size() > 0); }
 };
 
 } // namespace alure

@@ -79,7 +79,7 @@ class ALSource : public Source {
 
 public:
     ALSource(ALContext *context);
-    virtual ~ALSource();
+    ~ALSource();
 
     ALuint getId() const { return mId; }
 
@@ -96,100 +96,100 @@ public:
     void unsetPaused() { mPaused = false; }
     void makeStopped();
 
-    virtual void play(Buffer *buffer) final;
-    virtual void play(SharedPtr<Decoder> decoder, ALuint updatelen, ALuint queuesize) final;
-    virtual void stop() final;
-    virtual void pause() final;
-    virtual void resume() final;
+    void play(Buffer *buffer) override final;
+    void play(SharedPtr<Decoder> decoder, ALuint updatelen, ALuint queuesize) override final;
+    void stop() override final;
+    void pause() override final;
+    void resume() override final;
 
-    virtual bool isPlaying() const final;
-    virtual bool isPaused() const final;
+    bool isPlaying() const override final;
+    bool isPaused() const override final;
 
-    virtual void setPriority(ALuint priority) final;
-    virtual ALuint getPriority() const final
+    void setPriority(ALuint priority) override final;
+    ALuint getPriority() const override final
     { return mPriority; }
 
-    virtual void setOffset(uint64_t offset) final;
-    virtual uint64_t getOffset(uint64_t *latency=0) const final;
+    void setOffset(uint64_t offset) override final;
+    uint64_t getOffset(uint64_t *latency=0) const override final;
 
-    virtual void setLooping(bool looping) final;
-    virtual bool getLooping() const final
+    void setLooping(bool looping) override final;
+    bool getLooping() const override final
     { return mLooping; }
 
-    virtual void setPitch(ALfloat pitch) final;
-    virtual ALfloat getPitch() const final
+    void setPitch(ALfloat pitch) override final;
+    ALfloat getPitch() const override final
     { return mPitch; }
 
-    virtual void setGain(ALfloat gain) final;
-    virtual ALfloat getGain() const final { return mGain; }
+    void setGain(ALfloat gain) override final;
+    ALfloat getGain() const override final { return mGain; }
 
-    virtual void setGainRange(ALfloat mingain, ALfloat maxgain) final;
-    virtual ALfloat getMinGain() const final { return mMinGain; }
-    virtual ALfloat getMaxGain() const final { return mMaxGain; }
+    void setGainRange(ALfloat mingain, ALfloat maxgain) override final;
+    ALfloat getMinGain() const override final { return mMinGain; }
+    ALfloat getMaxGain() const override final { return mMaxGain; }
 
-    virtual void setDistanceRange(ALfloat refdist, ALfloat maxdist) final;
-    virtual ALfloat getReferenceDistance() const final { return mRefDist; }
-    virtual ALfloat getMaxDistance() const final { return mMaxDist; }
+    void setDistanceRange(ALfloat refdist, ALfloat maxdist) override final;
+    ALfloat getReferenceDistance() const override final { return mRefDist; }
+    ALfloat getMaxDistance() const override final { return mMaxDist; }
 
-    virtual void setPosition(ALfloat x, ALfloat y, ALfloat z) final;
-    virtual void setPosition(const ALfloat *pos) final;
-    virtual Vector3 getPosition() const final { return mPosition; }
+    void setPosition(ALfloat x, ALfloat y, ALfloat z) override final;
+    void setPosition(const ALfloat *pos) override final;
+    Vector3 getPosition() const final override { return mPosition; }
 
-    virtual void setVelocity(ALfloat x, ALfloat y, ALfloat z) final;
-    virtual void setVelocity(const ALfloat *vel) final;
-    virtual Vector3 getVelocity() const final { return mVelocity; }
+    void setVelocity(ALfloat x, ALfloat y, ALfloat z) override final;
+    void setVelocity(const ALfloat *vel) override final;
+    Vector3 getVelocity() const override final { return mVelocity; }
 
-    virtual void setDirection(ALfloat x, ALfloat y, ALfloat z) final;
-    virtual void setDirection(const ALfloat *dir) final;
-    virtual Vector3 getDirection() const final { return mDirection; }
+    void setDirection(ALfloat x, ALfloat y, ALfloat z) override final;
+    void setDirection(const ALfloat *dir) override final;
+    Vector3 getDirection() const override final { return mDirection; }
 
-    virtual void setOrientation(ALfloat x1, ALfloat y1, ALfloat z1, ALfloat x2, ALfloat y2, ALfloat z2) final;
-    virtual void setOrientation(const ALfloat *at, const ALfloat *up) final;
-    virtual void setOrientation(const ALfloat *ori) final;
+    void setOrientation(ALfloat x1, ALfloat y1, ALfloat z1, ALfloat x2, ALfloat y2, ALfloat z2) override final;
+    void setOrientation(const ALfloat *at, const ALfloat *up) override final;
+    void setOrientation(const ALfloat *ori) override final;
 
-    virtual void setConeAngles(ALfloat inner, ALfloat outer) final;
-    virtual ALfloat getInnerConeAngle() const final { return mConeInnerAngle; }
-    virtual ALfloat getOuterConeAngle() const final { return mConeOuterAngle; }
+    void setConeAngles(ALfloat inner, ALfloat outer) override final;
+    ALfloat getInnerConeAngle() const override final { return mConeInnerAngle; }
+    ALfloat getOuterConeAngle() const override final { return mConeOuterAngle; }
 
-    virtual void setOuterConeGains(ALfloat gain, ALfloat gainhf=1.0f) final;
-    virtual ALfloat getOuterConeGain() const final { return mConeOuterGain; }
-    virtual ALfloat getOuterConeGainHF() const final { return mConeOuterGainHF; }
+    void setOuterConeGains(ALfloat gain, ALfloat gainhf=1.0f) override final;
+    ALfloat getOuterConeGain() const override final { return mConeOuterGain; }
+    ALfloat getOuterConeGainHF() const override final { return mConeOuterGainHF; }
 
-    virtual void setRolloffFactors(ALfloat factor, ALfloat roomfactor=0.0f) final;
-    virtual ALfloat getRolloffFactor() const final { return mRolloffFactor; }
-    virtual ALfloat getRoomRolloffFactor() const final { return mRoomRolloffFactor; }
+    void setRolloffFactors(ALfloat factor, ALfloat roomfactor=0.0f) override final;
+    ALfloat getRolloffFactor() const override final { return mRolloffFactor; }
+    ALfloat getRoomRolloffFactor() const override final { return mRoomRolloffFactor; }
 
-    virtual void setDopplerFactor(ALfloat factor) final;
-    virtual ALfloat getDopplerFactor() const final
+    void setDopplerFactor(ALfloat factor) override final;
+    ALfloat getDopplerFactor() const override final
     { return mDopplerFactor; }
 
-    virtual void setRelative(bool relative) final;
-    virtual bool getRelative() const final
+    void setRelative(bool relative) override final;
+    bool getRelative() const override final
     { return mRelative; }
 
-    virtual void setRadius(ALfloat radius) final;
-    virtual ALfloat getRadius() const final { return mRadius; }
+    void setRadius(ALfloat radius) override final;
+    ALfloat getRadius() const override final { return mRadius; }
 
-    virtual void setStereoAngles(ALfloat leftAngle, ALfloat rightAngle) final;
-    virtual std::pair<ALfloat,ALfloat> getStereoAngles() const final
+    void setStereoAngles(ALfloat leftAngle, ALfloat rightAngle) override final;
+    std::pair<ALfloat,ALfloat> getStereoAngles() const override final
     { return std::make_pair(mStereoAngles[0], mStereoAngles[1]); }
 
-    virtual void setAirAbsorptionFactor(ALfloat factor) final;
-    virtual ALfloat getAirAbsorptionFactor() const final { return mAirAbsorptionFactor; }
+    void setAirAbsorptionFactor(ALfloat factor) override final;
+    ALfloat getAirAbsorptionFactor() const override final { return mAirAbsorptionFactor; }
 
-    virtual void setGainAuto(bool directhf, bool send, bool sendhf) final;
-    virtual bool getDirectGainHFAuto() const final { return mDryGainHFAuto; }
-    virtual bool getSendGainAuto() const final { return mWetGainAuto; }
-    virtual bool getSendGainHFAuto() const final { return mWetGainHFAuto; }
+    void setGainAuto(bool directhf, bool send, bool sendhf) override final;
+    bool getDirectGainHFAuto() const override final { return mDryGainHFAuto; }
+    bool getSendGainAuto() const override final { return mWetGainAuto; }
+    bool getSendGainHFAuto() const override final { return mWetGainHFAuto; }
 
-    virtual void setDirectFilter(const FilterParams &filter) final;
-    virtual void setSendFilter(ALuint send, const FilterParams &filter) final;
-    virtual void setAuxiliarySend(AuxiliaryEffectSlot *slot, ALuint send) final;
-    virtual void setAuxiliarySendFilter(AuxiliaryEffectSlot *slot, ALuint send, const FilterParams &filter) final;
+    void setDirectFilter(const FilterParams &filter) override final;
+    void setSendFilter(ALuint send, const FilterParams &filter) override final;
+    void setAuxiliarySend(AuxiliaryEffectSlot *slot, ALuint send) override final;
+    void setAuxiliarySendFilter(AuxiliaryEffectSlot *slot, ALuint send, const FilterParams &filter) override final;
 
-    virtual void update() final;
+    void update() override final;
 
-    virtual void release() final;
+    void release() override final;
 };
 
 } // namespace alure
