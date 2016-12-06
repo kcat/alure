@@ -382,7 +382,6 @@ ALContext::ALContext(ALCcontext *context, ALDevice *device)
 
 ALContext::~ALContext()
 {
-    mDevice->removeContext(this);
 }
 
 
@@ -409,7 +408,8 @@ void ALContext::destroy()
 
     alcDestroyContext(mContext);
     mContext = nullptr;
-    delete this;
+
+    mDevice->removeContext(this);
 }
 
 

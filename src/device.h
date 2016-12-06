@@ -27,7 +27,7 @@ enum ALCExtension {
 class ALDevice : public Device {
     ALCdevice *mDevice;
 
-    Vector<ALContext*> mContexts;
+    Vector<UniquePtr<ALContext>> mContexts;
 
     bool mHasExt[ALC_EXTENSION_MAX];
 

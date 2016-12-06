@@ -73,7 +73,10 @@ ALDevice::~ALDevice()
 
 void ALDevice::removeContext(ALContext *ctx)
 {
-    auto iter = std::find(mContexts.begin(), mContexts.end(), ctx);
+    auto iter = std::find_if(mContexts.begin(), mContexts.end(),
+        [ctx](const UniquePtr<ALContext> &entry) -> bool
+        { return entry.get() == ctx; }
+    );
     if(iter != mContexts.end()) mContexts.erase(iter);
 }
 
@@ -195,9 +198,8 @@ Context *ALDevice::createContext(const ALCint *attribs)
     ALCcontext *ctx = alcCreateContext(mDevice, attribs);
     if(!ctx) throw std::runtime_error("Failed to create context");
 
-    ALContext *ret = new ALContext(ctx, this);
-    mContexts.push_back(ret);
-    return ret;
+    mContexts.emplace_back(MakeUnique<ALContext>(ctx, this));
+    return mContexts.back().get();
 }
 
 
