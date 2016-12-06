@@ -19,11 +19,6 @@
 namespace alure
 {
 
-template<typename T, size_t N>
-static inline size_t countof(const T(&)[N])
-{ return N; }
-
-
 template<typename T>
 static inline void LoadALCFunc(ALCdevice *device, T **func, const char *name)
 { *func = reinterpret_cast<T*>(alcGetProcAddress(device, name)); }
@@ -94,9 +89,9 @@ String ALDevice::getName(PlaybackDeviceName type) const
     return name ? String(name) : String();
 }
 
-bool ALDevice::queryExtension(const char *extname) const
+bool ALDevice::queryExtension(const String &name) const
 {
-    return alcIsExtensionPresent(mDevice, extname);
+    return alcIsExtensionPresent(mDevice, name.c_str());
 }
 
 ALCuint ALDevice::getALCVersion() const

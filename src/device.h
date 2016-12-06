@@ -51,7 +51,7 @@ public:
     void removeContext(ALContext *ctx);
 
     String getName(PlaybackDeviceName type) const override final;
-    bool queryExtension(const char *extname) const override final;
+    bool queryExtension(const String &name) const override final;
 
     ALCuint getALCVersion() const override final;
     ALCuint getEFXVersion() const override final;

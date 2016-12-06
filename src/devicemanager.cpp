@@ -41,9 +41,9 @@ ALDeviceManager::ALDeviceManager()
         GetDeviceProc(&SetThreadContext, 0, "alcSetThreadContext");
 }
 
-bool ALDeviceManager::queryExtension(const char *extname) const
+bool ALDeviceManager::queryExtension(const String &name) const
 {
-    return alcIsExtensionPresent(nullptr, extname);
+    return alcIsExtensionPresent(nullptr, name.c_str());
 }
 
 Vector<String> ALDeviceManager::enumerate(DeviceEnumeration type) const

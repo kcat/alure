@@ -241,7 +241,7 @@ public:
     static DeviceManager &get();
 
     /** Queries the existence of a non-device-specific ALC extension. */
-    virtual bool queryExtension(const char *extname) const = 0;
+    virtual bool queryExtension(const String &name) const = 0;
 
     /** Enumerates available device names of the given \param type. */
     virtual Vector<String> enumerate(DeviceEnumeration type) const = 0;
@@ -263,7 +263,7 @@ public:
     /** Retrieves the device name as given by \param type. */
     virtual String getName(PlaybackDeviceName type=PlaybackDeviceName::Basic) const = 0;
     /** Queries the existence of an ALC extension on this device. */
-    virtual bool queryExtension(const char *extname) const = 0;
+    virtual bool queryExtension(const String &name) const = 0;
 
     /**
      * Retrieves the ALC version supported by this device, as constructed by

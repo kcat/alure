@@ -13,7 +13,7 @@ public:
 
     static ALDeviceManager &get();
 
-    bool queryExtension(const char *extname) const override final;
+    bool queryExtension(const String &name) const override final;
 
     Vector<String> enumerate(DeviceEnumeration type) const override final;
     String defaultDeviceName(DefaultDeviceType type) const override final;
