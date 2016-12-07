@@ -76,7 +76,7 @@ static long cb_get_size(void *user_data)
 
 // Inherit from alure::Decoder to make a custom decoder (DUMB for this example)
 class DumbDecoder : public alure::Decoder {
-    alure::SharedPtr<std::istream> mFile;
+    alure::UniquePtr<std::istream> mFile;
     std::unique_ptr<DUMBFILE_SYSTEM> mDfs;
     DUMBFILE *mDumbfile;
     DUH *mDuh;
@@ -86,9 +86,9 @@ class DumbDecoder : public alure::Decoder {
     uint64_t mStreamPos;
 
 public:
-    DumbDecoder(alure::SharedPtr<std::istream> file, std::unique_ptr<DUMBFILE_SYSTEM> &&dfs, DUMBFILE *dfile, DUH *duh, DUH_SIGRENDERER *renderer, ALuint freq)
-      : mFile(file), mDfs(std::move(dfs)), mDumbfile(dfile), mDuh(duh), mRenderer(renderer), mFrequency(freq),
-        mStreamPos(0)
+    DumbDecoder(alure::UniquePtr<std::istream> file, std::unique_ptr<DUMBFILE_SYSTEM> &&dfs, DUMBFILE *dfile, DUH *duh, DUH_SIGRENDERER *renderer, ALuint freq)
+      : mFile(std::move(file)), mDfs(std::move(dfs)), mDumbfile(dfile), mDuh(duh)
+      , mRenderer(renderer), mFrequency(freq), mStreamPos(0)
     { }
     virtual ~DumbDecoder()
     {
@@ -165,7 +165,7 @@ public:
 
 // Inherit from alure::DecoderFactory to use our custom decoder
 class DumbFactory : public alure::DecoderFactory {
-    virtual alure::SharedPtr<alure::Decoder> createDecoder(alure::SharedPtr<std::istream> file)
+    virtual alure::SharedPtr<alure::Decoder> createDecoder(alure::UniquePtr<std::istream> &file)
     {
         static const std::array<DUH*(*)(DUMBFILE*),3> init_funcs{{
             dumb_read_it, dumb_read_xm, dumb_read_s3m
@@ -193,7 +193,7 @@ class DumbFactory : public alure::DecoderFactory {
             {
                 if((renderer=duh_start_sigrenderer(duh, 0, 2, 0)) != nullptr)
                     return alure::MakeShared<DumbDecoder>(
-                        file, std::move(dfs), dfile, duh, renderer, freq
+                        std::move(file), std::move(dfs), dfile, duh, renderer, freq
                     );
 
                 unload_duh(duh);
@@ -207,7 +207,7 @@ class DumbFactory : public alure::DecoderFactory {
         {
             if((renderer=duh_start_sigrenderer(duh, 0, 2, 0)) != nullptr)
                 return alure::MakeShared<DumbDecoder>(
-                    file, std::move(dfs), dfile, duh, renderer, freq
+                    std::move(file), std::move(dfs), dfile, duh, renderer, freq
                 );
 
             unload_duh(duh);

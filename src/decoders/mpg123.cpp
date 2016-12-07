@@ -30,15 +30,15 @@ static off_t r_lseek(void *user_data, off_t offset, int whence)
 
 
 class Mpg123Decoder : public Decoder {
-    SharedPtr<std::istream> mFile;
+    UniquePtr<std::istream> mFile;
 
     mpg123_handle *mMpg123;
     int mChannels;
     long mSampleRate;
 
 public:
-    Mpg123Decoder(SharedPtr<std::istream> file, mpg123_handle *mpg123, int chans, long srate)
-      : mFile(file), mMpg123(mpg123), mChannels(chans), mSampleRate(srate)
+    Mpg123Decoder(UniquePtr<std::istream> file, mpg123_handle *mpg123, int chans, long srate)
+      : mFile(std::move(file)), mMpg123(mpg123), mChannels(chans), mSampleRate(srate)
     { }
     virtual ~Mpg123Decoder();
 
@@ -145,7 +145,7 @@ Mpg123DecoderFactory::~Mpg123DecoderFactory()
 }
 
 
-SharedPtr<Decoder> Mpg123DecoderFactory::createDecoder(SharedPtr<std::istream> file)
+SharedPtr<Decoder> Mpg123DecoderFactory::createDecoder(UniquePtr<std::istream> &file)
 {
     if(!mIsInited)
         return nullptr;
@@ -166,7 +166,7 @@ SharedPtr<Decoder> Mpg123DecoderFactory::createDecoder(SharedPtr<std::istream> f
                    mpg123_format(mpg123, srate, channels, MPG123_ENC_SIGNED_16) == MPG123_OK)
                 {
                     // All OK
-                    return MakeShared<Mpg123Decoder>(file, mpg123, channels, srate);
+                    return MakeShared<Mpg123Decoder>(std::move(file), mpg123, channels, srate);
                 }
             }
             mpg123_close(mpg123);

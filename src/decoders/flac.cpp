@@ -12,7 +12,7 @@ namespace alure
 {
 
 class FlacDecoder : public Decoder {
-    SharedPtr<std::istream> mFile;
+    UniquePtr<std::istream> mFile;
 
     FLAC__StreamDecoder *mFlacFile;
     ChannelConfig mChannelConfig;
@@ -160,14 +160,13 @@ class FlacDecoder : public Decoder {
     }
 
 public:
-    FlacDecoder(SharedPtr<std::istream> file)
-      : mFile(file), mFlacFile(nullptr), mChannelConfig(ChannelConfig::Mono),
-        mSampleType(SampleType::Int16), mFrequency(0), mFrameSize(0), mSamplePos(0),
-        mOutBytes(nullptr), mOutMax(0), mOutLen(0)
+    FlacDecoder()
+      : mFlacFile(nullptr), mChannelConfig(ChannelConfig::Mono), mSampleType(SampleType::Int16)
+      , mFrequency(0), mFrameSize(0), mSamplePos(0), mOutBytes(nullptr), mOutMax(0), mOutLen(0)
     { }
     virtual ~FlacDecoder();
 
-    bool open();
+    bool open(UniquePtr<std::istream> &file);
 
     virtual ALuint getFrequency() const final;
     virtual ChannelConfig getChannelConfig() const final;
@@ -193,26 +192,29 @@ FlacDecoder::~FlacDecoder()
 }
 
 
-bool FlacDecoder::open()
+bool FlacDecoder::open(UniquePtr<std::istream> &file)
 {
     mFlacFile = FLAC__stream_decoder_new();
     if(mFlacFile)
     {
+        mFile = std::move(file);
         if(FLAC__stream_decoder_init_stream(mFlacFile, ReadCallback, SeekCallback, TellCallback, LengthCallback, EofCallback, WriteCallback, MetadataCallback, ErrorCallback, this) == FLAC__STREAM_DECODER_INIT_STATUS_OK)
         {
-            while(mData.size() == 0)
+            while(mData.empty())
             {
                 if(FLAC__stream_decoder_process_single(mFlacFile) == false ||
                    FLAC__stream_decoder_get_state(mFlacFile) == FLAC__STREAM_DECODER_END_OF_STREAM)
                     break;
             }
-            if(mData.size() > 0)
+            if(!mData.empty())
                 return true;
 
             FLAC__stream_decoder_finish(mFlacFile);
         }
         FLAC__stream_decoder_delete(mFlacFile);
         mFlacFile = nullptr;
+
+        file = std::move(mFile);
     }
 
     return false;
@@ -286,10 +288,10 @@ ALuint FlacDecoder::read(ALvoid *ptr, ALuint count)
 }
 
 
-SharedPtr<Decoder> FlacDecoderFactory::createDecoder(SharedPtr<std::istream> file)
+SharedPtr<Decoder> FlacDecoderFactory::createDecoder(UniquePtr<std::istream> &file)
 {
-    SharedPtr<FlacDecoder> decoder{MakeShared<FlacDecoder>(file)};
-    if(!decoder->open()) decoder.reset();
+    auto decoder = MakeShared<FlacDecoder>();
+    if(!decoder->open(file)) decoder.reset();
     return decoder;
 }
 

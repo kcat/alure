@@ -67,7 +67,7 @@ static std::map<String,UniquePtr<DecoderFactory>> sDecoders;
 
 
 template<typename T>
-static SharedPtr<Decoder> GetDecoder(const String &name, SharedPtr<std::istream> file, T start, T end)
+static SharedPtr<Decoder> GetDecoder(const String &name, UniquePtr<std::istream> &file, T start, T end)
 {
     while(start != end)
     {
@@ -75,8 +75,7 @@ static SharedPtr<Decoder> GetDecoder(const String &name, SharedPtr<std::istream>
         auto decoder = factory->createDecoder(file);
         if(decoder) return decoder;
 
-        file->clear();
-        if(!file->seekg(0))
+        if(!file || !(file->clear(),file->seekg(0)))
             throw std::runtime_error("Failed to rewind "+name+" for the next decoder factory");
 
         ++start;
@@ -85,7 +84,7 @@ static SharedPtr<Decoder> GetDecoder(const String &name, SharedPtr<std::istream>
     return nullptr;
 }
 
-static SharedPtr<Decoder> GetDecoder(const String &name, SharedPtr<std::istream> file)
+static SharedPtr<Decoder> GetDecoder(const String &name, UniquePtr<std::istream> file)
 {
     auto decoder = GetDecoder(name, file, sDecoders.begin(), sDecoders.end());
     if(!decoder) decoder = GetDecoder(name, file, std::begin(sDefaultDecoders), std::end(sDefaultDecoders));
@@ -114,11 +113,11 @@ UniquePtr<DecoderFactory> UnregisterDecoder(const String &name)
 
 
 class DefaultFileIOFactory : public FileIOFactory {
-    virtual SharedPtr<std::istream> openFile(const String &name)
+    virtual UniquePtr<std::istream> openFile(const String &name)
     {
-        auto file = MakeShared<std::ifstream>(name.c_str(), std::ios::binary);
-        if(!file->is_open()) file.reset();
-        return file;
+        auto file = MakeUnique<std::ifstream>(name.c_str(), std::ios::binary);
+        if(!file->is_open()) file = nullptr;
+        return std::move(file);
     }
 };
 static DefaultFileIOFactory sDefaultFileFactory;
@@ -456,7 +455,7 @@ ALuint ALContext::getAsyncWakeInterval() const
 SharedPtr<Decoder> ALContext::createDecoder(const String &name)
 {
     auto file = FileIOFactory::get().openFile(name);
-    if(file.get()) return GetDecoder(name, file);
+    if(file) return GetDecoder(name, std::move(file));
 
     // Resource not found. Try to find a substitute.
     if(!mMessage.get()) throw std::runtime_error("Failed to open "+name);
@@ -467,9 +466,9 @@ SharedPtr<Decoder> ALContext::createDecoder(const String &name)
             throw std::runtime_error("Failed to open "+oldname);
         file = FileIOFactory::get().openFile(newname);
         oldname = std::move(newname);
-    } while(!file.get());
+    } while(!file);
 
-    return GetDecoder(oldname, file);
+    return GetDecoder(oldname, std::move(file));
 }
 
 

@@ -6,7 +6,7 @@
 namespace alure {
 
 class VorbisFileDecoderFactory : public DecoderFactory {
-    virtual SharedPtr<Decoder> createDecoder(SharedPtr<std::istream> file) final;
+    SharedPtr<Decoder> createDecoder(UniquePtr<std::istream> &file) override final;
 };
 
 } // namespace alure

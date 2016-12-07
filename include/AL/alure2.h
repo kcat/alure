@@ -1020,9 +1020,11 @@ public:
 
     /**
      * Creates and returns a \ref Decoder instance for the given resource
-     * \param file. Returns NULL if a decoder can't be created from the file.
+     * \param file. If the decoder needs to retain the file handle for reading
+     * as-needed, it should move the UniquePtr to internal storage. Returns
+     * nullptr if a decoder can't be created from the file.
      */
-    virtual SharedPtr<Decoder> createDecoder(SharedPtr<std::istream> file) = 0;
+    virtual SharedPtr<Decoder> createDecoder(UniquePtr<std::istream> &file) = 0;
 };
 
 /**
@@ -1076,7 +1078,7 @@ public:
     virtual ~FileIOFactory() { }
 
     /** Opens a read-only binary file for the given \param name. */
-    virtual SharedPtr<std::istream> openFile(const String &name) = 0;
+    virtual UniquePtr<std::istream> openFile(const String &name) = 0;
 };
 
 

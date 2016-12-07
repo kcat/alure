@@ -57,7 +57,7 @@ static ALushort read_le16(std::istream &stream)
 
 
 class WaveDecoder : public Decoder {
-    SharedPtr<std::istream> mFile;
+    UniquePtr<std::istream> mFile;
 
     ChannelConfig mChannelConfig;
     SampleType mSampleType;
@@ -71,10 +71,10 @@ class WaveDecoder : public Decoder {
     std::istream::pos_type mStart, mEnd;
 
 public:
-    WaveDecoder(SharedPtr<std::istream> file, ChannelConfig channels, SampleType type, ALuint frequency, ALuint framesize,
+    WaveDecoder(UniquePtr<std::istream> file, ChannelConfig channels, SampleType type, ALuint frequency, ALuint framesize,
                 std::istream::pos_type start, std::istream::pos_type end, ALuint loopstart, ALuint loopend)
-      : mFile(file), mChannelConfig(channels), mSampleType(type), mFrequency(frequency), mFrameSize(framesize),
-        mLoopPts{loopstart,loopend}, mStart(start), mEnd(end)
+      : mFile(std::move(file)), mChannelConfig(channels), mSampleType(type), mFrequency(frequency)
+      , mFrameSize(framesize), mLoopPts{loopstart,loopend}, mStart(start), mEnd(end)
     { }
     virtual ~WaveDecoder();
 
@@ -199,7 +199,7 @@ ALuint WaveDecoder::read(ALvoid *ptr, ALuint count)
 }
 
 
-SharedPtr<Decoder> WaveDecoderFactory::createDecoder(SharedPtr<std::istream> file)
+SharedPtr<Decoder> WaveDecoderFactory::createDecoder(UniquePtr<std::istream> &file)
 {
     ChannelConfig channels = ChannelConfig::Mono;
     SampleType type = SampleType::UInt8;
@@ -427,7 +427,7 @@ SharedPtr<Decoder> WaveDecoderFactory::createDecoder(SharedPtr<std::istream> fil
             {
                 /* Loop points are byte offsets relative to the data start.
                  * Convert to sample frame offsets. */
-                return MakeShared<WaveDecoder>(file,
+                return MakeShared<WaveDecoder>(std::move(file),
                     channels, type, frequency, framesize, start, end,
                     loop_pts[0] / blockalign * framealign,
                     loop_pts[1] / blockalign * framealign

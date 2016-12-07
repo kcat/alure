@@ -48,7 +48,7 @@ static opus_int64 tell(void *user_data)
 
 
 class OpusFileDecoder : public Decoder {
-    SharedPtr<std::istream> mFile;
+    UniquePtr<std::istream> mFile;
 
     OggOpusFile *mOggFile;
     int mOggBitstream;
@@ -56,8 +56,8 @@ class OpusFileDecoder : public Decoder {
     ChannelConfig mChannelConfig;
 
 public:
-    OpusFileDecoder(SharedPtr<std::istream> file, OggOpusFile *oggfile, ChannelConfig sconfig)
-      : mFile(file), mOggFile(oggfile), mOggBitstream(0), mChannelConfig(sconfig)
+    OpusFileDecoder(UniquePtr<std::istream> file, OggOpusFile *oggfile, ChannelConfig sconfig)
+      : mFile(std::move(file)), mOggFile(oggfile), mOggBitstream(0), mChannelConfig(sconfig)
     { }
     virtual ~OpusFileDecoder();
 
@@ -184,9 +184,9 @@ ALuint OpusFileDecoder::read(ALvoid *ptr, ALuint count)
 }
 
 
-SharedPtr<Decoder> OpusFileDecoderFactory::createDecoder(SharedPtr<std::istream> file)
+SharedPtr<Decoder> OpusFileDecoderFactory::createDecoder(UniquePtr<std::istream> &file)
 {
-    const OpusFileCallbacks streamIO = {
+    static const OpusFileCallbacks streamIO = {
         read, seek, tell, nullptr
     };
 
@@ -213,7 +213,7 @@ SharedPtr<Decoder> OpusFileDecoderFactory::createDecoder(SharedPtr<std::istream>
         return nullptr;
     }
 
-    return MakeShared<OpusFileDecoder>(file, oggfile, channels);
+    return MakeShared<OpusFileDecoder>(std::move(file), oggfile, channels);
 }
 
 }

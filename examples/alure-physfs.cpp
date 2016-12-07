@@ -151,11 +151,11 @@ public:
         PHYSFS_deinit();
     }
 
-    virtual alure::SharedPtr<std::istream> openFile(const alure::String &name)
+    virtual alure::UniquePtr<std::istream> openFile(const alure::String &name)
     {
-        auto stream = alure::MakeShared<Stream>(name.c_str());
-        if(stream->fail()) stream.reset();
-        return stream;
+        auto stream = alure::MakeUnique<Stream>(name.c_str());
+        if(stream->fail()) stream = nullptr;
+        return std::move(stream);
     }
 
     // A PhysFS-specific function to mount a new path to the virtual directory
