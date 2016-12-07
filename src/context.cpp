@@ -322,20 +322,19 @@ void ALContext::backgroundProc()
         // Only do one pending buffer at a time. In case there's several large
         // buffers to load, we still need to process streaming sources so they
         // don't underrun.
-        ll_ringbuffer_data_t vec[2];
-        ll_ringbuffer_get_read_vector(mPendingBuffers.get(), vec);
+        RingBuffer::Data vec[2];
+        mPendingBuffers.get_read_vector(vec);
         if(vec[0].len > 0)
         {
             PendingBuffer *pb = reinterpret_cast<PendingBuffer*>(vec[0].buf);
             pb->mBuffer->load(pb->mFrames, pb->mFormat, pb->mDecoder, pb->mName, this);
             pb->~PendingBuffer();
-            ll_ringbuffer_read_advance(mPendingBuffers.get(), 1);
+            mPendingBuffers.read_advance(1);
             continue;
         }
 
         std::unique_lock<std::mutex> wakelock(mWakeMutex);
-        if(!mQuitThread.load(std::memory_order_acquire) &&
-           ll_ringbuffer_read_space(mPendingBuffers.get()) == 0)
+        if(!mQuitThread.load(std::memory_order_acquire) && mPendingBuffers.read_space() == 0)
         {
             ctxlock.unlock();
 
@@ -366,7 +365,7 @@ void ALContext::backgroundProc()
 
 ALContext::ALContext(ALCcontext *context, ALDevice *device)
   : mContext(context), mDevice(device), mRefs(0),
-    mHasExt{false}, mPendingBuffers(ll_ringbuffer_create(16, sizeof(PendingBuffer)), ll_ringbuffer_free),
+    mHasExt{false}, mPendingBuffers(16, sizeof(PendingBuffer)),
     mWakeInterval(0), mQuitThread(false), mIsConnected(true), mIsBatching(false),
     alGetSourcei64vSOFT(0),
     alGenEffects(0), alDeleteEffects(0), alIsEffect(0),
@@ -569,13 +568,13 @@ Buffer *ALContext::getBufferAsync(const String &name)
     if(mThread.get_id() == std::thread::id())
         mThread = std::thread(std::mem_fn(&ALContext::backgroundProc), this);
 
-    while(ll_ringbuffer_write_space(mPendingBuffers.get()) == 0)
+    while(mPendingBuffers.write_space() == 0)
         std::this_thread::yield();
 
-    ll_ringbuffer_data_t vec[2];
-    ll_ringbuffer_get_write_vector(mPendingBuffers.get(), vec);
+    RingBuffer::Data vec[2];
+    mPendingBuffers.get_write_vector(vec);
     new(vec[0].buf) PendingBuffer{name, buffer.get(), decoder, format, frames};
-    ll_ringbuffer_write_advance(mPendingBuffers.get(), 1);
+    mPendingBuffers.write_advance(1);
     mWakeMutex.lock(); mWakeMutex.unlock();
     mWakeThread.notify_all();
 

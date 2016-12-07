@@ -1,26 +1,86 @@
 #ifndef RINGBUF_H
 #define RINGBUF_H
 
-#include <stdlib.h>
+#include "alure2.h"
 
-typedef struct ll_ringbuffer ll_ringbuffer_t;
-typedef struct ll_ringbuffer_data {
-    char *buf;
-    size_t len;
-} ll_ringbuffer_data_t;
+#include <atomic>
 
-ll_ringbuffer_t *ll_ringbuffer_create(size_t sz, size_t elem_sz);
-void ll_ringbuffer_free(ll_ringbuffer_t *rb);
-void ll_ringbuffer_get_read_vector(const ll_ringbuffer_t *rb, ll_ringbuffer_data_t *vec);
-void ll_ringbuffer_get_write_vector(const ll_ringbuffer_t *rb, ll_ringbuffer_data_t *vec);
-size_t ll_ringbuffer_read(ll_ringbuffer_t *rb, char *dest, size_t cnt);
-size_t ll_ringbuffer_peek(ll_ringbuffer_t *rb, char *dest, size_t cnt);
-void ll_ringbuffer_read_advance(ll_ringbuffer_t *rb, size_t cnt);
-size_t ll_ringbuffer_read_space(const ll_ringbuffer_t *rb);
-int ll_ringbuffer_mlock(ll_ringbuffer_t *rb);
-void ll_ringbuffer_reset(ll_ringbuffer_t *rb);
-size_t ll_ringbuffer_write(ll_ringbuffer_t *rb, const char *src, size_t cnt);
-void ll_ringbuffer_write_advance(ll_ringbuffer_t *rb, size_t cnt);
-size_t ll_ringbuffer_write_space(const ll_ringbuffer_t *rb);
+namespace alure
+{
+
+/* NOTE: This lockless ringbuffer implementation is based on JACK's, extended
+ * to include an element size. Consequently, parameters and return values for a
+ * size or count is in 'elements', not bytes. Additionally, it only supports
+ * single-consumer/single-provider operation.
+ */
+class RingBuffer {
+    std::atomic<size_t> mWritePtr;
+    std::atomic<size_t> mReadPtr;
+    size_t mSize;
+    size_t mSizeMask;
+    size_t mElemSize;
+
+    UniquePtr<char[]> mBuffer;
+
+public:
+    struct Data {
+        char *buf;
+        size_t len;
+    };
+
+    /* Create a new ringbuffer to hold at least `sz' elements of `elem_sz'
+     * bytes. The number of elements is rounded up to the next power of two.
+     */
+    RingBuffer(size_t sz, size_t elem_sz);
+    RingBuffer(const RingBuffer&) = delete;
+
+    /* Reset the read and write pointers to zero. This is not thread safe. */
+    void reset();
+
+    /* Return the number of elements available for reading. This is the number
+     * of elements in front of the read pointer and behind the write pointer.
+     */
+    size_t read_space() const;
+
+    /* Return the number of elements available for writing. This is the number
+     * of elements in front of the write pointer and behind the read pointer.
+     */
+    size_t write_space() const;
+
+    /* The copying data reader. Copy at most `cnt' elements to `dest'. Returns
+     * the actual number of elements copied.
+     */
+    size_t read(char *dest, size_t cnt);
+
+    /* The copying data reader w/o read pointer advance. Copy at most `cnt'
+     * elements to `dest'. Returns the actual number of elements copied.
+     */
+    size_t peek(char *dest, size_t cnt);
+
+    /* The copying data writer. Copy at most `cnt' elements from `src'. Returns
+     * the actual number of elements copied.
+     */
+    size_t write(const char *src, size_t cnt);
+
+    /* Advance the read pointer `cnt' places. */
+    void read_advance(size_t cnt);
+
+    /* Advance the write pointer `cnt' places. */
+    void write_advance(size_t cnt);
+
+    /* The non-copying data reader. `vec' is an array of two places. Set the
+     * values at `vec' to hold the current readable data. If the readable data
+     * is in one segment the second segment has zero length.
+     */
+    void get_read_vector(Data *vec) const;
+
+    /* The non-copying data writer. `vec' is an array of two places. Set the
+     * values at `vec' to hold the current writeable data. If the writeable
+     * data is in one segment the second segment has zero length.
+     */
+    void get_write_vector(Data *vec) const;
+};
+
+} // namespace alure
 
 #endif /* RINGBUF_H */

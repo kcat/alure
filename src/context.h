@@ -69,7 +69,6 @@ public:
     Batcher& operator=(const Batcher&) = delete;
 };
 
-using RingBufferPtr = UniquePtr<ll_ringbuffer_t,decltype(*ll_ringbuffer_free)>;
 
 class ALContext : public Context, public Listener {
     static ALContext *sCurrentCtx;
@@ -110,7 +109,7 @@ private:
 
         ~PendingBuffer() { }
     };
-    RingBufferPtr mPendingBuffers;
+    RingBuffer mPendingBuffers;
 
     Vector<ALSource*> mStreamingSources;
     std::mutex mSourceStreamMutex;
