@@ -63,9 +63,9 @@ public:
     Vector<String> enumerateHRTFNames() const override final;
     bool isHRTFEnabled() const override final;
     String getCurrentHRTF() const override final;
-    void reset(const ALCint *attributes) override final;
+    void reset(const Vector<AttributePair> &attributes) override final;
 
-    Context *createContext(const ALCint *attribs=0) override final;
+    Context *createContext(const Vector<AttributePair> &attributes) override final;
 
     void pauseDSP() override final;
     void resumeDSP() override final;

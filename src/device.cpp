@@ -184,18 +184,61 @@ String ALDevice::getCurrentHRTF() const
     return String(alcGetString(mDevice, ALC_HRTF_SPECIFIER_SOFT));
 }
 
-void ALDevice::reset(const ALCint *attributes)
+void ALDevice::reset(const Vector<AttributePair> &attributes)
 {
     if(!hasExtension(SOFT_HRTF))
         throw std::runtime_error("ALC_SOFT_HRTF not supported");
-    if(!alcResetDeviceSOFT(mDevice, attributes))
+    auto do_reset = [this, &attributes]() -> ALCboolean
+    {
+        if(attributes.empty())
+        {
+            /* No explicit attributes. */
+            return alcResetDeviceSOFT(mDevice, nullptr);
+        }
+        auto attr_end = std::find_if(attributes.begin(), attributes.end(),
+            [](const AttributePair &attr) -> bool
+            { return std::get<0>(attr) == 0; }
+        );
+        if(attr_end == attributes.end())
+        {
+            /* Attribute list was not properly terminated. Copy the attribute
+             * list and add the 0 sentinel.
+             */
+            Vector<AttributePair> attrs = attributes;
+            attrs.push_back({0, 0});
+            return alcResetDeviceSOFT(mDevice, &std::get<0>(attrs.front()));
+        }
+        return alcResetDeviceSOFT(mDevice, &std::get<0>(attributes.front()));
+    };
+    if(!do_reset())
         throw std::runtime_error("Device reset error");
 }
 
 
-Context *ALDevice::createContext(const ALCint *attribs)
+Context *ALDevice::createContext(const Vector<AttributePair> &attributes)
 {
-    ALCcontext *ctx = alcCreateContext(mDevice, attribs);
+    ALCcontext *ctx = [this, &attributes]() -> ALCcontext*
+    {
+        if(attributes.empty())
+        {
+            /* No explicit attributes. */
+            return alcCreateContext(mDevice, nullptr);
+        }
+        auto attr_end = std::find_if(attributes.begin(), attributes.end(),
+            [](const AttributePair &attr) -> bool
+            { return std::get<0>(attr) == 0; }
+        );
+        if(attr_end == attributes.end())
+        {
+            /* Attribute list was not properly terminated. Copy the attribute
+             * list and add the 0 sentinel.
+             */
+            Vector<AttributePair> attrs = attributes;
+            attrs.push_back({0, 0});
+            return alcCreateContext(mDevice, &std::get<0>(attrs.front()));
+        }
+        return alcCreateContext(mDevice, &std::get<0>(attributes.front()));
+    }();
     if(!ctx) throw std::runtime_error("Failed to create context");
 
     mContexts.emplace_back(MakeUnique<ALContext>(ctx, this));

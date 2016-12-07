@@ -28,33 +28,27 @@ int main(int argc, char *argv[])
     }
 
     // Enumerate (and display) the available HRTFs
-    std::cout<< "Available HRTFs:" <<std::endl;
+    std::cout<< "Available HRTFs:\n";
     alure::Vector<alure::String> hrtf_names = dev->enumerateHRTFNames();
     for(const alure::String &name : hrtf_names)
-        std::cout<< "    "<<name <<std::endl;
+        std::cout<< "    "<<name <<'\n';
+    std::cout.flush();
 
     int i = 1;
-    alure::Vector<ALCint> attrs;
-    attrs.push_back(ALC_HRTF_SOFT);
-    attrs.push_back(ALC_TRUE);
+    alure::Vector<alure::AttributePair> attrs;
+    attrs.push_back({ALC_HRTF_SOFT, ALC_TRUE});
     if(argc-i > 1 && strcasecmp(argv[i], "-hrtf") == 0)
     {
         // Find the given HRTF and add it to the attributes list
-        auto iter = std::find_if(hrtf_names.begin(), hrtf_names.end(),
-            [argv, i](const alure::String &name) -> bool
-            { return name == argv[i+1]; }
-        );
+        auto iter = std::find(hrtf_names.begin(), hrtf_names.end(), argv[i+1]);
         if(iter == hrtf_names.end())
             std::cerr<< "HRTF \""<<argv[i+1]<<"\" not found" <<std::endl;
         else
-        {
-            attrs.push_back(ALC_HRTF_ID_SOFT);
-            attrs.push_back(std::distance(hrtf_names.begin(), iter));
-        }
+            attrs.push_back({ALC_HRTF_ID_SOFT, std::distance(hrtf_names.begin(), iter)});
         i += 2;
     }
-    attrs.push_back(0);
-    alure::Context *ctx = dev->createContext(attrs.data());
+    attrs.push_back({0,0});
+    alure::Context *ctx = dev->createContext(attrs);
     alure::Context::MakeCurrent(ctx);
 
     std::cout<< "Using HRTF \""<<dev->getCurrentHRTF()<<"\"" <<std::endl;
@@ -64,21 +58,16 @@ int main(int argc, char *argv[])
         if(argc-i > 1 && strcasecmp(argv[i], "-hrtf") == 0)
         {
             // Find the given HRTF and reset the device using it
-            auto iter = std::find_if(hrtf_names.begin(), hrtf_names.end(),
-                [argv, i](const alure::String &name) -> bool
-                { return name == argv[i+1]; }
-            );
+            auto iter = std::find(hrtf_names.begin(), hrtf_names.end(), argv[i+1]);
             if(iter == hrtf_names.end())
                 std::cerr<< "HRTF \""<<argv[i+1]<<"\" not found" <<std::endl;
             else
             {
-                attrs.clear();
-                attrs.push_back(ALC_HRTF_SOFT);
-                attrs.push_back(ALC_TRUE);
-                attrs.push_back(ALC_HRTF_ID_SOFT);
-                attrs.push_back(std::distance(hrtf_names.begin(), iter));
-                dev->reset(attrs.data());
-
+                dev->reset({
+                    {ALC_HRTF_SOFT, ALC_TRUE},
+                    {ALC_HRTF_ID_SOFT, std::distance(hrtf_names.begin(), iter)},
+                    {0, 0}
+                });
                 std::cout<< "Using HRTF \""<<dev->getCurrentHRTF()<<"\"" <<std::endl;
             }
 

@@ -4,6 +4,7 @@
 #include <vector>
 #include <string>
 #include <memory>
+#include <utility>
 #include <cmath>
 
 #include "alc.h"
@@ -100,6 +101,13 @@ using Vector = std::vector<T>;
 // A String implementation, default's to C++'s std::string. If this is changed,
 // you must recompile the library.
 using String = std::string;
+
+/**
+ * An attribute pair, for passing attributes to \ref Device::createContext and
+ * \ref Device::reset.
+ */
+using AttributePair = std::pair<ALCint,ALCint>;
+static_assert(sizeof(AttributePair) == sizeof(ALCint[2]), "Bad AttributePair size");
 
 
 struct FilterParams {
@@ -315,13 +323,13 @@ public:
      *
      * Requires the ALC_SOFT_HRTF extension.
      */
-    virtual void reset(const ALCint *attributes) = 0;
+    virtual void reset(const Vector<AttributePair> &attributes) = 0;
 
     /**
      * Creates a new \ref Context on this device, using the specified
      * \param attributes.
      */
-    virtual Context *createContext(const ALCint *attributes=0) = 0;
+    virtual Context *createContext(const Vector<AttributePair> &attributes=Vector<AttributePair>{}) = 0;
 
     /**
      * Pauses device processing, stopping updates for its contexts. Multiple
