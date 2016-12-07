@@ -34,9 +34,9 @@ class ALDevice : public Device {
     std::once_flag mSetExts;
     void setupExts();
 
-    virtual ~ALDevice();
 public:
     ALDevice(ALCdevice *device);
+    virtual ~ALDevice();
 
     ALCdevice *getDevice() const { return mDevice; }
 

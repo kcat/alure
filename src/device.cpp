@@ -226,7 +226,7 @@ void ALDevice::close()
         throw std::runtime_error("Failed to close device");
     mDevice = 0;
 
-    delete this;
+    ALDeviceManager::get().removeDevice(this);
 }
 
 }

@@ -5,13 +5,20 @@
 
 namespace alure {
 
+class ALDevice;
+
 class ALDeviceManager : public DeviceManager {
+    Vector<UniquePtr<ALDevice>> mDevices;
+
     ALDeviceManager();
+    virtual ~ALDeviceManager();
 
 public:
     static ALCboolean (ALC_APIENTRY*SetThreadContext)(ALCcontext*);
 
     static ALDeviceManager &get();
+
+    void removeDevice(ALDevice *dev);
 
     bool queryExtension(const String &name) const override final;
 

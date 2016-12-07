@@ -41,6 +41,11 @@ ALDeviceManager::ALDeviceManager()
         GetDeviceProc(&SetThreadContext, 0, "alcSetThreadContext");
 }
 
+ALDeviceManager::~ALDeviceManager()
+{
+}
+
+
 bool ALDeviceManager::queryExtension(const String &name) const
 {
     return alcIsExtensionPresent(nullptr, name.c_str());
@@ -78,7 +83,17 @@ Device *ALDeviceManager::openPlayback(const String &name)
             throw std::runtime_error("Failed to open default device");
         throw std::runtime_error("Failed to open device \""+name+"\"");
     }
-    return new ALDevice(dev);
+    mDevices.emplace_back(MakeUnique<ALDevice>(dev));
+    return mDevices.back().get();
+}
+
+void ALDeviceManager::removeDevice(ALDevice *dev)
+{
+    auto iter = std::find_if(mDevices.begin(), mDevices.end(),
+        [dev](const UniquePtr<ALDevice> &entry) -> bool
+        { return entry.get() == dev; }
+    );
+    if(iter != mDevices.end()) mDevices.erase(iter);
 }
 
 }
