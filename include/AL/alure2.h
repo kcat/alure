@@ -1139,8 +1139,8 @@ public:
      * This will be called again if the new name isn't found.
      *
      * \param name The resource name that was not found.
-     * \return The resplacement resource name to use instead. Returning an
-     *         empty string means to stop trying.
+     * \return The replacement resource name to use instead. Returning an empty
+     *         string means to stop trying.
      */
     virtual String resourceNotFound(const String &name);
 };
