@@ -687,8 +687,9 @@ public:
      * to the gain base, although before the filter gain adjustements.
      */
     virtual void setGainRange(ALfloat mingain, ALfloat maxgain) = 0;
-    virtual ALfloat getMinGain() const = 0;
-    virtual ALfloat getMaxGain() const = 0;
+    virtual std::pair<ALfloat,ALfloat> getGainRange() const = 0;
+    ALfloat getMinGain() const { return std::get<0>(getGainRange()); }
+    ALfloat getMaxGain() const { return std::get<1>(getGainRange()); }
 
     /**
      * Specifies the reference distance and maximum distance the source will
@@ -701,8 +702,9 @@ public:
      * gain multiplier of 1).
      */
     virtual void setDistanceRange(ALfloat refdist, ALfloat maxdist) = 0;
-    virtual ALfloat getReferenceDistance() const = 0;
-    virtual ALfloat getMaxDistance() const = 0;
+    virtual std::pair<ALfloat,ALfloat> getDistanceRange() const = 0;
+    ALfloat getReferenceDistance() const { return std::get<0>(getDistanceRange()); }
+    ALfloat getMaxDistance() const { return std::get<1>(getDistanceRange()); }
 
     /** Specifies the source's 3D position. */
     virtual void setPosition(ALfloat x, ALfloat y, ALfloat z) = 0;
@@ -742,8 +744,9 @@ public:
      * hear the source attenuated according to the outer cone gains.
      */
     virtual void setConeAngles(ALfloat inner, ALfloat outer) = 0;
-    virtual ALfloat getInnerConeAngle() const = 0;
-    virtual ALfloat getOuterConeAngle() const = 0;
+    virtual std::pair<ALfloat,ALfloat> getConeAngles() const = 0;
+    ALfloat getInnerConeAngle() const { return std::get<0>(getConeAngles()); }
+    ALfloat getOuterConeAngle() const { return std::get<1>(getConeAngles()); }
 
     /**
      * Specifies the linear gain multiplier when the listener is outside of the
@@ -754,8 +757,9 @@ public:
      * \param gainhf has no effect without the ALC_EXT_EFX extension.
      */
     virtual void setOuterConeGains(ALfloat gain, ALfloat gainhf=1.0f) = 0;
-    virtual ALfloat getOuterConeGain() const = 0;
-    virtual ALfloat getOuterConeGainHF() const = 0;
+    virtual std::pair<ALfloat,ALfloat> getOuterConeGains() const = 0;
+    ALfloat getOuterConeGain() const { return std::get<0>(getOuterConeGains()); }
+    ALfloat getOuterConeGainHF() const { return std::get<1>(getOuterConeGains()); }
 
     /**
      * Specifies the rolloff factors for the direct and send paths. This is
@@ -766,8 +770,9 @@ public:
      * and direct path attenuation.
      */
     virtual void setRolloffFactors(ALfloat factor, ALfloat roomfactor=0.0f) = 0;
-    virtual ALfloat getRolloffFactor() const = 0;
-    virtual ALfloat getRoomRolloffFactor() const = 0;
+    virtual std::pair<ALfloat,ALfloat> getRolloffFactors() const = 0;
+    ALfloat getRolloffFactor() const { return std::get<0>(getRolloffFactors()); }
+    ALfloat getRoomRolloffFactor() const { return std::get<1>(getRolloffFactors()); }
 
     /**
      * Specifies the doppler factor for the doppler effect's pitch shift. This
@@ -804,9 +809,10 @@ public:
     virtual ALfloat getAirAbsorptionFactor() const = 0;
 
     virtual void setGainAuto(bool directhf, bool send, bool sendhf) = 0;
-    virtual bool getDirectGainHFAuto() const = 0;
-    virtual bool getSendGainAuto() const = 0;
-    virtual bool getSendGainHFAuto() const = 0;
+    virtual std::tuple<bool,bool,bool> getGainAuto() const = 0;
+    bool getDirectGainHFAuto() const { return std::get<0>(getGainAuto()); }
+    bool getSendGainAuto() const { return std::get<1>(getGainAuto()); }
+    bool getSendGainHFAuto() const { return std::get<2>(getGainAuto()); }
 
     /** Sets the \param filter properties on the direct path signal. */
     virtual void setDirectFilter(const FilterParams &filter) = 0;

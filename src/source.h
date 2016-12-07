@@ -125,12 +125,12 @@ public:
     ALfloat getGain() const override final { return mGain; }
 
     void setGainRange(ALfloat mingain, ALfloat maxgain) override final;
-    ALfloat getMinGain() const override final { return mMinGain; }
-    ALfloat getMaxGain() const override final { return mMaxGain; }
+    std::pair<ALfloat,ALfloat> getGainRange() const override final
+    { return {mMinGain, mMaxGain}; }
 
     void setDistanceRange(ALfloat refdist, ALfloat maxdist) override final;
-    ALfloat getReferenceDistance() const override final { return mRefDist; }
-    ALfloat getMaxDistance() const override final { return mMaxDist; }
+    std::pair<ALfloat,ALfloat> getDistanceRange() const override final
+    { return {mRefDist, mMaxDist}; }
 
     void setPosition(ALfloat x, ALfloat y, ALfloat z) override final;
     void setPosition(const ALfloat *pos) override final;
@@ -149,16 +149,16 @@ public:
     void setOrientation(const ALfloat *ori) override final;
 
     void setConeAngles(ALfloat inner, ALfloat outer) override final;
-    ALfloat getInnerConeAngle() const override final { return mConeInnerAngle; }
-    ALfloat getOuterConeAngle() const override final { return mConeOuterAngle; }
+    std::pair<ALfloat,ALfloat> getConeAngles() const override final
+    { return {mConeInnerAngle, mConeOuterAngle}; }
 
     void setOuterConeGains(ALfloat gain, ALfloat gainhf=1.0f) override final;
-    ALfloat getOuterConeGain() const override final { return mConeOuterGain; }
-    ALfloat getOuterConeGainHF() const override final { return mConeOuterGainHF; }
+    std::pair<ALfloat,ALfloat> getOuterConeGains() const override final
+    { return {mConeOuterGain, mConeOuterGainHF}; }
 
     void setRolloffFactors(ALfloat factor, ALfloat roomfactor=0.0f) override final;
-    ALfloat getRolloffFactor() const override final { return mRolloffFactor; }
-    ALfloat getRoomRolloffFactor() const override final { return mRoomRolloffFactor; }
+    std::pair<ALfloat,ALfloat> getRolloffFactors() const override final
+    { return {mRolloffFactor, mRoomRolloffFactor}; }
 
     void setDopplerFactor(ALfloat factor) override final;
     ALfloat getDopplerFactor() const override final
@@ -179,9 +179,8 @@ public:
     ALfloat getAirAbsorptionFactor() const override final { return mAirAbsorptionFactor; }
 
     void setGainAuto(bool directhf, bool send, bool sendhf) override final;
-    bool getDirectGainHFAuto() const override final { return mDryGainHFAuto; }
-    bool getSendGainAuto() const override final { return mWetGainAuto; }
-    bool getSendGainHFAuto() const override final { return mWetGainHFAuto; }
+    std::tuple<bool,bool,bool> getGainAuto() const override final
+    { return std::make_tuple(mDryGainHFAuto, mWetGainAuto, mWetGainHFAuto); }
 
     void setDirectFilter(const FilterParams &filter) override final;
     void setSendFilter(ALuint send, const FilterParams &filter) override final;
