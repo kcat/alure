@@ -9,12 +9,6 @@
 namespace alure
 {
 
-ALSourceGroup::ALSourceGroup(ALContext *context)
-  : mContext(context), mParent(nullptr)
-{
-}
-
-
 void ALSourceGroup::eraseSubGroup(ALSourceGroup *group)
 {
     auto iter = std::lower_bound(mSubGroups.begin(), mSubGroups.end(), group);
@@ -330,7 +324,6 @@ void ALSourceGroup::release()
     mParent = nullptr;
 
     mContext->freeSourceGroup(this);
-    delete this;
 }
 
 } // namespace alure

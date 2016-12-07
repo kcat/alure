@@ -53,7 +53,8 @@ class ALSourceGroup : public SourceGroup, SourceGroupProps {
     void updateStoppedStatus() const;
 
 public:
-    ALSourceGroup(ALContext *context);
+    ALSourceGroup(ALContext *context) : mContext(context), mParent(nullptr)
+    { }
     // Avoid a warning about deleting an object with virtual functions but no
     // virtual destructor.
     virtual ~ALSourceGroup() { }

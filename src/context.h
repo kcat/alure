@@ -90,9 +90,9 @@ private:
     std::queue<ALSource*> mFreeSources;
     Vector<ALSource*> mUsedSources;
 
-    std::map<String,ALBuffer*> mBuffers;
+    std::map<String,UniquePtr<ALBuffer>> mBuffers;
 
-    Vector<ALSourceGroup*> mSourceGroups;
+    Vector<UniquePtr<ALSourceGroup>> mSourceGroups;
 
     RefCount mRefs;
 

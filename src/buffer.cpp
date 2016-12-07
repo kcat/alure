@@ -27,8 +27,6 @@ void ALBuffer::cleanup()
     if(alGetError() != AL_NO_ERROR)
         throw std::runtime_error("Buffer failed to delete");
     mId = 0;
-
-    delete this;
 }
 
 

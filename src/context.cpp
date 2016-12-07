@@ -482,7 +482,7 @@ Buffer *ALContext::getBuffer(const String &name)
     {
         // Ensure the buffer is loaded before returning. getBuffer guarantees
         // the returned buffer is loaded.
-        ALBuffer *buffer = iter->second;
+        ALBuffer *buffer = iter->second.get();
         while(buffer->getLoadStatus() == BufferLoadStatus::Pending)
             std::this_thread::yield();
         return buffer;
@@ -529,8 +529,9 @@ Buffer *ALContext::getBuffer(const String &name)
         if(alGetError() != AL_NO_ERROR)
             throw std::runtime_error("Failed to buffer data");
 
-        ALBuffer *buffer = new ALBuffer(this, bid, srate, chans, type, true, name);
-        return mBuffers.insert(std::make_pair(name, buffer)).first->second;
+        return mBuffers.insert(std::make_pair(name,
+            MakeUnique<ALBuffer>(this, bid, srate, chans, type, true, name)
+        )).first->second.get();
     }
     catch(...) {
         alDeleteBuffers(1, &bid);
@@ -543,7 +544,8 @@ Buffer *ALContext::getBufferAsync(const String &name)
     CheckContext(this);
 
     auto iter = mBuffers.find(name);
-    if(iter != mBuffers.end()) return iter->second;
+    if(iter != mBuffers.end())
+        return iter->second.get();
 
     auto decoder = createDecoder(name);
 
@@ -561,7 +563,7 @@ Buffer *ALContext::getBufferAsync(const String &name)
     if(alGetError() != AL_NO_ERROR)
         throw std::runtime_error("Failed to buffer data");
 
-    ALBuffer *buffer = new ALBuffer(this, bid, srate, chans, type, false, name);
+    auto buffer = MakeUnique<ALBuffer>(this, bid, srate, chans, type, false, name);
 
     if(mThread.get_id() == std::thread::id())
         mThread = std::thread(std::mem_fn(&ALContext::backgroundProc), this);
@@ -571,12 +573,12 @@ Buffer *ALContext::getBufferAsync(const String &name)
 
     ll_ringbuffer_data_t vec[2];
     ll_ringbuffer_get_write_vector(mPendingBuffers.get(), vec);
-    new(vec[0].buf) PendingBuffer{name, buffer, decoder, format, frames};
+    new(vec[0].buf) PendingBuffer{name, buffer.get(), decoder, format, frames};
     ll_ringbuffer_write_advance(mPendingBuffers.get(), 1);
     mWakeMutex.lock(); mWakeMutex.unlock();
     mWakeThread.notify_all();
 
-    return mBuffers.insert(std::make_pair(name, buffer)).first->second;
+    return mBuffers.insert(std::make_pair(name, std::move(buffer))).first->second.get();
 }
 
 
@@ -586,7 +588,7 @@ void ALContext::removeBuffer(const String &name)
     auto iter = mBuffers.find(name);
     if(iter != mBuffers.end())
     {
-        ALBuffer *albuf = iter->second;
+        ALBuffer *albuf = iter->second.get();
         albuf->cleanup();
         mBuffers.erase(iter);
     }
@@ -731,16 +733,19 @@ Effect *ALContext::createEffect()
 
 SourceGroup *ALContext::createSourceGroup()
 {
-    ALSourceGroup *group = new ALSourceGroup(this);
+    auto group = MakeUnique<ALSourceGroup>(this);
     auto iter = std::lower_bound(mSourceGroups.begin(), mSourceGroups.end(), group);
-    mSourceGroups.insert(iter, group);
-    return group;
+    iter = mSourceGroups.insert(iter, std::move(group));
+    return iter->get();
 }
 
 void ALContext::freeSourceGroup(ALSourceGroup *group)
 {
-    auto iter = std::lower_bound(mSourceGroups.begin(), mSourceGroups.end(), group);
-    if(iter != mSourceGroups.end() && *iter != group)
+    auto iter = std::lower_bound(mSourceGroups.begin(), mSourceGroups.end(), group,
+        [](const UniquePtr<ALSourceGroup> &lhs, const ALSourceGroup *rhs) -> bool
+        { return lhs.get() < rhs; }
+    );
+    if(iter != mSourceGroups.end() && iter->get() != group)
         mSourceGroups.erase(iter);
 }
 
