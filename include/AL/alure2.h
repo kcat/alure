@@ -736,6 +736,7 @@ public:
     virtual void setOrientation(ALfloat x1, ALfloat y1, ALfloat z1, ALfloat x2, ALfloat y2, ALfloat z2) = 0;
     virtual void setOrientation(const ALfloat *at, const ALfloat *up) = 0;
     virtual void setOrientation(const ALfloat *ori) = 0;
+    virtual std::pair<Vector3,Vector3> getOrientation() const = 0;
 
     /**
      * Specifies the source's cone angles, in degrees. The inner angle is the

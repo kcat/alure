@@ -147,6 +147,8 @@ public:
     void setOrientation(ALfloat x1, ALfloat y1, ALfloat z1, ALfloat x2, ALfloat y2, ALfloat z2) override final;
     void setOrientation(const ALfloat *at, const ALfloat *up) override final;
     void setOrientation(const ALfloat *ori) override final;
+    std::pair<Vector3,Vector3> getOrientation() const override final
+    { return {mOrientation[0], mOrientation[1]}; }
 
     void setConeAngles(ALfloat inner, ALfloat outer) override final;
     std::pair<ALfloat,ALfloat> getConeAngles() const override final
