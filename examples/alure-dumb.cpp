@@ -77,7 +77,7 @@ static long cb_get_size(void *user_data)
 // Inherit from alure::Decoder to make a custom decoder (DUMB for this example)
 class DumbDecoder : public alure::Decoder {
     alure::UniquePtr<std::istream> mFile;
-    std::unique_ptr<DUMBFILE_SYSTEM> mDfs;
+    alure::UniquePtr<DUMBFILE_SYSTEM> mDfs;
     DUMBFILE *mDumbfile;
     DUH *mDuh;
     DUH_SIGRENDERER *mRenderer;
@@ -86,7 +86,7 @@ class DumbDecoder : public alure::Decoder {
     uint64_t mStreamPos;
 
 public:
-    DumbDecoder(alure::UniquePtr<std::istream> file, std::unique_ptr<DUMBFILE_SYSTEM> &&dfs, DUMBFILE *dfile, DUH *duh, DUH_SIGRENDERER *renderer, ALuint freq)
+    DumbDecoder(alure::UniquePtr<std::istream> file, alure::UniquePtr<DUMBFILE_SYSTEM> dfs, DUMBFILE *dfile, DUH *duh, DUH_SIGRENDERER *renderer, ALuint freq)
       : mFile(std::move(file)), mDfs(std::move(dfs)), mDumbfile(dfile), mDuh(duh)
       , mRenderer(renderer), mFrequency(freq), mStreamPos(0)
     { }
@@ -171,7 +171,7 @@ class DumbFactory : public alure::DecoderFactory {
             dumb_read_it, dumb_read_xm, dumb_read_s3m
         }};
 
-        std::unique_ptr<DUMBFILE_SYSTEM> dfs(new DUMBFILE_SYSTEM);
+        auto dfs = alure::MakeUnique<DUMBFILE_SYSTEM>();
         dfs->open = nullptr;
         dfs->skip = cb_skip;
         dfs->getc = cb_read_char;

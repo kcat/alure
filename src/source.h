@@ -36,7 +36,7 @@ class ALSource : public Source {
     ALuint mId;
 
     ALBuffer *mBuffer;
-    std::unique_ptr<ALBufferStream> mStream;
+    UniquePtr<ALBufferStream> mStream;
 
     ALSourceGroup *mGroup;
 

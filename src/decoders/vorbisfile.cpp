@@ -52,14 +52,14 @@ static int close(void*)
 class VorbisFileDecoder : public Decoder {
     UniquePtr<std::istream> mFile;
 
-    std::unique_ptr<OggVorbis_File> mOggFile;
+    UniquePtr<OggVorbis_File> mOggFile;
     vorbis_info *mVorbisInfo;
     int mOggBitstream;
 
     ChannelConfig mChannelConfig;
 
 public:
-    VorbisFileDecoder(UniquePtr<std::istream> file, std::unique_ptr<OggVorbis_File>&& oggfile, vorbis_info *vorbisinfo, ChannelConfig sconfig)
+    VorbisFileDecoder(UniquePtr<std::istream> file, UniquePtr<OggVorbis_File> oggfile, vorbis_info *vorbisinfo, ChannelConfig sconfig)
       : mFile(std::move(file)), mOggFile(std::move(oggfile)), mVorbisInfo(vorbisinfo)
       , mOggBitstream(0), mChannelConfig(sconfig)
     { }
@@ -196,7 +196,7 @@ SharedPtr<Decoder> VorbisFileDecoderFactory::createDecoder(UniquePtr<std::istrea
     };
 
     vorbis_info *vorbisinfo = nullptr;
-    std::unique_ptr<OggVorbis_File> oggfile(new OggVorbis_File{});
+    auto oggfile = MakeUnique<OggVorbis_File>();
     if(ov_open_callbacks(file.get(), oggfile.get(), NULL, 0, streamIO) != 0)
         return nullptr;
 

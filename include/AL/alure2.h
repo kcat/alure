@@ -81,8 +81,8 @@ constexpr inline SharedPtr<T> MakeShared(Args&&... args)
 
 // A UniquePtr implementation, defaults to C++11's std::unique_ptr. If this is
 // changed, you must recompile the library.
-template<typename T>
-using UniquePtr = std::unique_ptr<T>;
+template<typename T, typename D = std::default_delete<T>>
+using UniquePtr = std::unique_ptr<T, D>;
 template<typename T, typename... Args>
 constexpr inline UniquePtr<T> MakeUnique(Args&&... args)
 {

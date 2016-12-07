@@ -355,7 +355,7 @@ void ALSource::play(SharedPtr<Decoder> decoder, ALuint updatelen, ALuint queuesi
         throw std::runtime_error("Queue size out of range");
     CheckContext(mContext);
 
-    std::unique_ptr<ALBufferStream> stream(new ALBufferStream(decoder, updatelen, queuesize));
+    auto stream = MakeUnique<ALBufferStream>(decoder, updatelen, queuesize);
     stream->prepare();
 
     if(mIsAsync.load(std::memory_order_acquire))

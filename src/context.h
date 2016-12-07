@@ -69,7 +69,7 @@ public:
     Batcher& operator=(const Batcher&) = delete;
 };
 
-typedef std::unique_ptr<ll_ringbuffer_t,decltype(*ll_ringbuffer_free)> RingBufferPtr;
+using RingBufferPtr = UniquePtr<ll_ringbuffer_t,decltype(*ll_ringbuffer_free)>;
 
 class ALContext : public Context, public Listener {
     static ALContext *sCurrentCtx;
