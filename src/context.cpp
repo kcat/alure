@@ -305,7 +305,7 @@ void ALContext::backgroundProc()
     std::chrono::steady_clock::time_point basetime = std::chrono::steady_clock::now();
     std::chrono::milliseconds waketime(0);
     std::unique_lock<std::mutex> ctxlock(mContextMutex);
-    while(!mQuitThread)
+    while(!mQuitThread.load(std::memory_order_acquire))
     {
         {
             std::lock_guard<std::mutex> srclock(mSourceStreamMutex);
@@ -334,7 +334,8 @@ void ALContext::backgroundProc()
         }
 
         std::unique_lock<std::mutex> wakelock(mWakeMutex);
-        if(!mQuitThread && ll_ringbuffer_read_space(mPendingBuffers.get()) == 0)
+        if(!mQuitThread.load(std::memory_order_acquire) &&
+           ll_ringbuffer_read_space(mPendingBuffers.get()) == 0)
         {
             ctxlock.unlock();
 
@@ -351,7 +352,8 @@ void ALContext::backgroundProc()
             wakelock.unlock();
 
             ctxlock.lock();
-            while(!mQuitThread && alcGetCurrentContext() != getContext())
+            while(!mQuitThread.load(std::memory_order_acquire) &&
+                  alcGetCurrentContext() != getContext())
                 mWakeThread.wait(ctxlock);
         }
     }
@@ -399,7 +401,7 @@ void ALContext::destroy()
     if(mThread.joinable())
     {
         std::unique_lock<std::mutex> lock(mWakeMutex);
-        mQuitThread = true;
+        mQuitThread.store(true, std::memory_order_release);
         lock.unlock();
         mWakeThread.notify_all();
         mThread.join();

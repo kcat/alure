@@ -121,7 +121,7 @@ private:
 
     std::mutex mContextMutex;
 
-    volatile bool mQuitThread;
+    std::atomic<bool> mQuitThread;
     std::thread mThread;
     void backgroundProc();
 
