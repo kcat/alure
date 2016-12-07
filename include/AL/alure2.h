@@ -484,6 +484,23 @@ public:
     virtual void update() = 0;
 };
 
+class ALURE_API Listener {
+public:
+    virtual void setGain(ALfloat gain) = 0;
+
+    virtual void setPosition(ALfloat x, ALfloat y, ALfloat z) = 0;
+    virtual void setPosition(const ALfloat *pos) = 0;
+
+    virtual void setVelocity(ALfloat x, ALfloat y, ALfloat z) = 0;
+    virtual void setVelocity(const ALfloat *vel) = 0;
+
+    virtual void setOrientation(ALfloat x1, ALfloat y1, ALfloat z1, ALfloat x2, ALfloat y2, ALfloat z2) = 0;
+    virtual void setOrientation(const ALfloat *at, const ALfloat *up) = 0;
+    virtual void setOrientation(const ALfloat *ori) = 0;
+
+    virtual void setMetersPerUnit(ALfloat m_u) = 0;
+};
+
 
 enum class SampleType {
     UInt8,
@@ -519,24 +536,6 @@ enum class BufferLoadStatus {
     Pending,
     Ready
 };
-
-class ALURE_API Listener {
-public:
-    virtual void setGain(ALfloat gain) = 0;
-
-    virtual void setPosition(ALfloat x, ALfloat y, ALfloat z) = 0;
-    virtual void setPosition(const ALfloat *pos) = 0;
-
-    virtual void setVelocity(ALfloat x, ALfloat y, ALfloat z) = 0;
-    virtual void setVelocity(const ALfloat *vel) = 0;
-
-    virtual void setOrientation(ALfloat x1, ALfloat y1, ALfloat z1, ALfloat x2, ALfloat y2, ALfloat z2) = 0;
-    virtual void setOrientation(const ALfloat *at, const ALfloat *up) = 0;
-    virtual void setOrientation(const ALfloat *ori) = 0;
-
-    virtual void setMetersPerUnit(ALfloat m_u) = 0;
-};
-
 
 class ALURE_API Buffer {
 public:
@@ -590,10 +589,11 @@ public:
     virtual Vector<Source*> getSources() const = 0;
 
     /**
-     * Queries the buffer's load status. A return of \ref BufferLoad_Pending
-     * indicates the buffer is not finished loading and can't be used with a
-     * call to \ref Source::play. Buffers created with \ref Context::getBuffer
-     * will always return \ref BufferLoad_Ready.
+     * Queries the buffer's load status. A return of
+     * \ref BufferLoadStatus::Pending indicates the buffer is not finished
+     * loading and can't be used with a call to \ref Source::play. Buffers
+     * created with \ref Context::getBuffer will always return
+     * \ref BufferLoadStatus::Ready.
      */
     virtual BufferLoadStatus getLoadStatus() = 0;
 
