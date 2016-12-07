@@ -4,6 +4,7 @@
 #include "main.h"
 
 #include <condition_variable>
+#include <unordered_map>
 #include <stdexcept>
 #include <thread>
 #include <mutex>
@@ -90,7 +91,7 @@ private:
     std::queue<ALSource*> mFreeSources;
     Vector<ALSource*> mUsedSources;
 
-    std::map<String,UniquePtr<ALBuffer>> mBuffers;
+    std::unordered_map<String,UniquePtr<ALBuffer>> mBuffers;
 
     Vector<UniquePtr<ALSourceGroup>> mSourceGroups;
 
