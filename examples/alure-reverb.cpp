@@ -195,7 +195,7 @@ int main(int argc, char *argv[])
     for(;i < argc;i++)
     {
         alure::SharedPtr<alure::Decoder> decoder(ctx->createDecoder(argv[i]));
-        alure::Source *source = ctx->getSource();
+        alure::Source *source = ctx->createSource();
 
         source->setAuxiliarySend(auxslot, 0);
 

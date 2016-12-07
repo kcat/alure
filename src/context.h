@@ -226,7 +226,7 @@ public:
     void removeBuffer(const String &name) override final;
     void removeBuffer(Buffer *buffer) override final;
 
-    Source *getSource() override final;
+    Source *createSource() override final;
 
     AuxiliaryEffectSlot *createAuxiliaryEffectSlot() override final;
 

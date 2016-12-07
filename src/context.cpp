@@ -632,20 +632,20 @@ ALuint ALContext::getSourceId(ALuint maxprio)
 }
 
 
-Source *ALContext::getSource()
+Source *ALContext::createSource()
 {
     CheckContext(this);
 
     ALSource *source;
-    if(mFreeSources.empty())
-    {
-        mAllSources.emplace_back(this);
-        source = &mAllSources.back();
-    }
-    else
+    if(!mFreeSources.empty())
     {
         source = mFreeSources.back();
         mFreeSources.pop();
+    }
+    else
+    {
+        mAllSources.emplace_back(this);
+        source = &mAllSources.back();
     }
     auto iter = std::lower_bound(mUsedSources.begin(), mUsedSources.end(), source);
     if(iter == mUsedSources.end() || *iter != source)

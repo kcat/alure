@@ -33,7 +33,7 @@ int main(int argc, char *argv[])
         }
 
         alure::SharedPtr<alure::Decoder> decoder(ctx->createDecoder(argv[i]));
-        alure::Source *source = ctx->getSource();
+        alure::Source *source = ctx->createSource();
 
         if(offset > 0.0f)
             source->setOffset(uint64_t(offset * decoder->getFrequency()));

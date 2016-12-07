@@ -459,10 +459,10 @@ public:
     virtual void removeBuffer(Buffer *buffer) = 0;
 
     /**
-     * Gets a new \ref Source. There is no practical limit to the number of
+     * Creates a new \ref Source. There is no practical limit to the number of
      * sources you may get.
      */
-    virtual Source *getSource() = 0;
+    virtual Source *createSource() = 0;
 
     virtual AuxiliaryEffectSlot *createAuxiliaryEffectSlot() = 0;
 

@@ -22,7 +22,7 @@ int main(int argc, char *argv[])
     for(int i = 1;i < argc;i++)
     {
         alure::Buffer *buffer = ctx->getBuffer(argv[i]);
-        alure::Source *source = ctx->getSource();
+        alure::Source *source = ctx->createSource();
         source->play(buffer);
         std::cout<< "Playing "<<argv[i]<<" ("<<alure::GetSampleTypeName(buffer->getSampleType())<<", "
                                              <<alure::GetChannelConfigName(buffer->getChannelConfig())<<", "
