@@ -382,6 +382,19 @@ ALContext::ALContext(ALCcontext *context, ALDevice *device)
 
 ALContext::~ALContext()
 {
+    RingBuffer::Data vec[2];
+    mPendingBuffers.get_read_vector(vec);
+    if(vec[0].len > 0)
+    {
+        PendingBuffer *pb = reinterpret_cast<PendingBuffer*>(vec[0].buf);
+        for(size_t i = 0;i < vec[0].len;i++)
+            pb[i].~PendingBuffer();
+        pb = reinterpret_cast<PendingBuffer*>(vec[1].buf);
+        for(size_t i = 0;i < vec[1].len;i++)
+            pb[i].~PendingBuffer();
+
+        mPendingBuffers.read_advance(vec[0].len + vec[1].len);
+    }
 }
 
 
