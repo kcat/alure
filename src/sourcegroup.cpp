@@ -287,7 +287,10 @@ void ALSourceGroup::collectSourceIds(Vector<ALuint> &sourceids) const
 void ALSourceGroup::updateStoppedStatus() const
 {
     for(ALSource *alsrc : mSources)
+    {
         alsrc->makeStopped();
+        mContext->send(&MessageHandler::sourceStopped, alsrc, true);
+    }
     for(ALSourceGroup *group : mSubGroups)
         group->updateStoppedStatus();
 }

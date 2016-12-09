@@ -633,7 +633,7 @@ ALuint ALContext::getSourceId(ALuint maxprio)
         }
         if(lowest && lowest->getPriority() < maxprio)
         {
-            lowest->stop();
+            lowest->makeStopped();
             if(mMessage.get())
                 mMessage->sourceStopped(lowest, true);
         }

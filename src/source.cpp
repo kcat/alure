@@ -409,40 +409,6 @@ void ALSource::makeStopped()
 
     if(mId != 0)
     {
-        alSourcei(mId, AL_BUFFER, 0);
-        if(mContext->hasExtension(EXT_EFX))
-        {
-            alSourcei(mId, AL_DIRECT_FILTER, AL_FILTER_NULL);
-            for(auto &i : mEffectSlots)
-                alSource3i(mId, AL_AUXILIARY_SEND_FILTER, 0, i.first, AL_FILTER_NULL);
-        }
-        mContext->insertSourceId(mId);
-        mId = 0;
-    }
-
-    if(mBuffer)
-        mBuffer->removeSource(this);
-    mBuffer = 0;
-
-    mStream.reset();
-
-    mPaused.store(false, std::memory_order_release);
-
-    mContext->send(&MessageHandler::sourceStopped, this, true);
-}
-
-void ALSource::stop()
-{
-    CheckContext(mContext);
-
-    if(mIsAsync.load(std::memory_order_acquire))
-    {
-        mContext->removeStream(this);
-        mIsAsync.store(false, std::memory_order_release);
-    }
-
-    if(mId != 0)
-    {
         alSourceRewind(mId);
         alSourcei(mId, AL_BUFFER, 0);
         if(mContext->hasExtension(EXT_EFX))
@@ -462,6 +428,12 @@ void ALSource::stop()
     mStream.reset();
 
     mPaused.store(false, std::memory_order_release);
+}
+
+void ALSource::stop()
+{
+    CheckContext(mContext);
+    makeStopped();
 }
 
 
