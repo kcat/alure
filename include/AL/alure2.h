@@ -469,6 +469,7 @@ public:
     virtual Effect *createEffect() = 0;
 
     virtual SourceGroup *createSourceGroup(String name) = 0;
+    virtual SourceGroup *getSourceGroup(const String &name) = 0;
 
     virtual void setDopplerFactor(ALfloat factor) = 0;
 

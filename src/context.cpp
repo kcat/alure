@@ -763,6 +763,17 @@ SourceGroup *ALContext::createSourceGroup(String name)
     return iter->get();
 }
 
+SourceGroup *ALContext::getSourceGroup(const String &name)
+{
+    auto iter = std::lower_bound(mSourceGroups.begin(), mSourceGroups.end(), name,
+        [](const UniquePtr<ALSourceGroup> &lhs, const String &rhs) -> bool
+        { return lhs->getName() < rhs; }
+    );
+    if(iter == mSourceGroups.end() || (*iter)->getName() != name)
+        throw std::runtime_error("Source group not found");
+    return iter->get();
+}
+
 void ALContext::freeSourceGroup(ALSourceGroup *group)
 {
     auto iter = std::lower_bound(mSourceGroups.begin(), mSourceGroups.end(), group->getName(),

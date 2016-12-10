@@ -233,6 +233,7 @@ public:
     Effect *createEffect() override final;
 
     SourceGroup *createSourceGroup(String name) override final;
+    SourceGroup *getSourceGroup(const String &name) override final;
 
     void setDopplerFactor(ALfloat factor) override final;
 
