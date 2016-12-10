@@ -490,16 +490,20 @@ Buffer *ALContext::getBuffer(const String &name)
 {
     CheckContext(this);
 
-    auto iter = mBuffers.find(name);
-    if(iter != mBuffers.end())
+    auto iter = std::lower_bound(mBuffers.begin(), mBuffers.end(), name,
+        [](const UniquePtr<ALBuffer> &lhs, const String &rhs) -> bool
+        { return lhs->getName() < rhs; }
+    );
+    if(iter != mBuffers.end() && (*iter)->getName() == name)
     {
         // Ensure the buffer is loaded before returning. getBuffer guarantees
         // the returned buffer is loaded.
-        ALBuffer *buffer = iter->second.get();
+        ALBuffer *buffer = iter->get();
         while(buffer->getLoadStatus() == BufferLoadStatus::Pending)
             std::this_thread::yield();
         return buffer;
     }
+    // NOTE: 'iter' is used later to insert a new entry!
 
     auto decoder = createDecoder(name);
 
@@ -542,9 +546,9 @@ Buffer *ALContext::getBuffer(const String &name)
         if(alGetError() != AL_NO_ERROR)
             throw std::runtime_error("Failed to buffer data");
 
-        return mBuffers.insert(std::make_pair(name,
+        return mBuffers.insert(iter,
             MakeUnique<ALBuffer>(this, bid, srate, chans, type, true, name)
-        )).first->second.get();
+        )->get();
     }
     catch(...) {
         alDeleteBuffers(1, &bid);
@@ -556,9 +560,13 @@ Buffer *ALContext::getBufferAsync(const String &name)
 {
     CheckContext(this);
 
-    auto iter = mBuffers.find(name);
-    if(iter != mBuffers.end())
-        return iter->second.get();
+    auto iter = std::lower_bound(mBuffers.begin(), mBuffers.end(), name,
+        [](const UniquePtr<ALBuffer> &lhs, const String &rhs) -> bool
+        { return lhs->getName() < rhs; }
+    );
+    if(iter != mBuffers.end() && (*iter)->getName() == name)
+        return iter->get();
+    // NOTE: 'iter' is used later to insert a new entry!
 
     auto decoder = createDecoder(name);
 
@@ -591,18 +599,20 @@ Buffer *ALContext::getBufferAsync(const String &name)
     mWakeMutex.lock(); mWakeMutex.unlock();
     mWakeThread.notify_all();
 
-    return mBuffers.insert(std::make_pair(name, std::move(buffer))).first->second.get();
+    return mBuffers.insert(iter, std::move(buffer))->get();
 }
 
 
 void ALContext::removeBuffer(const String &name)
 {
     CheckContext(this);
-    auto iter = mBuffers.find(name);
-    if(iter != mBuffers.end())
+    auto iter = std::lower_bound(mBuffers.begin(), mBuffers.end(), name,
+        [](const UniquePtr<ALBuffer> &lhs, const String &rhs) -> bool
+        { return lhs->getName() < rhs; }
+    );
+    if(iter != mBuffers.end() && (*iter)->getName() == name)
     {
-        ALBuffer *albuf = iter->second.get();
-        albuf->cleanup();
+        (*iter)->cleanup();
         mBuffers.erase(iter);
     }
 }

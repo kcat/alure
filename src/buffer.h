@@ -31,7 +31,7 @@ class ALBuffer : public Buffer {
 
     Vector<Source*> mSources;
 
-    String mName;
+    const String mName;
 
 public:
     ALBuffer(ALContext *context, ALuint id, ALuint freq, ChannelConfig config, SampleType type, bool preloaded, const String &name)

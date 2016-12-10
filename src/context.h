@@ -90,7 +90,7 @@ private:
     std::queue<ALSource*> mFreeSources;
     Vector<ALSource*> mUsedSources;
 
-    std::unordered_map<String,UniquePtr<ALBuffer>> mBuffers;
+    Vector<UniquePtr<ALBuffer>> mBuffers;
 
     Vector<UniquePtr<ALSourceGroup>> mSourceGroups;
 
