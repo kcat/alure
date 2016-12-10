@@ -25,7 +25,7 @@ class StreamBuf : public std::streambuf {
     BufferArrayT mBuffer;
     PHYSFS_File *mFile;
 
-    virtual int_type underflow()
+    int_type underflow() override final
     {
         if(mFile && gptr() == egptr())
         {
@@ -41,7 +41,7 @@ class StreamBuf : public std::streambuf {
         return traits_type::to_int_type(*gptr());
     }
 
-    virtual pos_type seekoff(off_type offset, std::ios_base::seekdir whence, std::ios_base::openmode mode)
+    pos_type seekoff(off_type offset, std::ios_base::seekdir whence, std::ios_base::openmode mode) override final
     {
         if(!mFile || (mode&std::ios_base::out) || !(mode&std::ios_base::in))
             return traits_type::eof();
@@ -84,7 +84,7 @@ class StreamBuf : public std::streambuf {
         return offset;
     }
 
-    virtual pos_type seekpos(pos_type pos, std::ios_base::openmode mode)
+    pos_type seekpos(pos_type pos, std::ios_base::openmode mode) override final
     {
         // Simplified version of seekoff
         if(!mFile || (mode&std::ios_base::out) || !(mode&std::ios_base::in))
@@ -108,7 +108,7 @@ public:
 
     StreamBuf() : mFile(nullptr)
     { }
-    virtual ~StreamBuf()
+    ~StreamBuf() override final
     {
         PHYSFS_close(mFile);
         mFile = nullptr;
@@ -124,7 +124,7 @@ public:
         if(!(static_cast<StreamBuf*>(rdbuf())->open(filename)))
             clear(failbit);
     }
-    virtual ~Stream()
+    ~Stream() override final
     { delete rdbuf(); }
 };
 
@@ -146,12 +146,12 @@ public:
             std::cout<< "  "<<(*i)->extension<<": "<<(*i)->description <<std::endl;
         std::cout<<std::endl;
     }
-    virtual ~FileFactory()
+    ~FileFactory() override final
     {
         PHYSFS_deinit();
     }
 
-    virtual alure::UniquePtr<std::istream> openFile(const alure::String &name)
+    alure::UniquePtr<std::istream> openFile(const alure::String &name) override final
     {
         auto stream = alure::MakeUnique<Stream>(name.c_str());
         if(stream->fail()) stream = nullptr;

@@ -90,7 +90,7 @@ public:
       : mFile(std::move(file)), mDfs(std::move(dfs)), mDumbfile(dfile), mDuh(duh)
       , mRenderer(renderer), mFrequency(freq), mStreamPos(0)
     { }
-    virtual ~DumbDecoder()
+    ~DumbDecoder() override final
     {
         duh_end_sigrenderer(mRenderer);
         mRenderer = nullptr;
@@ -102,45 +102,45 @@ public:
         mDumbfile = nullptr;
     }
 
-    virtual ALuint getFrequency() const final
+    ALuint getFrequency() const override final
     { return mFrequency; }
-    virtual alure::ChannelConfig getChannelConfig() const final
+    alure::ChannelConfig getChannelConfig() const override final
     {
         // We always have DUMB render to stereo
         return alure::ChannelConfig::Stereo;
     }
-    virtual alure::SampleType getSampleType() const final
+    alure::SampleType getSampleType() const override final
     {
         // DUMB renders to 8.24 normalized fixed point, which we convert to
         // signed 16-bit samples
         return alure::SampleType::Int16;
     }
 
-    virtual uint64_t getLength() final
+    uint64_t getLength() override final
     {
         // Modules have no explicit length, they just keep playing as long as
         // more samples get generated.
         return 0;
     }
 
-    virtual uint64_t getPosition() final
+    uint64_t getPosition() override final
     {
         return mStreamPos;
     }
 
-    virtual bool seek(uint64_t) final
+    bool seek(uint64_t) override final
     {
         // Cannot seek
         return false;
     }
 
-    virtual std::pair<uint64_t,uint64_t> getLoopPoints() const final
+    std::pair<uint64_t,uint64_t> getLoopPoints() const override final
     {
         // No loop points
         return std::make_pair(0, 0);
     }
 
-    virtual ALuint read(ALvoid *ptr, ALuint count) final
+    ALuint read(ALvoid *ptr, ALuint count) override final
     {
         ALuint ret = 0;
 
@@ -165,7 +165,7 @@ public:
 
 // Inherit from alure::DecoderFactory to use our custom decoder
 class DumbFactory : public alure::DecoderFactory {
-    virtual alure::SharedPtr<alure::Decoder> createDecoder(alure::UniquePtr<std::istream> &file)
+    alure::SharedPtr<alure::Decoder> createDecoder(alure::UniquePtr<std::istream> &file) override final
     {
         static const std::array<DUH*(*)(DUMBFILE*),3> init_funcs{{
             dumb_read_it, dumb_read_xm, dumb_read_s3m
