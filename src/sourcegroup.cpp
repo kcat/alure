@@ -158,6 +158,7 @@ void ALSourceGroup::removeSubGroup(SourceGroup *group)
 Vector<Source*> ALSourceGroup::getSources() const
 {
     Vector<Source*> ret;
+    ret.reserve(mSources.size());
     std::copy(mSources.begin(), mSources.end(), std::back_inserter(ret));
     return ret;
 }
@@ -165,6 +166,7 @@ Vector<Source*> ALSourceGroup::getSources() const
 alure::Vector<SourceGroup*> ALSourceGroup::getSubGroups() const
 {
     Vector<SourceGroup*> ret;
+    ret.reserve(mSubGroups.size());
     std::copy(mSubGroups.begin(), mSubGroups.end(), std::back_inserter(ret));
     return ret;
 }
