@@ -116,14 +116,14 @@ public:
         return alure::SampleType::Int16;
     }
 
-    uint64_t getLength() override final
+    uint64_t getLength() const override final
     {
         // Modules have no explicit length, they just keep playing as long as
         // more samples get generated.
         return 0;
     }
 
-    uint64_t getPosition() override final
+    uint64_t getPosition() const override final
     {
         return mStreamPos;
     }

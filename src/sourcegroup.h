@@ -74,9 +74,9 @@ public:
     void addSubGroup(SourceGroup *group) override final;
     void removeSubGroup(SourceGroup *group) override final;
 
-    Vector<Source*> getSources() override final;
+    Vector<Source*> getSources() const override final;
 
-    Vector<SourceGroup*> getSubGroups() override final;
+    Vector<SourceGroup*> getSubGroups() const override final;
 
     void setGain(ALfloat gain) override final;
     ALfloat getGain() const override final { return mGain; }

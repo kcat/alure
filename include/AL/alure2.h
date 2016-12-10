@@ -876,10 +876,10 @@ public:
     virtual void removeSubGroup(SourceGroup *group) = 0;
 
     /** Returns the list of sources currently in the group. */
-    virtual Vector<Source*> getSources() = 0;
+    virtual Vector<Source*> getSources() const = 0;
 
     /** Returns the list of subgroups currently in the group. */
-    virtual Vector<SourceGroup*> getSubGroups() = 0;
+    virtual Vector<SourceGroup*> getSubGroups() const = 0;
 
     /** Sets the source group gain, which accumulates with its sources. */
     virtual void setGain(ALfloat gain) = 0;
@@ -986,12 +986,12 @@ public:
      * returns 0. Note that if the returned length is 0, the decoder may not be
      * used to load a \ref Buffer.
      */
-    virtual uint64_t getLength() = 0;
+    virtual uint64_t getLength() const = 0;
     /**
      * Retrieves the current sample frame position (i.e. the number of sample
      * frames from the beginning).
      */
-    virtual uint64_t getPosition() = 0;
+    virtual uint64_t getPosition() const = 0;
     /**
      * Seek to \param pos, specified in sample frames. Returns true if the seek
      * was successful.

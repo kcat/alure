@@ -172,8 +172,8 @@ public:
     ChannelConfig getChannelConfig() const override final;
     SampleType getSampleType() const override final;
 
-    uint64_t getLength() override final;
-    uint64_t getPosition() override final;
+    uint64_t getLength() const override final;
+    uint64_t getPosition() const override final;
     bool seek(uint64_t pos) override final;
 
     std::pair<uint64_t,uint64_t> getLoopPoints() const override final;
@@ -237,12 +237,12 @@ SampleType FlacDecoder::getSampleType() const
 }
 
 
-uint64_t FlacDecoder::getLength()
+uint64_t FlacDecoder::getLength() const
 {
     return FLAC__stream_decoder_get_total_samples(mFlacFile);
 }
 
-uint64_t FlacDecoder::getPosition()
+uint64_t FlacDecoder::getPosition() const
 {
     return mSamplePos;
 }
