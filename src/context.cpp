@@ -744,21 +744,25 @@ Effect *ALContext::createEffect()
 }
 
 
-SourceGroup *ALContext::createSourceGroup()
+SourceGroup *ALContext::createSourceGroup(String name)
 {
-    auto group = MakeUnique<ALSourceGroup>(this);
-    auto iter = std::lower_bound(mSourceGroups.begin(), mSourceGroups.end(), group);
-    iter = mSourceGroups.insert(iter, std::move(group));
+    auto iter = std::lower_bound(mSourceGroups.begin(), mSourceGroups.end(), name,
+        [](const UniquePtr<ALSourceGroup> &lhs, const String &rhs) -> bool
+        { return lhs->getName() < rhs; }
+    );
+    if(iter != mSourceGroups.end() && (*iter)->getName() == name)
+        throw std::runtime_error("Duplicate source group name");
+    iter = mSourceGroups.insert(iter, MakeUnique<ALSourceGroup>(this, std::move(name)));
     return iter->get();
 }
 
 void ALContext::freeSourceGroup(ALSourceGroup *group)
 {
-    auto iter = std::lower_bound(mSourceGroups.begin(), mSourceGroups.end(), group,
-        [](const UniquePtr<ALSourceGroup> &lhs, const ALSourceGroup *rhs) -> bool
-        { return lhs.get() < rhs; }
+    auto iter = std::lower_bound(mSourceGroups.begin(), mSourceGroups.end(), group->getName(),
+        [](const UniquePtr<ALSourceGroup> &lhs, const String &rhs) -> bool
+        { return lhs->getName() < rhs; }
     );
-    if(iter != mSourceGroups.end() && iter->get() != group)
+    if(iter != mSourceGroups.end() && iter->get() == group)
         mSourceGroups.erase(iter);
 }
 

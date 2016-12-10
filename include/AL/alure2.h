@@ -468,7 +468,7 @@ public:
 
     virtual Effect *createEffect() = 0;
 
-    virtual SourceGroup *createSourceGroup() = 0;
+    virtual SourceGroup *createSourceGroup(String name) = 0;
 
     virtual void setDopplerFactor(ALfloat factor) = 0;
 
@@ -849,6 +849,9 @@ public:
 
 class ALURE_API SourceGroup {
 public:
+    /** Retrieves the associated name of the source group. */
+    virtual const String &getName() const = 0;
+
     /**
      * Adds \param source to the source group. A source may only be part of one
      * group at a time, and will automatically be removed from its current

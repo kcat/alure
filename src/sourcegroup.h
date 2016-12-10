@@ -26,6 +26,8 @@ class ALSourceGroup : public SourceGroup, SourceGroupProps {
     SourceGroupProps mParentProps;
     ALSourceGroup *mParent;
 
+    const String mName;
+
     void applyPropTree(SourceGroupProps &props) const
     {
         props.mGain *= mGain;
@@ -53,7 +55,8 @@ class ALSourceGroup : public SourceGroup, SourceGroupProps {
     void updateStoppedStatus() const;
 
 public:
-    ALSourceGroup(ALContext *context) : mContext(context), mParent(nullptr)
+    ALSourceGroup(ALContext *context, String name)
+      : mContext(context), mParent(nullptr), mName(std::move(name))
     { }
     // Avoid a warning about deleting an object with virtual functions but no
     // virtual destructor.
@@ -85,6 +88,8 @@ public:
     void resumeAll() const override final;
 
     void stopAll() const override final;
+
+    const String &getName() const override final { return mName; }
 
     void release() override final;
 };
