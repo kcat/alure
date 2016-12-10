@@ -40,19 +40,19 @@ public:
     Mpg123Decoder(UniquePtr<std::istream> file, mpg123_handle *mpg123, int chans, long srate)
       : mFile(std::move(file)), mMpg123(mpg123), mChannels(chans), mSampleRate(srate)
     { }
-    virtual ~Mpg123Decoder();
+    ~Mpg123Decoder() override final;
 
-    virtual ALuint getFrequency() const final;
-    virtual ChannelConfig getChannelConfig() const final;
-    virtual SampleType getSampleType() const final;
+    ALuint getFrequency() const override final;
+    ChannelConfig getChannelConfig() const override final;
+    SampleType getSampleType() const override final;
 
-    virtual uint64_t getLength() final;
-    virtual uint64_t getPosition() final;
-    virtual bool seek(uint64_t pos) final;
+    uint64_t getLength() override final;
+    uint64_t getPosition() override final;
+    bool seek(uint64_t pos) override final;
 
-    virtual std::pair<uint64_t,uint64_t> getLoopPoints() const final;
+    std::pair<uint64_t,uint64_t> getLoopPoints() const override final;
 
-    virtual ALuint read(ALvoid *ptr, ALuint count) final;
+    ALuint read(ALvoid *ptr, ALuint count) override final;
 };
 
 Mpg123Decoder::~Mpg123Decoder()

@@ -113,7 +113,7 @@ UniquePtr<DecoderFactory> UnregisterDecoder(const String &name)
 
 
 class DefaultFileIOFactory : public FileIOFactory {
-    virtual UniquePtr<std::istream> openFile(const String &name)
+    UniquePtr<std::istream> openFile(const String &name) override final
     {
         auto file = MakeUnique<std::ifstream>(name.c_str(), std::ios::binary);
         if(!file->is_open()) file = nullptr;

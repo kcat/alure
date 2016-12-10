@@ -10,7 +10,7 @@ class Mpg123DecoderFactory : public DecoderFactory {
 
 public:
     Mpg123DecoderFactory();
-    virtual ~Mpg123DecoderFactory();
+    ~Mpg123DecoderFactory() override final;
 
     SharedPtr<Decoder> createDecoder(UniquePtr<std::istream> &file) override final;
 };
