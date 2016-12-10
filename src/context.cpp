@@ -322,11 +322,10 @@ void ALContext::backgroundProc()
         // Only do one pending buffer at a time. In case there's several large
         // buffers to load, we still need to process streaming sources so they
         // don't underrun.
-        RingBuffer::Data vec[2];
-        mPendingBuffers.get_read_vector(vec);
-        if(vec[0].len > 0)
+        RingBuffer::Data ringdata = mPendingBuffers.get_read_vector()[0];
+        if(ringdata.len > 0)
         {
-            PendingBuffer *pb = reinterpret_cast<PendingBuffer*>(vec[0].buf);
+            PendingBuffer *pb = reinterpret_cast<PendingBuffer*>(ringdata.buf);
             pb->mBuffer->load(pb->mFrames, pb->mFormat, pb->mDecoder, pb->mName, this);
             pb->~PendingBuffer();
             mPendingBuffers.read_advance(1);
@@ -382,18 +381,17 @@ ALContext::ALContext(ALCcontext *context, ALDevice *device)
 
 ALContext::~ALContext()
 {
-    RingBuffer::Data vec[2];
-    mPendingBuffers.get_read_vector(vec);
-    if(vec[0].len > 0)
+    auto ringdata = mPendingBuffers.get_read_vector();
+    if(ringdata[0].len > 0)
     {
-        PendingBuffer *pb = reinterpret_cast<PendingBuffer*>(vec[0].buf);
-        for(size_t i = 0;i < vec[0].len;i++)
+        PendingBuffer *pb = reinterpret_cast<PendingBuffer*>(ringdata[0].buf);
+        for(size_t i = 0;i < ringdata[0].len;i++)
             pb[i].~PendingBuffer();
-        pb = reinterpret_cast<PendingBuffer*>(vec[1].buf);
-        for(size_t i = 0;i < vec[1].len;i++)
+        pb = reinterpret_cast<PendingBuffer*>(ringdata[1].buf);
+        for(size_t i = 0;i < ringdata[1].len;i++)
             pb[i].~PendingBuffer();
 
-        mPendingBuffers.read_advance(vec[0].len + vec[1].len);
+        mPendingBuffers.read_advance(ringdata[0].len + ringdata[1].len);
     }
 }
 
@@ -592,9 +590,8 @@ Buffer *ALContext::getBufferAsync(const String &name)
     while(mPendingBuffers.write_space() == 0)
         std::this_thread::yield();
 
-    RingBuffer::Data vec[2];
-    mPendingBuffers.get_write_vector(vec);
-    new(vec[0].buf) PendingBuffer{name, buffer.get(), decoder, format, frames};
+    RingBuffer::Data ringdata = mPendingBuffers.get_write_vector()[0];
+    new(ringdata.buf) PendingBuffer{name, buffer.get(), decoder, format, frames};
     mPendingBuffers.write_advance(1);
     mWakeMutex.lock(); mWakeMutex.unlock();
     mWakeThread.notify_all();

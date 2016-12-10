@@ -165,8 +165,9 @@ void RingBuffer::write_advance(size_t cnt)
     mWritePtr.store(tmp);
 }
 
-void RingBuffer::get_read_vector(RingBuffer::Data* vec) const
+std::array<RingBuffer::Data,2> RingBuffer::get_read_vector() const
 {
+    std::array<Data,2> vec;
     size_t free_cnt;
     size_t cnt2;
     size_t w, r;
@@ -193,10 +194,13 @@ void RingBuffer::get_read_vector(RingBuffer::Data* vec) const
         vec[1].buf = nullptr;
         vec[1].len = 0;
     }
+
+    return vec;
 }
 
-void RingBuffer::get_write_vector(RingBuffer::Data* vec) const
+std::array<RingBuffer::Data,2> RingBuffer::get_write_vector() const
 {
+    std::array<Data,2> vec;
     size_t free_cnt;
     size_t cnt2;
     size_t w, r;
@@ -222,6 +226,8 @@ void RingBuffer::get_write_vector(RingBuffer::Data* vec) const
         vec[1].buf = nullptr;
         vec[1].len = 0;
     }
+
+    return vec;
 }
 
 } // namespace alure
