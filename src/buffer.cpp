@@ -156,7 +156,7 @@ BufferLoadStatus ALBuffer::getLoadStatus()
 }
 
 
-const char *GetSampleTypeName(SampleType type)
+ALURE_API const char *GetSampleTypeName(SampleType type)
 {
     switch(type)
     {
@@ -168,7 +168,7 @@ const char *GetSampleTypeName(SampleType type)
     throw std::runtime_error("Invalid type");
 }
 
-const char *GetChannelConfigName(ChannelConfig cfg)
+ALURE_API const char *GetChannelConfigName(ChannelConfig cfg)
 {
     switch(cfg)
     {
@@ -186,8 +186,9 @@ const char *GetChannelConfigName(ChannelConfig cfg)
 }
 
 
-ALuint FramesToBytes(ALuint size, ChannelConfig chans, SampleType type)
+ALURE_API ALuint FramesToBytes(ALuint frames, ChannelConfig chans, SampleType type)
 {
+    ALuint size = frames;
     switch(chans)
     {
         case ChannelConfig::Mono: size *= 1; break;
@@ -210,6 +211,12 @@ ALuint FramesToBytes(ALuint size, ChannelConfig chans, SampleType type)
 
     return size;
 }
+
+ALURE_API ALuint BytesToFrames(ALuint bytes, ChannelConfig chans, SampleType type)
+{
+    return bytes / FramesToBytes(1, chans, type);
+}
+
 
 ALenum GetFormat(ChannelConfig chans, SampleType type)
 {

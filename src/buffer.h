@@ -13,10 +13,7 @@ namespace alure {
 
 class ALContext;
 
-
-ALuint FramesToBytes(ALuint size, ChannelConfig chans, SampleType type);
 ALenum GetFormat(ChannelConfig chans, SampleType type);
-
 
 class ALBuffer : public Buffer {
     ALContext *const mContext;
