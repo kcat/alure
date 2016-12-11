@@ -5,6 +5,7 @@
 
 #include <stdexcept>
 #include <algorithm>
+#include <functional>
 #include <memory>
 #include <iostream>
 #include <sstream>
@@ -488,9 +489,10 @@ Buffer *ALContext::getBuffer(const String &name)
 {
     CheckContext(this);
 
-    auto iter = std::lower_bound(mBuffers.begin(), mBuffers.end(), name,
-        [](const UniquePtr<ALBuffer> &lhs, const String &rhs) -> bool
-        { return lhs->getName() < rhs; }
+    auto hasher = std::hash<String>();
+    auto iter = std::lower_bound(mBuffers.begin(), mBuffers.end(), hasher(name),
+        [hasher](const UniquePtr<ALBuffer> &lhs, size_t rhs) -> bool
+        { return hasher(lhs->getName()) < rhs; }
     );
     if(iter != mBuffers.end() && (*iter)->getName() == name)
     {
@@ -558,9 +560,10 @@ Buffer *ALContext::getBufferAsync(const String &name)
 {
     CheckContext(this);
 
-    auto iter = std::lower_bound(mBuffers.begin(), mBuffers.end(), name,
-        [](const UniquePtr<ALBuffer> &lhs, const String &rhs) -> bool
-        { return lhs->getName() < rhs; }
+    auto hasher = std::hash<String>();
+    auto iter = std::lower_bound(mBuffers.begin(), mBuffers.end(), hasher(name),
+        [hasher](const UniquePtr<ALBuffer> &lhs, size_t rhs) -> bool
+        { return hasher(lhs->getName()) < rhs; }
     );
     if(iter != mBuffers.end() && (*iter)->getName() == name)
         return iter->get();
@@ -603,9 +606,10 @@ Buffer *ALContext::getBufferAsync(const String &name)
 void ALContext::removeBuffer(const String &name)
 {
     CheckContext(this);
-    auto iter = std::lower_bound(mBuffers.begin(), mBuffers.end(), name,
-        [](const UniquePtr<ALBuffer> &lhs, const String &rhs) -> bool
-        { return lhs->getName() < rhs; }
+    auto hasher = std::hash<String>();
+    auto iter = std::lower_bound(mBuffers.begin(), mBuffers.end(), hasher(name),
+        [hasher](const UniquePtr<ALBuffer> &lhs, size_t rhs) -> bool
+        { return hasher(lhs->getName()) < rhs; }
     );
     if(iter != mBuffers.end() && (*iter)->getName() == name)
     {
