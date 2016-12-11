@@ -3,9 +3,9 @@
 
 #include "main.h"
 
+#include <unordered_map>
 #include <atomic>
 #include <mutex>
-#include <map>
 
 #include "al.h"
 #include "alext.h"
@@ -29,7 +29,7 @@ struct SendProps {
     SendProps(ALAuxiliaryEffectSlot *slot, ALuint filter) : mSlot(slot), mFilter(filter)
     { }
 };
-typedef std::map<ALuint,SendProps> SendPropMap;
+typedef std::unordered_map<ALuint,SendProps> SendPropMap;
 
 class ALSource : public Source {
     ALContext *const mContext;
