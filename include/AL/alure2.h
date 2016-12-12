@@ -206,6 +206,40 @@ public:
 static_assert(sizeof(Vector3) == sizeof(ALfloat[3]), "Bad Vector3 size");
 
 
+enum class SampleType {
+    UInt8,
+    Int16,
+    Float32,
+    Mulaw
+};
+ALURE_API const char *GetSampleTypeName(SampleType type);
+
+enum class ChannelConfig {
+    /** 1-channel mono sound. */
+    Mono,
+    /** 2-channel stereo sound. */
+    Stereo,
+    /** 2-channel rear sound (back-left and back-right). */
+    Rear,
+    /** 4-channel surround sound. */
+    Quad,
+    /** 5.1 surround sound. */
+    X51,
+    /** 6.1 surround sound. */
+    X61,
+    /** 7.1 surround sound. */
+    X71,
+    /** 3-channel B-Format, using FuMa channel ordering and scaling. */
+    BFormat2D,
+    /** 4-channel B-Format, using FuMa channel ordering and scaling. */
+    BFormat3D
+};
+ALURE_API const char *GetChannelConfigName(ChannelConfig cfg);
+
+ALURE_API ALuint FramesToBytes(ALuint frames, ChannelConfig chans, SampleType type);
+ALURE_API ALuint BytesToFrames(ALuint bytes, ChannelConfig chans, SampleType type);
+
+
 /**
  * Creates a version number value using the specified \param major and
  * \param minor values.
@@ -430,6 +464,12 @@ public:
     // Functions below require the context to be current
 
     /**
+     * Queries if the channel configuration and sample type are supported by
+     * the context.
+     */
+    virtual bool isSupported(ChannelConfig channels, SampleType type) const = 0;
+
+    /**
      * Creates and caches a \ref Buffer for the given audio file or resource
      * \param name. Multiple calls with the same name will return the same
      * \ref Buffer object.
@@ -502,39 +542,6 @@ public:
     virtual void setMetersPerUnit(ALfloat m_u) = 0;
 };
 
-
-enum class SampleType {
-    UInt8,
-    Int16,
-    Float32,
-    Mulaw
-};
-ALURE_API const char *GetSampleTypeName(SampleType type);
-
-enum class ChannelConfig {
-    /** 1-channel mono sound. */
-    Mono,
-    /** 2-channel stereo sound. */
-    Stereo,
-    /** 2-channel rear sound (back-left and back-right). */
-    Rear,
-    /** 4-channel surround sound. */
-    Quad,
-    /** 5.1 surround sound. */
-    X51,
-    /** 6.1 surround sound. */
-    X61,
-    /** 7.1 surround sound. */
-    X71,
-    /** 3-channel B-Format, using FuMa channel ordering and scaling. */
-    BFormat2D,
-    /** 4-channel B-Format, using FuMa channel ordering and scaling. */
-    BFormat3D
-};
-ALURE_API const char *GetChannelConfigName(ChannelConfig cfg);
-
-ALURE_API ALuint FramesToBytes(ALuint frames, ChannelConfig chans, SampleType type);
-ALURE_API ALuint BytesToFrames(ALuint bytes, ChannelConfig chans, SampleType type);
 
 enum class BufferLoadStatus {
     Pending,

@@ -6,6 +6,7 @@
 #include <cstring>
 
 #include <stdexcept>
+#include <sstream>
 #include <memory>
 #include <limits>
 
@@ -83,9 +84,15 @@ public:
             mLoopPts.second = std::numeric_limits<uint64_t>::max();
         }
 
-        mFormat = GetFormat(chans, type);
         mFrequency = srate;
         mFrameSize = FramesToBytes(1, chans, type);
+        mFormat = GetFormat(chans, type);
+        if(mFormat == AL_NONE)
+        {
+            std::stringstream sstr;
+            sstr<< "Format not supported ("<<GetSampleTypeName(type)<<", "<<GetChannelConfigName(chans)<<")";
+            throw std::runtime_error(sstr.str());
+        }
 
         mData.resize(mUpdateLen * mFrameSize);
         if(type == SampleType::UInt8) mSilence = 0x80;

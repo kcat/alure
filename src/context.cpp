@@ -485,6 +485,12 @@ SharedPtr<Decoder> ALContext::createDecoder(const String &name)
 }
 
 
+bool ALContext::isSupported(ChannelConfig channels, SampleType type) const
+{
+    return GetFormat(channels, type) != AL_NONE;
+}
+
+
 Buffer *ALContext::getBuffer(const String &name)
 {
     CheckContext(this);
@@ -529,6 +535,12 @@ Buffer *ALContext::getBuffer(const String &name)
     // Get the format before calling the bufferLoading message handler, to
     // ensure it's something OpenAL can handle.
     ALenum format = GetFormat(chans, type);
+    if(format == AL_NONE)
+    {
+        std::stringstream sstr;
+        sstr<< "Format not supported ("<<GetSampleTypeName(type)<<", "<<GetChannelConfigName(chans)<<")";
+        throw std::runtime_error(sstr.str());
+    }
 
     if(mMessage.get())
         mMessage->bufferLoading(name, chans, type, srate, data);
@@ -578,6 +590,12 @@ Buffer *ALContext::getBufferAsync(const String &name)
     if(!frames) throw std::runtime_error("No samples for buffer");
 
     ALenum format = GetFormat(chans, type);
+    if(format == AL_NONE)
+    {
+        std::stringstream sstr;
+        sstr<< "Format not supported ("<<GetSampleTypeName(type)<<", "<<GetChannelConfigName(chans)<<")";
+        throw std::runtime_error(sstr.str());
+    }
 
     alGetError();
     ALuint bid = 0;

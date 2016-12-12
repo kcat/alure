@@ -299,9 +299,7 @@ ALenum GetFormat(ChannelConfig chans, SampleType type)
     }
 #undef RETURN_FMT
 
-    std::stringstream sstr;
-    sstr<< "Format not supported ("<<GetSampleTypeName(type)<<", "<<GetChannelConfigName(chans)<<")";
-    throw std::runtime_error(sstr.str());
+    return AL_NONE;
 }
 
 }

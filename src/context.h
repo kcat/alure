@@ -221,6 +221,8 @@ public:
 
     SharedPtr<Decoder> createDecoder(const String &name) override final;
 
+    bool isSupported(ChannelConfig channels, SampleType type) const override final;
+
     Buffer *getBuffer(const String &name) override final;
     Buffer *getBufferAsync(const String &name) override final;
     void removeBuffer(const String &name) override final;
