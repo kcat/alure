@@ -107,7 +107,7 @@ UniquePtr<DecoderFactory> UnregisterDecoder(const String &name)
     {
         UniquePtr<DecoderFactory> factory = std::move(iter->second);
         sDecoders.erase(iter);
-        return std::move(factory);
+        return factory;
     }
     return nullptr;
 }
