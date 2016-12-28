@@ -104,8 +104,8 @@ using Vector = std::vector<T>;
 using String = std::string;
 
 /**
- * An attribute pair, for passing attributes to \ref Device::createContext and
- * \ref Device::reset.
+ * An attribute pair, for passing attributes to Device::createContext and
+ * Device::reset.
  */
 using AttributePair = std::pair<ALCint,ALCint>;
 static_assert(sizeof(AttributePair) == sizeof(ALCint[2]), "Bad AttributePair size");
@@ -242,21 +242,20 @@ ALURE_API ALuint BytesToFrames(ALuint bytes, ChannelConfig chans, SampleType typ
 
 
 /**
- * Creates a version number value using the specified \param major and
- * \param minor values.
+ * Creates a version number value using the specified major and minor values.
  */
 constexpr inline ALCuint MakeVersion(ALCushort major, ALCushort minor)
 { return (major<<16) | minor; }
 
 /**
  * Retrieves the major version of a version number value created by
- * \ref MakeVersion.
+ * MakeVersion.
  */
 constexpr inline ALCuint MajorVersion(ALCuint version)
 { return version>>16; }
 /**
  * Retrieves the minor version of a version number value created by
- * \ref MakeVersion.
+ * MakeVersion.
  */
 constexpr inline ALCuint MinorVersion(ALCuint version)
 { return version&0xffff; }
@@ -275,8 +274,8 @@ enum class DefaultDeviceType {
 };
 
 /**
- * A class managing \ref Device objects and other related functionality. This
- * class is a singleton, only one instance will exist in a process.
+ * A class managing Device objects and other related functionality. This class
+ * is a singleton, only one instance will exist in a process.
  */
 class ALURE_API DeviceManager {
 public:
@@ -286,12 +285,12 @@ public:
     /** Queries the existence of a non-device-specific ALC extension. */
     virtual bool queryExtension(const String &name) const = 0;
 
-    /** Enumerates available device names of the given \param type. */
+    /** Enumerates available device names of the given type. */
     virtual Vector<String> enumerate(DeviceEnumeration type) const = 0;
-    /** Retrieves the default device of the given \param type. */
+    /** Retrieves the default device of the given type. */
     virtual String defaultDeviceName(DefaultDeviceType type) const = 0;
 
-    /** Opens the playback device given by \param name, or the default if empty. */
+    /** Opens the playback device given by name, or the default if empty. */
     virtual Device *openPlayback(const String &name=String()) = 0;
 };
 
@@ -303,21 +302,21 @@ enum class PlaybackDeviceName {
 
 class ALURE_API Device {
 public:
-    /** Retrieves the device name as given by \param type. */
+    /** Retrieves the device name as given by type. */
     virtual String getName(PlaybackDeviceName type=PlaybackDeviceName::Basic) const = 0;
     /** Queries the existence of an ALC extension on this device. */
     virtual bool queryExtension(const String &name) const = 0;
 
     /**
      * Retrieves the ALC version supported by this device, as constructed by
-     * \ref MakeVersion.
+     * MakeVersion.
      */
     virtual ALCuint getALCVersion() const = 0;
 
     /**
      * Retrieves the EFX version supported by this device, as constructed by
-     * \ref MakeVersion. If the ALC_EXT_EFX extension is unsupported, this
-     * will be 0.
+     * MakeVersion. If the ALC_EXT_EFX extension is unsupported, this will be
+     * 0.
      */
     virtual ALCuint getEFXVersion() const = 0;
 
@@ -354,22 +353,21 @@ public:
     virtual String getCurrentHRTF() const = 0;
 
     /**
-     * Resets the device, using the specified \param attributes.
+     * Resets the device, using the specified attributes.
      *
      * Requires the ALC_SOFT_HRTF extension.
      */
     virtual void reset(const Vector<AttributePair> &attributes) = 0;
 
     /**
-     * Creates a new \ref Context on this device, using the specified
-     * \param attributes.
+     * Creates a new Context on this device, using the specified attributes.
      */
     virtual Context *createContext(const Vector<AttributePair> &attributes=Vector<AttributePair>{}) = 0;
 
     /**
      * Pauses device processing, stopping updates for its contexts. Multiple
      * calls are allowed but it is not reference counted, so the device will
-     * resume after one \ref resumeDSP call.
+     * resume after one resumeDSP call.
      *
      * Requires the ALC_SOFT_pause_device extension.
      */
@@ -401,15 +399,15 @@ enum class DistanceModel {
 
 class ALURE_API Context {
 public:
-    /** Makes the specified \param context current for OpenAL operations. */
+    /** Makes the specified context current for OpenAL operations. */
     static void MakeCurrent(Context *context);
     /** Retrieves the current context used for OpenAL operations. */
     static Context *GetCurrent();
 
     /**
-     * Makes the specified \param context current for OpenAL operations on the
-     * calling thread only. Requires the ALC_EXT_thread_local_context extension
-     * on both the context's device and the \ref DeviceManager.
+     * Makes the specified context current for OpenAL operations on the calling
+     * thread only. Requires the ALC_EXT_thread_local_context extension on both
+     * the context's device and the DeviceManager.
      */
     static void MakeThreadCurrent(Context *context);
     /** Retrieves the thread-specific context used for OpenAL operations. */
@@ -421,15 +419,15 @@ public:
      */
     virtual void destroy() = 0;
 
-    /** Retrieves the \ref Device this context was created from. */
+    /** Retrieves the Device this context was created from. */
     virtual Device *getDevice() = 0;
 
     virtual void startBatch() = 0;
     virtual void endBatch() = 0;
 
     /**
-     * Retrieves a \ref Listener instance for this context. Each context will
-     * only have one listener.
+     * Retrieves a Listener instance for this context. Each context will only
+     * have one listener.
      */
     virtual Listener *getListener() = 0;
 
@@ -447,7 +445,7 @@ public:
      * Specifies the desired interval (in milliseconds) that the background
      * thread will be woken up to process tasks, e.g. keeping streaming sources
      * filled. An interval of 0 means the background thread will only be woken
-     * up manually, for instance with calls to \ref update. The default is 0.
+     * up manually with calls to update. The default is 0.
      */
     virtual void setAsyncWakeInterval(ALuint msec) = 0;
 
@@ -457,8 +455,7 @@ public:
     virtual ALuint getAsyncWakeInterval() const = 0;
 
     /**
-     * Creates a \ref Decoder instance for the given audio file or resource
-     * \param name.
+     * Creates a Decoder instance for the given audio file or resource name.
      */
     virtual SharedPtr<Decoder> createDecoder(const String &name) = 0;
 
@@ -471,37 +468,35 @@ public:
     virtual bool isSupported(ChannelConfig channels, SampleType type) const = 0;
 
     /**
-     * Creates and caches a \ref Buffer for the given audio file or resource
-     * \param name. Multiple calls with the same name will return the same
-     * \ref Buffer object.
+     * Creates and caches a Buffer for the given audio file or resource name.
+     * Multiple calls with the same name will return the same Buffer object.
      */
     virtual Buffer *getBuffer(const String &name) = 0;
 
     /**
-     * Creates and caches a \ref Buffer for the given audio file or resource
-     * \param name. Multiple calls with the same name will return the same
-     * \ref Buffer object.
+     * Creates and caches a Buffer for the given audio file or resource name.
+     * Multiple calls with the same name will return the same Buffer object.
      *
-     * The returned \ref Buffer object will be scheduled for loading
-     * asynchronously, and must be checked with a call to
-     * \ref Buffer::getLoadStatus prior to being played.
+     * The returned Buffer object will be scheduled for loading asynchronously,
+     * and must be checked with a call to Buffer::getLoadStatus prior to being
+     * played.
      */
     virtual Buffer *getBufferAsync(const String &name) = 0;
 
     /**
-     * Deletes the cached \ref Buffer object for the given audio file or
-     * resource \param name. The buffer must not be in use by a \ref Source.
+     * Deletes the cached Buffer object for the given audio file or
+     * resource name. The buffer must not be in use by a Source.
      */
     virtual void removeBuffer(const String &name) = 0;
     /**
-     * Deletes the given cached \param buffer instance. The buffer must not be
-     * in use by a \ref Source.
+     * Deletes the given cached buffer instance. The buffer must not be in use
+     * by a Source.
      */
     virtual void removeBuffer(Buffer *buffer) = 0;
 
     /**
-     * Creates a new \ref Source. There is no practical limit to the number of
-     * sources you may get.
+     * Creates a new Source. There is no practical limit to the number of
+     * sources you may create.
      */
     virtual Source *createSource() = 0;
 
@@ -574,10 +569,9 @@ public:
 
     /**
      * Sets the buffer's loop points, used for looping sources. If the current
-     * context does not support the AL_SOFT_loop_points extension, \param start
-     * and \param end must be 0 and \ref getLength() respectively. Otherwise,
-     * \param start must be less than \param end, and \param end must be less
-     * than or equal to \ref getLength().
+     * context does not support the AL_SOFT_loop_points extension, start and
+     * end must be 0 and getLength() respectively. Otherwise, start must be
+     * less than end, and end must be less than or equal to getLength().
      *
      * The buffer must not be in use when this method is called, and the buffer
      * must be fully loaded.
@@ -594,18 +588,16 @@ public:
     virtual std::pair<ALuint,ALuint> getLoopPoints() const = 0;
 
     /**
-     * Retrieves the \ref Source objects currently playing the buffer. Stopping
-     * the returned sources will allow the buffer to be removed from the
-     * context.
+     * Retrieves the Source objects currently playing the buffer. Stopping the
+     * returned sources will allow the buffer to be removed from the context.
      */
     virtual Vector<Source*> getSources() const = 0;
 
     /**
-     * Queries the buffer's load status. A return of
-     * \ref BufferLoadStatus::Pending indicates the buffer is not finished
-     * loading and can't be used with a call to \ref Source::play. Buffers
-     * created with \ref Context::getBuffer will always return
-     * \ref BufferLoadStatus::Ready.
+     * Queries the buffer's load status. A return of BufferLoadStatus::Pending
+     * indicates the buffer is not finished loading and can't be used with a
+     * call to Source::play. Buffers created with Context::getBuffer will
+     * always return BufferLoadStatus::Ready.
      */
     virtual BufferLoadStatus getLoadStatus() = 0;
 
@@ -620,15 +612,15 @@ public:
 class ALURE_API Source {
 public:
     /**
-     * Plays the source using \param buffer. The same buffer may be played from
+     * Plays the source using buffer. The same buffer may be played from
      * multiple sources simultaneously.
      */
     virtual void play(Buffer *buffer) = 0;
     /**
-     * Plays the source by streaming audio from \param decoder. This will use
-     * \param queuelen buffers, each with \param updatelen sample frames. The
-     * given decoder must *NOT* have its read or seek methods called from
-     * elsewhere while in use.
+     * Plays the source by streaming audio from decoder. This will use
+     * queuesize buffers, each with updatelen sample frames. The given decoder
+     * must *NOT* have its read or seek methods called from elsewhere while in
+     * use.
      */
     virtual void play(SharedPtr<Decoder> decoder, ALuint updatelen, ALuint queuesize) = 0;
     /**
@@ -673,8 +665,8 @@ public:
     virtual uint64_t getOffset(uint64_t *latency=0) const = 0;
 
     /**
-     * Specifies if the source should loop on the \ref Buffer or \ref Decoder
-     * object's loop points.
+     * Specifies if the source should loop on the Buffer or Decoder object's
+     * loop points.
      */
     virtual void setLooping(bool looping) = 0;
     virtual bool getLooping() const = 0;
@@ -734,7 +726,7 @@ public:
 
     /**
      * Specifies the source's 3D facing direction. Deprecated in favor of
-     * \ref setOrientation.
+     * setOrientation.
      */
     virtual void setDirection(ALfloat x, ALfloat y, ALfloat z) = 0;
     virtual void setDirection(const ALfloat *dir) = 0;
@@ -743,7 +735,7 @@ public:
     /**
      * Specifies the source's 3D orientation. Note: unlike the AL_EXT_BFORMAT
      * extension this property comes from, this also affects the facing
-     * direction, superceding \ref setDirection.
+     * direction, superceding setDirection.
      */
     virtual void setOrientation(ALfloat x1, ALfloat y1, ALfloat z1, ALfloat x2, ALfloat y2, ALfloat z2) = 0;
     virtual void setOrientation(const ALfloat *at, const ALfloat *up) = 0;
@@ -763,9 +755,8 @@ public:
 
     /**
      * Specifies the linear gain multiplier when the listener is outside of the
-     * source's outer cone area. The specified \param gain applies to all
-     * frequencies, while \param gainhf applies extra attenuation to high
-     * frequencies.
+     * source's outer cone area. The specified gain applies to all frequencies,
+     * while gainhf applies extra attenuation to high frequencies.
      *
      * \param gainhf has no effect without the ALC_EXT_EFX extension.
      */
@@ -827,21 +818,21 @@ public:
     bool getSendGainAuto() const { return std::get<1>(getGainAuto()); }
     bool getSendGainHFAuto() const { return std::get<2>(getGainAuto()); }
 
-    /** Sets the \param filter properties on the direct path signal. */
+    /** Sets the filter properties on the direct path signal. */
     virtual void setDirectFilter(const FilterParams &filter) = 0;
     /**
-     * Sets the \param filter properties on the given \param send path signal.
-     * Any auxiliary effect slot on the send path remains in place.
+     * Sets the filter properties on the given send path signal. Any auxiliary
+     * effect slot on the send path remains in place.
      */
     virtual void setSendFilter(ALuint send, const FilterParams &filter) = 0;
     /**
-     * Connects the effect slot \param slot to the given \param send path. Any
-     * filter properties on the send path remain as they were.
+     * Connects the effect slot slot to the given send path. Any filter
+     * properties on the send path remain as they were.
      */
     virtual void setAuxiliarySend(AuxiliaryEffectSlot *slot, ALuint send) = 0;
     /**
-     * Connects the effect slot \param slot to the given \param send path,
-     * using the \param filter properties.
+     * Connects the effect slot slot to the given send path, using the filter
+     * properties.
      */
     virtual void setAuxiliarySendFilter(AuxiliaryEffectSlot *slot, ALuint send, const FilterParams &filter) = 0;
 
@@ -865,12 +856,12 @@ public:
     virtual const String &getName() const = 0;
 
     /**
-     * Adds \param source to the source group. A source may only be part of one
-     * group at a time, and will automatically be removed from its current
-     * group as needed.
+     * Adds source to the source group. A source may only be part of one group
+     * at a time, and will automatically be removed from its current group as
+     * needed.
      */
     virtual void addSource(Source *source) = 0;
-    /** Removes \param source from the source group. */
+    /** Removes source from the source group. */
     virtual void removeSource(Source *source) = 0;
 
     /** Adds a list of sources to the group at once. */
@@ -879,12 +870,12 @@ public:
     virtual void removeSources(const Vector<Source*> &sources) = 0;
 
     /**
-     * Adds \param group as a subgroup of the source group. This method will
-     * throw an exception if \param group is being added to a group it has as a
-     * sub-group (i.e. it would create a circular sub-group chain).
+     * Adds group as a subgroup of the source group. This method will throw an
+     * exception if group is being added to a group it has as a sub-group (i.e.
+     * it would create a circular sub-group chain).
      */
     virtual void addSubGroup(SourceGroup *group) = 0;
-    /** Removes \param group from the source group. */
+    /** Removes group from the source group. */
     virtual void removeSubGroup(SourceGroup *group) = 0;
 
     /** Returns the list of sources currently in the group. */
@@ -942,8 +933,8 @@ public:
     virtual void setSendAuto(bool sendauto) = 0;
 
     /**
-     * Updates the effect slot with a new \param effect. The given effect
-     * object may be altered or destroyed without affecting the effect slot.
+     * Updates the effect slot with a new effect. The given effect object may
+     * be altered or destroyed without affecting the effect slot.
      */
     virtual void applyEffect(const Effect *effect) = 0;
 
@@ -954,9 +945,9 @@ public:
     virtual void release() = 0;
 
     /**
-     * Retrieves each \ref Source object and its pairing send this effect slot
-     * is set on. Setting a different (or null) effect slot on each source's
-     * given send will allow the effect slot to be released.
+     * Retrieves each Source object and its pairing send this effect slot is
+     * set on. Setting a different (or null) effect slot on each source's given
+     * send will allow the effect slot to be released.
      */
     virtual Vector<SourceSend> getSourceSends() const = 0;
 
@@ -968,8 +959,8 @@ public:
 class ALURE_API Effect {
 public:
     /**
-     * Updates the effect with the specified reverb properties \param props. If
-     * the EAXReverb effect is not supported, it will automatically attempt to
+     * Updates the effect with the specified reverb properties. If the
+     * EAXReverb effect is not supported, it will automatically attempt to
      * downgrade to the Standard Reverb effect.
      */
     virtual void setReverbProperties(const EFXEAXREVERBPROPERTIES &props) = 0;
@@ -996,7 +987,7 @@ public:
     /**
      * Retrieves the total length of the audio, in sample frames. If unknown,
      * returns 0. Note that if the returned length is 0, the decoder may not be
-     * used to load a \ref Buffer.
+     * used to load a Buffer.
      */
     virtual uint64_t getLength() const = 0;
     /**
@@ -1005,8 +996,8 @@ public:
      */
     virtual uint64_t getPosition() const = 0;
     /**
-     * Seek to \param pos, specified in sample frames. Returns true if the seek
-     * was successful.
+     * Seek to pos, specified in sample frames. Returns true if the seek was
+     * successful.
      */
     virtual bool seek(uint64_t pos) = 0;
 
@@ -1017,9 +1008,9 @@ public:
     virtual std::pair<uint64_t,uint64_t> getLoopPoints() const = 0;
 
     /**
-     * Decodes \param count sample frames, writing them to \param ptr, and
-     * returns the number of sample frames written. Returning less than the
-     * requested count indicates the end of the audio.
+     * Decodes count sample frames, writing them to ptr, and returns the number
+     * of sample frames written. Returning less than the requested count
+     * indicates the end of the audio.
      */
     virtual ALuint read(ALvoid *ptr, ALuint count) = 0;
 };
@@ -1034,10 +1025,11 @@ public:
     virtual ~DecoderFactory() { }
 
     /**
-     * Creates and returns a \ref Decoder instance for the given resource
-     * \param file. If the decoder needs to retain the file handle for reading
-     * as-needed, it should move the UniquePtr to internal storage. Returns
-     * nullptr if a decoder can't be created from the file.
+     * Creates and returns a Decoder instance for the given resource file. If
+     * the decoder needs to retain the file handle for reading as-needed, it
+     * should move the UniquePtr to internal storage.
+     *
+     * \return nullptr if a decoder can't be created from the file.
      */
     virtual SharedPtr<Decoder> createDecoder(UniquePtr<std::istream> &file) = 0;
 };
@@ -1078,7 +1070,7 @@ ALURE_API UniquePtr<DecoderFactory> UnregisterDecoder(const String &name);
 class ALURE_API FileIOFactory {
 public:
     /**
-     * Sets the \param factory instance to be used by the audio decoders. If a
+     * Sets the factory instance to be used by the audio decoders. If a
      * previous factory was set, it's returned to the application. Passing in a
      * NULL factory reverts to the default.
      */
@@ -1092,7 +1084,7 @@ public:
 
     virtual ~FileIOFactory() { }
 
-    /** Opens a read-only binary file for the given \param name. */
+    /** Opens a read-only binary file for the given name. */
     virtual UniquePtr<std::istream> openFile(const String &name) = 0;
 };
 
@@ -1111,16 +1103,16 @@ public:
     virtual ~MessageHandler();
 
     /**
-     * Called when the given \param device has been disconnected and is no
-     * longer usable for output. As per the ALC_EXT_disconnect specification,
+     * Called when the given device has been disconnected and is no longer
+     * usable for output. As per the ALC_EXT_disconnect specification,
      * disconnected devices remain valid, however all playing sources are
      * automatically stopped, any sources that are attempted to play will
      * immediately stop, and new contexts may not be created on the device.
      *
-     * Note that connection status is checked during \ref Context::update
-     * calls, so that method must be called regularly to be notified when a
-     * device is disconnected. This method may not be called if the device
-     * lacks support for the ALC_EXT_disconnect extension.
+     * Note that connection status is checked during Context::update calls, so
+     * that method must be called regularly to be notified when a device is
+     * disconnected. This method may not be called if the device lacks support
+     * for the ALC_EXT_disconnect extension.
      *
      * WARNING: Do not attempt to clean up resources within this callback
      * method, as Alure is in the middle of doing updates. Instead, flag the
@@ -1129,15 +1121,13 @@ public:
     virtual void deviceDisconnected(Device *device);
 
     /**
-     * Called when the given \param source stops playback. If \param forced is
-     * true, the source was stopped because either there were no more system
-     * sources and a higher-priority source needs to play, or it's part of a
-     * \ref SourceGroup (or sub-group thereof) that had its
-     * \ref SourceGroup::stopAll method called.
+     * Called when the given source stops playback. If forced is true, the
+     * source was stopped because either there were no more system sources and
+     * a higher-priority source needs to play, or it's part of a SourceGroup
+     * (or sub-group thereof) that had its SourceGroup::stopAll method called.
      *
      * Sources that stopped automatically will be detected upon a call to
-     * \ref Context::update or \ref Source::update, and will have \param forced
-     * set to false.
+     * Context::update or Source::update, and will have forced set to false.
      */
     virtual void sourceStopped(Source *source, bool forced);
 
@@ -1145,7 +1135,7 @@ public:
      * Called when a new buffer is about to be created and loaded. May be
      * called asynchronously for buffers being loaded asynchronously.
      *
-     * \param name The resource name, as passed to \ref Context::getBuffer.
+     * \param name The resource name, as passed to Context::getBuffer.
      * \param channels Channel configuration of the given audio data.
      * \param type Sample type of the given audio data.
      * \param samplerate Sample rate of the given audio data.
@@ -1155,10 +1145,10 @@ public:
 
     /**
      * Called when a resource isn't found, allowing the app to substitute in a
-     * different resource. For buffers created with \ref Context::getBuffer or
-     * \ref Context::getBufferAsync, the original name will still be used for
-     * the cache map so the app doesn't have to keep track of substituted
-     * resource names.
+     * different resource. For buffers created with Context::getBuffer or
+     * Context::getBufferAsync, the original name will still be used for the
+     * cache map so the app doesn't have to keep track of substituted resource
+     * names.
      *
      * This will be called again if the new name isn't found.
      *
