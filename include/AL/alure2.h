@@ -5,6 +5,7 @@
 #include <string>
 #include <memory>
 #include <utility>
+#include <array>
 #include <cmath>
 
 #include "alc.h"
