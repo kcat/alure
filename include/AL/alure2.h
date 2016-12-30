@@ -196,12 +196,12 @@ public:
 
     constexpr ALfloat getLengthSquared() const noexcept
     { return mValue[0]*mValue[0] + mValue[1]*mValue[1] + mValue[2]*mValue[2]; }
-    constexpr ALfloat getLength() const noexcept
+    ALfloat getLength() const noexcept
     { return std::sqrt(getLengthSquared()); }
 
     constexpr ALfloat getDistanceSquared(const Vector3 &pos) const noexcept
     { return (pos - *this).getLengthSquared(); }
-    constexpr ALfloat getDistance(const Vector3 &pos) const noexcept
+    ALfloat getDistance(const Vector3 &pos) const noexcept
     { return (pos - *this).getLength(); }
 };
 static_assert(sizeof(Vector3) == sizeof(ALfloat[3]), "Bad Vector3 size");
