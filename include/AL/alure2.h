@@ -662,7 +662,7 @@ public:
      * \param latency If non-NULL and the device supports it, the source's
      * latency, in nanoseconds, will be written to that location.
      */
-    virtual uint64_t getOffset(uint64_t *latency=0) const = 0;
+    virtual uint64_t getOffset(uint64_t *latency=nullptr) const = 0;
 
     /**
      * Specifies if the source should loop on the Buffer or Decoder object's
