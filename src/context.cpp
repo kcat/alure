@@ -683,7 +683,7 @@ Source *ALContext::createSource()
     ALSource *source;
     if(!mFreeSources.empty())
     {
-        source = mFreeSources.back();
+        source = mFreeSources.front();
         mFreeSources.pop();
     }
     else
