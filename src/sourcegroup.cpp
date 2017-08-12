@@ -291,7 +291,7 @@ void ALSourceGroup::updateStoppedStatus() const
     for(ALSource *alsrc : mSources)
     {
         alsrc->makeStopped();
-        mContext->send(&MessageHandler::sourceStopped, alsrc, true);
+        mContext->send(&MessageHandler::sourceForceStopped, alsrc);
     }
     for(ALSourceGroup *group : mSubGroups)
         group->updateStoppedStatus();

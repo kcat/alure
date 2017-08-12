@@ -558,7 +558,7 @@ void ALSource::updateNoCtxCheck()
         if(!mIsAsync.load(std::memory_order_acquire))
         {
             stop();
-            mContext->send(&MessageHandler::sourceStopped, this, false);
+            mContext->send(&MessageHandler::sourceStopped, this);
         }
     }
     else
@@ -568,7 +568,7 @@ void ALSource::updateNoCtxCheck()
         if(state != AL_PLAYING && state != AL_PAUSED)
         {
             stop();
-            mContext->send(&MessageHandler::sourceStopped, this, false);
+            mContext->send(&MessageHandler::sourceStopped, this);
         }
     }
 }

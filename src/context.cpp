@@ -147,7 +147,11 @@ void MessageHandler::deviceDisconnected(Device*)
 {
 }
 
-void MessageHandler::sourceStopped(Source*, bool)
+void MessageHandler::sourceStopped(Source*)
+{
+}
+
+void MessageHandler::sourceForceStopped(Source*)
 {
 }
 
@@ -664,7 +668,7 @@ ALuint ALContext::getSourceId(ALuint maxprio)
         {
             lowest->makeStopped();
             if(mMessage.get())
-                mMessage->sourceStopped(lowest, true);
+                mMessage->sourceForceStopped(lowest);
         }
     }
     if(mSourceIds.empty())

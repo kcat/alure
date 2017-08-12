@@ -1121,15 +1121,20 @@ public:
     virtual void deviceDisconnected(Device *device);
 
     /**
-     * Called when the given source stops playback. If forced is true, the
-     * source was stopped because either there were no more system sources and
-     * a higher-priority source needs to play, or it's part of a SourceGroup
-     * (or sub-group thereof) that had its SourceGroup::stopAll method called.
+     * Called when the given source reaches the end of the buffer or stream.
      *
      * Sources that stopped automatically will be detected upon a call to
      * Context::update or Source::update, and will have forced set to false.
      */
-    virtual void sourceStopped(Source *source, bool forced);
+    virtual void sourceStopped(Source *source);
+
+    /**
+     * Called when the given source was forced to stop. This can be because
+     * either there were no more system sources and a higher-priority source
+     * needs to play, or it's part of a SourceGroup (or sub-group thereof) that
+     * had its SourceGroup::stopAll method called.
+     */
+    virtual void sourceForceStopped(Source *source);
 
     /**
      * Called when a new buffer is about to be created and loaded. May be
