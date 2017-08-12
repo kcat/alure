@@ -588,10 +588,7 @@ bool ALSource::updateAsync()
         ALint state = -1;
         alGetSourcei(mId, AL_SOURCE_STATE, &state);
         if(state != AL_PLAYING)
-        {
-            refillBufferStream();
             alSourcePlay(mId);
-        }
     }
     return true;
 }
