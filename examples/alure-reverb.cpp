@@ -155,7 +155,21 @@ int main(int argc, char *argv[])
 {
     alure::DeviceManager &devMgr = alure::DeviceManager::get();
 
-    alure::Device *dev = devMgr.openPlayback();
+    int fileidx = 1;
+    alure::Device *dev = [argc,argv,&devMgr,&fileidx]() -> alure::Device*
+    {
+        if(argc > 3 && strcmp(argv[1], "-device") == 0)
+        {
+            fileidx = 3;
+            try {
+                return devMgr.openPlayback(argv[2]);
+            }
+            catch(...) {
+                std::cerr<< "Failed to open \""<<argv[2]<<"\" - trying default" <<std::endl;
+            }
+        }
+        return devMgr.openPlayback();
+    }();
     std::cout<< "Opened \""<<dev->getName()<<"\"" <<std::endl;
 
     alure::Context *ctx = dev->createContext();
@@ -164,7 +178,7 @@ int main(int argc, char *argv[])
     bool gotreverb = false;
     alure::Effect *effect = ctx->createEffect();
 
-    int i = 1;
+    int i = fileidx;
     if(argc-i >= 2 && strcasecmp(argv[i], "-preset") == 0)
     {
         for(size_t j = 0;j < countof(reverblist);j++)

@@ -18,7 +18,21 @@ int main(int argc, char *argv[])
 {
     alure::DeviceManager &devMgr = alure::DeviceManager::get();
 
-    alure::Device *dev = devMgr.openPlayback();
+    int fileidx = 1;
+    alure::Device *dev = [argc,argv,&devMgr,&fileidx]() -> alure::Device*
+    {
+        if(argc > 3 && strcmp(argv[1], "-device") == 0)
+        {
+            fileidx = 3;
+            try {
+                return devMgr.openPlayback(argv[2]);
+            }
+            catch(...) {
+                std::cerr<< "Failed to open \""<<argv[2]<<"\" - trying default" <<std::endl;
+            }
+        }
+        return devMgr.openPlayback();
+    }();
     std::cout<< "Opened \""<<dev->getName()<<"\"" <<std::endl;
 
     if(!dev->queryExtension("ALC_SOFT_HRTF"))
@@ -34,7 +48,7 @@ int main(int argc, char *argv[])
         std::cout<< "    "<<name <<'\n';
     std::cout.flush();
 
-    int i = 1;
+    int i = fileidx;
     alure::Vector<alure::AttributePair> attrs;
     attrs.push_back({ALC_HRTF_SOFT, ALC_TRUE});
     if(argc-i > 1 && strcasecmp(argv[i], "-hrtf") == 0)
