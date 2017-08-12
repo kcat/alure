@@ -61,10 +61,11 @@ class ALSource : public Source {
     ALfloat mAirAbsorptionFactor;
     ALfloat mRadius;
     ALfloat mStereoAngles[2];
-    bool mRelative;
-    bool mDryGainHFAuto;
-    bool mWetGainAuto;
-    bool mWetGainHFAuto;
+    ALint mFlags;
+    static constexpr ALint mRelativeFlag = 1<<0;
+    static constexpr ALint mDryGainHFAutoFlag = 1<<1;
+    static constexpr ALint mWetGainAutoFlag = 1<<2;
+    static constexpr ALint mWetGainHFAutoFlag = 1<<3;
 
     ALuint mDirectFilter;
     SendPropMap mEffectSlots;
@@ -168,7 +169,7 @@ public:
 
     void setRelative(bool relative) override final;
     bool getRelative() const override final
-    { return mRelative; }
+    { return mFlags&mRelativeFlag; }
 
     void setRadius(ALfloat radius) override final;
     ALfloat getRadius() const override final { return mRadius; }
@@ -182,7 +183,8 @@ public:
 
     void setGainAuto(bool directhf, bool send, bool sendhf) override final;
     std::tuple<bool,bool,bool> getGainAuto() const override final
-    { return std::make_tuple(mDryGainHFAuto, mWetGainAuto, mWetGainHFAuto); }
+    { return std::make_tuple(mFlags&mDryGainHFAutoFlag, mFlags&mWetGainAutoFlag,
+                             mFlags&mWetGainHFAutoFlag); }
 
     void setDirectFilter(const FilterParams &filter) override final;
     void setSendFilter(ALuint send, const FilterParams &filter) override final;

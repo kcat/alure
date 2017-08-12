@@ -200,14 +200,11 @@ void ALSource::resetProperties()
     mRolloffFactor = 1.0f;
     mRoomRolloffFactor = 0.0f;
     mDopplerFactor = 1.0f;
-    mRelative = false;
     mRadius = 0.0f;
     mStereoAngles[0] =  F_PI / 6.0f;
     mStereoAngles[1] = -F_PI / 6.0f;
     mAirAbsorptionFactor = 0.0f;
-    mDryGainHFAuto = true;
-    mWetGainAuto = true;
-    mWetGainHFAuto = true;
+    mFlags = mDryGainHFAutoFlag | mWetGainAutoFlag | mWetGainHFAutoFlag;
     if(mDirectFilter)
         mContext->alDeleteFilters(1, &mDirectFilter);
     mDirectFilter = 0;
@@ -255,15 +252,15 @@ void ALSource::applyProperties(bool looping, ALuint offset) const
         alSourcef(mId, AL_SOURCE_RADIUS, mRadius);
     if(mContext->hasExtension(EXT_STEREO_ANGLES))
         alSourcefv(mId, AL_STEREO_ANGLES, mStereoAngles);
-    alSourcei(mId, AL_SOURCE_RELATIVE, mRelative ? AL_TRUE : AL_FALSE);
+    alSourcei(mId, AL_SOURCE_RELATIVE, (mFlags&mRelativeFlag) ? AL_TRUE : AL_FALSE);
     if(mContext->hasExtension(EXT_EFX))
     {
         alSourcef(mId, AL_CONE_OUTER_GAINHF, mConeOuterGainHF);
         alSourcef(mId, AL_ROOM_ROLLOFF_FACTOR, mRoomRolloffFactor);
         alSourcef(mId, AL_AIR_ABSORPTION_FACTOR, mAirAbsorptionFactor);
-        alSourcei(mId, AL_DIRECT_FILTER_GAINHF_AUTO, mDryGainHFAuto ? AL_TRUE : AL_FALSE);
-        alSourcei(mId, AL_AUXILIARY_SEND_FILTER_GAIN_AUTO, mWetGainAuto ? AL_TRUE : AL_FALSE);
-        alSourcei(mId, AL_AUXILIARY_SEND_FILTER_GAINHF_AUTO, mWetGainHFAuto ? AL_TRUE : AL_FALSE);
+        alSourcei(mId, AL_DIRECT_FILTER_GAINHF_AUTO, (mFlags&mDryGainHFAutoFlag) ? AL_TRUE : AL_FALSE);
+        alSourcei(mId, AL_AUXILIARY_SEND_FILTER_GAIN_AUTO, (mFlags&mWetGainAutoFlag) ? AL_TRUE : AL_FALSE);
+        alSourcei(mId, AL_AUXILIARY_SEND_FILTER_GAINHF_AUTO, (mFlags&mWetGainHFAutoFlag) ? AL_TRUE : AL_FALSE);
         alSourcei(mId, AL_DIRECT_FILTER, mDirectFilter);
         for(const auto &i : mEffectSlots)
         {
@@ -978,7 +975,8 @@ void ALSource::setRelative(bool relative)
     CheckContext(mContext);
     if(mId != 0)
         alSourcei(mId, AL_SOURCE_RELATIVE, relative ? AL_TRUE : AL_FALSE);
-    mRelative = relative;
+    if(relative) mFlags &= ~mRelativeFlag;
+    else mFlags |= mRelativeFlag;
 }
 
 void ALSource::setGainAuto(bool directhf, bool send, bool sendhf)
@@ -990,9 +988,12 @@ void ALSource::setGainAuto(bool directhf, bool send, bool sendhf)
         alSourcei(mId, AL_AUXILIARY_SEND_FILTER_GAIN_AUTO, send ? AL_TRUE : AL_FALSE);
         alSourcei(mId, AL_AUXILIARY_SEND_FILTER_GAINHF_AUTO, sendhf ? AL_TRUE : AL_FALSE);
     }
-    mDryGainHFAuto = directhf;
-    mWetGainAuto = send;
-    mWetGainHFAuto = sendhf;
+    if(directhf) mFlags &= ~mDryGainHFAutoFlag;
+    else mFlags |= mDryGainHFAutoFlag;
+    if(send) mFlags &= ~mWetGainAutoFlag;
+    else mFlags |= mWetGainAutoFlag;
+    if(sendhf) mFlags &= ~mWetGainHFAutoFlag;
+    else mFlags |= mWetGainHFAutoFlag;
 }
 
 
