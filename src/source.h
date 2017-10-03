@@ -98,7 +98,7 @@ public:
     void unsetPaused() { mPaused = false; }
     void makeStopped();
 
-    void play(Buffer *buffer) override final;
+    void play(Buffer buffer) override final;
     void play(SharedPtr<Decoder> decoder, ALuint updatelen, ALuint queuesize) override final;
     void stop() override final;
     void pause() override final;

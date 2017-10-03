@@ -37,18 +37,18 @@ int main(int argc, char *argv[])
 
     for(int i = fileidx;i < argc;i++)
     {
-        alure::Buffer *buffer = ctx.getBuffer(argv[i]);
+        alure::Buffer buffer = ctx.getBuffer(argv[i]);
         alure::Source *source = ctx.createSource();
         source->play(buffer);
-        std::cout<< "Playing "<<argv[i]<<" ("<<alure::GetSampleTypeName(buffer->getSampleType())<<", "
-                                             <<alure::GetChannelConfigName(buffer->getChannelConfig())<<", "
-                                             <<buffer->getFrequency()<<"hz)" <<std::endl;
+        std::cout<< "Playing "<<argv[i]<<" ("<<alure::GetSampleTypeName(buffer.getSampleType())<<", "
+                                             <<alure::GetChannelConfigName(buffer.getChannelConfig())<<", "
+                                             <<buffer.getFrequency()<<"hz)" <<std::endl;
 
-        float invfreq = 1.0f / buffer->getFrequency();
+        float invfreq = 1.0f / buffer.getFrequency();
         while(source->isPlaying())
         {
             std::cout<< "\r "<<std::setiosflags(std::ios::fixed)<<std::setprecision(2)<<
-                        (source->getOffset()*invfreq)<<" / "<<(buffer->getLength()*invfreq);
+                        (source->getOffset()*invfreq)<<" / "<<(buffer.getLength()*invfreq);
             std::cout.flush();
             std::this_thread::sleep_for(std::chrono::milliseconds(25));
             ctx.update();
@@ -58,7 +58,6 @@ int main(int argc, char *argv[])
         source->release();
         source = 0;
         ctx.removeBuffer(buffer);
-        buffer = 0;
     }
 
     alure::Context::MakeCurrent(nullptr);

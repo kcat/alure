@@ -495,7 +495,7 @@ bool ALContext::isSupported(ChannelConfig channels, SampleType type) const
 }
 
 
-Buffer *ALContext::getBuffer(const String &name)
+Buffer ALContext::getBuffer(const String &name)
 {
     CheckContext(this);
 
@@ -511,7 +511,7 @@ Buffer *ALContext::getBuffer(const String &name)
         ALBuffer *buffer = iter->get();
         while(buffer->getLoadStatus() == BufferLoadStatus::Pending)
             std::this_thread::yield();
-        return buffer;
+        return Buffer(buffer);
     }
     // NOTE: 'iter' is used later to insert a new entry!
 
@@ -562,9 +562,9 @@ Buffer *ALContext::getBuffer(const String &name)
         if(alGetError() != AL_NO_ERROR)
             throw std::runtime_error("Failed to buffer data");
 
-        return mBuffers.insert(iter,
+        return Buffer(mBuffers.insert(iter,
             MakeUnique<ALBuffer>(this, bid, srate, chans, type, true, name)
-        )->get();
+        )->get());
     }
     catch(...) {
         alDeleteBuffers(1, &bid);
@@ -572,7 +572,7 @@ Buffer *ALContext::getBuffer(const String &name)
     }
 }
 
-Buffer *ALContext::getBufferAsync(const String &name)
+Buffer ALContext::getBufferAsync(const String &name)
 {
     CheckContext(this);
 
@@ -582,7 +582,7 @@ Buffer *ALContext::getBufferAsync(const String &name)
         { return hasher(lhs->getName()) < rhs; }
     );
     if(iter != mBuffers.end() && (*iter)->getName() == name)
-        return iter->get();
+        return Buffer(iter->get());
     // NOTE: 'iter' is used later to insert a new entry!
 
     auto decoder = createDecoder(name);
@@ -621,7 +621,7 @@ Buffer *ALContext::getBufferAsync(const String &name)
     mWakeMutex.lock(); mWakeMutex.unlock();
     mWakeThread.notify_all();
 
-    return mBuffers.insert(iter, std::move(buffer))->get();
+    return Buffer(mBuffers.insert(iter, std::move(buffer))->get());
 }
 
 
@@ -640,9 +640,9 @@ void ALContext::removeBuffer(const String &name)
     }
 }
 
-void ALContext::removeBuffer(Buffer *buffer)
+void ALContext::removeBuffer(Buffer buffer)
 {
-    removeBuffer(buffer->getName());
+    removeBuffer(buffer.getName());
 }
 
 
@@ -872,10 +872,10 @@ DECL_THUNK1(void, Context, setAsyncWakeInterval,, ALuint)
 DECL_THUNK0(ALuint, Context, getAsyncWakeInterval, const)
 DECL_THUNK1(SharedPtr<Decoder>, Context, createDecoder,, const String&)
 DECL_THUNK2(bool, Context, isSupported, const, ChannelConfig, SampleType)
-DECL_THUNK1(Buffer*, Context, getBuffer,, const String&)
-DECL_THUNK1(Buffer*, Context, getBufferAsync,, const String&)
+DECL_THUNK1(Buffer, Context, getBuffer,, const String&)
+DECL_THUNK1(Buffer, Context, getBufferAsync,, const String&)
 DECL_THUNK1(void, Context, removeBuffer,, const String&)
-DECL_THUNK1(void, Context, removeBuffer,, Buffer*)
+DECL_THUNK1(void, Context, removeBuffer,, Buffer)
 DECL_THUNK0(Source*, Context, createSource,)
 DECL_THUNK0(AuxiliaryEffectSlot*, Context, createAuxiliaryEffectSlot,)
 DECL_THUNK0(Effect*, Context, createEffect,)

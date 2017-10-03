@@ -155,6 +155,19 @@ BufferLoadStatus ALBuffer::getLoadStatus()
     return mLoadStatus;
 }
 
+using ALuintPair = std::pair<ALuint,ALuint>;
+DECL_THUNK0(ALuint, Buffer, getLength, const)
+DECL_THUNK0(ALuint, Buffer, getFrequency, const)
+DECL_THUNK0(ChannelConfig, Buffer, getChannelConfig, const)
+DECL_THUNK0(SampleType, Buffer, getSampleType, const)
+DECL_THUNK0(ALuint, Buffer, getSize, const)
+DECL_THUNK2(void, Buffer, setLoopPoints,, ALuint, ALuint)
+DECL_THUNK0(ALuintPair, Buffer, getLoopPoints, const)
+DECL_THUNK0(Vector<Source*>, Buffer, getSources, const)
+DECL_THUNK0(BufferLoadStatus, Buffer, getLoadStatus,)
+DECL_THUNK0(const String&, Buffer, getName, const)
+DECL_THUNK0(bool, Buffer, isInUse, const)
+
 
 ALURE_API const char *GetSampleTypeName(SampleType type)
 {

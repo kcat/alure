@@ -312,9 +312,9 @@ void ALSource::groupPropUpdate(ALfloat gain, ALfloat pitch)
 }
 
 
-void ALSource::play(Buffer *buffer)
+void ALSource::play(Buffer buffer)
 {
-    ALBuffer *albuf = cast<ALBuffer*>(buffer);
+    ALBuffer *albuf = buffer.pImpl;
     if(!albuf) throw std::runtime_error("Buffer is not valid");
     CheckContext(mContext);
     CheckContext(albuf->getContext());

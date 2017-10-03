@@ -245,10 +245,10 @@ public:
 
     bool isSupported(ChannelConfig channels, SampleType type) const;
 
-    Buffer *getBuffer(const String &name);
-    Buffer *getBufferAsync(const String &name);
+    Buffer getBuffer(const String &name);
+    Buffer getBufferAsync(const String &name);
     void removeBuffer(const String &name);
-    void removeBuffer(Buffer *buffer);
+    void removeBuffer(Buffer buffer);
 
     Source *createSource();
 

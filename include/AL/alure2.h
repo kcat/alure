@@ -504,7 +504,7 @@ public:
      * Creates and caches a Buffer for the given audio file or resource name.
      * Multiple calls with the same name will return the same Buffer object.
      */
-    Buffer *getBuffer(const String &name);
+    Buffer getBuffer(const String &name);
 
     /**
      * Creates and caches a Buffer for the given audio file or resource name.
@@ -514,7 +514,7 @@ public:
      * and must be checked with a call to Buffer::getLoadStatus prior to being
      * played.
      */
-    Buffer *getBufferAsync(const String &name);
+    Buffer getBufferAsync(const String &name);
 
     /**
      * Deletes the cached Buffer object for the given audio file or
@@ -525,7 +525,7 @@ public:
      * Deletes the given cached buffer instance. The buffer must not be in use
      * by a Source.
      */
-    void removeBuffer(Buffer *buffer);
+    void removeBuffer(Buffer buffer);
 
     /**
      * Creates a new Source. There is no practical limit to the number of
@@ -577,28 +577,34 @@ enum class BufferLoadStatus {
     Ready
 };
 
+class ALBuffer;
 class ALURE_API Buffer {
+    friend class ALContext;
+    friend class ALSource;
+
+    MAKE_PIMPL(Buffer, ALBuffer)
+
 public:
     /**
      * Retrieves the length of the buffer in sample frames. The buffer must be
      * fully loaded before this method is called.
      */
-    virtual ALuint getLength() const = 0;
+    ALuint getLength() const;
 
     /** Retrieves the buffer's frequency in hz. */
-    virtual ALuint getFrequency() const = 0;
+    ALuint getFrequency() const;
 
     /** Retrieves the buffer's sample configuration. */
-    virtual ChannelConfig getChannelConfig() const = 0;
+    ChannelConfig getChannelConfig() const;
 
     /** Retrieves the buffer's sample type. */
-    virtual SampleType getSampleType() const = 0;
+    SampleType getSampleType() const;
 
     /**
      * Retrieves the storage size used by the buffer, in bytes. The buffer must
      * be fully loaded before this method is called.
      */
-    virtual ALuint getSize() const = 0;
+    ALuint getSize() const;
 
     /**
      * Sets the buffer's loop points, used for looping sources. If the current
@@ -612,19 +618,19 @@ public:
      * \param start The starting point, in sample frames (inclusive).
      * \param end The ending point, in sample frames (exclusive).
      */
-    virtual void setLoopPoints(ALuint start, ALuint end) = 0;
+    void setLoopPoints(ALuint start, ALuint end);
 
     /**
      * Retrieves the current loop points as a [start,end) pair. The buffer must
      * be fully loaded before this method is called.
      */
-    virtual std::pair<ALuint,ALuint> getLoopPoints() const = 0;
+    std::pair<ALuint,ALuint> getLoopPoints() const;
 
     /**
      * Retrieves the Source objects currently playing the buffer. Stopping the
      * returned sources will allow the buffer to be removed from the context.
      */
-    virtual Vector<Source*> getSources() const = 0;
+    Vector<Source*> getSources() const;
 
     /**
      * Queries the buffer's load status. A return of BufferLoadStatus::Pending
@@ -632,13 +638,13 @@ public:
      * call to Source::play. Buffers created with Context::getBuffer will
      * always return BufferLoadStatus::Ready.
      */
-    virtual BufferLoadStatus getLoadStatus() = 0;
+    BufferLoadStatus getLoadStatus();
 
     /** Retrieves the name the buffer was created with. */
-    virtual const String &getName() const = 0;
+    const String &getName() const;
 
     /** Queries if the buffer is in use and can't be removed. */
-    virtual bool isInUse() const = 0;
+    bool isInUse() const;
 };
 
 
@@ -648,7 +654,7 @@ public:
      * Plays the source using buffer. The same buffer may be played from
      * multiple sources simultaneously.
      */
-    virtual void play(Buffer *buffer) = 0;
+    virtual void play(Buffer buffer) = 0;
     /**
      * Plays the source by streaming audio from decoder. This will use
      * queuesize buffers, each with updatelen sample frames. The given decoder

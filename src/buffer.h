@@ -15,7 +15,7 @@ class ALContext;
 
 ALenum GetFormat(ChannelConfig chans, SampleType type);
 
-class ALBuffer : public Buffer {
+class ALBuffer {
     ALContext *const mContext;
     ALuint mId;
 
@@ -36,7 +36,6 @@ public:
         mLoadStatus(preloaded ? BufferLoadStatus::Ready : BufferLoadStatus::Pending),
         mIsLoaded(preloaded), mName(name)
     { }
-    virtual ~ALBuffer() { }
 
     void cleanup();
 
@@ -54,24 +53,24 @@ public:
 
     bool isReady() const { return mLoadStatus == BufferLoadStatus::Ready; }
 
-    ALuint getLength() const override final;
+    ALuint getLength() const;
 
-    ALuint getFrequency() const override final { return mFrequency; }
-    ChannelConfig getChannelConfig() const override final { return mChannelConfig; }
-    SampleType getSampleType() const override final { return mSampleType; }
+    ALuint getFrequency() const { return mFrequency; }
+    ChannelConfig getChannelConfig() const { return mChannelConfig; }
+    SampleType getSampleType() const { return mSampleType; }
 
-    ALuint getSize() const override final;
+    ALuint getSize() const;
 
-    void setLoopPoints(ALuint start, ALuint end) override final;
-    std::pair<ALuint,ALuint> getLoopPoints() const override final;
+    void setLoopPoints(ALuint start, ALuint end);
+    std::pair<ALuint,ALuint> getLoopPoints() const;
 
-    Vector<Source*> getSources() const override final { return mSources; }
+    Vector<Source*> getSources() const { return mSources; }
 
-    BufferLoadStatus getLoadStatus() override final;
+    BufferLoadStatus getLoadStatus();
 
-    const String &getName() const override final { return mName; }
+    const String &getName() const { return mName; }
 
-    bool isInUse() const override final { return (mSources.size() > 0); }
+    bool isInUse() const { return (mSources.size() > 0); }
 };
 
 } // namespace alure
