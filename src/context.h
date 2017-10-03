@@ -70,7 +70,28 @@ public:
 };
 
 
-class ALContext : public Listener {
+class ALListener : public Listener {
+    ALContext *const mContext;
+
+public:
+    ALListener(ALContext *ctx) : mContext(ctx) { }
+
+    void setGain(ALfloat gain) final;
+
+    void setPosition(ALfloat x, ALfloat y, ALfloat z) final;
+    void setPosition(const ALfloat *pos) final;
+
+    void setVelocity(ALfloat x, ALfloat y, ALfloat z) final;
+    void setVelocity(const ALfloat *vel) final;
+
+    void setOrientation(ALfloat x1, ALfloat y1, ALfloat z1, ALfloat x2, ALfloat y2, ALfloat z2) final;
+    void setOrientation(const ALfloat *at, const ALfloat *up) final;
+    void setOrientation(const ALfloat *ori) final;
+
+    void setMetersPerUnit(ALfloat m_u) final;
+};
+
+class ALContext {
     static ALContext *sCurrentCtx;
     static thread_local ALContext *sThreadCurrentCtx;
 
@@ -82,6 +103,7 @@ public:
     static ALContext *GetThreadCurrent() { return sThreadCurrentCtx; }
 
 private:
+    ALListener mListener;
     ALCcontext *mContext;
     std::stack<ALuint> mSourceIds;
 
@@ -132,7 +154,7 @@ private:
 
 public:
     ALContext(ALCcontext *context, ALDevice *device);
-    virtual ~ALContext();
+    ~ALContext();
 
     ALCcontext *getContext() const { return mContext; }
     long addRef() { return ++mRefs; }
@@ -244,21 +266,6 @@ public:
     void setDistanceModel(DistanceModel model);
 
     void update();
-
-    // Listener methods
-    void setGain(ALfloat gain) final;
-
-    void setPosition(ALfloat x, ALfloat y, ALfloat z) override final;
-    void setPosition(const ALfloat *pos) override final;
-
-    void setVelocity(ALfloat x, ALfloat y, ALfloat z) override final;
-    void setVelocity(const ALfloat *vel) override final;
-
-    void setOrientation(ALfloat x1, ALfloat y1, ALfloat z1, ALfloat x2, ALfloat y2, ALfloat z2) override final;
-    void setOrientation(const ALfloat *at, const ALfloat *up) override final;
-    void setOrientation(const ALfloat *ori) override final;
-
-    void setMetersPerUnit(ALfloat m_u) override final;
 };
 
 

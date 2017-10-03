@@ -368,7 +368,7 @@ void ALContext::backgroundProc()
 
 
 ALContext::ALContext(ALCcontext *context, ALDevice *device)
-  : mContext(context), mDevice(device), mRefs(0),
+  : mListener(this), mContext(context), mDevice(device), mRefs(0),
     mHasExt{false}, mPendingBuffers(16, sizeof(PendingBuffer)),
     mWakeInterval(0), mQuitThread(false), mIsConnected(true), mIsBatching(false),
     alGetSourcei64vSOFT(0),
@@ -444,7 +444,7 @@ void ALContext::endBatch()
 
 Listener *ALContext::getListener()
 {
-    return this;
+    return &mListener;
 }
 
 
@@ -887,69 +887,6 @@ DECL_THUNK1(void, Context, setDistanceModel,, DistanceModel)
 DECL_THUNK0(void, Context, update,)
 
 
-void ALContext::setGain(ALfloat gain)
-{
-    if(!(gain >= 0.0f))
-        throw std::runtime_error("Gain out of range");
-    CheckContext(this);
-    alListenerf(AL_GAIN, gain);
-}
-
-
-void ALContext::setPosition(ALfloat x, ALfloat y, ALfloat z)
-{
-    CheckContext(this);
-    alListener3f(AL_POSITION, x, y, z);
-}
-
-void ALContext::setPosition(const ALfloat *pos)
-{
-    CheckContext(this);
-    alListenerfv(AL_POSITION, pos);
-}
-
-void ALContext::setVelocity(ALfloat x, ALfloat y, ALfloat z)
-{
-    CheckContext(this);
-    alListener3f(AL_VELOCITY, x, y, z);
-}
-
-void ALContext::setVelocity(const ALfloat *vel)
-{
-    CheckContext(this);
-    alListenerfv(AL_VELOCITY, vel);
-}
-
-void ALContext::setOrientation(ALfloat x1, ALfloat y1, ALfloat z1, ALfloat x2, ALfloat y2, ALfloat z2)
-{
-    CheckContext(this);
-    ALfloat ori[6] = { x1, y1, z1, x2, y2, z2 };
-    alListenerfv(AL_ORIENTATION, ori);
-}
-
-void ALContext::setOrientation(const ALfloat *at, const ALfloat *up)
-{
-    CheckContext(this);
-    ALfloat ori[6] = { at[0], at[1], at[2], up[0], up[1], up[2] };
-    alListenerfv(AL_ORIENTATION, ori);
-}
-
-void ALContext::setOrientation(const ALfloat *ori)
-{
-    CheckContext(this);
-    alListenerfv(AL_ORIENTATION, ori);
-}
-
-void ALContext::setMetersPerUnit(ALfloat m_u)
-{
-    if(!(m_u > 0.0f))
-        throw std::runtime_error("Invalid meters per unit");
-    CheckContext(this);
-    if(hasExtension(EXT_EFX))
-        alListenerf(AL_METERS_PER_UNIT, m_u);
-}
-
-
 void Context::MakeCurrent(Context context)
 { ALContext::MakeCurrent(context.pImpl); }
 
@@ -967,5 +904,68 @@ void Context::MakeThreadCurrent(std::nullptr_t)
 
 Context Context::GetThreadCurrent()
 { return Context(ALContext::GetThreadCurrent()); }
+
+
+void ALListener::setGain(ALfloat gain)
+{
+    if(!(gain >= 0.0f))
+        throw std::runtime_error("Gain out of range");
+    CheckContext(mContext);
+    alListenerf(AL_GAIN, gain);
+}
+
+
+void ALListener::setPosition(ALfloat x, ALfloat y, ALfloat z)
+{
+    CheckContext(mContext);
+    alListener3f(AL_POSITION, x, y, z);
+}
+
+void ALListener::setPosition(const ALfloat *pos)
+{
+    CheckContext(mContext);
+    alListenerfv(AL_POSITION, pos);
+}
+
+void ALListener::setVelocity(ALfloat x, ALfloat y, ALfloat z)
+{
+    CheckContext(mContext);
+    alListener3f(AL_VELOCITY, x, y, z);
+}
+
+void ALListener::setVelocity(const ALfloat *vel)
+{
+    CheckContext(mContext);
+    alListenerfv(AL_VELOCITY, vel);
+}
+
+void ALListener::setOrientation(ALfloat x1, ALfloat y1, ALfloat z1, ALfloat x2, ALfloat y2, ALfloat z2)
+{
+    CheckContext(mContext);
+    ALfloat ori[6] = { x1, y1, z1, x2, y2, z2 };
+    alListenerfv(AL_ORIENTATION, ori);
+}
+
+void ALListener::setOrientation(const ALfloat *at, const ALfloat *up)
+{
+    CheckContext(mContext);
+    ALfloat ori[6] = { at[0], at[1], at[2], up[0], up[1], up[2] };
+    alListenerfv(AL_ORIENTATION, ori);
+}
+
+void ALListener::setOrientation(const ALfloat *ori)
+{
+    CheckContext(mContext);
+    alListenerfv(AL_ORIENTATION, ori);
+}
+
+void ALListener::setMetersPerUnit(ALfloat m_u)
+{
+    if(!(m_u > 0.0f))
+        throw std::runtime_error("Invalid meters per unit");
+    CheckContext(mContext);
+    if(mContext->hasExtension(EXT_EFX))
+        alListenerf(AL_METERS_PER_UNIT, m_u);
+}
 
 }
