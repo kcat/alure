@@ -36,7 +36,7 @@ class ALDevice {
 
 public:
     ALDevice(ALCdevice *device);
-    virtual ~ALDevice();
+    ~ALDevice();
 
     ALCdevice *getDevice() const { return mDevice; }
 
