@@ -188,8 +188,8 @@ public:
 
     void setDirectFilter(const FilterParams &filter) override final;
     void setSendFilter(ALuint send, const FilterParams &filter) override final;
-    void setAuxiliarySend(AuxiliaryEffectSlot *slot, ALuint send) override final;
-    void setAuxiliarySendFilter(AuxiliaryEffectSlot *slot, ALuint send, const FilterParams &filter) override final;
+    void setAuxiliarySend(AuxiliaryEffectSlot slot, ALuint send) override final;
+    void setAuxiliarySendFilter(AuxiliaryEffectSlot slot, ALuint send, const FilterParams &filter) override final;
 
     void update() override final;
 

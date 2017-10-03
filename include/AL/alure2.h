@@ -533,9 +533,9 @@ public:
      */
     Source *createSource();
 
-    AuxiliaryEffectSlot *createAuxiliaryEffectSlot();
+    AuxiliaryEffectSlot createAuxiliaryEffectSlot();
 
-    Effect *createEffect();
+    Effect createEffect();
 
     SourceGroup *createSourceGroup(String name);
     SourceGroup *getSourceGroup(const String &name);
@@ -868,12 +868,12 @@ public:
      * Connects the effect slot slot to the given send path. Any filter
      * properties on the send path remain as they were.
      */
-    virtual void setAuxiliarySend(AuxiliaryEffectSlot *slot, ALuint send) = 0;
+    virtual void setAuxiliarySend(AuxiliaryEffectSlot slot, ALuint send) = 0;
     /**
      * Connects the effect slot slot to the given send path, using the filter
      * properties.
      */
-    virtual void setAuxiliarySendFilter(AuxiliaryEffectSlot *slot, ALuint send, const FilterParams &filter) = 0;
+    virtual void setAuxiliarySendFilter(AuxiliaryEffectSlot slot, ALuint send, const FilterParams &filter) = 0;
 
     /**
      * Updates the source, ensuring that resources are released when playback
@@ -960,51 +960,63 @@ struct SourceSend {
     ALuint mSend;
 };
 
+class ALAuxiliaryEffectSlot;
 class ALURE_API AuxiliaryEffectSlot {
+    friend class ALContext;
+    friend class ALSource;
+
+    MAKE_PIMPL(AuxiliaryEffectSlot, ALAuxiliaryEffectSlot)
+
 public:
-    virtual void setGain(ALfloat gain) = 0;
+    void setGain(ALfloat gain);
     /**
      * If set to true, the reverb effect will automatically apply adjustments
      * to the source's send slot based on the effect properties.
      *
      * Has no effect when using non-reverb effects. Default is true.
      */
-    virtual void setSendAuto(bool sendauto) = 0;
+    void setSendAuto(bool sendauto);
 
     /**
      * Updates the effect slot with a new effect. The given effect object may
      * be altered or destroyed without affecting the effect slot.
      */
-    virtual void applyEffect(const Effect *effect) = 0;
+    void applyEffect(Effect effect);
 
     /**
      * Releases the effect slot, returning it to the system. It must not be in
      * use by a source.
      */
-    virtual void release() = 0;
+    void release();
 
     /**
      * Retrieves each Source object and its pairing send this effect slot is
      * set on. Setting a different (or null) effect slot on each source's given
      * send will allow the effect slot to be released.
      */
-    virtual Vector<SourceSend> getSourceSends() const = 0;
+    Vector<SourceSend> getSourceSends() const;
 
     /** Determines if the effect slot is in use by a source. */
-    virtual bool isInUse() const = 0;
+    bool isInUse() const;
 };
 
 
+class ALEffect;
 class ALURE_API Effect {
+    friend class ALContext;
+    friend class ALAuxiliaryEffectSlot;
+
+    MAKE_PIMPL(Effect, ALEffect)
+
 public:
     /**
      * Updates the effect with the specified reverb properties. If the
      * EAXReverb effect is not supported, it will automatically attempt to
      * downgrade to the Standard Reverb effect.
      */
-    virtual void setReverbProperties(const EFXEAXREVERBPROPERTIES &props) = 0;
+    void setReverbProperties(const EFXEAXREVERBPROPERTIES &props);
 
-    virtual void destroy() = 0;
+    void destroy();
 };
 
 

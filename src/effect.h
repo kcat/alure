@@ -7,7 +7,7 @@ namespace alure {
 
 class ALContext;
 
-class ALEffect : public Effect {
+class ALEffect {
     ALContext *const mContext;
     ALuint mId;
     ALenum mType;
@@ -15,13 +15,10 @@ class ALEffect : public Effect {
 public:
     ALEffect(ALContext *context, ALuint id) : mContext(context), mId(id), mType(AL_NONE)
     { }
-    // Avoid a warning about deleting an object with virtual functions but no
-    // virtual destructor.
-    virtual ~ALEffect() { }
 
-    void setReverbProperties(const EFXEAXREVERBPROPERTIES &props) override final;
+    void setReverbProperties(const EFXEAXREVERBPROPERTIES &props);
 
-    void destroy() override final;
+    void destroy();
 
     ALContext *getContext() const { return mContext; }
     ALuint getId() const { return mId; }

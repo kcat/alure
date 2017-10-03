@@ -1088,15 +1088,10 @@ void ALSource::setSendFilter(ALuint send, const FilterParams &filter)
     }
 }
 
-void ALSource::setAuxiliarySend(AuxiliaryEffectSlot *auxslot, ALuint send)
+void ALSource::setAuxiliarySend(AuxiliaryEffectSlot auxslot, ALuint send)
 {
-    ALAuxiliaryEffectSlot *slot = 0;
-    if(auxslot)
-    {
-        slot = cast<ALAuxiliaryEffectSlot*>(auxslot);
-        if(!slot) throw std::runtime_error("Invalid AuxiliaryEffectSlot");
-        CheckContext(slot->getContext());
-    }
+    ALAuxiliaryEffectSlot *slot = auxslot.pImpl;
+    if(slot) CheckContext(slot->getContext());
     CheckContext(mContext);
 
     SendPropMap::iterator siter = mEffectSlots.find(send);
@@ -1121,17 +1116,12 @@ void ALSource::setAuxiliarySend(AuxiliaryEffectSlot *auxslot, ALuint send)
     }
 }
 
-void ALSource::setAuxiliarySendFilter(AuxiliaryEffectSlot *auxslot, ALuint send, const FilterParams &filter)
+void ALSource::setAuxiliarySendFilter(AuxiliaryEffectSlot auxslot, ALuint send, const FilterParams &filter)
 {
     if(!(filter.mGain >= 0.0f && filter.mGainHF >= 0.0f && filter.mGainLF >= 0.0f))
         throw std::runtime_error("Gain value out of range");
-    ALAuxiliaryEffectSlot *slot = 0;
-    if(auxslot)
-    {
-        slot = cast<ALAuxiliaryEffectSlot*>(auxslot);
-        if(!slot) throw std::runtime_error("Invalid AuxiliaryEffectSlot");
-        CheckContext(slot->getContext());
-    }
+    ALAuxiliaryEffectSlot *slot = auxslot.pImpl;
+    if(slot) CheckContext(slot->getContext());
     CheckContext(mContext);
 
     SendPropMap::iterator siter = mEffectSlots.find(send);

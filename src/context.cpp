@@ -735,7 +735,7 @@ void ALContext::removeStreamNoLock(ALSource *source)
 }
 
 
-AuxiliaryEffectSlot *ALContext::createAuxiliaryEffectSlot()
+AuxiliaryEffectSlot ALContext::createAuxiliaryEffectSlot()
 {
     if(!hasExtension(EXT_EFX) || !alGenAuxiliaryEffectSlots)
         throw std::runtime_error("AuxiliaryEffectSlots not supported");
@@ -747,7 +747,7 @@ AuxiliaryEffectSlot *ALContext::createAuxiliaryEffectSlot()
     if(alGetError() != AL_NO_ERROR)
         throw std::runtime_error("Failed to create AuxiliaryEffectSlot");
     try {
-        return new ALAuxiliaryEffectSlot(this, id);
+        return AuxiliaryEffectSlot(new ALAuxiliaryEffectSlot(this, id));
     }
     catch(...) {
         alDeleteAuxiliaryEffectSlots(1, &id);
@@ -756,7 +756,7 @@ AuxiliaryEffectSlot *ALContext::createAuxiliaryEffectSlot()
 }
 
 
-Effect *ALContext::createEffect()
+Effect ALContext::createEffect()
 {
     if(!hasExtension(EXT_EFX))
         throw std::runtime_error("Effects not supported");
@@ -768,7 +768,7 @@ Effect *ALContext::createEffect()
     if(alGetError() != AL_NO_ERROR)
         throw std::runtime_error("Failed to create Effect");
     try {
-        return new ALEffect(this, id);
+        return Effect(new ALEffect(this, id));
     }
     catch(...) {
         alDeleteEffects(1, &id);
@@ -877,8 +877,8 @@ DECL_THUNK1(Buffer, Context, getBufferAsync,, const String&)
 DECL_THUNK1(void, Context, removeBuffer,, const String&)
 DECL_THUNK1(void, Context, removeBuffer,, Buffer)
 DECL_THUNK0(Source*, Context, createSource,)
-DECL_THUNK0(AuxiliaryEffectSlot*, Context, createAuxiliaryEffectSlot,)
-DECL_THUNK0(Effect*, Context, createEffect,)
+DECL_THUNK0(AuxiliaryEffectSlot, Context, createAuxiliaryEffectSlot,)
+DECL_THUNK0(Effect, Context, createEffect,)
 DECL_THUNK1(SourceGroup*, Context, createSourceGroup,, String)
 DECL_THUNK1(SourceGroup*, Context, getSourceGroup,, const String&)
 DECL_THUNK1(void, Context, setDopplerFactor,, ALfloat)

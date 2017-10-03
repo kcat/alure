@@ -94,4 +94,7 @@ void ALEffect::destroy()
     delete this;
 }
 
+DECL_THUNK1(void, Effect, setReverbProperties,, const EFXEAXREVERBPROPERTIES&)
+DECL_THUNK0(void, Effect, destroy,)
+
 }

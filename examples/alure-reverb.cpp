@@ -176,7 +176,7 @@ int main(int argc, char *argv[])
     alure::Context::MakeCurrent(ctx);
 
     bool gotreverb = false;
-    alure::Effect *effect = ctx.createEffect();
+    alure::Effect effect = ctx.createEffect();
 
     int i = fileidx;
     if(argc-i >= 2 && strcasecmp(argv[i], "-preset") == 0)
@@ -188,7 +188,7 @@ int main(int argc, char *argv[])
                 std::cout<< "Loading preset "<<reverblist[j].name <<std::endl;
                 std::cout.flush();
 
-                effect->setReverbProperties(reverblist[j].props);
+                effect.setReverbProperties(reverblist[j].props);
                 gotreverb = true;
                 break;
             }
@@ -200,11 +200,11 @@ int main(int argc, char *argv[])
         std::cout<< "Loading generic preset" <<std::endl;
         std::cout.flush();
 
-        effect->setReverbProperties(EFX_REVERB_PRESET_GENERIC);
+        effect.setReverbProperties(EFX_REVERB_PRESET_GENERIC);
     }
 
-    alure::AuxiliaryEffectSlot *auxslot = ctx.createAuxiliaryEffectSlot();
-    auxslot->applyEffect(effect);
+    alure::AuxiliaryEffectSlot auxslot = ctx.createAuxiliaryEffectSlot();
+    auxslot.applyEffect(effect);
 
     for(;i < argc;i++)
     {
@@ -234,10 +234,8 @@ int main(int argc, char *argv[])
         decoder.reset();
     }
 
-    auxslot->release();
-    auxslot = 0;
-    effect->destroy();
-    effect = 0;
+    auxslot.release();
+    effect.destroy();
 
     alure::Context::MakeCurrent(nullptr);
     ctx.destroy();

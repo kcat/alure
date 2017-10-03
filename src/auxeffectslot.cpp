@@ -28,9 +28,9 @@ void ALAuxiliaryEffectSlot::setSendAuto(bool sendauto)
     mContext->alAuxiliaryEffectSloti(mId, AL_EFFECTSLOT_AUXILIARY_SEND_AUTO, sendauto ? AL_TRUE : AL_FALSE);
 }
 
-void ALAuxiliaryEffectSlot::applyEffect(const Effect *effect)
+void ALAuxiliaryEffectSlot::applyEffect(Effect effect)
 {
-    const ALEffect *eff = cast<const ALEffect*>(effect);
+    const ALEffect *eff = effect.pImpl;
     if(!eff) throw std::runtime_error("Invalid Effect");
     CheckContext(mContext);
 
@@ -52,5 +52,13 @@ void ALAuxiliaryEffectSlot::release()
 
     delete this;
 }
+
+
+DECL_THUNK1(void, AuxiliaryEffectSlot, setGain,, ALfloat)
+DECL_THUNK1(void, AuxiliaryEffectSlot, setSendAuto,, bool)
+DECL_THUNK1(void, AuxiliaryEffectSlot, applyEffect,, Effect)
+DECL_THUNK0(void, AuxiliaryEffectSlot, release,)
+DECL_THUNK0(Vector<SourceSend>, AuxiliaryEffectSlot, getSourceSends, const)
+DECL_THUNK0(bool, AuxiliaryEffectSlot, isInUse, const)
 
 } // namespace alure

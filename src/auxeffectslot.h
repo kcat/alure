@@ -16,7 +16,7 @@ class ALContext;
 inline bool operator==(const SourceSend &lhs, const SourceSend &rhs)
 { return lhs.mSource == rhs.mSource && lhs.mSend == rhs.mSend; }
 
-class ALAuxiliaryEffectSlot : public AuxiliaryEffectSlot {
+class ALAuxiliaryEffectSlot {
     ALContext *const mContext;
     ALuint mId;
 
@@ -26,7 +26,6 @@ public:
     ALAuxiliaryEffectSlot(ALContext *context, ALuint id)
       : mContext(context), mId(id)
     { }
-    virtual ~ALAuxiliaryEffectSlot() { }
 
     void addSourceSend(Source *source, ALuint send)
     { mSourceSends.emplace_back((SourceSend){source, send}); }
@@ -39,16 +38,16 @@ public:
     ALContext *getContext() { return mContext; }
     const ALuint &getId() const { return mId; }
 
-    void setGain(ALfloat gain) override final;
-    void setSendAuto(bool sendauto) override final;
+    void setGain(ALfloat gain);
+    void setSendAuto(bool sendauto);
 
-    void applyEffect(const Effect *effect) override final;
+    void applyEffect(Effect effect);
 
-    void release() override final;
+    void release();
 
-    Vector<SourceSend> getSourceSends() const override final { return mSourceSends; }
+    Vector<SourceSend> getSourceSends() const { return mSourceSends; }
 
-    bool isInUse() const override final { return (mSourceSends.size() > 0); }
+    bool isInUse() const { return (mSourceSends.size() > 0); }
 };
 
 } // namespace alure

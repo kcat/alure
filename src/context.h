@@ -252,9 +252,9 @@ public:
 
     Source *createSource();
 
-    AuxiliaryEffectSlot *createAuxiliaryEffectSlot();
+    AuxiliaryEffectSlot createAuxiliaryEffectSlot();
 
-    Effect *createEffect();
+    Effect createEffect();
 
     SourceGroup *createSourceGroup(String name);
     SourceGroup *getSourceGroup(const String &name);
