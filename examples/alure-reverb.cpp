@@ -156,7 +156,7 @@ int main(int argc, char *argv[])
     alure::DeviceManager &devMgr = alure::DeviceManager::get();
 
     int fileidx = 1;
-    alure::Device *dev = [argc,argv,&devMgr,&fileidx]() -> alure::Device*
+    alure::Device dev = [argc,argv,&devMgr,&fileidx]() -> alure::Device
     {
         if(argc > 3 && strcmp(argv[1], "-device") == 0)
         {
@@ -170,13 +170,13 @@ int main(int argc, char *argv[])
         }
         return devMgr.openPlayback();
     }();
-    std::cout<< "Opened \""<<dev->getName()<<"\"" <<std::endl;
+    std::cout<< "Opened \""<<dev.getName()<<"\"" <<std::endl;
 
-    alure::Context *ctx = dev->createContext();
+    alure::Context ctx = dev.createContext();
     alure::Context::MakeCurrent(ctx);
 
     bool gotreverb = false;
-    alure::Effect *effect = ctx->createEffect();
+    alure::Effect *effect = ctx.createEffect();
 
     int i = fileidx;
     if(argc-i >= 2 && strcasecmp(argv[i], "-preset") == 0)
@@ -203,13 +203,13 @@ int main(int argc, char *argv[])
         effect->setReverbProperties(EFX_REVERB_PRESET_GENERIC);
     }
 
-    alure::AuxiliaryEffectSlot *auxslot = ctx->createAuxiliaryEffectSlot();
+    alure::AuxiliaryEffectSlot *auxslot = ctx.createAuxiliaryEffectSlot();
     auxslot->applyEffect(effect);
 
     for(;i < argc;i++)
     {
-        alure::SharedPtr<alure::Decoder> decoder(ctx->createDecoder(argv[i]));
-        alure::Source *source = ctx->createSource();
+        alure::SharedPtr<alure::Decoder> decoder(ctx.createDecoder(argv[i]));
+        alure::Source *source = ctx.createSource();
 
         source->setAuxiliarySend(auxslot, 0);
 
@@ -225,7 +225,7 @@ int main(int argc, char *argv[])
                         (source->getOffset()*invfreq)<<" / "<<(decoder->getLength()*invfreq);
             std::cout.flush();
             std::this_thread::sleep_for(std::chrono::milliseconds(25));
-            ctx->update();
+            ctx.update();
         }
         std::cout<<std::endl;
 
@@ -239,11 +239,9 @@ int main(int argc, char *argv[])
     effect->destroy();
     effect = 0;
 
-    alure::Context::MakeCurrent(0);
-    ctx->destroy();
-    ctx = 0;
-    dev->close();
-    dev = 0;
+    alure::Context::MakeCurrent(nullptr);
+    ctx.destroy();
+    dev.close();
 
     return 0;
 }

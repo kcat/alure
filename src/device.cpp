@@ -215,7 +215,7 @@ void ALDevice::reset(const Vector<AttributePair> &attributes)
 }
 
 
-Context *ALDevice::createContext(const Vector<AttributePair> &attributes)
+Context ALDevice::createContext(const Vector<AttributePair> &attributes)
 {
     ALCcontext *ctx = [this, &attributes]() -> ALCcontext*
     {
@@ -242,7 +242,7 @@ Context *ALDevice::createContext(const Vector<AttributePair> &attributes)
     if(!ctx) throw std::runtime_error("Failed to create context");
 
     mContexts.emplace_back(MakeUnique<ALContext>(ctx, this));
-    return mContexts.back().get();
+    return Context(mContexts.back().get());
 }
 
 
@@ -270,6 +270,26 @@ void ALDevice::close()
     mDevice = 0;
 
     ALDeviceManager::get().removeDevice(this);
+}
+
+
+DECL_THUNK1(String, Device, getName, const, PlaybackDeviceName)
+DECL_THUNK1(bool, Device, queryExtension, const, const String&)
+DECL_THUNK0(ALCuint, Device, getALCVersion, const)
+DECL_THUNK0(ALCuint, Device, getEFXVersion, const)
+DECL_THUNK0(ALCuint, Device, getFrequency, const)
+DECL_THUNK0(ALCuint, Device, getMaxAuxiliarySends, const)
+DECL_THUNK0(Vector<String>, Device, enumerateHRTFNames, const)
+DECL_THUNK0(bool, Device, isHRTFEnabled, const)
+DECL_THUNK0(String, Device, getCurrentHRTF, const)
+DECL_THUNK1(void, Device, reset,, const Vector<AttributePair>&)
+DECL_THUNK1(Context, Device, createContext,, const Vector<AttributePair>&)
+DECL_THUNK0(void, Device, pauseDSP,)
+DECL_THUNK0(void, Device, resumeDSP,)
+void Device::close()
+{
+    pImpl->close();
+    pImpl = nullptr;
 }
 
 }

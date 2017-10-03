@@ -25,7 +25,7 @@ public:
     Vector<String> enumerate(DeviceEnumeration type) const override final;
     String defaultDeviceName(DefaultDeviceType type) const override final;
 
-    Device *openPlayback(const String &name) override final;
+    Device openPlayback(const String &name) override final;
 };
 
 } // namespace alure

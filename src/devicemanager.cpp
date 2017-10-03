@@ -74,7 +74,7 @@ String ALDeviceManager::defaultDeviceName(DefaultDeviceType type) const
 }
 
 
-Device *ALDeviceManager::openPlayback(const String &name)
+Device ALDeviceManager::openPlayback(const String &name)
 {
     ALCdevice *dev = alcOpenDevice(name.c_str());
     if(!dev)
@@ -84,7 +84,7 @@ Device *ALDeviceManager::openPlayback(const String &name)
         throw std::runtime_error("Failed to open device \""+name+"\"");
     }
     mDevices.emplace_back(MakeUnique<ALDevice>(dev));
-    return mDevices.back().get();
+    return Device(mDevices.back().get());
 }
 
 void ALDeviceManager::removeDevice(ALDevice *dev)

@@ -143,7 +143,7 @@ MessageHandler::~MessageHandler()
 {
 }
 
-void MessageHandler::deviceDisconnected(Device*)
+void MessageHandler::deviceDisconnected(Device)
 {
 }
 
@@ -401,9 +401,9 @@ ALContext::~ALContext()
 }
 
 
-Device *ALContext::getDevice()
+Device ALContext::getDevice()
 {
-    return mDevice;
+    return Device(mDevice);
 }
 
 void ALContext::destroy()
@@ -852,10 +852,39 @@ void ALContext::update()
     {
         ALCint connected;
         alcGetIntegerv(alcGetContextsDevice(mContext), ALC_CONNECTED, 1, &connected);
-        if(!connected && mMessage.get()) mMessage->deviceDisconnected(mDevice);
+        if(!connected && mMessage.get()) mMessage->deviceDisconnected(Device(mDevice));
         mIsConnected = connected;
     }
 }
+
+void Context::destroy()
+{
+    pImpl->destroy();
+    pImpl = nullptr;
+}
+DECL_THUNK0(Device, Context, getDevice,)
+DECL_THUNK0(void, Context, startBatch,)
+DECL_THUNK0(void, Context, endBatch,)
+DECL_THUNK0(Listener*, Context, getListener,)
+DECL_THUNK1(SharedPtr<MessageHandler>, Context, setMessageHandler,, SharedPtr<MessageHandler>)
+DECL_THUNK0(SharedPtr<MessageHandler>, Context, getMessageHandler, const)
+DECL_THUNK1(void, Context, setAsyncWakeInterval,, ALuint)
+DECL_THUNK0(ALuint, Context, getAsyncWakeInterval, const)
+DECL_THUNK1(SharedPtr<Decoder>, Context, createDecoder,, const String&)
+DECL_THUNK2(bool, Context, isSupported, const, ChannelConfig, SampleType)
+DECL_THUNK1(Buffer*, Context, getBuffer,, const String&)
+DECL_THUNK1(Buffer*, Context, getBufferAsync,, const String&)
+DECL_THUNK1(void, Context, removeBuffer,, const String&)
+DECL_THUNK1(void, Context, removeBuffer,, Buffer*)
+DECL_THUNK0(Source*, Context, createSource,)
+DECL_THUNK0(AuxiliaryEffectSlot*, Context, createAuxiliaryEffectSlot,)
+DECL_THUNK0(Effect*, Context, createEffect,)
+DECL_THUNK1(SourceGroup*, Context, createSourceGroup,, String)
+DECL_THUNK1(SourceGroup*, Context, getSourceGroup,, const String&)
+DECL_THUNK1(void, Context, setDopplerFactor,, ALfloat)
+DECL_THUNK1(void, Context, setSpeedOfSound,, ALfloat)
+DECL_THUNK1(void, Context, setDistanceModel,, DistanceModel)
+DECL_THUNK0(void, Context, update,)
 
 
 void ALContext::setGain(ALfloat gain)
@@ -921,36 +950,22 @@ void ALContext::setMetersPerUnit(ALfloat m_u)
 }
 
 
-void Context::MakeCurrent(Context *context)
-{
-    ALContext *ctx = nullptr;
-    if(context)
-    {
-        ctx = cast<ALContext*>(context);
-        if(!ctx) throw std::runtime_error("Invalid context pointer");
-    }
-    ALContext::MakeCurrent(ctx);
-}
+void Context::MakeCurrent(Context context)
+{ ALContext::MakeCurrent(context.pImpl); }
 
-Context *Context::GetCurrent()
-{
-    return ALContext::GetCurrent();
-}
+void Context::MakeCurrent(std::nullptr_t)
+{ ALContext::MakeCurrent(nullptr); }
 
-void Context::MakeThreadCurrent(Context *context)
-{
-    ALContext *ctx = nullptr;
-    if(context)
-    {
-        ctx = cast<ALContext*>(context);
-        if(!ctx) throw std::runtime_error("Invalid context pointer");
-    }
-    ALContext::MakeThreadCurrent(ctx);
-}
+Context Context::GetCurrent()
+{ return Context(ALContext::GetCurrent()); }
 
-Context *Context::GetThreadCurrent()
-{
-    return ALContext::GetThreadCurrent();
-}
+void Context::MakeThreadCurrent(Context context)
+{ ALContext::MakeThreadCurrent(context.pImpl); }
+
+void Context::MakeThreadCurrent(std::nullptr_t)
+{ ALContext::MakeThreadCurrent(nullptr); }
+
+Context Context::GetThreadCurrent()
+{ return Context(ALContext::GetThreadCurrent()); }
 
 }

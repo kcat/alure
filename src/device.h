@@ -24,7 +24,7 @@ enum ALCExtension {
     ALC_EXTENSION_MAX
 };
 
-class ALDevice : public Device {
+class ALDevice {
     ALCdevice *mDevice;
 
     Vector<UniquePtr<ALContext>> mContexts;
@@ -50,27 +50,27 @@ public:
 
     void removeContext(ALContext *ctx);
 
-    String getName(PlaybackDeviceName type) const override final;
-    bool queryExtension(const String &name) const override final;
+    String getName(PlaybackDeviceName type) const;
+    bool queryExtension(const String &name) const;
 
-    ALCuint getALCVersion() const override final;
-    ALCuint getEFXVersion() const override final;
+    ALCuint getALCVersion() const;
+    ALCuint getEFXVersion() const;
 
-    ALCuint getFrequency() const override final;
+    ALCuint getFrequency() const;
 
-    ALCuint getMaxAuxiliarySends() const override final;
+    ALCuint getMaxAuxiliarySends() const;
 
-    Vector<String> enumerateHRTFNames() const override final;
-    bool isHRTFEnabled() const override final;
-    String getCurrentHRTF() const override final;
-    void reset(const Vector<AttributePair> &attributes) override final;
+    Vector<String> enumerateHRTFNames() const;
+    bool isHRTFEnabled() const;
+    String getCurrentHRTF() const;
+    void reset(const Vector<AttributePair> &attributes);
 
-    Context *createContext(const Vector<AttributePair> &attributes) override final;
+    Context createContext(const Vector<AttributePair> &attributes);
 
-    void pauseDSP() override final;
-    void resumeDSP() override final;
+    void pauseDSP();
+    void resumeDSP();
 
-    void close() override final;
+    void close();
 };
 
 } // namespace alure

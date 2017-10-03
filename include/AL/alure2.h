@@ -291,7 +291,7 @@ public:
     virtual String defaultDeviceName(DefaultDeviceType type) const = 0;
 
     /** Opens the playback device given by name, or the default if empty. */
-    virtual Device *openPlayback(const String &name=String()) = 0;
+    virtual Device openPlayback(const String &name=String()) = 0;
 };
 
 
@@ -300,34 +300,55 @@ enum class PlaybackDeviceName {
     Complete = ALC_ALL_DEVICES_SPECIFIER
 };
 
+#define MAKE_PIMPL(BaseT, ImplT)                                              \
+private:                                                                      \
+    ImplT *pImpl;                                                             \
+                                                                              \
+    BaseT(ImplT *impl) : pImpl(impl) { }                                      \
+                                                                              \
+public:                                                                       \
+    BaseT() : pImpl(nullptr) { }                                              \
+    BaseT(const BaseT&) = default;                                            \
+    BaseT(BaseT&&) = default;                                                 \
+                                                                              \
+    BaseT& operator=(std::nullptr_t) { pImpl = nullptr; return *this; }       \
+    BaseT& operator=(const BaseT&) = default;                                 \
+    BaseT& operator=(BaseT&&) = default;
+
+class ALDevice;
 class ALURE_API Device {
+    friend class ALDeviceManager;
+    friend class ALContext;
+
+    MAKE_PIMPL(Device, ALDevice)
+
 public:
     /** Retrieves the device name as given by type. */
-    virtual String getName(PlaybackDeviceName type=PlaybackDeviceName::Basic) const = 0;
+    String getName(PlaybackDeviceName type=PlaybackDeviceName::Basic) const;
     /** Queries the existence of an ALC extension on this device. */
-    virtual bool queryExtension(const String &name) const = 0;
+    bool queryExtension(const String &name) const;
 
     /**
      * Retrieves the ALC version supported by this device, as constructed by
      * MakeVersion.
      */
-    virtual ALCuint getALCVersion() const = 0;
+    ALCuint getALCVersion() const;
 
     /**
      * Retrieves the EFX version supported by this device, as constructed by
      * MakeVersion. If the ALC_EXT_EFX extension is unsupported, this will be
      * 0.
      */
-    virtual ALCuint getEFXVersion() const = 0;
+    ALCuint getEFXVersion() const;
 
     /** Retrieves the device's playback frequency, in hz. */
-    virtual ALCuint getFrequency() const = 0;
+    ALCuint getFrequency() const;
 
     /**
      * Retrieves the maximum number of auxiliary source sends. If ALC_EXT_EFX
      * is unsupported, this will be 0.
      */
-    virtual ALCuint getMaxAuxiliarySends() const = 0;
+    ALCuint getMaxAuxiliarySends() const;
 
     /**
      * Enumerates available HRTF names. The names are sorted as OpenAL gives
@@ -336,33 +357,33 @@ public:
      *
      * Requires the ALC_SOFT_HRTF extension.
      */
-    virtual Vector<String> enumerateHRTFNames() const = 0;
+    Vector<String> enumerateHRTFNames() const;
 
     /**
      * Retrieves whether HRTF is enabled on the device or not.
      *
      * Requires the ALC_SOFT_HRTF extension.
      */
-    virtual bool isHRTFEnabled() const = 0;
+    bool isHRTFEnabled() const;
 
     /**
      * Retrieves the name of the HRTF currently being used by this device.
      *
      * Requires the ALC_SOFT_HRTF extension.
      */
-    virtual String getCurrentHRTF() const = 0;
+    String getCurrentHRTF() const;
 
     /**
      * Resets the device, using the specified attributes.
      *
      * Requires the ALC_SOFT_HRTF extension.
      */
-    virtual void reset(const Vector<AttributePair> &attributes) = 0;
+    void reset(const Vector<AttributePair> &attributes);
 
     /**
      * Creates a new Context on this device, using the specified attributes.
      */
-    virtual Context *createContext(const Vector<AttributePair> &attributes=Vector<AttributePair>{}) = 0;
+    Context createContext(const Vector<AttributePair> &attributes=Vector<AttributePair>{});
 
     /**
      * Pauses device processing, stopping updates for its contexts. Multiple
@@ -371,19 +392,19 @@ public:
      *
      * Requires the ALC_SOFT_pause_device extension.
      */
-    virtual void pauseDSP() = 0;
+    void pauseDSP();
 
     /**
      * Resumes device processing, restarting updates for its contexts. Multiple
      * calls are allowed and will no-op.
      */
-    virtual void resumeDSP() = 0;
+    void resumeDSP();
 
     /**
      * Closes and frees the device. All previously-created contexts must first
      * be destroyed.
      */
-    virtual void close() = 0;
+    void close();
 };
 
 
@@ -397,49 +418,61 @@ enum class DistanceModel {
     None  = AL_NONE,
 };
 
+class ALContext;
 class ALURE_API Context {
+    friend class ALDevice;
+
+    MAKE_PIMPL(Context, ALContext)
+
 public:
     /** Makes the specified context current for OpenAL operations. */
-    static void MakeCurrent(Context *context);
+    static void MakeCurrent(Context context);
+    /** Removes the current context for OpenAL operations. */
+    static void MakeCurrent(std::nullptr_t);
     /** Retrieves the current context used for OpenAL operations. */
-    static Context *GetCurrent();
+    static Context GetCurrent();
 
     /**
      * Makes the specified context current for OpenAL operations on the calling
      * thread only. Requires the ALC_EXT_thread_local_context extension on both
      * the context's device and the DeviceManager.
      */
-    static void MakeThreadCurrent(Context *context);
+    static void MakeThreadCurrent(Context context);
+    /**
+     * Removes the current context for OpenAL operations on the calling thread
+     * only.
+     */
+    static void MakeThreadCurrent(std::nullptr_t);
     /** Retrieves the thread-specific context used for OpenAL operations. */
-    static Context *GetThreadCurrent();
+    static Context GetThreadCurrent();
 
     /**
      * Destroys the context. The context must not be current when this is
      * called.
      */
-    virtual void destroy() = 0;
+    void destroy();
 
     /** Retrieves the Device this context was created from. */
-    virtual Device *getDevice() = 0;
+    Device getDevice();
 
-    virtual void startBatch() = 0;
-    virtual void endBatch() = 0;
+    void startBatch();
+    void endBatch();
 
     /**
      * Retrieves a Listener instance for this context. Each context will only
      * have one listener.
      */
-    virtual Listener *getListener() = 0;
+    Listener *getListener();
 
     /**
      * Sets a MessageHandler instance which will be used to provide certain
      * messages back to the application. Only one handler may be set for a
      * context at a time. The previously set handler will be returned.
      */
-    virtual SharedPtr<MessageHandler> setMessageHandler(SharedPtr<MessageHandler> handler) = 0;
+    SharedPtr<MessageHandler> setMessageHandler(SharedPtr<MessageHandler> handler);
 
     /** Gets the currently-set message handler. */
-    virtual SharedPtr<MessageHandler> getMessageHandler() const = 0;
+    SharedPtr<MessageHandler> getMessageHandler() const;
 
     /**
      * Specifies the desired interval (in milliseconds) that the background
@@ -447,17 +480,17 @@ public:
      * filled. An interval of 0 means the background thread will only be woken
      * up manually with calls to update. The default is 0.
      */
-    virtual void setAsyncWakeInterval(ALuint msec) = 0;
+    void setAsyncWakeInterval(ALuint msec);
 
     /**
      * Retrieves the current interval used for waking up the background thread.
      */
-    virtual ALuint getAsyncWakeInterval() const = 0;
+    ALuint getAsyncWakeInterval() const;
 
     /**
      * Creates a Decoder instance for the given audio file or resource name.
      */
-    virtual SharedPtr<Decoder> createDecoder(const String &name) = 0;
+    SharedPtr<Decoder> createDecoder(const String &name);
 
     // Functions below require the context to be current
 
@@ -465,13 +498,13 @@ public:
      * Queries if the channel configuration and sample type are supported by
      * the context.
      */
-    virtual bool isSupported(ChannelConfig channels, SampleType type) const = 0;
+    bool isSupported(ChannelConfig channels, SampleType type) const;
 
     /**
      * Creates and caches a Buffer for the given audio file or resource name.
      * Multiple calls with the same name will return the same Buffer object.
      */
-    virtual Buffer *getBuffer(const String &name) = 0;
+    Buffer *getBuffer(const String &name);
 
     /**
      * Creates and caches a Buffer for the given audio file or resource name.
@@ -481,44 +514,44 @@ public:
      * and must be checked with a call to Buffer::getLoadStatus prior to being
      * played.
      */
-    virtual Buffer *getBufferAsync(const String &name) = 0;
+    Buffer *getBufferAsync(const String &name);
 
     /**
      * Deletes the cached Buffer object for the given audio file or
      * resource name. The buffer must not be in use by a Source.
      */
-    virtual void removeBuffer(const String &name) = 0;
+    void removeBuffer(const String &name);
     /**
      * Deletes the given cached buffer instance. The buffer must not be in use
      * by a Source.
      */
-    virtual void removeBuffer(Buffer *buffer) = 0;
+    void removeBuffer(Buffer *buffer);
 
     /**
      * Creates a new Source. There is no practical limit to the number of
      * sources you may create.
      */
-    virtual Source *createSource() = 0;
+    Source *createSource();
 
-    virtual AuxiliaryEffectSlot *createAuxiliaryEffectSlot() = 0;
+    AuxiliaryEffectSlot *createAuxiliaryEffectSlot();
 
-    virtual Effect *createEffect() = 0;
+    Effect *createEffect();
 
-    virtual SourceGroup *createSourceGroup(String name) = 0;
-    virtual SourceGroup *getSourceGroup(const String &name) = 0;
+    SourceGroup *createSourceGroup(String name);
+    SourceGroup *getSourceGroup(const String &name);
 
-    virtual void setDopplerFactor(ALfloat factor) = 0;
+    void setDopplerFactor(ALfloat factor);
 
-    virtual void setSpeedOfSound(ALfloat speed) = 0;
+    void setSpeedOfSound(ALfloat speed);
 
-    virtual void setDistanceModel(DistanceModel model) = 0;
+    void setDistanceModel(DistanceModel model);
 
     /**
      * Updates the context and all sources belonging to this context (you do
      * not need to call the individual sources' update method if you call this
      * function).
      */
-    virtual void update() = 0;
+    void update();
 };
 
 class ALURE_API Listener {
@@ -1118,7 +1151,7 @@ public:
      * method, as Alure is in the middle of doing updates. Instead, flag the
      * device as having been lost and do cleanup later.
      */
-    virtual void deviceDisconnected(Device *device);
+    virtual void deviceDisconnected(Device device);
 
     /**
      * Called when the given source reaches the end of the buffer or stream.

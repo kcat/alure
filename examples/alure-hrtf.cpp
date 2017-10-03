@@ -19,7 +19,7 @@ int main(int argc, char *argv[])
     alure::DeviceManager &devMgr = alure::DeviceManager::get();
 
     int fileidx = 1;
-    alure::Device *dev = [argc,argv,&devMgr,&fileidx]() -> alure::Device*
+    alure::Device dev = [argc,argv,&devMgr,&fileidx]() -> alure::Device
     {
         if(argc > 3 && strcmp(argv[1], "-device") == 0)
         {
@@ -33,9 +33,9 @@ int main(int argc, char *argv[])
         }
         return devMgr.openPlayback();
     }();
-    std::cout<< "Opened \""<<dev->getName()<<"\"" <<std::endl;
+    std::cout<< "Opened \""<<dev.getName()<<"\"" <<std::endl;
 
-    if(!dev->queryExtension("ALC_SOFT_HRTF"))
+    if(!dev.queryExtension("ALC_SOFT_HRTF"))
     {
         std::cerr<< "ALC_SOFT_HRTF not supported!" <<std::endl;
         return 1;
@@ -43,7 +43,7 @@ int main(int argc, char *argv[])
 
     // Enumerate (and display) the available HRTFs
     std::cout<< "Available HRTFs:\n";
-    alure::Vector<alure::String> hrtf_names = dev->enumerateHRTFNames();
+    alure::Vector<alure::String> hrtf_names = dev.enumerateHRTFNames();
     for(const alure::String &name : hrtf_names)
         std::cout<< "    "<<name <<'\n';
     std::cout.flush();
@@ -62,10 +62,10 @@ int main(int argc, char *argv[])
         i += 2;
     }
     attrs.push_back({0,0});
-    alure::Context *ctx = dev->createContext(attrs);
+    alure::Context ctx = dev.createContext(attrs);
     alure::Context::MakeCurrent(ctx);
 
-    std::cout<< "Using HRTF \""<<dev->getCurrentHRTF()<<"\"" <<std::endl;
+    std::cout<< "Using HRTF \""<<dev.getCurrentHRTF()<<"\"" <<std::endl;
 
     for(;i < argc;i++)
     {
@@ -77,20 +77,20 @@ int main(int argc, char *argv[])
                 std::cerr<< "HRTF \""<<argv[i+1]<<"\" not found" <<std::endl;
             else
             {
-                dev->reset({
+                dev.reset({
                     {ALC_HRTF_SOFT, ALC_TRUE},
                     {ALC_HRTF_ID_SOFT, std::distance(hrtf_names.begin(), iter)},
                     {0, 0}
                 });
-                std::cout<< "Using HRTF \""<<dev->getCurrentHRTF()<<"\"" <<std::endl;
+                std::cout<< "Using HRTF \""<<dev.getCurrentHRTF()<<"\"" <<std::endl;
             }
 
             ++i;
             continue;
         }
 
-        alure::SharedPtr<alure::Decoder> decoder(ctx->createDecoder(argv[i]));
-        alure::Source *source = ctx->createSource();
+        alure::SharedPtr<alure::Decoder> decoder(ctx.createDecoder(argv[i]));
+        alure::Source *source = ctx.createSource();
 
         source->play(decoder, 32768, 4);
         std::cout<< "Playing "<<argv[i]<<" ("<<alure::GetSampleTypeName(decoder->getSampleType())<<", "
@@ -104,7 +104,7 @@ int main(int argc, char *argv[])
                         (source->getOffset()*invfreq)<<" / "<<(decoder->getLength()*invfreq);
             std::cout.flush();
             std::this_thread::sleep_for(std::chrono::milliseconds(25));
-            ctx->update();
+            ctx.update();
         }
         std::cout<<std::endl;
 
@@ -112,11 +112,9 @@ int main(int argc, char *argv[])
         source = 0;
     }
 
-    alure::Context::MakeCurrent(0);
-    ctx->destroy();
-    ctx = 0;
-    dev->close();
-    dev = 0;
+    alure::Context::MakeCurrent(nullptr);
+    ctx.destroy();
+    dev.close();
 
     return 0;
 }

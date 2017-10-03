@@ -70,7 +70,7 @@ public:
 };
 
 
-class ALContext : public Context, public Listener {
+class ALContext : public Listener {
     static ALContext *sCurrentCtx;
     static thread_local ALContext *sThreadCurrentCtx;
 
@@ -203,47 +203,47 @@ public:
     void send(R MessageHandler::* func, Args&&... args)
     { if(mMessage.get()) (mMessage.get()->*func)(std::forward<Args>(args)...); }
 
-    Device *getDevice() override final;
+    Device getDevice();
 
-    void destroy() override final;
+    void destroy();
 
-    void startBatch() override final;
-    void endBatch() override final;
+    void startBatch();
+    void endBatch();
 
-    Listener *getListener() override final;
+    Listener *getListener();
 
-    SharedPtr<MessageHandler> setMessageHandler(SharedPtr<MessageHandler> handler) override final;
-    SharedPtr<MessageHandler> getMessageHandler() const override final
+    SharedPtr<MessageHandler> setMessageHandler(SharedPtr<MessageHandler> handler);
+    SharedPtr<MessageHandler> getMessageHandler() const
     { return mMessage; }
 
-    void setAsyncWakeInterval(ALuint msec) override final;
-    ALuint getAsyncWakeInterval() const override final;
+    void setAsyncWakeInterval(ALuint msec);
+    ALuint getAsyncWakeInterval() const;
 
-    SharedPtr<Decoder> createDecoder(const String &name) override final;
+    SharedPtr<Decoder> createDecoder(const String &name);
 
-    bool isSupported(ChannelConfig channels, SampleType type) const override final;
+    bool isSupported(ChannelConfig channels, SampleType type) const;
 
-    Buffer *getBuffer(const String &name) override final;
-    Buffer *getBufferAsync(const String &name) override final;
-    void removeBuffer(const String &name) override final;
-    void removeBuffer(Buffer *buffer) override final;
+    Buffer *getBuffer(const String &name);
+    Buffer *getBufferAsync(const String &name);
+    void removeBuffer(const String &name);
+    void removeBuffer(Buffer *buffer);
 
-    Source *createSource() override final;
+    Source *createSource();
 
-    AuxiliaryEffectSlot *createAuxiliaryEffectSlot() override final;
+    AuxiliaryEffectSlot *createAuxiliaryEffectSlot();
 
-    Effect *createEffect() override final;
+    Effect *createEffect();
 
-    SourceGroup *createSourceGroup(String name) override final;
-    SourceGroup *getSourceGroup(const String &name) override final;
+    SourceGroup *createSourceGroup(String name);
+    SourceGroup *getSourceGroup(const String &name);
 
-    void setDopplerFactor(ALfloat factor) override final;
+    void setDopplerFactor(ALfloat factor);
 
-    void setSpeedOfSound(ALfloat speed) override final;
+    void setSpeedOfSound(ALfloat speed);
 
-    void setDistanceModel(DistanceModel model) override final;
+    void setDistanceModel(DistanceModel model);
 
-    void update() override final;
+    void update();
 
     // Listener methods
     void setGain(ALfloat gain) final;

@@ -34,7 +34,7 @@ int main(int argc, char *argv[])
         std::cout<< "  "<<name<<((defname==name)?"  [DEFAULT]":"") <<'\n';
     std::cout<<std::endl;
 
-    alure::Device *dev = [&devMgr, argc, argv]()
+    alure::Device dev = [&devMgr, argc, argv]() -> alure::Device
     {
         if(argc > 1) try {
             return devMgr.openPlayback(argv[1]);
@@ -44,19 +44,18 @@ int main(int argc, char *argv[])
         }
         return devMgr.openPlayback();
     }();
-    std::cout<< "Info for device \""<<dev->getName(alure::PlaybackDeviceName::Complete)<<"\":" <<std::endl;
-    ALCuint version = dev->getALCVersion();
+    std::cout<< "Info for device \""<<dev.getName(alure::PlaybackDeviceName::Complete)<<"\":" <<std::endl;
+    ALCuint version = dev.getALCVersion();
     std::cout<< "ALC version: "<<alure::MajorVersion(version)<<"."<<alure::MinorVersion(version) <<std::endl;
-    version = dev->getEFXVersion();
+    version = dev.getEFXVersion();
     if(version)
     {
         std::cout<< "EFX version: "<<alure::MajorVersion(version)<<"."<<alure::MinorVersion(version) <<'\n';
-        std::cout<< "Max auxiliary sends: "<<dev->getMaxAuxiliarySends() <<std::endl;
+        std::cout<< "Max auxiliary sends: "<<dev.getMaxAuxiliarySends() <<std::endl;
     }
     else
         std::cout<< "EFX not supported" <<std::endl;
-    dev->close();
-    dev = 0;
+    dev.close();
 
     return 0;
 }
