@@ -149,8 +149,8 @@ private:
     std::once_flag mSetExts;
     void setupExts();
 
-    bool mIsConnected;
-    bool mIsBatching;
+    bool mIsConnected : 1;
+    bool mIsBatching : 1;
 
 public:
     ALContext(ALCcontext *context, ALDevice *device);
