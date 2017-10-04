@@ -44,7 +44,6 @@ class ALSource {
     std::atomic<bool> mIsAsync;
 
     std::atomic<bool> mPaused;
-    bool mLooping;
     ALuint64SOFT mOffset;
     ALfloat mPitch;
     ALfloat mGain;
@@ -61,11 +60,11 @@ class ALSource {
     ALfloat mAirAbsorptionFactor;
     ALfloat mRadius;
     ALfloat mStereoAngles[2];
-    ALint mFlags;
-    static constexpr ALint mRelativeFlag = 1<<0;
-    static constexpr ALint mDryGainHFAutoFlag = 1<<1;
-    static constexpr ALint mWetGainAutoFlag = 1<<2;
-    static constexpr ALint mWetGainHFAutoFlag = 1<<3;
+    bool mLooping : 1;
+    bool mRelative : 1;
+    bool mDryGainHFAuto : 1;
+    bool mWetGainAuto : 1;
+    bool mWetGainHFAuto : 1;
 
     ALuint mDirectFilter;
     SendPropMap mEffectSlots;
@@ -164,7 +163,7 @@ public:
     ALfloat getDopplerFactor() const { return mDopplerFactor; }
 
     void setRelative(bool relative);
-    bool getRelative() const { return mFlags&mRelativeFlag; }
+    bool getRelative() const { return mRelative; }
 
     void setRadius(ALfloat radius);
     ALfloat getRadius() const { return mRadius; }
@@ -178,8 +177,7 @@ public:
 
     void setGainAuto(bool directhf, bool send, bool sendhf);
     std::tuple<bool,bool,bool> getGainAuto() const
-    { return std::make_tuple(mFlags&mDryGainHFAutoFlag, mFlags&mWetGainAutoFlag,
-                             mFlags&mWetGainHFAutoFlag); }
+    { return std::make_tuple(mDryGainHFAuto, mWetGainAuto, mWetGainHFAuto); }
 
     void setDirectFilter(const FilterParams &filter);
     void setSendFilter(ALuint send, const FilterParams &filter);
