@@ -60,6 +60,7 @@ class ALSource {
     ALfloat mAirAbsorptionFactor;
     ALfloat mRadius;
     ALfloat mStereoAngles[2];
+    Spatialize mSpatialize;
     bool mLooping : 1;
     bool mRelative : 1;
     bool mDryGainHFAuto : 1;
@@ -171,6 +172,9 @@ public:
     void setStereoAngles(ALfloat leftAngle, ALfloat rightAngle);
     std::pair<ALfloat,ALfloat> getStereoAngles() const
     { return std::make_pair(mStereoAngles[0], mStereoAngles[1]); }
+
+    void set3DSpatialize(Spatialize spatialize);
+    Spatialize get3DSpatialize() const { return mSpatialize; }
 
     void setAirAbsorptionFactor(ALfloat factor);
     ALfloat getAirAbsorptionFactor() const { return mAirAbsorptionFactor; }

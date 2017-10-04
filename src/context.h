@@ -41,6 +41,7 @@ enum ALExtension {
 
     SOFT_loop_points,
     SOFT_source_latency,
+    SOFT_source_spatialize,
 
     EXT_disconnect,
 

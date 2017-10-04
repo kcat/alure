@@ -737,6 +737,13 @@ public:
     bool isInUse() const;
 };
 
+
+enum class Spatialize {
+    Off = AL_FALSE,
+    On = AL_TRUE,
+    Auto = 0x0002 /* AL_AUTO_SOFT */
+};
+
 class ALSource;
 class ALURE_API Source {
     friend class ALContext;
@@ -943,6 +950,9 @@ public:
      */
     void setStereoAngles(ALfloat leftAngle, ALfloat rightAngle);
     std::pair<ALfloat,ALfloat> getStereoAngles() const;
+
+    void set3DSpatialize(Spatialize spatialize);
+    Spatialize get3DSpatialize() const;
 
     void setAirAbsorptionFactor(ALfloat factor);
     ALfloat getAirAbsorptionFactor() const;

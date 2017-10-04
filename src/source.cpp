@@ -199,10 +199,11 @@ void ALSource::resetProperties()
     mRolloffFactor = 1.0f;
     mRoomRolloffFactor = 0.0f;
     mDopplerFactor = 1.0f;
+    mAirAbsorptionFactor = 0.0f;
     mRadius = 0.0f;
     mStereoAngles[0] =  F_PI / 6.0f;
     mStereoAngles[1] = -F_PI / 6.0f;
-    mAirAbsorptionFactor = 0.0f;
+    mSpatialize = Spatialize::Auto;
     mLooping = false;
     mRelative = false;
     mDryGainHFAuto = true;
@@ -255,6 +256,8 @@ void ALSource::applyProperties(bool looping, ALuint offset) const
         alSourcef(mId, AL_SOURCE_RADIUS, mRadius);
     if(mContext->hasExtension(EXT_STEREO_ANGLES))
         alSourcefv(mId, AL_STEREO_ANGLES, mStereoAngles);
+    if(mContext->hasExtension(SOFT_source_spatialize))
+        alSourcei(mId, AL_SOURCE_SPATIALIZE_SOFT, (ALint)mSpatialize);
     alSourcei(mId, AL_SOURCE_RELATIVE, mRelative ? AL_TRUE : AL_FALSE);
     if(mContext->hasExtension(EXT_EFX))
     {
@@ -973,6 +976,14 @@ void ALSource::setStereoAngles(ALfloat leftAngle, ALfloat rightAngle)
     mStereoAngles[1] = rightAngle;
 }
 
+void ALSource::set3DSpatialize(Spatialize spatialize)
+{
+    CheckContext(mContext);
+    if(mId != 0 && mContext->hasExtension(SOFT_source_spatialize))
+        alSourcei(mId, AL_SOURCE_SPATIALIZE_SOFT, (ALint)spatialize);
+    mSpatialize = spatialize;
+}
+
 void ALSource::setRelative(bool relative)
 {
     CheckContext(mContext);
@@ -1256,6 +1267,8 @@ DECL_THUNK1(void, Source, setRadius,, ALfloat)
 DECL_THUNK0(ALfloat, Source, getRadius, const)
 DECL_THUNK2(void, Source, setStereoAngles,, ALfloat, ALfloat)
 DECL_THUNK0(ALfloatPair, Source, getStereoAngles, const)
+DECL_THUNK1(void, Source, set3DSpatialize,, Spatialize)
+DECL_THUNK0(Spatialize, Source, get3DSpatialize, const)
 DECL_THUNK1(void, Source, setAirAbsorptionFactor,, ALfloat)
 DECL_THUNK0(ALfloat, Source, getAirAbsorptionFactor, const)
 DECL_THUNK3(void, Source, setGainAuto,, bool, bool, bool)
