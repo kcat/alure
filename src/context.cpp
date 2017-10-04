@@ -502,6 +502,29 @@ bool ALContext::isSupported(ChannelConfig channels, SampleType type) const
 }
 
 
+const Vector<String> &ALContext::getAvailableResamplers()
+{
+    CheckContext(this);
+    if(mResamplers.empty() && hasExtension(SOFT_source_resampler))
+    {
+        ALint num_resamplers = alGetInteger(AL_NUM_RESAMPLERS_SOFT);
+        mResamplers.reserve(num_resamplers);
+        for(int i = 0;i < num_resamplers;i++)
+            mResamplers.emplace_back(alGetStringiSOFT(AL_RESAMPLER_NAME_SOFT, i));
+        if(mResamplers.empty())
+            mResamplers.emplace_back();
+    }
+    return mResamplers;
+}
+
+ALsizei ALContext::getDefaultResamplerIndex() const
+{
+    CheckContext(this);
+    if(!hasExtension(SOFT_source_resampler))
+        return 0;
+    return alGetInteger(AL_DEFAULT_RESAMPLER_SOFT);
+}
+
 Buffer ALContext::getBuffer(const String &name)
 {
     CheckContext(this);
@@ -879,6 +902,8 @@ DECL_THUNK1(void, Context, setAsyncWakeInterval,, ALuint)
 DECL_THUNK0(ALuint, Context, getAsyncWakeInterval, const)
 DECL_THUNK1(SharedPtr<Decoder>, Context, createDecoder,, const String&)
 DECL_THUNK2(bool, Context, isSupported, const, ChannelConfig, SampleType)
+DECL_THUNK0(const Vector<String>&, Context, getAvailableResamplers,)
+DECL_THUNK0(ALsizei, Context, getDefaultResamplerIndex, const)
 DECL_THUNK1(Buffer, Context, getBuffer,, const String&)
 DECL_THUNK1(Buffer, Context, getBufferAsync,, const String&)
 DECL_THUNK1(void, Context, removeBuffer,, const String&)

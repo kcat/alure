@@ -61,6 +61,7 @@ class ALSource {
     ALfloat mRadius;
     ALfloat mStereoAngles[2];
     Spatialize mSpatialize;
+    ALsizei mResampler;
     bool mLooping : 1;
     bool mRelative : 1;
     bool mDryGainHFAuto : 1;
@@ -175,6 +176,9 @@ public:
 
     void set3DSpatialize(Spatialize spatialize);
     Spatialize get3DSpatialize() const { return mSpatialize; }
+
+    void setResamplerIndex(ALsizei index);
+    ALsizei getResamplerIndex() const { return mResampler; }
 
     void setAirAbsorptionFactor(ALfloat factor);
     ALfloat getAirAbsorptionFactor() const { return mAirAbsorptionFactor; }

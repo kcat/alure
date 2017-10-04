@@ -586,6 +586,21 @@ public:
     bool isSupported(ChannelConfig channels, SampleType type) const;
 
     /**
+     * Queries the list of resamplers supported by the context. If the
+     * AL_SOFT_source_resampler extension is unsupported this will be an empty
+     * vector, otherwise there will be at least one entry.
+     */
+    const Vector<String> &getAvailableResamplers();
+    /**
+     * Queries the context's default resampler index. Be aware, if the
+     * AL_SOFT_source_resampler extension is unsupported the resampler list
+     * will be empty and this will resturn 0. If you try to access the
+     * resampler list with this index without the extension, undefined behavior
+     * (accessing an out of bounds array index) will occur.
+     */
+    ALsizei getDefaultResamplerIndex() const;
+
+    /**
      * Creates and caches a Buffer for the given audio file or resource name.
      * Multiple calls with the same name will return the same Buffer object.
      */
@@ -953,6 +968,9 @@ public:
 
     void set3DSpatialize(Spatialize spatialize);
     Spatialize get3DSpatialize() const;
+
+    void setResamplerIndex(ALsizei index);
+    ALsizei getResamplerIndex() const;
 
     void setAirAbsorptionFactor(ALfloat factor);
     ALfloat getAirAbsorptionFactor() const;

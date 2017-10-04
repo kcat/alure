@@ -204,6 +204,7 @@ void ALSource::resetProperties()
     mStereoAngles[0] =  F_PI / 6.0f;
     mStereoAngles[1] = -F_PI / 6.0f;
     mSpatialize = Spatialize::Auto;
+    mResampler = alGetInteger(AL_DEFAULT_RESAMPLER_SOFT);
     mLooping = false;
     mRelative = false;
     mDryGainHFAuto = true;
@@ -258,6 +259,8 @@ void ALSource::applyProperties(bool looping, ALuint offset) const
         alSourcefv(mId, AL_STEREO_ANGLES, mStereoAngles);
     if(mContext->hasExtension(SOFT_source_spatialize))
         alSourcei(mId, AL_SOURCE_SPATIALIZE_SOFT, (ALint)mSpatialize);
+    if(mContext->hasExtension(SOFT_source_resampler))
+        alSourcei(mId, AL_SOURCE_RESAMPLER_SOFT, mResampler);
     alSourcei(mId, AL_SOURCE_RELATIVE, mRelative ? AL_TRUE : AL_FALSE);
     if(mContext->hasExtension(EXT_EFX))
     {
@@ -984,6 +987,16 @@ void ALSource::set3DSpatialize(Spatialize spatialize)
     mSpatialize = spatialize;
 }
 
+void ALSource::setResamplerIndex(ALsizei index)
+{
+    if(index < 0)
+        throw std::runtime_error("Resampler index out of range");
+    index = std::min<ALsizei>(index, mContext->getAvailableResamplers().size());
+    if(mId != 0 && mContext->hasExtension(SOFT_source_resampler))
+        alSourcei(mId, AL_SOURCE_RESAMPLER_SOFT, index);
+    mResampler = index;
+}
+
 void ALSource::setRelative(bool relative)
 {
     CheckContext(mContext);
@@ -1269,6 +1282,8 @@ DECL_THUNK2(void, Source, setStereoAngles,, ALfloat, ALfloat)
 DECL_THUNK0(ALfloatPair, Source, getStereoAngles, const)
 DECL_THUNK1(void, Source, set3DSpatialize,, Spatialize)
 DECL_THUNK0(Spatialize, Source, get3DSpatialize, const)
+DECL_THUNK1(void, Source, setResamplerIndex,, ALsizei)
+DECL_THUNK0(ALsizei, Source, getResamplerIndex, const)
 DECL_THUNK1(void, Source, setAirAbsorptionFactor,, ALfloat)
 DECL_THUNK0(ALfloat, Source, getAirAbsorptionFactor, const)
 DECL_THUNK3(void, Source, setGainAuto,, bool, bool, bool)

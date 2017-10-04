@@ -120,6 +120,8 @@ private:
 
     RefCount mRefs;
 
+    Vector<String> mResamplers;
+
     SharedPtr<MessageHandler> mMessage;
 
     bool mHasExt[AL_EXTENSION_MAX];
@@ -248,6 +250,9 @@ public:
 
     bool isSupported(ChannelConfig channels, SampleType type) const;
 
+    const Vector<String> &getAvailableResamplers();
+    ALsizei getDefaultResamplerIndex() const;
+
     Buffer getBuffer(const String &name);
     Buffer getBufferAsync(const String &name);
     void removeBuffer(const String &name);
@@ -272,7 +277,7 @@ public:
 };
 
 
-inline void CheckContext(ALContext *ctx)
+inline void CheckContext(const ALContext *ctx)
 {
     if(ctx != ALContext::GetCurrent())
         throw std::runtime_error("Called context is not current");
