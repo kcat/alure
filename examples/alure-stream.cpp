@@ -47,29 +47,28 @@ int main(int argc, char *argv[])
         }
 
         alure::SharedPtr<alure::Decoder> decoder(ctx.createDecoder(argv[i]));
-        alure::Source *source = ctx.createSource();
+        alure::Source source = ctx.createSource();
 
         if(offset > 0.0f)
-            source->setOffset(uint64_t(offset * decoder->getFrequency()));
+            source.setOffset(uint64_t(offset * decoder->getFrequency()));
 
-        source->play(decoder, 32768, 4);
+        source.play(decoder, 32768, 4);
         std::cout<< "Playing "<<argv[i]<<" ("<<alure::GetSampleTypeName(decoder->getSampleType())<<", "
                                              <<alure::GetChannelConfigName(decoder->getChannelConfig())<<", "
                                              <<decoder->getFrequency()<<"hz)" <<std::endl;
 
         float invfreq = 1.0f / decoder->getFrequency();
-        while(source->isPlaying())
+        while(source.isPlaying())
         {
             std::cout<< "\r "<<std::setiosflags(std::ios::fixed)<<std::setprecision(2)<<
-                        (source->getOffset()*invfreq)<<" / "<<(decoder->getLength()*invfreq);
+                        (source.getOffset()*invfreq)<<" / "<<(decoder->getLength()*invfreq);
             std::cout.flush();
             std::this_thread::sleep_for(std::chrono::milliseconds(25));
             ctx.update();
         }
         std::cout<<std::endl;
 
-        source->release();
-        source = 0;
+        source.release();
     }
 
     alure::Context::MakeCurrent(nullptr);

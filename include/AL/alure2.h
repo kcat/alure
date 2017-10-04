@@ -534,7 +534,7 @@ public:
      * Creates a new Source. There is no practical limit to the number of
      * sources you may create.
      */
-    Source *createSource();
+    Source createSource();
 
     AuxiliaryEffectSlot createAuxiliaryEffectSlot();
 
@@ -638,7 +638,7 @@ public:
      * Retrieves the Source objects currently playing the buffer. Stopping the
      * returned sources will allow the buffer to be removed from the context.
      */
-    Vector<Source*> getSources() const;
+    Vector<Source> getSources() const;
 
     /**
      * Queries the buffer's load status. A return of BufferLoadStatus::Pending
@@ -655,52 +655,58 @@ public:
     bool isInUse() const;
 };
 
-
+class ALSource;
 class ALURE_API Source {
+    friend class ALContext;
+    friend class ALSource;
+    friend class ALSourceGroup;
+
+    MAKE_PIMPL(Source, ALSource)
+
 public:
     /**
      * Plays the source using buffer. The same buffer may be played from
      * multiple sources simultaneously.
      */
-    virtual void play(Buffer buffer) = 0;
+    void play(Buffer buffer);
     /**
      * Plays the source by streaming audio from decoder. This will use
      * queuesize buffers, each with updatelen sample frames. The given decoder
      * must *NOT* have its read or seek methods called from elsewhere while in
      * use.
      */
-    virtual void play(SharedPtr<Decoder> decoder, ALuint updatelen, ALuint queuesize) = 0;
+    void play(SharedPtr<Decoder> decoder, ALuint updatelen, ALuint queuesize);
     /**
      * Stops playback, releasing the buffer or decoder reference.
      */
-    virtual void stop() = 0;
+    void stop();
 
     /** Pauses the source if it is playing. */
-    virtual void pause() = 0;
+    void pause();
 
     /** Resumes the source if it is paused. */
-    virtual void resume() = 0;
+    void resume();
 
     /** Specifies if the source is currently playing. */
-    virtual bool isPlaying() const = 0;
+    bool isPlaying() const;
 
     /** Specifies if the source is currently paused. */
-    virtual bool isPaused() const = 0;
+    bool isPaused() const;
 
     /**
      * Specifies the source's playback priority. Lowest priority sources will
      * be evicted first when higher priority sources are played.
      */
-    virtual void setPriority(ALuint priority) = 0;
+    void setPriority(ALuint priority);
     /** Retrieves the source's priority. */
-    virtual ALuint getPriority() const = 0;
+    ALuint getPriority() const;
 
     /**
      * Sets the source's offset, in sample frames. If the source is playing or
      * paused, it will go to that offset immediately, otherwise the source will
      * start at the specified offset the next time it's played.
      */
-    virtual void setOffset(uint64_t offset) = 0;
+    void setOffset(uint64_t offset);
     /**
      * Retrieves the source offset in sample frames. For streaming sources,
      * this will be the offset from the beginning of the stream based on the
@@ -709,36 +715,36 @@ public:
      * \param latency If non-NULL and the device supports it, the source's
      * latency, in nanoseconds, will be written to that location.
      */
-    virtual uint64_t getOffset(uint64_t *latency=nullptr) const = 0;
+    uint64_t getOffset(uint64_t *latency=nullptr) const;
 
     /**
      * Specifies if the source should loop on the Buffer or Decoder object's
      * loop points.
      */
-    virtual void setLooping(bool looping) = 0;
-    virtual bool getLooping() const = 0;
+    void setLooping(bool looping);
+    bool getLooping() const;
 
     /**
      * Specifies a linear pitch shift base. A value of 1.0 is the default
      * normal speed.
      */
-    virtual void setPitch(ALfloat pitch) = 0;
-    virtual ALfloat getPitch() const = 0;
+    void setPitch(ALfloat pitch);
+    ALfloat getPitch() const;
 
     /**
      * Specifies the base linear gain. A value of 1.0 is the default normal
      * volume.
      */
-    virtual void setGain(ALfloat gain) = 0;
-    virtual ALfloat getGain() const = 0;
+    void setGain(ALfloat gain);
+    ALfloat getGain() const;
 
     /**
      * Specifies the minimum and maximum gain. The source's gain is clamped to
      * this range after distance attenuation and cone attenuation are applied
      * to the gain base, although before the filter gain adjustements.
      */
-    virtual void setGainRange(ALfloat mingain, ALfloat maxgain) = 0;
-    virtual std::pair<ALfloat,ALfloat> getGainRange() const = 0;
+    void setGainRange(ALfloat mingain, ALfloat maxgain);
+    std::pair<ALfloat,ALfloat> getGainRange() const;
     ALfloat getMinGain() const { return std::get<0>(getGainRange()); }
     ALfloat getMaxGain() const { return std::get<1>(getGainRange()); }
 
@@ -752,42 +758,42 @@ public:
      * the source's volume will not have any extra attenuation (an effective
      * gain multiplier of 1).
      */
-    virtual void setDistanceRange(ALfloat refdist, ALfloat maxdist) = 0;
-    virtual std::pair<ALfloat,ALfloat> getDistanceRange() const = 0;
+    void setDistanceRange(ALfloat refdist, ALfloat maxdist);
+    std::pair<ALfloat,ALfloat> getDistanceRange() const;
     ALfloat getReferenceDistance() const { return std::get<0>(getDistanceRange()); }
     ALfloat getMaxDistance() const { return std::get<1>(getDistanceRange()); }
 
     /** Specifies the source's 3D position. */
-    virtual void setPosition(ALfloat x, ALfloat y, ALfloat z) = 0;
-    virtual void setPosition(const ALfloat *pos) = 0;
-    virtual Vector3 getPosition() const = 0;
+    void setPosition(ALfloat x, ALfloat y, ALfloat z);
+    void setPosition(const ALfloat *pos);
+    Vector3 getPosition() const;
 
     /**
      * Specifies the source's 3D velocity, in units per second. As with OpenAL,
      * this does not actually alter the source's position, and instead just
      * alters the pitch as determined by the doppler effect.
      */
-    virtual void setVelocity(ALfloat x, ALfloat y, ALfloat z) = 0;
-    virtual void setVelocity(const ALfloat *vel) = 0;
-    virtual Vector3 getVelocity() const = 0;
+    void setVelocity(ALfloat x, ALfloat y, ALfloat z);
+    void setVelocity(const ALfloat *vel);
+    Vector3 getVelocity() const;
 
     /**
      * Specifies the source's 3D facing direction. Deprecated in favor of
      * setOrientation.
      */
-    virtual void setDirection(ALfloat x, ALfloat y, ALfloat z) = 0;
-    virtual void setDirection(const ALfloat *dir) = 0;
-    virtual Vector3 getDirection() const = 0;
+    void setDirection(ALfloat x, ALfloat y, ALfloat z);
+    void setDirection(const ALfloat *dir);
+    Vector3 getDirection() const;
 
     /**
      * Specifies the source's 3D orientation. Note: unlike the AL_EXT_BFORMAT
      * extension this property comes from, this also affects the facing
      * direction, superceding setDirection.
      */
-    virtual void setOrientation(ALfloat x1, ALfloat y1, ALfloat z1, ALfloat x2, ALfloat y2, ALfloat z2) = 0;
-    virtual void setOrientation(const ALfloat *at, const ALfloat *up) = 0;
-    virtual void setOrientation(const ALfloat *ori) = 0;
-    virtual std::pair<Vector3,Vector3> getOrientation() const = 0;
+    void setOrientation(ALfloat x1, ALfloat y1, ALfloat z1, ALfloat x2, ALfloat y2, ALfloat z2);
+    void setOrientation(const ALfloat *at, const ALfloat *up);
+    void setOrientation(const ALfloat *ori);
+    std::pair<Vector3,Vector3> getOrientation() const;
 
     /**
      * Specifies the source's cone angles, in degrees. The inner angle is the
@@ -795,8 +801,8 @@ public:
      * attenuation, while the listener being outside of the outer angle will
      * hear the source attenuated according to the outer cone gains.
      */
-    virtual void setConeAngles(ALfloat inner, ALfloat outer) = 0;
-    virtual std::pair<ALfloat,ALfloat> getConeAngles() const = 0;
+    void setConeAngles(ALfloat inner, ALfloat outer);
+    std::pair<ALfloat,ALfloat> getConeAngles() const;
     ALfloat getInnerConeAngle() const { return std::get<0>(getConeAngles()); }
     ALfloat getOuterConeAngle() const { return std::get<1>(getConeAngles()); }
 
@@ -807,8 +813,8 @@ public:
      *
      * \param gainhf has no effect without the ALC_EXT_EFX extension.
      */
-    virtual void setOuterConeGains(ALfloat gain, ALfloat gainhf=1.0f) = 0;
-    virtual std::pair<ALfloat,ALfloat> getOuterConeGains() const = 0;
+    void setOuterConeGains(ALfloat gain, ALfloat gainhf=1.0f);
+    std::pair<ALfloat,ALfloat> getOuterConeGains() const;
     ALfloat getOuterConeGain() const { return std::get<0>(getOuterConeGains()); }
     ALfloat getOuterConeGainHF() const { return std::get<1>(getOuterConeGains()); }
 
@@ -820,8 +826,8 @@ public:
      * apply a more realistic room attenuation based on the reverb decay time
      * and direct path attenuation.
      */
-    virtual void setRolloffFactors(ALfloat factor, ALfloat roomfactor=0.0f) = 0;
-    virtual std::pair<ALfloat,ALfloat> getRolloffFactors() const = 0;
+    void setRolloffFactors(ALfloat factor, ALfloat roomfactor=0.0f);
+    std::pair<ALfloat,ALfloat> getRolloffFactors() const;
     ALfloat getRolloffFactor() const { return std::get<0>(getRolloffFactors()); }
     ALfloat getRoomRolloffFactor() const { return std::get<1>(getRolloffFactors()); }
 
@@ -830,12 +836,12 @@ public:
      * effectively scales the source and listener velocities for the doppler
      * calculation.
      */
-    virtual void setDopplerFactor(ALfloat factor) = 0;
-    virtual ALfloat getDopplerFactor() const = 0;
+    void setDopplerFactor(ALfloat factor);
+    ALfloat getDopplerFactor() const;
 
     /** Specifies if the source properties are relative to the listener. */
-    virtual void setRelative(bool relative) = 0;
-    virtual bool getRelative() const = 0;
+    void setRelative(bool relative);
+    bool getRelative() const;
 
     /**
      * Specifies the source's radius. This causes the source to behave as if
@@ -843,8 +849,8 @@ public:
      *
      * Has no effect without the AL_EXT_SOURCE_RADIUS extension.
      */
-    virtual void setRadius(ALfloat radius) = 0;
-    virtual ALfloat getRadius() const = 0;
+    void setRadius(ALfloat radius);
+    ALfloat getRadius() const;
 
     /**
      * Specifies the left and right channel angles, in radians, when playing a
@@ -853,47 +859,47 @@ public:
      *
      * Has no effect without the AL_EXT_STEREO_ANGLES extension.
      */
-    virtual void setStereoAngles(ALfloat leftAngle, ALfloat rightAngle) = 0;
-    virtual std::pair<ALfloat,ALfloat> getStereoAngles() const = 0;
+    void setStereoAngles(ALfloat leftAngle, ALfloat rightAngle);
+    std::pair<ALfloat,ALfloat> getStereoAngles() const;
 
-    virtual void setAirAbsorptionFactor(ALfloat factor) = 0;
-    virtual ALfloat getAirAbsorptionFactor() const = 0;
+    void setAirAbsorptionFactor(ALfloat factor);
+    ALfloat getAirAbsorptionFactor() const;
 
-    virtual void setGainAuto(bool directhf, bool send, bool sendhf) = 0;
-    virtual std::tuple<bool,bool,bool> getGainAuto() const = 0;
+    void setGainAuto(bool directhf, bool send, bool sendhf);
+    std::tuple<bool,bool,bool> getGainAuto() const;
     bool getDirectGainHFAuto() const { return std::get<0>(getGainAuto()); }
     bool getSendGainAuto() const { return std::get<1>(getGainAuto()); }
     bool getSendGainHFAuto() const { return std::get<2>(getGainAuto()); }
 
     /** Sets the filter properties on the direct path signal. */
-    virtual void setDirectFilter(const FilterParams &filter) = 0;
+    void setDirectFilter(const FilterParams &filter);
     /**
      * Sets the filter properties on the given send path signal. Any auxiliary
      * effect slot on the send path remains in place.
      */
-    virtual void setSendFilter(ALuint send, const FilterParams &filter) = 0;
+    void setSendFilter(ALuint send, const FilterParams &filter);
     /**
      * Connects the effect slot slot to the given send path. Any filter
      * properties on the send path remain as they were.
      */
-    virtual void setAuxiliarySend(AuxiliaryEffectSlot slot, ALuint send) = 0;
+    void setAuxiliarySend(AuxiliaryEffectSlot slot, ALuint send);
     /**
      * Connects the effect slot slot to the given send path, using the filter
      * properties.
      */
-    virtual void setAuxiliarySendFilter(AuxiliaryEffectSlot slot, ALuint send, const FilterParams &filter) = 0;
+    void setAuxiliarySendFilter(AuxiliaryEffectSlot slot, ALuint send, const FilterParams &filter);
 
     /**
      * Updates the source, ensuring that resources are released when playback
      * is finished.
      */
-    virtual void update() = 0;
+    void update();
 
     /**
      * Releases the source, stopping playback, releasing resources, and
      * returning it to the system.
      */
-    virtual void release() = 0;
+    void release();
 };
 
 
@@ -913,14 +919,14 @@ public:
      * at a time, and will automatically be removed from its current group as
      * needed.
      */
-    void addSource(Source *source);
+    void addSource(Source source);
     /** Removes source from the source group. */
-    void removeSource(Source *source);
+    void removeSource(Source source);
 
     /** Adds a list of sources to the group at once. */
-    void addSources(const Vector<Source*> &sources);
+    void addSources(const Vector<Source> &sources);
     /** Removes a list of sources from the source group. */
-    void removeSources(const Vector<Source*> &sources);
+    void removeSources(const Vector<Source> &sources);
 
     /**
      * Adds group as a subgroup of the source group. This method will throw an
@@ -932,7 +938,7 @@ public:
     void removeSubGroup(SourceGroup group);
 
     /** Returns the list of sources currently in the group. */
-    Vector<Source*> getSources() const;
+    Vector<Source> getSources() const;
 
     /** Returns the list of subgroups currently in the group. */
     Vector<SourceGroup> getSubGroups() const;
@@ -970,7 +976,7 @@ public:
 
 
 struct SourceSend {
-    Source *mSource;
+    Source mSource;
     ALuint mSend;
 };
 
@@ -1191,7 +1197,7 @@ public:
      * Sources that stopped automatically will be detected upon a call to
      * Context::update or Source::update, and will have forced set to false.
      */
-    virtual void sourceStopped(Source *source);
+    virtual void sourceStopped(Source source);
 
     /**
      * Called when the given source was forced to stop. This can be because
@@ -1199,7 +1205,7 @@ public:
      * needs to play, or it's part of a SourceGroup (or sub-group thereof) that
      * had its SourceGroup::stopAll method called.
      */
-    virtual void sourceForceStopped(Source *source);
+    virtual void sourceForceStopped(Source source);
 
     /**
      * Called when a new buffer is about to be created and loaded. May be

@@ -31,7 +31,7 @@ struct SendProps {
 };
 typedef std::unordered_map<ALuint,SendProps> SendPropMap;
 
-class ALSource : public Source {
+class ALSource {
     ALContext *const mContext;
     ALuint mId;
 
@@ -98,102 +98,97 @@ public:
     void unsetPaused() { mPaused = false; }
     void makeStopped();
 
-    void play(Buffer buffer) override final;
-    void play(SharedPtr<Decoder> decoder, ALuint updatelen, ALuint queuesize) override final;
-    void stop() override final;
-    void pause() override final;
-    void resume() override final;
+    void play(Buffer buffer);
+    void play(SharedPtr<Decoder> decoder, ALuint updatelen, ALuint queuesize);
+    void stop();
+    void pause();
+    void resume();
 
-    bool isPlaying() const override final;
-    bool isPaused() const override final;
+    bool isPlaying() const;
+    bool isPaused() const;
 
-    void setPriority(ALuint priority) override final;
-    ALuint getPriority() const override final
-    { return mPriority; }
+    void setPriority(ALuint priority);
+    ALuint getPriority() const { return mPriority; }
 
-    void setOffset(uint64_t offset) override final;
-    uint64_t getOffset(uint64_t *latency=0) const override final;
+    void setOffset(uint64_t offset);
+    uint64_t getOffset(uint64_t *latency=0) const;
 
-    void setLooping(bool looping) override final;
-    bool getLooping() const override final
-    { return mLooping; }
+    void setLooping(bool looping);
+    bool getLooping() const { return mLooping; }
 
-    void setPitch(ALfloat pitch) override final;
-    ALfloat getPitch() const override final
-    { return mPitch; }
+    void setPitch(ALfloat pitch);
+    ALfloat getPitch() const { return mPitch; }
 
-    void setGain(ALfloat gain) override final;
-    ALfloat getGain() const override final { return mGain; }
+    void setGain(ALfloat gain);
+    ALfloat getGain() const { return mGain; }
 
-    void setGainRange(ALfloat mingain, ALfloat maxgain) override final;
-    std::pair<ALfloat,ALfloat> getGainRange() const override final
+    void setGainRange(ALfloat mingain, ALfloat maxgain);
+    std::pair<ALfloat,ALfloat> getGainRange() const
     { return {mMinGain, mMaxGain}; }
 
-    void setDistanceRange(ALfloat refdist, ALfloat maxdist) override final;
-    std::pair<ALfloat,ALfloat> getDistanceRange() const override final
+    void setDistanceRange(ALfloat refdist, ALfloat maxdist);
+    std::pair<ALfloat,ALfloat> getDistanceRange() const
     { return {mRefDist, mMaxDist}; }
 
-    void setPosition(ALfloat x, ALfloat y, ALfloat z) override final;
-    void setPosition(const ALfloat *pos) override final;
-    Vector3 getPosition() const final override { return mPosition; }
+    void setPosition(ALfloat x, ALfloat y, ALfloat z);
+    void setPosition(const ALfloat *pos);
+    Vector3 getPosition() const { return mPosition; }
 
-    void setVelocity(ALfloat x, ALfloat y, ALfloat z) override final;
-    void setVelocity(const ALfloat *vel) override final;
-    Vector3 getVelocity() const override final { return mVelocity; }
+    void setVelocity(ALfloat x, ALfloat y, ALfloat z);
+    void setVelocity(const ALfloat *vel);
+    Vector3 getVelocity() const { return mVelocity; }
 
-    void setDirection(ALfloat x, ALfloat y, ALfloat z) override final;
-    void setDirection(const ALfloat *dir) override final;
-    Vector3 getDirection() const override final { return mDirection; }
+    void setDirection(ALfloat x, ALfloat y, ALfloat z);
+    void setDirection(const ALfloat *dir);
+    Vector3 getDirection() const { return mDirection; }
 
-    void setOrientation(ALfloat x1, ALfloat y1, ALfloat z1, ALfloat x2, ALfloat y2, ALfloat z2) override final;
-    void setOrientation(const ALfloat *at, const ALfloat *up) override final;
-    void setOrientation(const ALfloat *ori) override final;
-    std::pair<Vector3,Vector3> getOrientation() const override final
+    void setOrientation(ALfloat x1, ALfloat y1, ALfloat z1, ALfloat x2, ALfloat y2, ALfloat z2);
+    void setOrientation(const ALfloat *at, const ALfloat *up);
+    void setOrientation(const ALfloat *ori);
+    std::pair<Vector3,Vector3> getOrientation() const
     { return {mOrientation[0], mOrientation[1]}; }
 
-    void setConeAngles(ALfloat inner, ALfloat outer) override final;
-    std::pair<ALfloat,ALfloat> getConeAngles() const override final
+    void setConeAngles(ALfloat inner, ALfloat outer);
+    std::pair<ALfloat,ALfloat> getConeAngles() const
     { return {mConeInnerAngle, mConeOuterAngle}; }
 
-    void setOuterConeGains(ALfloat gain, ALfloat gainhf=1.0f) override final;
-    std::pair<ALfloat,ALfloat> getOuterConeGains() const override final
+    void setOuterConeGains(ALfloat gain, ALfloat gainhf=1.0f);
+    std::pair<ALfloat,ALfloat> getOuterConeGains() const
     { return {mConeOuterGain, mConeOuterGainHF}; }
 
-    void setRolloffFactors(ALfloat factor, ALfloat roomfactor=0.0f) override final;
-    std::pair<ALfloat,ALfloat> getRolloffFactors() const override final
+    void setRolloffFactors(ALfloat factor, ALfloat roomfactor=0.0f);
+    std::pair<ALfloat,ALfloat> getRolloffFactors() const
     { return {mRolloffFactor, mRoomRolloffFactor}; }
 
-    void setDopplerFactor(ALfloat factor) override final;
-    ALfloat getDopplerFactor() const override final
-    { return mDopplerFactor; }
+    void setDopplerFactor(ALfloat factor);
+    ALfloat getDopplerFactor() const { return mDopplerFactor; }
 
-    void setRelative(bool relative) override final;
-    bool getRelative() const override final
-    { return mFlags&mRelativeFlag; }
+    void setRelative(bool relative);
+    bool getRelative() const { return mFlags&mRelativeFlag; }
 
-    void setRadius(ALfloat radius) override final;
-    ALfloat getRadius() const override final { return mRadius; }
+    void setRadius(ALfloat radius);
+    ALfloat getRadius() const { return mRadius; }
 
-    void setStereoAngles(ALfloat leftAngle, ALfloat rightAngle) override final;
-    std::pair<ALfloat,ALfloat> getStereoAngles() const override final
+    void setStereoAngles(ALfloat leftAngle, ALfloat rightAngle);
+    std::pair<ALfloat,ALfloat> getStereoAngles() const
     { return std::make_pair(mStereoAngles[0], mStereoAngles[1]); }
 
-    void setAirAbsorptionFactor(ALfloat factor) override final;
-    ALfloat getAirAbsorptionFactor() const override final { return mAirAbsorptionFactor; }
+    void setAirAbsorptionFactor(ALfloat factor);
+    ALfloat getAirAbsorptionFactor() const { return mAirAbsorptionFactor; }
 
-    void setGainAuto(bool directhf, bool send, bool sendhf) override final;
-    std::tuple<bool,bool,bool> getGainAuto() const override final
+    void setGainAuto(bool directhf, bool send, bool sendhf);
+    std::tuple<bool,bool,bool> getGainAuto() const
     { return std::make_tuple(mFlags&mDryGainHFAutoFlag, mFlags&mWetGainAutoFlag,
                              mFlags&mWetGainHFAutoFlag); }
 
-    void setDirectFilter(const FilterParams &filter) override final;
-    void setSendFilter(ALuint send, const FilterParams &filter) override final;
-    void setAuxiliarySend(AuxiliaryEffectSlot slot, ALuint send) override final;
-    void setAuxiliarySendFilter(AuxiliaryEffectSlot slot, ALuint send, const FilterParams &filter) override final;
+    void setDirectFilter(const FilterParams &filter);
+    void setSendFilter(ALuint send, const FilterParams &filter);
+    void setAuxiliarySend(AuxiliaryEffectSlot slot, ALuint send);
+    void setAuxiliarySendFilter(AuxiliaryEffectSlot slot, ALuint send, const FilterParams &filter);
 
-    void update() override final;
+    void update();
 
-    void release() override final;
+    void release();
 };
 
 } // namespace alure

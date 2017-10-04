@@ -250,7 +250,7 @@ public:
     void removeBuffer(const String &name);
     void removeBuffer(Buffer buffer);
 
-    Source *createSource();
+    Source createSource();
 
     AuxiliaryEffectSlot createAuxiliaryEffectSlot();
 

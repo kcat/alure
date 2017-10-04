@@ -60,9 +60,9 @@ bool ALSourceGroup::findInSubGroups(ALSourceGroup *group) const
 }
 
 
-void ALSourceGroup::addSource(Source *source)
+void ALSourceGroup::addSource(Source source)
 {
-    ALSource *alsrc = cast<ALSource*>(source);
+    ALSource *alsrc = source.pImpl;
     if(!alsrc) throw std::runtime_error("Source is not valid");
     CheckContext(mContext);
 
@@ -73,11 +73,11 @@ void ALSourceGroup::addSource(Source *source)
     alsrc->setGroup(this);
 }
 
-void ALSourceGroup::removeSource(Source *source)
+void ALSourceGroup::removeSource(Source source)
 {
     CheckContext(mContext);
-    auto iter = std::lower_bound(mSources.begin(), mSources.end(), source);
-    if(iter != mSources.end() && *iter == source)
+    auto iter = std::lower_bound(mSources.begin(), mSources.end(), source.pImpl);
+    if(iter != mSources.end() && *iter == source.pImpl)
     {
         (*iter)->unsetGroup();
         mSources.erase(iter);
@@ -85,7 +85,7 @@ void ALSourceGroup::removeSource(Source *source)
 }
 
 
-void ALSourceGroup::addSources(const Vector<Source*> &sources)
+void ALSourceGroup::addSources(const Vector<Source> &sources)
 {
     CheckContext(mContext);
     if(sources.empty())
@@ -94,9 +94,9 @@ void ALSourceGroup::addSources(const Vector<Source*> &sources)
     Vector<ALSource*> alsrcs;
     alsrcs.reserve(sources.size());
 
-    for(Source *source : sources)
+    for(Source source : sources)
     {
-        alsrcs.push_back(cast<ALSource*>(source));
+        alsrcs.push_back(source.pImpl);
         if(!alsrcs.back()) throw std::runtime_error("Source is not valid");
     }
 
@@ -111,13 +111,13 @@ void ALSourceGroup::addSources(const Vector<Source*> &sources)
     }
 }
 
-void ALSourceGroup::removeSources(const Vector<Source*> &sources)
+void ALSourceGroup::removeSources(const Vector<Source> &sources)
 {
     Batcher batcher = mContext->getBatcher();
-    for(Source *source : sources)
+    for(Source source : sources)
     {
-        auto iter = std::lower_bound(mSources.begin(), mSources.end(), source);
-        if(iter != mSources.end() && *iter == source)
+        auto iter = std::lower_bound(mSources.begin(), mSources.end(), source.pImpl);
+        if(iter != mSources.end() && *iter == source.pImpl)
         {
             (*iter)->unsetGroup();
             mSources.erase(iter);
@@ -155,15 +155,16 @@ void ALSourceGroup::removeSubGroup(SourceGroup group)
 }
 
 
-Vector<Source*> ALSourceGroup::getSources() const
+Vector<Source> ALSourceGroup::getSources() const
 {
-    Vector<Source*> ret;
+    Vector<Source> ret;
     ret.reserve(mSources.size());
-    std::copy(mSources.begin(), mSources.end(), std::back_inserter(ret));
+    for(ALSource *src : mSources)
+        ret.emplace_back(Source(src));
     return ret;
 }
 
-alure::Vector<SourceGroup> ALSourceGroup::getSubGroups() const
+Vector<SourceGroup> ALSourceGroup::getSubGroups() const
 {
     Vector<SourceGroup> ret;
     ret.reserve(mSubGroups.size());
@@ -334,13 +335,13 @@ void ALSourceGroup::release()
 
 
 DECL_THUNK0(const String&, SourceGroup, getName, const)
-DECL_THUNK1(void, SourceGroup, addSource,, Source*)
-DECL_THUNK1(void, SourceGroup, removeSource,, Source*)
-DECL_THUNK1(void, SourceGroup, addSources,, const Vector<Source*>&)
-DECL_THUNK1(void, SourceGroup, removeSources,, const Vector<Source*>&)
+DECL_THUNK1(void, SourceGroup, addSource,, Source)
+DECL_THUNK1(void, SourceGroup, removeSource,, Source)
+DECL_THUNK1(void, SourceGroup, addSources,, const Vector<Source>&)
+DECL_THUNK1(void, SourceGroup, removeSources,, const Vector<Source>&)
 DECL_THUNK1(void, SourceGroup, addSubGroup,, SourceGroup)
 DECL_THUNK1(void, SourceGroup, removeSubGroup,, SourceGroup)
-DECL_THUNK0(Vector<Source*>, SourceGroup, getSources, const)
+DECL_THUNK0(Vector<Source>, SourceGroup, getSources, const)
 DECL_THUNK0(Vector<SourceGroup>, SourceGroup, getSubGroups, const)
 DECL_THUNK1(void, SourceGroup, setGain,, ALfloat)
 DECL_THUNK0(ALfloat, SourceGroup, getGain, const)

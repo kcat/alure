@@ -27,9 +27,9 @@ public:
       : mContext(context), mId(id)
     { }
 
-    void addSourceSend(Source *source, ALuint send)
+    void addSourceSend(Source source, ALuint send)
     { mSourceSends.emplace_back((SourceSend){source, send}); }
-    void removeSourceSend(Source *source, ALuint send)
+    void removeSourceSend(Source source, ALuint send)
     {
         auto iter = std::find(mSourceSends.cbegin(), mSourceSends.cend(), SourceSend{source, send});
         if(iter != mSourceSends.cend()) mSourceSends.erase(iter);

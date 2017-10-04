@@ -147,11 +147,11 @@ void MessageHandler::deviceDisconnected(Device)
 {
 }
 
-void MessageHandler::sourceStopped(Source*)
+void MessageHandler::sourceStopped(Source)
 {
 }
 
-void MessageHandler::sourceForceStopped(Source*)
+void MessageHandler::sourceForceStopped(Source)
 {
 }
 
@@ -680,7 +680,7 @@ ALuint ALContext::getSourceId(ALuint maxprio)
 }
 
 
-Source *ALContext::createSource()
+Source ALContext::createSource()
 {
     CheckContext(this);
 
@@ -698,7 +698,7 @@ Source *ALContext::createSource()
     auto iter = std::lower_bound(mUsedSources.begin(), mUsedSources.end(), source);
     if(iter == mUsedSources.end() || *iter != source)
         mUsedSources.insert(iter, source);
-    return source;
+    return Source(source);
 }
 
 void ALContext::freeSource(ALSource *source)
@@ -876,7 +876,7 @@ DECL_THUNK1(Buffer, Context, getBuffer,, const String&)
 DECL_THUNK1(Buffer, Context, getBufferAsync,, const String&)
 DECL_THUNK1(void, Context, removeBuffer,, const String&)
 DECL_THUNK1(void, Context, removeBuffer,, Buffer)
-DECL_THUNK0(Source*, Context, createSource,)
+DECL_THUNK0(Source, Context, createSource,)
 DECL_THUNK0(AuxiliaryEffectSlot, Context, createAuxiliaryEffectSlot,)
 DECL_THUNK0(Effect, Context, createEffect,)
 DECL_THUNK1(SourceGroup, Context, createSourceGroup,, String)

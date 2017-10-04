@@ -62,16 +62,16 @@ public:
     ALfloat getAppliedGain() const { return mGain * mParentProps.mGain; }
     ALfloat getAppliedPitch() const { return mPitch * mParentProps.mPitch; }
 
-    void addSource(Source *source);
-    void removeSource(Source *source);
+    void addSource(Source source);
+    void removeSource(Source source);
 
-    void addSources(const Vector<Source*> &sources);
-    void removeSources(const Vector<Source*> &sources);
+    void addSources(const Vector<Source> &sources);
+    void removeSources(const Vector<Source> &sources);
 
     void addSubGroup(SourceGroup group);
     void removeSubGroup(SourceGroup group);
 
-    Vector<Source*> getSources() const;
+    Vector<Source> getSources() const;
 
     Vector<SourceGroup> getSubGroups() const;
 

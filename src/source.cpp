@@ -176,7 +176,7 @@ ALSource::~ALSource()
 void ALSource::resetProperties()
 {
     if(mGroup)
-        mGroup->removeSource(this);
+        mGroup->removeSource(Source(this));
     mGroup = nullptr;
 
     mPaused.store(false, std::memory_order_release);
@@ -211,7 +211,7 @@ void ALSource::resetProperties()
     for(auto &i : mEffectSlots)
     {
         if(i.second.mSlot)
-            i.second.mSlot->removeSourceSend(this, i.first);
+            i.second.mSlot->removeSourceSend(Source(this), i.first);
         if(i.second.mFilter)
             mContext->alDeleteFilters(1, &i.second.mFilter);
     }
@@ -274,7 +274,7 @@ void ALSource::applyProperties(bool looping, ALuint offset) const
 void ALSource::setGroup(ALSourceGroup *group)
 {
     if(mGroup)
-        mGroup->removeSource(this);
+        mGroup->removeSource(Source(this));
     mGroup = group;
     groupUpdate();
 }
@@ -345,9 +345,9 @@ void ALSource::play(Buffer buffer)
     mStream.reset();
 
     if(mBuffer)
-        mBuffer->removeSource(this);
+        mBuffer->removeSource(Source(this));
     mBuffer = albuf;
-    mBuffer->addSource(this);
+    mBuffer->addSource(Source(this));
 
     alSourcei(mId, AL_BUFFER, mBuffer->getId());
     alSourcePlay(mId);
@@ -385,7 +385,7 @@ void ALSource::play(SharedPtr<Decoder> decoder, ALuint updatelen, ALuint queuesi
     }
 
     if(mBuffer)
-        mBuffer->removeSource(this);
+        mBuffer->removeSource(Source(this));
     mBuffer = 0;
 
     mStream = std::move(stream);
@@ -429,7 +429,7 @@ void ALSource::makeStopped()
     }
 
     if(mBuffer)
-        mBuffer->removeSource(this);
+        mBuffer->removeSource(Source(this));
     mBuffer = 0;
 
     mStream.reset();
@@ -555,7 +555,7 @@ void ALSource::updateNoCtxCheck()
         if(!mIsAsync.load(std::memory_order_acquire))
         {
             stop();
-            mContext->send(&MessageHandler::sourceStopped, this);
+            mContext->send(&MessageHandler::sourceStopped, Source(this));
         }
     }
     else
@@ -565,7 +565,7 @@ void ALSource::updateNoCtxCheck()
         if(state != AL_PLAYING && state != AL_PAUSED)
         {
             stop();
-            mContext->send(&MessageHandler::sourceStopped, this);
+            mContext->send(&MessageHandler::sourceStopped, Source(this));
         }
     }
 }
@@ -1098,14 +1098,14 @@ void ALSource::setAuxiliarySend(AuxiliaryEffectSlot auxslot, ALuint send)
     if(siter == mEffectSlots.end())
     {
         if(!slot) return;
-        slot->addSourceSend(this, send);
+        slot->addSourceSend(Source(this), send);
         siter = mEffectSlots.insert(std::make_pair(send, SendProps(slot))).first;
     }
     else if(siter->second.mSlot != slot)
     {
-        if(slot) slot->addSourceSend(this, send);
+        if(slot) slot->addSourceSend(Source(this), send);
         if(siter->second.mSlot)
-            siter->second.mSlot->removeSourceSend(this, send);
+            siter->second.mSlot->removeSourceSend(Source(this), send);
         siter->second.mSlot = slot;
     }
 
@@ -1133,16 +1133,16 @@ void ALSource::setAuxiliarySendFilter(AuxiliaryEffectSlot auxslot, ALuint send, 
         if(!filterid && !slot)
             return;
 
-        if(slot) slot->addSourceSend(this, send);
+        if(slot) slot->addSourceSend(Source(this), send);
         siter = mEffectSlots.insert(std::make_pair(send, SendProps(slot, filterid))).first;
     }
     else
     {
         if(siter->second.mSlot != slot)
         {
-            if(slot) slot->addSourceSend(this, send);
+            if(slot) slot->addSourceSend(Source(this), send);
             if(siter->second.mSlot)
-                siter->second.mSlot->removeSourceSend(this, send);
+                siter->second.mSlot->removeSourceSend(Source(this), send);
             siter->second.mSlot = slot;
         }
         setFilterParams(siter->second.mFilter, filter);
@@ -1189,19 +1189,87 @@ void ALSource::release()
     for(auto &i : mEffectSlots)
     {
         if(i.second.mSlot)
-            i.second.mSlot->removeSourceSend(this, i.first);
+            i.second.mSlot->removeSourceSend(Source(this), i.first);
         if(i.second.mFilter)
             mContext->alDeleteFilters(1, &i.second.mFilter);
     }
     mEffectSlots.clear();
 
     if(mBuffer)
-        mBuffer->removeSource(this);
+        mBuffer->removeSource(Source(this));
     mBuffer = 0;
 
     mStream.reset();
 
     resetProperties();
+}
+
+
+using ALfloatPair = std::pair<ALfloat,ALfloat>;
+using Vector3Pair = std::pair<Vector3,Vector3>;
+using BoolTriple = std::tuple<bool,bool,bool>;
+
+DECL_THUNK1(void, Source, play,, Buffer)
+DECL_THUNK3(void, Source, play,, SharedPtr<Decoder>, ALuint, ALuint)
+DECL_THUNK0(void, Source, stop,)
+DECL_THUNK0(void, Source, pause,)
+DECL_THUNK0(void, Source, resume,)
+DECL_THUNK0(bool, Source, isPlaying, const)
+DECL_THUNK0(bool, Source, isPaused, const)
+DECL_THUNK1(void, Source, setPriority,, ALuint)
+DECL_THUNK0(ALuint, Source, getPriority, const)
+DECL_THUNK1(void, Source, setOffset,, uint64_t)
+DECL_THUNK1(uint64_t, Source, getOffset, const, uint64_t*)
+DECL_THUNK1(void, Source, setLooping,, bool)
+DECL_THUNK0(bool, Source, getLooping, const)
+DECL_THUNK1(void, Source, setPitch,, ALfloat)
+DECL_THUNK0(ALfloat, Source, getPitch, const)
+DECL_THUNK1(void, Source, setGain,, ALfloat)
+DECL_THUNK0(ALfloat, Source, getGain, const)
+DECL_THUNK2(void, Source, setGainRange,, ALfloat, ALfloat)
+DECL_THUNK0(ALfloatPair, Source, getGainRange, const)
+DECL_THUNK2(void, Source, setDistanceRange,, ALfloat, ALfloat)
+DECL_THUNK0(ALfloatPair, Source, getDistanceRange, const)
+DECL_THUNK3(void, Source, setPosition,, ALfloat, ALfloat, ALfloat)
+DECL_THUNK1(void, Source, setPosition,, const ALfloat*)
+DECL_THUNK0(Vector3, Source, getPosition, const)
+DECL_THUNK3(void, Source, setVelocity,, ALfloat, ALfloat, ALfloat)
+DECL_THUNK1(void, Source, setVelocity,, const ALfloat*)
+DECL_THUNK0(Vector3, Source, getVelocity, const)
+DECL_THUNK3(void, Source, setDirection,, ALfloat, ALfloat, ALfloat)
+DECL_THUNK1(void, Source, setDirection,, const ALfloat*)
+DECL_THUNK0(Vector3, Source, getDirection, const)
+DECL_THUNK6(void, Source, setOrientation,, ALfloat, ALfloat, ALfloat, ALfloat, ALfloat, ALfloat)
+DECL_THUNK2(void, Source, setOrientation,, const ALfloat*, const ALfloat*)
+DECL_THUNK1(void, Source, setOrientation,, const ALfloat*)
+DECL_THUNK0(Vector3Pair, Source, getOrientation, const)
+DECL_THUNK2(void, Source, setConeAngles,, ALfloat, ALfloat)
+DECL_THUNK0(ALfloatPair, Source, getConeAngles, const)
+DECL_THUNK2(void, Source, setOuterConeGains,, ALfloat, ALfloat)
+DECL_THUNK0(ALfloatPair, Source, getOuterConeGains, const)
+DECL_THUNK2(void, Source, setRolloffFactors,, ALfloat, ALfloat)
+DECL_THUNK0(ALfloatPair, Source, getRolloffFactors, const)
+DECL_THUNK1(void, Source, setDopplerFactor,, ALfloat)
+DECL_THUNK0(ALfloat, Source, getDopplerFactor, const)
+DECL_THUNK1(void, Source, setRelative,, bool)
+DECL_THUNK0(bool, Source, getRelative, const)
+DECL_THUNK1(void, Source, setRadius,, ALfloat)
+DECL_THUNK0(ALfloat, Source, getRadius, const)
+DECL_THUNK2(void, Source, setStereoAngles,, ALfloat, ALfloat)
+DECL_THUNK0(ALfloatPair, Source, getStereoAngles, const)
+DECL_THUNK1(void, Source, setAirAbsorptionFactor,, ALfloat)
+DECL_THUNK0(ALfloat, Source, getAirAbsorptionFactor, const)
+DECL_THUNK3(void, Source, setGainAuto,, bool, bool, bool)
+DECL_THUNK0(BoolTriple, Source, getGainAuto, const)
+DECL_THUNK1(void, Source, setDirectFilter,, const FilterParams&)
+DECL_THUNK2(void, Source, setSendFilter,, ALuint, const FilterParams&)
+DECL_THUNK2(void, Source, setAuxiliarySend,, AuxiliaryEffectSlot, ALuint)
+DECL_THUNK3(void, Source, setAuxiliarySendFilter,, AuxiliaryEffectSlot, ALuint, const FilterParams&)
+DECL_THUNK0(void, Source, update,)
+void Source::release()
+{
+    pImpl->release();
+    pImpl = nullptr;
 }
 
 }

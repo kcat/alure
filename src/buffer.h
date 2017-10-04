@@ -26,7 +26,7 @@ class ALBuffer {
     BufferLoadStatus mLoadStatus;
     std::atomic<bool> mIsLoaded;
 
-    Vector<Source*> mSources;
+    Vector<Source> mSources;
 
     const String mName;
 
@@ -42,8 +42,8 @@ public:
     ALContext *getContext() { return mContext; }
     ALuint getId() const { return mId; }
 
-    void addSource(Source *source) { mSources.push_back(source); }
-    void removeSource(Source *source)
+    void addSource(Source source) { mSources.push_back(source); }
+    void removeSource(Source source)
     {
         auto iter = std::find(mSources.cbegin(), mSources.cend(), source);
         if(iter != mSources.cend()) mSources.erase(iter);
@@ -64,7 +64,7 @@ public:
     void setLoopPoints(ALuint start, ALuint end);
     std::pair<ALuint,ALuint> getLoopPoints() const;
 
-    Vector<Source*> getSources() const { return mSources; }
+    Vector<Source> getSources() const { return mSources; }
 
     BufferLoadStatus getLoadStatus();
 
