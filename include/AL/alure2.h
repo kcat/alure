@@ -313,7 +313,10 @@ public:                                                                       \
                                                                               \
     BaseT& operator=(std::nullptr_t) { pImpl = nullptr; return *this; }       \
     BaseT& operator=(const BaseT&) = default;                                 \
-    BaseT& operator=(BaseT&&) = default;
+    BaseT& operator=(BaseT&&) = default;                                      \
+                                                                              \
+    bool operator==(const BaseT &rhs) const { return pImpl == rhs.pImpl; }    \
+    bool operator==(BaseT&& rhs) const { return pImpl == rhs.pImpl; }
 
 class ALDevice;
 class ALURE_API Device {
