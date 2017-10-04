@@ -70,25 +70,25 @@ public:
 };
 
 
-class ALListener : public Listener {
+class ALListener {
     ALContext *const mContext;
 
 public:
     ALListener(ALContext *ctx) : mContext(ctx) { }
 
-    void setGain(ALfloat gain) final;
+    void setGain(ALfloat gain);
 
-    void setPosition(ALfloat x, ALfloat y, ALfloat z) final;
-    void setPosition(const ALfloat *pos) final;
+    void setPosition(ALfloat x, ALfloat y, ALfloat z);
+    void setPosition(const ALfloat *pos);
 
-    void setVelocity(ALfloat x, ALfloat y, ALfloat z) final;
-    void setVelocity(const ALfloat *vel) final;
+    void setVelocity(ALfloat x, ALfloat y, ALfloat z);
+    void setVelocity(const ALfloat *vel);
 
-    void setOrientation(ALfloat x1, ALfloat y1, ALfloat z1, ALfloat x2, ALfloat y2, ALfloat z2) final;
-    void setOrientation(const ALfloat *at, const ALfloat *up) final;
-    void setOrientation(const ALfloat *ori) final;
+    void setOrientation(ALfloat x1, ALfloat y1, ALfloat z1, ALfloat x2, ALfloat y2, ALfloat z2);
+    void setOrientation(const ALfloat *at, const ALfloat *up);
+    void setOrientation(const ALfloat *ori);
 
-    void setMetersPerUnit(ALfloat m_u) final;
+    void setMetersPerUnit(ALfloat m_u);
 };
 
 class ALContext {
@@ -232,7 +232,7 @@ public:
     void startBatch();
     void endBatch();
 
-    Listener *getListener();
+    Listener getListener();
 
     SharedPtr<MessageHandler> setMessageHandler(SharedPtr<MessageHandler> handler);
     SharedPtr<MessageHandler> getMessageHandler() const

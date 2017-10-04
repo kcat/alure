@@ -465,7 +465,7 @@ public:
      * Retrieves a Listener instance for this context. Each context will only
      * have one listener.
      */
-    Listener *getListener();
+    Listener getListener();
 
     /**
      * Sets a MessageHandler instance which will be used to provide certain
@@ -557,21 +557,26 @@ public:
     void update();
 };
 
+class ALListener;
 class ALURE_API Listener {
+    friend class ALContext;
+
+    MAKE_PIMPL(Listener, ALListener)
+
 public:
-    virtual void setGain(ALfloat gain) = 0;
+    void setGain(ALfloat gain);
 
-    virtual void setPosition(ALfloat x, ALfloat y, ALfloat z) = 0;
-    virtual void setPosition(const ALfloat *pos) = 0;
+    void setPosition(ALfloat x, ALfloat y, ALfloat z);
+    void setPosition(const ALfloat *pos);
 
-    virtual void setVelocity(ALfloat x, ALfloat y, ALfloat z) = 0;
-    virtual void setVelocity(const ALfloat *vel) = 0;
+    void setVelocity(ALfloat x, ALfloat y, ALfloat z);
+    void setVelocity(const ALfloat *vel);
 
-    virtual void setOrientation(ALfloat x1, ALfloat y1, ALfloat z1, ALfloat x2, ALfloat y2, ALfloat z2) = 0;
-    virtual void setOrientation(const ALfloat *at, const ALfloat *up) = 0;
-    virtual void setOrientation(const ALfloat *ori) = 0;
+    void setOrientation(ALfloat x1, ALfloat y1, ALfloat z1, ALfloat x2, ALfloat y2, ALfloat z2);
+    void setOrientation(const ALfloat *at, const ALfloat *up);
+    void setOrientation(const ALfloat *ori);
 
-    virtual void setMetersPerUnit(ALfloat m_u) = 0;
+    void setMetersPerUnit(ALfloat m_u);
 };
 
 

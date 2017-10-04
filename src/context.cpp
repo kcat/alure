@@ -442,9 +442,9 @@ void ALContext::endBatch()
 }
 
 
-Listener *ALContext::getListener()
+Listener ALContext::getListener()
 {
-    return &mListener;
+    return Listener(&mListener);
 }
 
 
@@ -865,7 +865,7 @@ void Context::destroy()
 DECL_THUNK0(Device, Context, getDevice,)
 DECL_THUNK0(void, Context, startBatch,)
 DECL_THUNK0(void, Context, endBatch,)
-DECL_THUNK0(Listener*, Context, getListener,)
+DECL_THUNK0(Listener, Context, getListener,)
 DECL_THUNK1(SharedPtr<MessageHandler>, Context, setMessageHandler,, SharedPtr<MessageHandler>)
 DECL_THUNK0(SharedPtr<MessageHandler>, Context, getMessageHandler, const)
 DECL_THUNK1(void, Context, setAsyncWakeInterval,, ALuint)
@@ -967,5 +967,16 @@ void ALListener::setMetersPerUnit(ALfloat m_u)
     if(mContext->hasExtension(EXT_EFX))
         alListenerf(AL_METERS_PER_UNIT, m_u);
 }
+
+
+DECL_THUNK1(void, Listener, setGain,, ALfloat)
+DECL_THUNK3(void, Listener, setPosition,, ALfloat, ALfloat, ALfloat)
+DECL_THUNK1(void, Listener, setPosition,, const ALfloat*)
+DECL_THUNK3(void, Listener, setVelocity,, ALfloat, ALfloat, ALfloat)
+DECL_THUNK1(void, Listener, setVelocity,, const ALfloat*)
+DECL_THUNK6(void, Listener, setOrientation,, ALfloat, ALfloat, ALfloat, ALfloat, ALfloat, ALfloat)
+DECL_THUNK2(void, Listener, setOrientation,, const ALfloat*, const ALfloat*)
+DECL_THUNK1(void, Listener, setOrientation,, const ALfloat*)
+DECL_THUNK1(void, Listener, setMetersPerUnit,, ALfloat)
 
 }
