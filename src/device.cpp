@@ -184,7 +184,7 @@ String ALDevice::getCurrentHRTF() const
     return String(alcGetString(mDevice, ALC_HRTF_SPECIFIER_SOFT));
 }
 
-void ALDevice::reset(const Vector<AttributePair> &attributes)
+void ALDevice::reset(ArrayView<AttributePair> attributes)
 {
     if(!hasExtension(SOFT_HRTF))
         throw std::runtime_error("ALC_SOFT_HRTF not supported");
@@ -204,7 +204,9 @@ void ALDevice::reset(const Vector<AttributePair> &attributes)
             /* Attribute list was not properly terminated. Copy the attribute
              * list and add the 0 sentinel.
              */
-            Vector<AttributePair> attrs = attributes;
+            Vector<AttributePair> attrs;
+            attrs.reserve(attributes.size());
+            std::copy(attributes.begin(), attributes.end(), std::back_inserter(attrs));
             attrs.push_back({0, 0});
             return alcResetDeviceSOFT(mDevice, &std::get<0>(attrs.front()));
         }
@@ -215,7 +217,7 @@ void ALDevice::reset(const Vector<AttributePair> &attributes)
 }
 
 
-Context ALDevice::createContext(const Vector<AttributePair> &attributes)
+Context ALDevice::createContext(ArrayView<AttributePair> attributes)
 {
     ALCcontext *ctx = [this, &attributes]() -> ALCcontext*
     {
@@ -233,7 +235,9 @@ Context ALDevice::createContext(const Vector<AttributePair> &attributes)
             /* Attribute list was not properly terminated. Copy the attribute
              * list and add the 0 sentinel.
              */
-            Vector<AttributePair> attrs = attributes;
+            Vector<AttributePair> attrs;
+            attrs.reserve(attributes.size());
+            std::copy(attributes.begin(), attributes.end(), std::back_inserter(attrs));
             attrs.push_back({0, 0});
             return alcCreateContext(mDevice, &std::get<0>(attrs.front()));
         }
@@ -282,8 +286,8 @@ DECL_THUNK0(ALCuint, Device, getMaxAuxiliarySends, const)
 DECL_THUNK0(Vector<String>, Device, enumerateHRTFNames, const)
 DECL_THUNK0(bool, Device, isHRTFEnabled, const)
 DECL_THUNK0(String, Device, getCurrentHRTF, const)
-DECL_THUNK1(void, Device, reset,, const Vector<AttributePair>&)
-DECL_THUNK1(Context, Device, createContext,, const Vector<AttributePair>&)
+DECL_THUNK1(void, Device, reset,, ArrayView<AttributePair>)
+DECL_THUNK1(Context, Device, createContext,, ArrayView<AttributePair>)
 DECL_THUNK0(void, Device, pauseDSP,)
 DECL_THUNK0(void, Device, resumeDSP,)
 void Device::close()

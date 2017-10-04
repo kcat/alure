@@ -65,8 +65,8 @@ public:
     void addSource(Source source);
     void removeSource(Source source);
 
-    void addSources(const Vector<Source> &sources);
-    void removeSources(const Vector<Source> &sources);
+    void addSources(ArrayView<Source> sources);
+    void removeSources(ArrayView<Source> sources);
 
     void addSubGroup(SourceGroup group);
     void removeSubGroup(SourceGroup group);

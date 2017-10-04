@@ -103,6 +103,88 @@ using Vector = std::vector<T>;
 // you must recompile the library.
 using String = std::string;
 
+// A rather simple ArrayView container. This allows accepting various array
+// types (std::array, Vector, a static-sized array, a dynamic array + size)
+// without copying its elements.
+template<typename T>
+class ArrayView {
+    T *mElems;
+    size_t mNumElems;
+
+public:
+    typedef T *iterator;
+    typedef const T *const_iterator;
+
+    ArrayView() : mElems(nullptr), mNumElems(0) { }
+    ArrayView(const ArrayView &rhs) : mElems(rhs.data()), mNumElems(rhs.size()) { }
+    ArrayView(ArrayView&& rhs) : mElems(rhs.data()), mNumElems(rhs.size()) { }
+    ArrayView(T *elems, size_t num_elems) : mElems(elems), mNumElems(num_elems) { }
+    template<size_t N>
+    ArrayView(T (&elems)[N]) : mElems(elems), mNumElems(N) { }
+    template<typename OtherT>
+    ArrayView(OtherT &arr) : mElems(arr.data()), mNumElems(arr.size()) { }
+
+    ArrayView& operator=(const ArrayView &rhs)
+    {
+        mElems = rhs.data();
+        mNumElems = rhs.size();
+    }
+    ArrayView& operator=(ArrayView&& rhs)
+    {
+        mElems = rhs.data();
+        mNumElems = rhs.size();
+    }
+    template<size_t N>
+    ArrayView& operator=(T (&elems)[N])
+    {
+        mElems = elems;
+        mNumElems = N;
+    }
+    template<typename OtherT>
+    ArrayView& operator=(OtherT &arr)
+    {
+        mElems = arr.data();
+        mNumElems = arr.size();
+    }
+
+
+    const T *data() const { return mElems; }
+    T *data() { return mElems; }
+
+    size_t size() const { return mNumElems; }
+    bool empty() const { return mNumElems == 0; }
+
+    const T& operator[](size_t i) const { return mElems[i]; }
+    T& operator[](size_t i) { return mElems[i]; }
+
+    const T& front() const { return mElems[0]; }
+    T& front() { return mElems[0]; }
+    const T& back() const { return mElems[mNumElems-1]; }
+    T& back() { return mElems[mNumElems-1]; }
+
+    const T& at(size_t i) const
+    {
+        if(i >= mNumElems)
+            throw std::out_of_range("alure::ArrayView::at: element out of range");
+        return mElems[i];
+    }
+    T& at(size_t i)
+    {
+        if(i >= mNumElems)
+            throw std::out_of_range("alure::ArrayView::at: element out of range");
+        return mElems[i];
+    }
+
+    iterator begin() { return mElems; }
+    const_iterator begin() const { return mElems; }
+    const_iterator cbegin() const { return mElems; }
+
+    iterator end() { return mElems + mNumElems; }
+    const_iterator end() const { return mElems + mNumElems; }
+    const_iterator cend() const { return mElems + mNumElems; }
+};
+
+
 /**
  * An attribute pair, for passing attributes to Device::createContext and
  * Device::reset.
@@ -381,12 +463,12 @@ public:
      *
      * Requires the ALC_SOFT_HRTF extension.
      */
-    void reset(const Vector<AttributePair> &attributes);
+    void reset(ArrayView<AttributePair> attributes);
 
     /**
      * Creates a new Context on this device, using the specified attributes.
      */
-    Context createContext(const Vector<AttributePair> &attributes=Vector<AttributePair>{});
+    Context createContext(ArrayView<AttributePair> attributes=ArrayView<AttributePair>());
 
     /**
      * Pauses device processing, stopping updates for its contexts. Multiple
@@ -924,9 +1006,9 @@ public:
     void removeSource(Source source);
 
     /** Adds a list of sources to the group at once. */
-    void addSources(const Vector<Source> &sources);
+    void addSources(ArrayView<Source> sources);
     /** Removes a list of sources from the source group. */
-    void removeSources(const Vector<Source> &sources);
+    void removeSources(ArrayView<Source> sources);
 
     /**
      * Adds group as a subgroup of the source group. This method will throw an

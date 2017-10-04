@@ -77,11 +77,12 @@ int main(int argc, char *argv[])
                 std::cerr<< "HRTF \""<<argv[i+1]<<"\" not found" <<std::endl;
             else
             {
-                dev.reset({
+                std::array<alure::AttributePair,3> attrs{{
                     {ALC_HRTF_SOFT, ALC_TRUE},
                     {ALC_HRTF_ID_SOFT, std::distance(hrtf_names.begin(), iter)},
                     {0, 0}
-                });
+                }};
+                dev.reset(attrs);
                 std::cout<< "Using HRTF \""<<dev.getCurrentHRTF()<<"\"" <<std::endl;
             }
 

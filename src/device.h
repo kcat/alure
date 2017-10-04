@@ -63,9 +63,9 @@ public:
     Vector<String> enumerateHRTFNames() const;
     bool isHRTFEnabled() const;
     String getCurrentHRTF() const;
-    void reset(const Vector<AttributePair> &attributes);
+    void reset(ArrayView<AttributePair> attributes);
 
-    Context createContext(const Vector<AttributePair> &attributes);
+    Context createContext(ArrayView<AttributePair> attributes);
 
     void pauseDSP();
     void resumeDSP();

@@ -85,7 +85,7 @@ void ALSourceGroup::removeSource(Source source)
 }
 
 
-void ALSourceGroup::addSources(const Vector<Source> &sources)
+void ALSourceGroup::addSources(ArrayView<Source> sources)
 {
     CheckContext(mContext);
     if(sources.empty())
@@ -111,7 +111,7 @@ void ALSourceGroup::addSources(const Vector<Source> &sources)
     }
 }
 
-void ALSourceGroup::removeSources(const Vector<Source> &sources)
+void ALSourceGroup::removeSources(ArrayView<Source> sources)
 {
     Batcher batcher = mContext->getBatcher();
     for(Source source : sources)
@@ -337,8 +337,8 @@ void ALSourceGroup::release()
 DECL_THUNK0(const String&, SourceGroup, getName, const)
 DECL_THUNK1(void, SourceGroup, addSource,, Source)
 DECL_THUNK1(void, SourceGroup, removeSource,, Source)
-DECL_THUNK1(void, SourceGroup, addSources,, const Vector<Source>&)
-DECL_THUNK1(void, SourceGroup, removeSources,, const Vector<Source>&)
+DECL_THUNK1(void, SourceGroup, addSources,, ArrayView<Source>)
+DECL_THUNK1(void, SourceGroup, removeSources,, ArrayView<Source>)
 DECL_THUNK1(void, SourceGroup, addSubGroup,, SourceGroup)
 DECL_THUNK1(void, SourceGroup, removeSubGroup,, SourceGroup)
 DECL_THUNK0(Vector<Source>, SourceGroup, getSources, const)
