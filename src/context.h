@@ -41,6 +41,7 @@ enum ALExtension {
 
     SOFT_loop_points,
     SOFT_source_latency,
+    SOFT_source_resampler,
     SOFT_source_spatialize,
 
     EXT_disconnect,
@@ -163,6 +164,7 @@ public:
 
     bool hasExtension(ALExtension ext) const { return mHasExt[ext]; }
 
+    LPALGETSTRINGISOFT alGetStringiSOFT;
     LPALGETSOURCEI64VSOFT alGetSourcei64vSOFT;
 
     LPALGENEFFECTS alGenEffects;

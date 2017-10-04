@@ -210,6 +210,11 @@ static void LoadEFX(ALContext *ctx)
     LoadALFunc(&ctx->alGetAuxiliaryEffectSlotfv,   "alGetAuxiliaryEffectSlotfv");
 }
 
+static void LoadSourceResampler(ALContext *ctx)
+{
+    LoadALFunc(&ctx->alGetStringiSOFT, "alGetStringiSOFT");
+}
+
 static void LoadSourceLatency(ALContext *ctx)
 {
     LoadALFunc(&ctx->alGetSourcei64vSOFT, "alGetSourcei64vSOFT");
@@ -232,6 +237,7 @@ static const struct {
 
     { SOFT_loop_points,       "AL_SOFT_loop_points",       LoadNothing },
     { SOFT_source_latency,    "AL_SOFT_source_latency",    LoadSourceLatency },
+    { SOFT_source_resampler,  "AL_SOFT_source_resampler",  LoadSourceResampler },
     { SOFT_source_spatialize, "AL_SOFT_source_spatialize", LoadNothing },
 
     { EXT_disconnect, "ALC_EXT_disconnect", LoadNothing },
