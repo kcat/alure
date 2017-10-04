@@ -204,7 +204,8 @@ void ALSource::resetProperties()
     mStereoAngles[0] =  F_PI / 6.0f;
     mStereoAngles[1] = -F_PI / 6.0f;
     mSpatialize = Spatialize::Auto;
-    mResampler = alGetInteger(AL_DEFAULT_RESAMPLER_SOFT);
+    mResampler = mContext->hasExtension(SOFT_source_resampler) ?
+                 alGetInteger(AL_DEFAULT_RESAMPLER_SOFT) : 0;
     mLooping = false;
     mRelative = false;
     mDryGainHFAuto = true;
