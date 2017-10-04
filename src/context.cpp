@@ -777,7 +777,7 @@ Effect ALContext::createEffect()
 }
 
 
-SourceGroup *ALContext::createSourceGroup(String name)
+SourceGroup ALContext::createSourceGroup(String name)
 {
     auto iter = std::lower_bound(mSourceGroups.begin(), mSourceGroups.end(), name,
         [](const UniquePtr<ALSourceGroup> &lhs, const String &rhs) -> bool
@@ -786,10 +786,10 @@ SourceGroup *ALContext::createSourceGroup(String name)
     if(iter != mSourceGroups.end() && (*iter)->getName() == name)
         throw std::runtime_error("Duplicate source group name");
     iter = mSourceGroups.insert(iter, MakeUnique<ALSourceGroup>(this, std::move(name)));
-    return iter->get();
+    return SourceGroup(iter->get());
 }
 
-SourceGroup *ALContext::getSourceGroup(const String &name)
+SourceGroup ALContext::getSourceGroup(const String &name)
 {
     auto iter = std::lower_bound(mSourceGroups.begin(), mSourceGroups.end(), name,
         [](const UniquePtr<ALSourceGroup> &lhs, const String &rhs) -> bool
@@ -797,7 +797,7 @@ SourceGroup *ALContext::getSourceGroup(const String &name)
     );
     if(iter == mSourceGroups.end() || (*iter)->getName() != name)
         throw std::runtime_error("Source group not found");
-    return iter->get();
+    return SourceGroup(iter->get());
 }
 
 void ALContext::freeSourceGroup(ALSourceGroup *group)
@@ -879,8 +879,8 @@ DECL_THUNK1(void, Context, removeBuffer,, Buffer)
 DECL_THUNK0(Source*, Context, createSource,)
 DECL_THUNK0(AuxiliaryEffectSlot, Context, createAuxiliaryEffectSlot,)
 DECL_THUNK0(Effect, Context, createEffect,)
-DECL_THUNK1(SourceGroup*, Context, createSourceGroup,, String)
-DECL_THUNK1(SourceGroup*, Context, getSourceGroup,, const String&)
+DECL_THUNK1(SourceGroup, Context, createSourceGroup,, String)
+DECL_THUNK1(SourceGroup, Context, getSourceGroup,, const String&)
 DECL_THUNK1(void, Context, setDopplerFactor,, ALfloat)
 DECL_THUNK1(void, Context, setSpeedOfSound,, ALfloat)
 DECL_THUNK1(void, Context, setDistanceModel,, DistanceModel)

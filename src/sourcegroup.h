@@ -17,7 +17,7 @@ struct SourceGroupProps {
     SourceGroupProps() : mGain(1.0f), mPitch(1.0f) { }
 };
 
-class ALSourceGroup : public SourceGroup, SourceGroupProps {
+class ALSourceGroup : SourceGroupProps {
     ALContext *const mContext;
 
     Vector<ALSource*> mSources;
@@ -58,40 +58,37 @@ public:
     ALSourceGroup(ALContext *context, String name)
       : mContext(context), mParent(nullptr), mName(std::move(name))
     { }
-    // Avoid a warning about deleting an object with virtual functions but no
-    // virtual destructor.
-    virtual ~ALSourceGroup() { }
 
     ALfloat getAppliedGain() const { return mGain * mParentProps.mGain; }
     ALfloat getAppliedPitch() const { return mPitch * mParentProps.mPitch; }
 
-    void addSource(Source *source) override final;
-    void removeSource(Source *source) override final;
+    void addSource(Source *source);
+    void removeSource(Source *source);
 
-    void addSources(const Vector<Source*> &sources) override final;
-    void removeSources(const Vector<Source*> &sources) override final;
+    void addSources(const Vector<Source*> &sources);
+    void removeSources(const Vector<Source*> &sources);
 
-    void addSubGroup(SourceGroup *group) override final;
-    void removeSubGroup(SourceGroup *group) override final;
+    void addSubGroup(SourceGroup group);
+    void removeSubGroup(SourceGroup group);
 
-    Vector<Source*> getSources() const override final;
+    Vector<Source*> getSources() const;
 
-    Vector<SourceGroup*> getSubGroups() const override final;
+    Vector<SourceGroup> getSubGroups() const;
 
-    void setGain(ALfloat gain) override final;
-    ALfloat getGain() const override final { return mGain; }
+    void setGain(ALfloat gain);
+    ALfloat getGain() const { return mGain; }
 
-    void setPitch(ALfloat pitch) override final;
-    ALfloat getPitch() const override final { return mPitch; }
+    void setPitch(ALfloat pitch);
+    ALfloat getPitch() const { return mPitch; }
 
-    void pauseAll() const override final;
-    void resumeAll() const override final;
+    void pauseAll() const;
+    void resumeAll() const;
 
-    void stopAll() const override final;
+    void stopAll() const;
 
-    const String &getName() const override final { return mName; }
+    const String &getName() const { return mName; }
 
-    void release() override final;
+    void release();
 };
 
 } // namespace alure2

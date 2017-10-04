@@ -126,9 +126,9 @@ void ALSourceGroup::removeSources(const Vector<Source*> &sources)
 }
 
 
-void ALSourceGroup::addSubGroup(SourceGroup *group)
+void ALSourceGroup::addSubGroup(SourceGroup group)
 {
-    ALSourceGroup *algrp = cast<ALSourceGroup*>(group);
+    ALSourceGroup *algrp = group.pImpl;
     if(!algrp) throw std::runtime_error("SourceGroup is not valid");
     CheckContext(mContext);
 
@@ -143,10 +143,10 @@ void ALSourceGroup::addSubGroup(SourceGroup *group)
     algrp->setParentGroup(this);
 }
 
-void ALSourceGroup::removeSubGroup(SourceGroup *group)
+void ALSourceGroup::removeSubGroup(SourceGroup group)
 {
-    auto iter = std::lower_bound(mSubGroups.begin(), mSubGroups.end(), group);
-    if(iter != mSubGroups.end() && *iter == group)
+    auto iter = std::lower_bound(mSubGroups.begin(), mSubGroups.end(), group.pImpl);
+    if(iter != mSubGroups.end() && *iter == group.pImpl)
     {
         Batcher batcher = mContext->getBatcher();
         (*iter)->unsetParentGroup();
@@ -163,11 +163,12 @@ Vector<Source*> ALSourceGroup::getSources() const
     return ret;
 }
 
-alure::Vector<SourceGroup*> ALSourceGroup::getSubGroups() const
+alure::Vector<SourceGroup> ALSourceGroup::getSubGroups() const
 {
-    Vector<SourceGroup*> ret;
+    Vector<SourceGroup> ret;
     ret.reserve(mSubGroups.size());
-    std::copy(mSubGroups.begin(), mSubGroups.end(), std::back_inserter(ret));
+    for(ALSourceGroup *grp : mSubGroups)
+        ret.emplace_back(SourceGroup(grp));
     return ret;
 }
 
@@ -329,6 +330,29 @@ void ALSourceGroup::release()
     mParent = nullptr;
 
     mContext->freeSourceGroup(this);
+}
+
+
+DECL_THUNK0(const String&, SourceGroup, getName, const)
+DECL_THUNK1(void, SourceGroup, addSource,, Source*)
+DECL_THUNK1(void, SourceGroup, removeSource,, Source*)
+DECL_THUNK1(void, SourceGroup, addSources,, const Vector<Source*>&)
+DECL_THUNK1(void, SourceGroup, removeSources,, const Vector<Source*>&)
+DECL_THUNK1(void, SourceGroup, addSubGroup,, SourceGroup)
+DECL_THUNK1(void, SourceGroup, removeSubGroup,, SourceGroup)
+DECL_THUNK0(Vector<Source*>, SourceGroup, getSources, const)
+DECL_THUNK0(Vector<SourceGroup>, SourceGroup, getSubGroups, const)
+DECL_THUNK1(void, SourceGroup, setGain,, ALfloat)
+DECL_THUNK0(ALfloat, SourceGroup, getGain, const)
+DECL_THUNK1(void, SourceGroup, setPitch,, ALfloat)
+DECL_THUNK0(ALfloat, SourceGroup, getPitch, const)
+DECL_THUNK0(void, SourceGroup, pauseAll, const)
+DECL_THUNK0(void, SourceGroup, resumeAll, const)
+DECL_THUNK0(void, SourceGroup, stopAll, const)
+void SourceGroup::release()
+{
+    pImpl->release();
+    pImpl = nullptr;
 }
 
 } // namespace alure

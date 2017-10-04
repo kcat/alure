@@ -537,8 +537,8 @@ public:
 
     Effect createEffect();
 
-    SourceGroup *createSourceGroup(String name);
-    SourceGroup *getSourceGroup(const String &name);
+    SourceGroup createSourceGroup(String name);
+    SourceGroup getSourceGroup(const String &name);
 
     void setDopplerFactor(ALfloat factor);
 
@@ -889,69 +889,75 @@ public:
 };
 
 
+class ALSourceGroup;
 class ALURE_API SourceGroup {
+    friend class ALContext;
+    friend class ALSourceGroup;
+
+    MAKE_PIMPL(SourceGroup, ALSourceGroup)
+
 public:
     /** Retrieves the associated name of the source group. */
-    virtual const String &getName() const = 0;
+    const String &getName() const;
 
     /**
      * Adds source to the source group. A source may only be part of one group
      * at a time, and will automatically be removed from its current group as
      * needed.
      */
-    virtual void addSource(Source *source) = 0;
+    void addSource(Source *source);
     /** Removes source from the source group. */
-    virtual void removeSource(Source *source) = 0;
+    void removeSource(Source *source);
 
     /** Adds a list of sources to the group at once. */
-    virtual void addSources(const Vector<Source*> &sources) = 0;
+    void addSources(const Vector<Source*> &sources);
     /** Removes a list of sources from the source group. */
-    virtual void removeSources(const Vector<Source*> &sources) = 0;
+    void removeSources(const Vector<Source*> &sources);
 
     /**
      * Adds group as a subgroup of the source group. This method will throw an
      * exception if group is being added to a group it has as a sub-group (i.e.
      * it would create a circular sub-group chain).
      */
-    virtual void addSubGroup(SourceGroup *group) = 0;
+    void addSubGroup(SourceGroup group);
     /** Removes group from the source group. */
-    virtual void removeSubGroup(SourceGroup *group) = 0;
+    void removeSubGroup(SourceGroup group);
 
     /** Returns the list of sources currently in the group. */
-    virtual Vector<Source*> getSources() const = 0;
+    Vector<Source*> getSources() const;
 
     /** Returns the list of subgroups currently in the group. */
-    virtual Vector<SourceGroup*> getSubGroups() const = 0;
+    Vector<SourceGroup> getSubGroups() const;
 
     /** Sets the source group gain, which accumulates with its sources. */
-    virtual void setGain(ALfloat gain) = 0;
+    void setGain(ALfloat gain);
     /** Gets the source group gain. */
-    virtual ALfloat getGain() const = 0;
+    ALfloat getGain() const;
 
     /** Sets the source group pitch, which accumulates with its sources. */
-    virtual void setPitch(ALfloat pitch) = 0;
+    void setPitch(ALfloat pitch);
     /** Gets the source group pitch. */
-    virtual ALfloat getPitch() const = 0;
+    ALfloat getPitch() const;
 
     /**
      * Pauses all currently-playing sources that are under this group,
      * including sub-groups.
      */
-    virtual void pauseAll() const = 0;
+    void pauseAll() const;
     /**
      * Resumes all paused sources that are under this group, including
      * sub-groups.
      */
-    virtual void resumeAll() const = 0;
+    void resumeAll() const;
 
     /** Stops all sources that are under this group, including sub-groups. */
-    virtual void stopAll() const = 0;
+    void stopAll() const;
 
     /**
      * Releases the source group, removing all sources from it before being
      * freed.
      */
-    virtual void release() = 0;
+    void release();
 };
 
 

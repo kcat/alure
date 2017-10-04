@@ -256,8 +256,8 @@ public:
 
     Effect createEffect();
 
-    SourceGroup *createSourceGroup(String name);
-    SourceGroup *getSourceGroup(const String &name);
+    SourceGroup createSourceGroup(String name);
+    SourceGroup getSourceGroup(const String &name);
 
     void setDopplerFactor(ALfloat factor);
 
