@@ -95,6 +95,10 @@ void ALEffect::destroy()
 }
 
 DECL_THUNK1(void, Effect, setReverbProperties,, const EFXEAXREVERBPROPERTIES&)
-DECL_THUNK0(void, Effect, destroy,)
+void Effect::destroy()
+{
+    pImpl->destroy();
+    pImpl = nullptr;
+}
 
 }

@@ -57,7 +57,11 @@ void ALAuxiliaryEffectSlot::release()
 DECL_THUNK1(void, AuxiliaryEffectSlot, setGain,, ALfloat)
 DECL_THUNK1(void, AuxiliaryEffectSlot, setSendAuto,, bool)
 DECL_THUNK1(void, AuxiliaryEffectSlot, applyEffect,, Effect)
-DECL_THUNK0(void, AuxiliaryEffectSlot, release,)
+void AuxiliaryEffectSlot::release()
+{
+    pImpl->release();
+    pImpl = nullptr;
+}
 DECL_THUNK0(Vector<SourceSend>, AuxiliaryEffectSlot, getSourceSends, const)
 DECL_THUNK0(bool, AuxiliaryEffectSlot, isInUse, const)
 
