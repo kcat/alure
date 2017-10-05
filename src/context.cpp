@@ -462,6 +462,7 @@ void ALContext::setAsyncWakeInterval(ALuint msec)
 
 SharedPtr<Decoder> ALContext::createDecoder(const String &name)
 {
+    CheckContext(this);
     auto file = FileIOFactory::get().openFile(name);
     if(file) return GetDecoder(name, std::move(file));
 
@@ -482,6 +483,7 @@ SharedPtr<Decoder> ALContext::createDecoder(const String &name)
 
 bool ALContext::isSupported(ChannelConfig channels, SampleType type) const
 {
+    CheckContext(this);
     return GetFormat(channels, type) != AL_NONE;
 }
 

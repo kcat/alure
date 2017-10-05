@@ -572,12 +572,12 @@ public:
      */
     ALuint getAsyncWakeInterval() const;
 
+    // Functions below require the context to be current
+
     /**
      * Creates a Decoder instance for the given audio file or resource name.
      */
     SharedPtr<Decoder> createDecoder(const String &name);
-
-    // Functions below require the context to be current
 
     /**
      * Queries if the channel configuration and sample type are supported by
