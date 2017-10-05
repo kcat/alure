@@ -47,6 +47,22 @@ static opus_int64 tell(void *user_data)
 }
 
 
+template<typename T> struct OggTypeInfo { };
+template<>
+struct OggTypeInfo<ogg_int16_t>
+{
+    template<typename ...Args>
+    static int read(Args&& ...args)
+    { return op_read(std::forward<Args>(args)...); }
+};
+template<>
+struct OggTypeInfo<float>
+{
+    template<typename ...Args>
+    static int read(Args&& ...args)
+    { return op_read_float(std::forward<Args>(args)...); }
+};
+
 class OpusFileDecoder : public Decoder {
     UniquePtr<std::istream> mFile;
 
@@ -54,10 +70,76 @@ class OpusFileDecoder : public Decoder {
     int mOggBitstream;
 
     ChannelConfig mChannelConfig;
+    SampleType mSampleType;
+
+    template<typename T>
+    ALuint do_read(T *ptr, ALuint count)
+    {
+        ALuint total = 0;
+        T *samples = ptr;
+        int num_chans = FramesToBytes(1, mChannelConfig, SampleType::UInt8);
+        while(total < count)
+        {
+            if(num_chans != op_head(mOggFile, -1)->channel_count)
+                break;
+            int len = (count-total) * num_chans;
+
+            long got = OggTypeInfo<T>::read(mOggFile, samples, len, &mOggBitstream);
+            if(got <= 0) break;
+
+            samples += got*num_chans;
+            total += got;
+        }
+
+        // 1, 2, and 4 channel files decode into the same channel order as
+        // OpenAL, however 6 (5.1), 7 (6.1), and 8 (7.1) channel files need to be
+        // re-ordered.
+        if(mChannelConfig == ChannelConfig::X51)
+        {
+            samples = ptr;
+            for(ALuint i = 0;i < total;++i)
+            {
+                // OpenAL : FL, FR, FC, LFE, RL, RR
+                // Opus   : FL, FC, FR,  RL, RR, LFE
+                std::swap(samples[i*6 + 1], samples[i*6 + 2]);
+                std::swap(samples[i*6 + 3], samples[i*6 + 5]);
+                std::swap(samples[i*6 + 4], samples[i*6 + 5]);
+            }
+        }
+        else if(mChannelConfig == ChannelConfig::X61)
+        {
+            samples = ptr;
+            for(ALuint i = 0;i < total;++i)
+            {
+                // OpenAL : FL, FR, FC, LFE, RC, SL, SR
+                // Opus   : FL, FC, FR,  SL, SR, RC, LFE
+                std::swap(samples[i*7 + 1], samples[i*7 + 2]);
+                std::swap(samples[i*7 + 3], samples[i*7 + 6]);
+                std::swap(samples[i*7 + 4], samples[i*7 + 5]);
+                std::swap(samples[i*7 + 5], samples[i*7 + 6]);
+            }
+        }
+        else if(mChannelConfig == ChannelConfig::X71)
+        {
+            samples = ptr;
+            for(ALuint i = 0;i < total;++i)
+            {
+                // OpenAL : FL, FR, FC, LFE, RL, RR, SL, SR
+                // Opus   : FL, FC, FR,  SL, SR, RL, RR, LFE
+                std::swap(samples[i*8 + 1], samples[i*8 + 2]);
+                std::swap(samples[i*8 + 3], samples[i*8 + 7]);
+                std::swap(samples[i*8 + 4], samples[i*8 + 5]);
+                std::swap(samples[i*8 + 5], samples[i*8 + 6]);
+                std::swap(samples[i*8 + 6], samples[i*8 + 7]);
+            }
+        }
+
+        return total;
+    }
 
 public:
-    OpusFileDecoder(UniquePtr<std::istream> file, OggOpusFile *oggfile, ChannelConfig sconfig)
-      : mFile(std::move(file)), mOggFile(oggfile), mOggBitstream(0), mChannelConfig(sconfig)
+    OpusFileDecoder(UniquePtr<std::istream> file, OggOpusFile *oggfile, ChannelConfig sconfig, SampleType stype)
+      : mFile(std::move(file)), mOggFile(oggfile), mOggBitstream(0), mChannelConfig(sconfig), mSampleType(stype)
     { }
     ~OpusFileDecoder() override final;
 
@@ -93,7 +175,7 @@ ChannelConfig OpusFileDecoder::getChannelConfig() const
 
 SampleType OpusFileDecoder::getSampleType() const
 {
-    return SampleType::Int16;
+    return mSampleType;
 }
 
 
@@ -121,66 +203,9 @@ std::pair<uint64_t,uint64_t> OpusFileDecoder::getLoopPoints() const
 
 ALuint OpusFileDecoder::read(ALvoid *ptr, ALuint count)
 {
-    ALuint total = 0;
-    opus_int16 *samples = (opus_int16*)ptr;
-    int num_chans = FramesToBytes(1, mChannelConfig, SampleType::UInt8);
-    while(total < count)
-    {
-        if(num_chans != op_head(mOggFile, -1)->channel_count)
-            break;
-        int len = (count-total) * num_chans;
-
-        long got = op_read(mOggFile, samples, len, &mOggBitstream);
-        if(got <= 0) break;
-
-        samples += got*num_chans;
-        total += got;
-    }
-
-    // 1, 2, and 4 channel files decode into the same channel order as
-    // OpenAL, however 6 (5.1), 7 (6.1), and 8 (7.1) channel files need to be
-    // re-ordered.
-    if(mChannelConfig == ChannelConfig::X51)
-    {
-        samples = (opus_int16*)ptr;
-        for(ALuint i = 0;i < total;++i)
-        {
-            // OpenAL : FL, FR, FC, LFE, RL, RR
-            // Opus   : FL, FC, FR,  RL, RR, LFE
-            std::swap(samples[i*6 + 1], samples[i*6 + 2]);
-            std::swap(samples[i*6 + 3], samples[i*6 + 5]);
-            std::swap(samples[i*6 + 4], samples[i*6 + 5]);
-        }
-    }
-    else if(mChannelConfig == ChannelConfig::X61)
-    {
-        samples = (opus_int16*)ptr;
-        for(ALuint i = 0;i < total;++i)
-        {
-            // OpenAL : FL, FR, FC, LFE, RC, SL, SR
-            // Opus   : FL, FC, FR,  SL, SR, RC, LFE
-            std::swap(samples[i*7 + 1], samples[i*7 + 2]);
-            std::swap(samples[i*7 + 3], samples[i*7 + 6]);
-            std::swap(samples[i*7 + 4], samples[i*7 + 5]);
-            std::swap(samples[i*7 + 5], samples[i*7 + 6]);
-        }
-    }
-    else if(mChannelConfig == ChannelConfig::X71)
-    {
-        samples = (opus_int16*)ptr;
-        for(ALuint i = 0;i < total;++i)
-        {
-            // OpenAL : FL, FR, FC, LFE, RL, RR, SL, SR
-            // Opus   : FL, FC, FR,  SL, SR, RL, RR, LFE
-            std::swap(samples[i*8 + 1], samples[i*8 + 2]);
-            std::swap(samples[i*8 + 3], samples[i*8 + 7]);
-            std::swap(samples[i*8 + 4], samples[i*8 + 5]);
-            std::swap(samples[i*8 + 5], samples[i*8 + 6]);
-            std::swap(samples[i*8 + 6], samples[i*8 + 7]);
-        }
-    }
-
-    return total;
+    if(mSampleType == SampleType::Float32)
+        return do_read<float>(reinterpret_cast<float*>(ptr), count);
+    return do_read<ogg_int16_t>(reinterpret_cast<ogg_int16_t*>(ptr), count);
 }
 
 
@@ -213,7 +238,9 @@ SharedPtr<Decoder> OpusFileDecoderFactory::createDecoder(UniquePtr<std::istream>
         return nullptr;
     }
 
-    return MakeShared<OpusFileDecoder>(std::move(file), oggfile, channels);
+    if(Context::GetCurrent().isSupported(channels, SampleType::Float32))
+        return MakeShared<OpusFileDecoder>(std::move(file), oggfile, channels, SampleType::Float32);
+    return MakeShared<OpusFileDecoder>(std::move(file), oggfile, channels, SampleType::Int16);
 }
 
 }

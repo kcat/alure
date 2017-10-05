@@ -230,9 +230,12 @@ SharedPtr<Decoder> SndFileDecoderFactory::createDecoder(UniquePtr<std::istream> 
         case SF_FORMAT_FLOAT:
         case SF_FORMAT_DOUBLE:
         case SF_FORMAT_VORBIS:
-            stype = SampleType::Float32;
-            break;
-
+            if(Context::GetCurrent().isSupported(sconfig, SampleType::Float32))
+            {
+                stype = SampleType::Float32;
+                break;
+            }
+            /*fall-through*/
         default:
             stype = SampleType::Int16;
             break;
