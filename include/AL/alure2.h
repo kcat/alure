@@ -1305,7 +1305,7 @@ public:
      * Called when the given source reaches the end of the buffer or stream.
      *
      * Sources that stopped automatically will be detected upon a call to
-     * Context::update or Source::update, and will have forced set to false.
+     * Context::update or Source::update.
      */
     virtual void sourceStopped(Source source);
 
