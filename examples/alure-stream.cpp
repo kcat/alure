@@ -52,7 +52,7 @@ int main(int argc, char *argv[])
         if(offset > 0.0f)
             source.setOffset(uint64_t(offset * decoder->getFrequency()));
 
-        source.play(decoder, 32768, 4);
+        source.play(decoder, 12000, 4);
         std::cout<< "Playing "<<argv[i]<<" ("<<alure::GetSampleTypeName(decoder->getSampleType())<<", "
                                              <<alure::GetChannelConfigName(decoder->getChannelConfig())<<", "
                                              <<decoder->getFrequency()<<"hz)" <<std::endl;

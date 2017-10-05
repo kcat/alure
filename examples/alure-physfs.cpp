@@ -223,7 +223,7 @@ int main(int argc, char *argv[])
 
         alure::SharedPtr<alure::Decoder> decoder(ctx.createDecoder(argv[i]));
         alure::Source source = ctx.createSource();
-        source.play(decoder, 32768, 4);
+        source.play(decoder, 12000, 4);
         std::cout<< "Playing "<<argv[i]<<" ("<<alure::GetSampleTypeName(decoder->getSampleType())<<", "
                                              <<alure::GetChannelConfigName(decoder->getChannelConfig())<<", "
                                              <<decoder->getFrequency()<<"hz)" <<std::endl;

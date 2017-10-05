@@ -213,7 +213,7 @@ int main(int argc, char *argv[])
 
         source.setAuxiliarySend(auxslot, 0);
 
-        source.play(decoder, 32768, 4);
+        source.play(decoder, 12000, 4);
         std::cout<< "Playing "<<argv[i]<<" ("<<alure::GetSampleTypeName(decoder->getSampleType())<<", "
                                              <<alure::GetChannelConfigName(decoder->getChannelConfig())<<", "
                                              <<decoder->getFrequency()<<"hz)" <<std::endl;
