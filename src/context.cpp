@@ -408,11 +408,6 @@ ALContext::~ALContext()
 }
 
 
-Device ALContext::getDevice()
-{
-    return Device(mDevice);
-}
-
 void ALContext::destroy()
 {
     if(mRefs.load() != 0)
@@ -449,12 +444,6 @@ void ALContext::endBatch()
 }
 
 
-Listener ALContext::getListener()
-{
-    return Listener(&mListener);
-}
-
-
 SharedPtr<MessageHandler> ALContext::setMessageHandler(SharedPtr<MessageHandler> handler)
 {
     std::lock_guard<std::mutex> lock(mContextMutex);
@@ -468,11 +457,6 @@ void ALContext::setAsyncWakeInterval(ALuint msec)
     mWakeInterval.store(msec);
     mWakeMutex.lock(); mWakeMutex.unlock();
     mWakeThread.notify_all();
-}
-
-ALuint ALContext::getAsyncWakeInterval() const
-{
-    return mWakeInterval.load();
 }
 
 
@@ -668,11 +652,6 @@ void ALContext::removeBuffer(const String &name)
         (*iter)->cleanup();
         mBuffers.erase(iter);
     }
-}
-
-void ALContext::removeBuffer(Buffer buffer)
-{
-    removeBuffer(buffer.getName());
 }
 
 

@@ -230,21 +230,20 @@ public:
     void send(R MessageHandler::* func, Args&&... args)
     { if(mMessage.get()) (mMessage.get()->*func)(std::forward<Args>(args)...); }
 
-    Device getDevice();
+    Device getDevice() { return Device(mDevice); }
 
     void destroy();
 
     void startBatch();
     void endBatch();
 
-    Listener getListener();
+    Listener getListener() { return Listener(&mListener); }
 
     SharedPtr<MessageHandler> setMessageHandler(SharedPtr<MessageHandler> handler);
-    SharedPtr<MessageHandler> getMessageHandler() const
-    { return mMessage; }
+    SharedPtr<MessageHandler> getMessageHandler() const { return mMessage; }
 
     void setAsyncWakeInterval(ALuint msec);
-    ALuint getAsyncWakeInterval() const;
+    ALuint getAsyncWakeInterval() const { return mWakeInterval.load(); }
 
     SharedPtr<Decoder> createDecoder(const String &name);
 
@@ -256,7 +255,7 @@ public:
     Buffer getBuffer(const String &name);
     Buffer getBufferAsync(const String &name);
     void removeBuffer(const String &name);
-    void removeBuffer(Buffer buffer);
+    void removeBuffer(Buffer buffer) { removeBuffer(buffer.getName()); }
 
     Source createSource();
 
