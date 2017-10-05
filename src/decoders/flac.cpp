@@ -31,21 +31,44 @@ class FlacDecoder : public Decoder {
     {
         if(mSampleType == SampleType::UInt8)
         {
+            int shift = 8 - frame->header.bits_per_sample;
             ALubyte *samples = output;
             for(ALuint c = 0;c < frame->header.channels;c++)
             {
                 for(ALuint i = 0;i < todo;i++)
-                    samples[i*frame->header.channels + c] = ALubyte(buffer[c][offset+i] + 0x80);
+                    samples[i*frame->header.channels + c] = ALubyte((buffer[c][offset+i]<<shift) + 0x80);
+            }
+        }
+        else if(mSampleType == SampleType::Int16)
+        {
+            int shift = 16 - frame->header.bits_per_sample;
+            ALshort *samples = reinterpret_cast<ALshort*>(output);
+            if(shift >= 0)
+            {
+                for(ALuint c = 0;c < frame->header.channels;c++)
+                {
+                    for(ALuint i = 0;i < todo;i++)
+                        samples[i*frame->header.channels + c] = buffer[c][offset+i] << shift;
+                }
+            }
+            else
+            {
+                shift = -shift;
+                for(ALuint c = 0;c < frame->header.channels;c++)
+                {
+                    for(ALuint i = 0;i < todo;i++)
+                        samples[i*frame->header.channels + c] = buffer[c][offset+i] >> shift;
+                }
             }
         }
         else
         {
-            int shift = frame->header.bits_per_sample - 16;
-            ALshort *samples = reinterpret_cast<ALshort*>(output);
+            ALfloat scale = 1.0f / (float)(1<<(frame->header.bits_per_sample-1));
+            ALfloat *samples = reinterpret_cast<ALfloat*>(output);
             for(ALuint c = 0;c < frame->header.channels;c++)
             {
                 for(ALuint i = 0;i < todo;i++)
-                    samples[i*frame->header.channels + c] = buffer[c][offset+i] >> shift;
+                    samples[i*frame->header.channels + c] = (ALfloat)buffer[c][offset+i] * scale;
             }
         }
     }
@@ -56,21 +79,29 @@ class FlacDecoder : public Decoder {
 
         if(self->mFrequency == 0)
         {
-            ALuint bps = frame->header.bits_per_sample;
-            if(bps == 8)
-                self->mSampleType = SampleType::UInt8;
-            else
-            {
-                self->mSampleType = SampleType::Int16;
-                bps = 16;
-            }
-
             if(frame->header.channels == 1)
                 self->mChannelConfig = ChannelConfig::Mono;
             else if(frame->header.channels == 2)
                 self->mChannelConfig = ChannelConfig::Stereo;
             else
                 return FLAC__STREAM_DECODER_WRITE_STATUS_ABORT;
+
+            ALuint bps = frame->header.bits_per_sample;
+            if(bps > 16 && Context::GetCurrent().isSupported(self->mChannelConfig, SampleType::Float32))
+            {
+                self->mSampleType = SampleType::Float32;
+                bps = 32;
+            }
+            else if(bps > 8)
+            {
+                self->mSampleType = SampleType::Int16;
+                bps = 16;
+            }
+            else
+            {
+                self->mSampleType = SampleType::UInt8;
+                bps = 8;
+            }
 
             self->mFrameSize = frame->header.channels * bps/8;
             self->mFrequency = frame->header.sample_rate;
