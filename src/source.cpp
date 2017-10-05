@@ -324,7 +324,7 @@ void ALSource::groupPropUpdate(ALfloat gain, ALfloat pitch)
 
 void ALSource::play(Buffer buffer)
 {
-    ALBuffer *albuf = buffer.pImpl;
+    ALBuffer *albuf = buffer.getHandle();
     if(!albuf) throw std::runtime_error("Buffer is not valid");
     CheckContext(mContext);
     CheckContext(albuf->getContext());
@@ -1114,7 +1114,7 @@ void ALSource::setSendFilter(ALuint send, const FilterParams &filter)
 
 void ALSource::setAuxiliarySend(AuxiliaryEffectSlot auxslot, ALuint send)
 {
-    ALAuxiliaryEffectSlot *slot = auxslot.pImpl;
+    ALAuxiliaryEffectSlot *slot = auxslot.getHandle();
     if(slot) CheckContext(slot->getContext());
     CheckContext(mContext);
 
@@ -1144,7 +1144,7 @@ void ALSource::setAuxiliarySendFilter(AuxiliaryEffectSlot auxslot, ALuint send, 
 {
     if(!(filter.mGain >= 0.0f && filter.mGainHF >= 0.0f && filter.mGainLF >= 0.0f))
         throw std::runtime_error("Gain value out of range");
-    ALAuxiliaryEffectSlot *slot = auxslot.pImpl;
+    ALAuxiliaryEffectSlot *slot = auxslot.getHandle();
     if(slot) CheckContext(slot->getContext());
     CheckContext(mContext);
 

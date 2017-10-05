@@ -62,7 +62,7 @@ bool ALSourceGroup::findInSubGroups(ALSourceGroup *group) const
 
 void ALSourceGroup::addSource(Source source)
 {
-    ALSource *alsrc = source.pImpl;
+    ALSource *alsrc = source.getHandle();
     if(!alsrc) throw std::runtime_error("Source is not valid");
     CheckContext(mContext);
 
@@ -76,8 +76,8 @@ void ALSourceGroup::addSource(Source source)
 void ALSourceGroup::removeSource(Source source)
 {
     CheckContext(mContext);
-    auto iter = std::lower_bound(mSources.begin(), mSources.end(), source.pImpl);
-    if(iter != mSources.end() && *iter == source.pImpl)
+    auto iter = std::lower_bound(mSources.begin(), mSources.end(), source.getHandle());
+    if(iter != mSources.end() && *iter == source.getHandle())
     {
         (*iter)->unsetGroup();
         mSources.erase(iter);
@@ -96,7 +96,7 @@ void ALSourceGroup::addSources(ArrayView<Source> sources)
 
     for(Source source : sources)
     {
-        alsrcs.push_back(source.pImpl);
+        alsrcs.push_back(source.getHandle());
         if(!alsrcs.back()) throw std::runtime_error("Source is not valid");
     }
 
@@ -116,8 +116,8 @@ void ALSourceGroup::removeSources(ArrayView<Source> sources)
     Batcher batcher = mContext->getBatcher();
     for(Source source : sources)
     {
-        auto iter = std::lower_bound(mSources.begin(), mSources.end(), source.pImpl);
-        if(iter != mSources.end() && *iter == source.pImpl)
+        auto iter = std::lower_bound(mSources.begin(), mSources.end(), source.getHandle());
+        if(iter != mSources.end() && *iter == source.getHandle())
         {
             (*iter)->unsetGroup();
             mSources.erase(iter);
@@ -128,7 +128,7 @@ void ALSourceGroup::removeSources(ArrayView<Source> sources)
 
 void ALSourceGroup::addSubGroup(SourceGroup group)
 {
-    ALSourceGroup *algrp = group.pImpl;
+    ALSourceGroup *algrp = group.getHandle();
     if(!algrp) throw std::runtime_error("SourceGroup is not valid");
     CheckContext(mContext);
 
@@ -145,8 +145,8 @@ void ALSourceGroup::addSubGroup(SourceGroup group)
 
 void ALSourceGroup::removeSubGroup(SourceGroup group)
 {
-    auto iter = std::lower_bound(mSubGroups.begin(), mSubGroups.end(), group.pImpl);
-    if(iter != mSubGroups.end() && *iter == group.pImpl)
+    auto iter = std::lower_bound(mSubGroups.begin(), mSubGroups.end(), group.getHandle());
+    if(iter != mSubGroups.end() && *iter == group.getHandle())
     {
         Batcher batcher = mContext->getBatcher();
         (*iter)->unsetParentGroup();

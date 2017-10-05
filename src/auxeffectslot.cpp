@@ -30,7 +30,7 @@ void ALAuxiliaryEffectSlot::setSendAuto(bool sendauto)
 
 void ALAuxiliaryEffectSlot::applyEffect(Effect effect)
 {
-    const ALEffect *eff = effect.pImpl;
+    const ALEffect *eff = effect.getHandle();
     if(!eff) throw std::runtime_error("Invalid Effect");
     CheckContext(mContext);
 

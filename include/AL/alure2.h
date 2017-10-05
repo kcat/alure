@@ -386,10 +386,11 @@ enum class PlaybackDeviceName {
 private:                                                                      \
     ImplT *pImpl;                                                             \
                                                                               \
-    BaseT(ImplT *impl) : pImpl(impl) { }                                      \
-                                                                              \
 public:                                                                       \
+    using handle_type = ImplT*;                                               \
+                                                                              \
     BaseT() : pImpl(nullptr) { }                                              \
+    BaseT(ImplT *impl) : pImpl(impl) { }                                      \
     BaseT(const BaseT&) = default;                                            \
     BaseT(BaseT&&) = default;                                                 \
                                                                               \
@@ -398,13 +399,12 @@ public:                                                                       \
     BaseT& operator=(BaseT&&) = default;                                      \
                                                                               \
     bool operator==(const BaseT &rhs) const { return pImpl == rhs.pImpl; }    \
-    bool operator==(BaseT&& rhs) const { return pImpl == rhs.pImpl; }
+    bool operator==(BaseT&& rhs) const { return pImpl == rhs.pImpl; }         \
+                                                                              \
+    handle_type getHandle() const { return pImpl; }
 
 class ALDevice;
 class ALURE_API Device {
-    friend class ALDeviceManager;
-    friend class ALContext;
-
     MAKE_PIMPL(Device, ALDevice)
 
 public:
@@ -505,8 +505,6 @@ enum class DistanceModel {
 
 class ALContext;
 class ALURE_API Context {
-    friend class ALDevice;
-
     MAKE_PIMPL(Context, ALContext)
 
 public:
@@ -656,8 +654,6 @@ public:
 
 class ALListener;
 class ALURE_API Listener {
-    friend class ALContext;
-
     MAKE_PIMPL(Listener, ALListener)
 
 public:
@@ -684,9 +680,6 @@ enum class BufferLoadStatus {
 
 class ALBuffer;
 class ALURE_API Buffer {
-    friend class ALContext;
-    friend class ALSource;
-
     MAKE_PIMPL(Buffer, ALBuffer)
 
 public:
@@ -761,10 +754,6 @@ enum class Spatialize {
 
 class ALSource;
 class ALURE_API Source {
-    friend class ALContext;
-    friend class ALSource;
-    friend class ALSourceGroup;
-
     MAKE_PIMPL(Source, ALSource)
 
 public:
@@ -1015,9 +1004,6 @@ public:
 
 class ALSourceGroup;
 class ALURE_API SourceGroup {
-    friend class ALContext;
-    friend class ALSourceGroup;
-
     MAKE_PIMPL(SourceGroup, ALSourceGroup)
 
 public:
@@ -1092,9 +1078,6 @@ struct SourceSend {
 
 class ALAuxiliaryEffectSlot;
 class ALURE_API AuxiliaryEffectSlot {
-    friend class ALContext;
-    friend class ALSource;
-
     MAKE_PIMPL(AuxiliaryEffectSlot, ALAuxiliaryEffectSlot)
 
 public:
@@ -1133,9 +1116,6 @@ public:
 
 class ALEffect;
 class ALURE_API Effect {
-    friend class ALContext;
-    friend class ALAuxiliaryEffectSlot;
-
     MAKE_PIMPL(Effect, ALEffect)
 
 public:
