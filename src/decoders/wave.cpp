@@ -417,7 +417,7 @@ SharedPtr<Decoder> WaveDecoderFactory::createDecoder(UniquePtr<std::istream> &fi
         }
         else if(memcmp(tag, "data", 4) == 0)
         {
-            if(framesize == 0)
+            if(framesize == 0 || !Context::GetCurrent().isSupported(channels, type))
                 goto next_chunk;
 
             /* Make sure there's at least one sample frame of audio data. */
