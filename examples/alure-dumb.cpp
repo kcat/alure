@@ -252,20 +252,16 @@ int main(int argc, char *argv[])
     alure::DeviceManager &devMgr = alure::DeviceManager::get();
 
     int fileidx = 1;
-    alure::Device dev = [argc,argv,&devMgr,&fileidx]() -> alure::Device
+    alure::Device dev;
+    if(argc > 3 && strcmp(argv[1], "-device") == 0)
     {
-        if(argc > 3 && strcmp(argv[1], "-device") == 0)
-        {
-            fileidx = 3;
-            try {
-                return devMgr.openPlayback(argv[2]);
-            }
-            catch(...) {
-                std::cerr<< "Failed to open \""<<argv[2]<<"\" - trying default" <<std::endl;
-            }
-        }
-        return devMgr.openPlayback();
-    }();
+        fileidx = 3;
+        dev = devMgr.openPlayback(argv[2], std::nothrow);
+        if(!dev)
+            std::cerr<< "Failed to open \""<<argv[2]<<"\" - trying default" <<std::endl;
+    }
+    if(!dev)
+        dev = devMgr.openPlayback();
     std::cout<< "Opened \""<<dev.getName()<<"\"" <<std::endl;
 
     alure::Context ctx = dev.createContext();

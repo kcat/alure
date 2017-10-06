@@ -34,16 +34,7 @@ int main(int argc, char *argv[])
         std::cout<< "  "<<name<<((defname==name)?"  [DEFAULT]":"") <<'\n';
     std::cout<<std::endl;
 
-    alure::Device dev = [&devMgr, argc, argv]() -> alure::Device
-    {
-        if(argc > 1) try {
-            return devMgr.openPlayback(argv[1]);
-        }
-        catch(std::exception &e) {
-            std::cerr<< "Exception while opening requested device: "<<e.what() <<std::endl;
-        }
-        return devMgr.openPlayback();
-    }();
+    alure::Device dev = devMgr.openPlayback((argc > 1) ? argv[1] : "");
     std::cout<< "Info for device \""<<dev.getName(alure::PlaybackDeviceName::Complete)<<"\":" <<std::endl;
     ALCuint version = dev.getALCVersion();
     std::cout<< "ALC version: "<<alure::MajorVersion(version)<<"."<<alure::MinorVersion(version) <<std::endl;
