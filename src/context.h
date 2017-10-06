@@ -153,6 +153,9 @@ private:
     std::once_flag mSetExts;
     void setupExts();
 
+    Buffer doCreateBuffer(const String &name, Vector<UniquePtr<ALBuffer>>::iterator iter, SharedPtr<Decoder> decoder);
+    Buffer doCreateBufferAsync(const String &name, Vector<UniquePtr<ALBuffer>>::iterator iter, SharedPtr<Decoder> decoder);
+
     bool mIsConnected : 1;
     bool mIsBatching : 1;
 
@@ -254,6 +257,8 @@ public:
 
     Buffer getBuffer(const String &name);
     Buffer getBufferAsync(const String &name);
+    Buffer createBufferFrom(const String &name, SharedPtr<Decoder> decoder);
+    Buffer createBufferAsyncFrom(const String &name, SharedPtr<Decoder> decoder);
     void removeBuffer(const String &name);
     void removeBuffer(Buffer buffer) { removeBuffer(buffer.getName()); }
 

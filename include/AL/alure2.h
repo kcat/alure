@@ -629,6 +629,27 @@ public:
     Buffer getBufferAsync(const String &name);
 
     /**
+     * Creates and caches a Buffer using the given name. The name may alias an
+     * audio file, but it must not currently exist in the buffer cache. The
+     * returned buffer is normal in all other respects; getBuffer and
+     * getBufferAsync can (re-)retrieve it and removeBuffer must be used to
+     * remove it from the cache.
+     */
+    Buffer createBufferFrom(const String &name, SharedPtr<Decoder> decoder);
+
+    /**
+     * Creates and caches a Buffer using the given name. The name may alias an
+     * audio file, but it must not currently exist in the buffer cache.
+     *
+     * The returned Buffer object will be scheduled for loading asynchronously,
+     * and must be checked with a call to Buffer::getLoadStatus prior to being
+     * played. The given decoder will be held on to and used asynchronously to
+     * load the buffer. The decoder must not have its read or seek methods
+     * called while the buffer load status is pending.
+     */
+    Buffer createBufferAsyncFrom(const String &name, SharedPtr<Decoder> decoder);
+
+    /**
      * Deletes the cached Buffer object for the given audio file or
      * resource name. The buffer must not be in use by a Source.
      */

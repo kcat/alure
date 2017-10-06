@@ -511,28 +511,9 @@ ALsizei ALContext::getDefaultResamplerIndex() const
     return alGetInteger(AL_DEFAULT_RESAMPLER_SOFT);
 }
 
-Buffer ALContext::getBuffer(const String &name)
+
+Buffer ALContext::doCreateBuffer(const String &name, Vector<UniquePtr<ALBuffer>>::iterator iter, SharedPtr<Decoder> decoder)
 {
-    CheckContext(this);
-
-    auto hasher = std::hash<String>();
-    auto iter = std::lower_bound(mBuffers.begin(), mBuffers.end(), hasher(name),
-        [hasher](const UniquePtr<ALBuffer> &lhs, size_t rhs) -> bool
-        { return hasher(lhs->getName()) < rhs; }
-    );
-    if(iter != mBuffers.end() && (*iter)->getName() == name)
-    {
-        // Ensure the buffer is loaded before returning. getBuffer guarantees
-        // the returned buffer is loaded.
-        ALBuffer *buffer = iter->get();
-        while(buffer->getLoadStatus() == BufferLoadStatus::Pending)
-            std::this_thread::yield();
-        return Buffer(buffer);
-    }
-    // NOTE: 'iter' is used later to insert a new entry!
-
-    auto decoder = createDecoder(name);
-
     ALuint srate = decoder->getFrequency();
     ChannelConfig chans = decoder->getChannelConfig();
     SampleType type = decoder->getSampleType();
@@ -588,21 +569,8 @@ Buffer ALContext::getBuffer(const String &name)
     }
 }
 
-Buffer ALContext::getBufferAsync(const String &name)
+Buffer ALContext::doCreateBufferAsync(const String &name, Vector<UniquePtr<ALBuffer>>::iterator iter, SharedPtr<Decoder> decoder)
 {
-    CheckContext(this);
-
-    auto hasher = std::hash<String>();
-    auto iter = std::lower_bound(mBuffers.begin(), mBuffers.end(), hasher(name),
-        [hasher](const UniquePtr<ALBuffer> &lhs, size_t rhs) -> bool
-        { return hasher(lhs->getName()) < rhs; }
-    );
-    if(iter != mBuffers.end() && (*iter)->getName() == name)
-        return Buffer(iter->get());
-    // NOTE: 'iter' is used later to insert a new entry!
-
-    auto decoder = createDecoder(name);
-
     ALuint srate = decoder->getFrequency();
     ChannelConfig chans = decoder->getChannelConfig();
     SampleType type = decoder->getSampleType();
@@ -638,6 +606,78 @@ Buffer ALContext::getBufferAsync(const String &name)
     mWakeThread.notify_all();
 
     return Buffer(mBuffers.insert(iter, std::move(buffer))->get());
+}
+
+Buffer ALContext::getBuffer(const String &name)
+{
+    CheckContext(this);
+
+    auto hasher = std::hash<String>();
+    auto iter = std::lower_bound(mBuffers.begin(), mBuffers.end(), hasher(name),
+        [hasher](const UniquePtr<ALBuffer> &lhs, size_t rhs) -> bool
+        { return hasher(lhs->getName()) < rhs; }
+    );
+    if(iter != mBuffers.end() && (*iter)->getName() == name)
+    {
+        // Ensure the buffer is loaded before returning. getBuffer guarantees
+        // the returned buffer is loaded.
+        ALBuffer *buffer = iter->get();
+        while(buffer->getLoadStatus() == BufferLoadStatus::Pending)
+            std::this_thread::yield();
+        return Buffer(buffer);
+    }
+
+    auto decoder = createDecoder(name);
+    return doCreateBuffer(name, iter, std::move(decoder));
+}
+
+Buffer ALContext::getBufferAsync(const String &name)
+{
+    CheckContext(this);
+
+    auto hasher = std::hash<String>();
+    auto iter = std::lower_bound(mBuffers.begin(), mBuffers.end(), hasher(name),
+        [hasher](const UniquePtr<ALBuffer> &lhs, size_t rhs) -> bool
+        { return hasher(lhs->getName()) < rhs; }
+    );
+    if(iter != mBuffers.end() && (*iter)->getName() == name)
+        return Buffer(iter->get());
+    // NOTE: 'iter' is used later to insert a new entry!
+
+    auto decoder = createDecoder(name);
+    return doCreateBufferAsync(name, iter, std::move(decoder));
+}
+
+Buffer ALContext::createBufferFrom(const String &name, SharedPtr<Decoder> decoder)
+{
+    CheckContext(this);
+
+    auto hasher = std::hash<String>();
+    auto iter = std::lower_bound(mBuffers.begin(), mBuffers.end(), hasher(name),
+        [hasher](const UniquePtr<ALBuffer> &lhs, size_t rhs) -> bool
+        { return hasher(lhs->getName()) < rhs; }
+    );
+    if(iter != mBuffers.end() && (*iter)->getName() == name)
+        throw std::runtime_error("Buffer \""+name+"\" already exists");
+    // NOTE: 'iter' is used later to insert a new entry!
+
+    return doCreateBuffer(name, iter, std::move(decoder));
+}
+
+Buffer ALContext::createBufferAsyncFrom(const String &name, SharedPtr<Decoder> decoder)
+{
+    CheckContext(this);
+
+    auto hasher = std::hash<String>();
+    auto iter = std::lower_bound(mBuffers.begin(), mBuffers.end(), hasher(name),
+        [hasher](const UniquePtr<ALBuffer> &lhs, size_t rhs) -> bool
+        { return hasher(lhs->getName()) < rhs; }
+    );
+    if(iter != mBuffers.end() && (*iter)->getName() == name)
+        throw std::runtime_error("Buffer \""+name+"\" already exists");
+    // NOTE: 'iter' is used later to insert a new entry!
+
+    return doCreateBufferAsync(name, iter, std::move(decoder));
 }
 
 
@@ -887,6 +927,8 @@ DECL_THUNK0(const Vector<String>&, Context, getAvailableResamplers,)
 DECL_THUNK0(ALsizei, Context, getDefaultResamplerIndex, const)
 DECL_THUNK1(Buffer, Context, getBuffer,, const String&)
 DECL_THUNK1(Buffer, Context, getBufferAsync,, const String&)
+DECL_THUNK2(Buffer, Context, createBufferFrom,, const String&, SharedPtr<Decoder>)
+DECL_THUNK2(Buffer, Context, createBufferAsyncFrom,, const String&, SharedPtr<Decoder>)
 DECL_THUNK1(void, Context, removeBuffer,, const String&)
 DECL_THUNK1(void, Context, removeBuffer,, Buffer)
 DECL_THUNK0(Source, Context, createSource,)
