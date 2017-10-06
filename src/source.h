@@ -112,7 +112,7 @@ public:
     ALuint getPriority() const { return mPriority; }
 
     void setOffset(uint64_t offset);
-    uint64_t getOffset(uint64_t *latency=0) const;
+    uint64_t getOffset(std::chrono::nanoseconds *latency=0) const;
 
     void setLooping(bool looping);
     bool getLooping() const { return mLooping; }

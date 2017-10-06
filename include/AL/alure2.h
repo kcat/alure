@@ -847,7 +847,7 @@ public:
      * \param latency If non-NULL and the device supports it, the source's
      * latency, in nanoseconds, will be written to that location.
      */
-    uint64_t getOffset(uint64_t *latency=nullptr) const;
+    uint64_t getOffset(std::chrono::nanoseconds *latency=nullptr) const;
 
     /**
      * Specifies if the source should loop on the Buffer or Decoder object's

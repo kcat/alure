@@ -638,13 +638,13 @@ void ALSource::setOffset(uint64_t offset)
     }
 }
 
-uint64_t ALSource::getOffset(uint64_t *latency) const
+uint64_t ALSource::getOffset(std::chrono::nanoseconds *latency) const
 {
     CheckContext(mContext);
     if(mId == 0)
     {
         if(latency)
-            *latency = 0;
+            *latency = std::chrono::nanoseconds::zero();
         return 0;
     }
 
@@ -658,12 +658,12 @@ uint64_t ALSource::getOffset(uint64_t *latency) const
             ALint64SOFT val[2];
             mContext->alGetSourcei64vSOFT(mId, AL_SAMPLE_OFFSET_LATENCY_SOFT, val);
             srcpos = val[0]>>32;
-            *latency = val[1];
+            *latency = std::chrono::nanoseconds(val[1]);
         }
         else
         {
             alGetSourcei(mId, AL_SAMPLE_OFFSET, &srcpos);
-            if(latency) *latency = 0;
+            if(latency) *latency = std::chrono::nanoseconds::zero();
         }
         alGetSourcei(mId, AL_SOURCE_STATE, &state);
 
@@ -707,12 +707,12 @@ uint64_t ALSource::getOffset(uint64_t *latency) const
         ALint64SOFT val[2];
         mContext->alGetSourcei64vSOFT(mId, AL_SAMPLE_OFFSET_LATENCY_SOFT, val);
         srcpos = val[0]>>32;
-        *latency = val[1];
+        *latency = std::chrono::nanoseconds(val[1]);
     }
     else
     {
         alGetSourcei(mId, AL_SAMPLE_OFFSET, &srcpos);
-        if(latency) *latency = 0;
+        if(latency) *latency = std::chrono::nanoseconds::zero();
     }
     return srcpos;
 }
@@ -1243,7 +1243,7 @@ DECL_THUNK0(bool, Source, isPaused, const)
 DECL_THUNK1(void, Source, setPriority,, ALuint)
 DECL_THUNK0(ALuint, Source, getPriority, const)
 DECL_THUNK1(void, Source, setOffset,, uint64_t)
-DECL_THUNK1(uint64_t, Source, getOffset, const, uint64_t*)
+DECL_THUNK1(uint64_t, Source, getOffset, const, std::chrono::nanoseconds*)
 DECL_THUNK1(void, Source, setLooping,, bool)
 DECL_THUNK0(bool, Source, getLooping, const)
 DECL_THUNK1(void, Source, setPitch,, ALfloat)
