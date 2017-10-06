@@ -734,11 +734,11 @@ std::pair<Seconds,Seconds> ALSource::getSecOffsetLatency() const
         int64_t streampos = mStream->getPosition();
         if(state != AL_STOPPED)
         {
-            srcpos *= mStream->getFrequency();
-            frac = srcpos - std::floor(srcpos);
+            ALdouble ipos;
+            frac = std::modf(srcpos * mStream->getFrequency(), &ipos);
 
             // The amount of samples in the queue waiting to play
-            ALuint inqueue = queued*mStream->getUpdateLength() - (ALuint)std::ceil(srcpos);
+            ALuint inqueue = queued*mStream->getUpdateLength() - (ALuint)ipos;
             if(!mStream->hasLooped())
             {
                 // A non-looped stream should never have more samples queued
