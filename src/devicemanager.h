@@ -26,6 +26,7 @@ public:
     String defaultDeviceName(DefaultDeviceType type) const override final;
 
     Device openPlayback(const String &name) override final;
+    Device openPlayback(const String &name, const std::nothrow_t&) override final;
 };
 
 } // namespace alure

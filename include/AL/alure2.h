@@ -372,8 +372,20 @@ public:
     /** Retrieves the default device of the given type. */
     virtual String defaultDeviceName(DefaultDeviceType type) const = 0;
 
-    /** Opens the playback device given by name, or the default if empty. */
+    /**
+     * Opens the playback device given by name, or the default if blank. Throws
+     * an exception on error.
+     */
     virtual Device openPlayback(const String &name=String()) = 0;
+
+    /**
+     * Opens the playback device given by name, or the default if blank.
+     * Returns an empty Device on error.
+     */
+    virtual Device openPlayback(const String &name, const std::nothrow_t&) = 0;
+
+    /** Opens the default playback device. Returns an empty Device on error. */
+    Device openPlayback(const std::nothrow_t&);
 };
 
 

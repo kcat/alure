@@ -27,6 +27,9 @@ DeviceManager &DeviceManager::get()
     return ALDeviceManager::get();
 }
 
+Device DeviceManager::openPlayback(const std::nothrow_t&)
+{ return openPlayback(String(), std::nothrow); }
+
 
 ALDeviceManager &ALDeviceManager::get()
 {
@@ -83,6 +86,14 @@ Device ALDeviceManager::openPlayback(const String &name)
             throw std::runtime_error("Failed to open default device");
         throw std::runtime_error("Failed to open device \""+name+"\"");
     }
+    mDevices.emplace_back(MakeUnique<ALDevice>(dev));
+    return Device(mDevices.back().get());
+}
+
+Device ALDeviceManager::openPlayback(const String &name, const std::nothrow_t&)
+{
+    ALCdevice *dev = alcOpenDevice(name.c_str());
+    if(!dev) return Device();
     mDevices.emplace_back(MakeUnique<ALDevice>(dev));
     return Device(mDevices.back().get());
 }
