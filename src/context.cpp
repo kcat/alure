@@ -945,17 +945,11 @@ DECL_THUNK0(void, Context, update,)
 void Context::MakeCurrent(Context context)
 { ALContext::MakeCurrent(context.pImpl); }
 
-void Context::MakeCurrent(std::nullptr_t)
-{ ALContext::MakeCurrent(nullptr); }
-
 Context Context::GetCurrent()
 { return Context(ALContext::GetCurrent()); }
 
 void Context::MakeThreadCurrent(Context context)
 { ALContext::MakeThreadCurrent(context.pImpl); }
-
-void Context::MakeThreadCurrent(std::nullptr_t)
-{ ALContext::MakeThreadCurrent(nullptr); }
 
 Context Context::GetThreadCurrent()
 { return Context(ALContext::GetThreadCurrent()); }

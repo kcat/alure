@@ -415,7 +415,6 @@ public:                                                                       \
     BaseT(const BaseT&) = default;                                            \
     BaseT(BaseT&&) = default;                                                 \
                                                                               \
-    BaseT& operator=(std::nullptr_t) { pImpl = nullptr; return *this; }       \
     BaseT& operator=(const BaseT&) = default;                                 \
     BaseT& operator=(BaseT&&) = default;                                      \
                                                                               \
@@ -531,8 +530,6 @@ class ALURE_API Context {
 public:
     /** Makes the specified context current for OpenAL operations. */
     static void MakeCurrent(Context context);
-    /** Removes the current context for OpenAL operations. */
-    static void MakeCurrent(std::nullptr_t);
     /** Retrieves the current context used for OpenAL operations. */
     static Context GetCurrent();
 
@@ -542,11 +539,6 @@ public:
      * the context's device and the DeviceManager.
      */
     static void MakeThreadCurrent(Context context);
-    /**
-     * Removes the current context for OpenAL operations on the calling thread
-     * only.
-     */
-    static void MakeThreadCurrent(std::nullptr_t);
     /** Retrieves the thread-specific context used for OpenAL operations. */
     static Context GetThreadCurrent();
 
