@@ -714,7 +714,6 @@ enum class BufferLoadStatus {
     Ready
 };
 
-class ALBuffer;
 class ALURE_API Buffer {
     MAKE_PIMPL(Buffer, ALBuffer)
 
