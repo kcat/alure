@@ -349,14 +349,13 @@ void ALContext::backgroundProc()
         {
             ctxlock.unlock();
 
-            ALuint interval = mWakeInterval.load();
-            if(!interval)
+            std::chrono::milliseconds interval = mWakeInterval.load();
+            if(interval.count() == 0)
                 mWakeThread.wait(wakelock);
             else
             {
                 auto now = std::chrono::steady_clock::now() - basetime;
-                auto duration = std::chrono::milliseconds(interval);
-                while((waketime - now).count() <= 0) waketime += duration;
+                while((waketime - now).count() <= 0) waketime += interval;
                 mWakeThread.wait_until(wakelock, waketime + basetime);
             }
             wakelock.unlock();
@@ -377,7 +376,8 @@ void ALContext::backgroundProc()
 ALContext::ALContext(ALCcontext *context, ALDevice *device)
   : mListener(this), mContext(context), mDevice(device), mRefs(0),
     mHasExt{false}, mPendingBuffers(16, sizeof(PendingBuffer)),
-    mWakeInterval(0), mQuitThread(false), mIsConnected(true), mIsBatching(false),
+    mWakeInterval(std::chrono::milliseconds::zero()), mQuitThread(false),
+    mIsConnected(true), mIsBatching(false),
     alGetSourcei64vSOFT(0),
     alGenEffects(0), alDeleteEffects(0), alIsEffect(0),
     alEffecti(0), alEffectiv(0), alEffectf(0), alEffectfv(0),
@@ -452,7 +452,7 @@ SharedPtr<MessageHandler> ALContext::setMessageHandler(SharedPtr<MessageHandler>
 }
 
 
-void ALContext::setAsyncWakeInterval(ALuint msec)
+void ALContext::setAsyncWakeInterval(std::chrono::milliseconds msec)
 {
     mWakeInterval.store(msec);
     mWakeMutex.lock(); mWakeMutex.unlock();
@@ -891,7 +891,7 @@ void ALContext::update()
 {
     CheckContext(this);
     std::for_each(mUsedSources.begin(), mUsedSources.end(), std::mem_fn(&ALSource::updateNoCtxCheck));
-    if(!mWakeInterval.load())
+    if(!mWakeInterval.load().count())
     {
         // For performance reasons, don't wait for the thread's mutex. This
         // should be called often enough to keep up with any and all streams
@@ -919,8 +919,8 @@ DECL_THUNK0(void, Context, endBatch,)
 DECL_THUNK0(Listener, Context, getListener,)
 DECL_THUNK1(SharedPtr<MessageHandler>, Context, setMessageHandler,, SharedPtr<MessageHandler>)
 DECL_THUNK0(SharedPtr<MessageHandler>, Context, getMessageHandler, const)
-DECL_THUNK1(void, Context, setAsyncWakeInterval,, ALuint)
-DECL_THUNK0(ALuint, Context, getAsyncWakeInterval, const)
+DECL_THUNK1(void, Context, setAsyncWakeInterval,, std::chrono::milliseconds)
+DECL_THUNK0(std::chrono::milliseconds, Context, getAsyncWakeInterval, const)
 DECL_THUNK1(SharedPtr<Decoder>, Context, createDecoder,, const String&)
 DECL_THUNK2(bool, Context, isSupported, const, ChannelConfig, SampleType)
 DECL_THUNK0(const Vector<String>&, Context, getAvailableResamplers,)

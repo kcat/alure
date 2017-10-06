@@ -140,7 +140,7 @@ private:
     Vector<ALSource*> mStreamingSources;
     std::mutex mSourceStreamMutex;
 
-    std::atomic<ALuint> mWakeInterval;
+    std::atomic<std::chrono::milliseconds> mWakeInterval;
     std::mutex mWakeMutex;
     std::condition_variable mWakeThread;
 
@@ -245,8 +245,8 @@ public:
     SharedPtr<MessageHandler> setMessageHandler(SharedPtr<MessageHandler> handler);
     SharedPtr<MessageHandler> getMessageHandler() const { return mMessage; }
 
-    void setAsyncWakeInterval(ALuint msec);
-    ALuint getAsyncWakeInterval() const { return mWakeInterval.load(); }
+    void setAsyncWakeInterval(std::chrono::milliseconds msec);
+    std::chrono::milliseconds getAsyncWakeInterval() const { return mWakeInterval.load(); }
 
     SharedPtr<Decoder> createDecoder(const String &name);
 

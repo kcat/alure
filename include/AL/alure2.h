@@ -5,6 +5,7 @@
 #include <string>
 #include <memory>
 #include <utility>
+#include <chrono>
 #include <array>
 #include <cmath>
 
@@ -58,13 +59,21 @@ namespace alure {
 
 class DeviceManager;
 class Device;
+class ALDevice;
 class Context;
+class ALContext;
 class Listener;
+class ALListener;
 class Buffer;
+class ALBuffer;
 class Source;
+class ALSource;
 class SourceGroup;
+class ALSourceGroup;
 class AuxiliaryEffectSlot;
+class ALAuxiliaryEffectSlot;
 class Effect;
+class ALEffect;
 class Decoder;
 class DecoderFactory;
 class MessageHandler;
@@ -417,7 +426,6 @@ public:                                                                       \
                                                                               \
     handle_type getHandle() const { return pImpl; }
 
-class ALDevice;
 class ALURE_API Device {
     MAKE_PIMPL(Device, ALDevice)
 
@@ -517,7 +525,6 @@ enum class DistanceModel {
     None  = AL_NONE,
 };
 
-class ALContext;
 class ALURE_API Context {
     MAKE_PIMPL(Context, ALContext)
 
@@ -572,17 +579,17 @@ public:
     SharedPtr<MessageHandler> getMessageHandler() const;
 
     /**
-     * Specifies the desired interval (in milliseconds) that the background
-     * thread will be woken up to process tasks, e.g. keeping streaming sources
-     * filled. An interval of 0 means the background thread will only be woken
-     * up manually with calls to update. The default is 0.
+     * Specifies the desired interval that the background thread will be woken
+     * up to process tasks, e.g. keeping streaming sources filled. An interval
+     * of 0 means the background thread will only be woken up manually with
+     * calls to update. The default is 0.
      */
-    void setAsyncWakeInterval(ALuint msec);
+    void setAsyncWakeInterval(std::chrono::milliseconds msec);
 
     /**
      * Retrieves the current interval used for waking up the background thread.
      */
-    ALuint getAsyncWakeInterval() const;
+    std::chrono::milliseconds getAsyncWakeInterval() const;
 
     // Functions below require the context to be current
 
@@ -686,7 +693,6 @@ public:
     void update();
 };
 
-class ALListener;
 class ALURE_API Listener {
     MAKE_PIMPL(Listener, ALListener)
 
@@ -786,7 +792,6 @@ enum class Spatialize {
     Auto = 0x0002 /* AL_AUTO_SOFT */
 };
 
-class ALSource;
 class ALURE_API Source {
     MAKE_PIMPL(Source, ALSource)
 
@@ -1036,7 +1041,6 @@ public:
 };
 
 
-class ALSourceGroup;
 class ALURE_API SourceGroup {
     MAKE_PIMPL(SourceGroup, ALSourceGroup)
 
@@ -1110,7 +1114,6 @@ struct SourceSend {
     ALuint mSend;
 };
 
-class ALAuxiliaryEffectSlot;
 class ALURE_API AuxiliaryEffectSlot {
     MAKE_PIMPL(AuxiliaryEffectSlot, ALAuxiliaryEffectSlot)
 
@@ -1148,7 +1151,6 @@ public:
 };
 
 
-class ALEffect;
 class ALURE_API Effect {
     MAKE_PIMPL(Effect, ALEffect)
 
