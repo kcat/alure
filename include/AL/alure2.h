@@ -835,14 +835,15 @@ public:
      */
     void setOffset(uint64_t offset);
     /**
-     * Retrieves the source offset in sample frames. For streaming sources,
-     * this will be the offset from the beginning of the stream based on the
-     * decoder's reported position.
+     * Retrieves the source offset in sample frames and its latency in nano-
+     * seconds. For streaming sources, this will be the offset from the
+     * beginning of the stream based on the decoder's reported position.
      *
-     * \param latency If non-NULL and the device supports it, the source's
-     * latency, in nanoseconds, will be written to that location.
+     * If the AL_SOFT_source_latency extension is unsupported, the latency will
+     * be 0.
      */
-    uint64_t getOffset(std::chrono::nanoseconds *latency=nullptr) const;
+    std::pair<uint64_t,std::chrono::nanoseconds> getSampleOffsetLatency() const;
+    uint64_t getSampleOffset() const { return std::get<0>(getSampleOffsetLatency()); }
 
     /**
      * Specifies if the source should loop on the Buffer or Decoder object's

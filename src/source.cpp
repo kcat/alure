@@ -638,33 +638,28 @@ void ALSource::setOffset(uint64_t offset)
     }
 }
 
-uint64_t ALSource::getOffset(std::chrono::nanoseconds *latency) const
+std::pair<uint64_t,std::chrono::nanoseconds> ALSource::getSampleOffsetLatency() const
 {
     CheckContext(mContext);
     if(mId == 0)
-    {
-        if(latency)
-            *latency = std::chrono::nanoseconds::zero();
-        return 0;
-    }
+        return { 0, std::chrono::nanoseconds::zero() };
 
     if(mStream)
     {
         std::lock_guard<std::mutex> lock(mMutex);
         ALint queued = 0, state = -1, srcpos = 0;
+        std::chrono::nanoseconds latency(0);
+
         alGetSourcei(mId, AL_BUFFERS_QUEUED, &queued);
-        if(latency && mContext->hasExtension(SOFT_source_latency))
+        if(mContext->hasExtension(SOFT_source_latency))
         {
             ALint64SOFT val[2];
             mContext->alGetSourcei64vSOFT(mId, AL_SAMPLE_OFFSET_LATENCY_SOFT, val);
             srcpos = val[0]>>32;
-            *latency = std::chrono::nanoseconds(val[1]);
+            latency = std::chrono::nanoseconds(val[1]);
         }
         else
-        {
             alGetSourcei(mId, AL_SAMPLE_OFFSET, &srcpos);
-            if(latency) *latency = std::chrono::nanoseconds::zero();
-        }
         alGetSourcei(mId, AL_SOURCE_STATE, &state);
 
         uint64_t streampos = mStream->getPosition();
@@ -698,23 +693,21 @@ uint64_t ALSource::getOffset(std::chrono::nanoseconds *latency) const
             }
         }
 
-        return streampos;
+        return { streampos, latency };
     }
 
+    std::chrono::nanoseconds latency(0);
     ALint srcpos = 0;
-    if(latency && mContext->hasExtension(SOFT_source_latency))
+    if(mContext->hasExtension(SOFT_source_latency))
     {
         ALint64SOFT val[2];
         mContext->alGetSourcei64vSOFT(mId, AL_SAMPLE_OFFSET_LATENCY_SOFT, val);
         srcpos = val[0]>>32;
-        *latency = std::chrono::nanoseconds(val[1]);
+        latency = std::chrono::nanoseconds(val[1]);
     }
     else
-    {
         alGetSourcei(mId, AL_SAMPLE_OFFSET, &srcpos);
-        if(latency) *latency = std::chrono::nanoseconds::zero();
-    }
-    return srcpos;
+    return { srcpos, latency };
 }
 
 
@@ -1229,6 +1222,8 @@ void ALSource::release()
 }
 
 
+// Need to use these to avoid extraneous commas in macro parameter lists
+using UInt64NSecPair = std::pair<uint64_t,std::chrono::nanoseconds>;
 using ALfloatPair = std::pair<ALfloat,ALfloat>;
 using Vector3Pair = std::pair<Vector3,Vector3>;
 using BoolTriple = std::tuple<bool,bool,bool>;
@@ -1243,7 +1238,7 @@ DECL_THUNK0(bool, Source, isPaused, const)
 DECL_THUNK1(void, Source, setPriority,, ALuint)
 DECL_THUNK0(ALuint, Source, getPriority, const)
 DECL_THUNK1(void, Source, setOffset,, uint64_t)
-DECL_THUNK1(uint64_t, Source, getOffset, const, std::chrono::nanoseconds*)
+DECL_THUNK0(UInt64NSecPair, Source, getSampleOffsetLatency, const)
 DECL_THUNK1(void, Source, setLooping,, bool)
 DECL_THUNK0(bool, Source, getLooping, const)
 DECL_THUNK1(void, Source, setPitch,, ALfloat)
