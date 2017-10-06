@@ -837,6 +837,41 @@ void ALSource::setDistanceRange(ALfloat refdist, ALfloat maxdist)
 }
 
 
+void ALSource::set3DParameters(const Vector3 &position, const Vector3 &velocity, const Vector3 &direction)
+{
+    CheckContext(mContext);
+    if(mId != 0)
+    {
+        Batcher batcher = mContext->getBatcher();
+        alSourcefv(mId, AL_POSITION, position.getPtr());
+        alSourcefv(mId, AL_VELOCITY, velocity.getPtr());
+        alSourcefv(mId, AL_DIRECTION, direction.getPtr());
+    }
+    mPosition = position;
+    mVelocity = velocity;
+    mDirection = direction;
+}
+
+void ALSource::set3DParameters(const Vector3 &position, const Vector3 &velocity, std::pair<Vector3,Vector3> orientation)
+{
+    static_assert(sizeof(orientation) == sizeof(ALfloat[6]), "Invalid Vector3 pair size");
+    CheckContext(mContext);
+    if(mId != 0)
+    {
+        Batcher batcher = mContext->getBatcher();
+        alSourcefv(mId, AL_POSITION, position.getPtr());
+        alSourcefv(mId, AL_VELOCITY, velocity.getPtr());
+        if(mContext->hasExtension(EXT_BFORMAT))
+            alSourcefv(mId, AL_ORIENTATION, orientation.first.getPtr());
+        alSourcefv(mId, AL_DIRECTION, orientation.first.getPtr());
+    }
+    mPosition = position;
+    mVelocity = velocity;
+    mDirection = mOrientation[0] = orientation.first;
+    mOrientation[1] = orientation.second;
+}
+
+
 void ALSource::setPosition(ALfloat x, ALfloat y, ALfloat z)
 {
     CheckContext(mContext);
@@ -1316,6 +1351,8 @@ DECL_THUNK2(void, Source, setGainRange,, ALfloat, ALfloat)
 DECL_THUNK0(ALfloatPair, Source, getGainRange, const)
 DECL_THUNK2(void, Source, setDistanceRange,, ALfloat, ALfloat)
 DECL_THUNK0(ALfloatPair, Source, getDistanceRange, const)
+DECL_THUNK3(void, Source, set3DParameters,, const Vector3&, const Vector3&, const Vector3&)
+DECL_THUNK3(void, Source, set3DParameters,, const Vector3&, const Vector3&, Vector3Pair)
 DECL_THUNK3(void, Source, setPosition,, ALfloat, ALfloat, ALfloat)
 DECL_THUNK1(void, Source, setPosition,, const ALfloat*)
 DECL_THUNK0(Vector3, Source, getPosition, const)

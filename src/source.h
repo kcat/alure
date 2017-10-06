@@ -132,6 +132,9 @@ public:
     std::pair<ALfloat,ALfloat> getDistanceRange() const
     { return {mRefDist, mMaxDist}; }
 
+    void set3DParameters(const Vector3 &position, const Vector3 &velocity, const Vector3 &direction);
+    void set3DParameters(const Vector3 &position, const Vector3 &velocity, std::pair<Vector3,Vector3> orientation);
+
     void setPosition(ALfloat x, ALfloat y, ALfloat z);
     void setPosition(const ALfloat *pos);
     Vector3 getPosition() const { return mPosition; }

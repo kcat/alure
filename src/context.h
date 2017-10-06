@@ -80,6 +80,8 @@ public:
 
     void setGain(ALfloat gain);
 
+    void set3DParameters(const Vector3 &position, const Vector3 &velocity, std::pair<Vector3,Vector3> orientation);
+
     void setPosition(ALfloat x, ALfloat y, ALfloat z);
     void setPosition(const ALfloat *pos);
 

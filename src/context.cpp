@@ -965,6 +965,16 @@ void ALListener::setGain(ALfloat gain)
 }
 
 
+void ALListener::set3DParameters(const Vector3 &position, const Vector3 &velocity, std::pair<Vector3,Vector3> orientation)
+{
+    static_assert(sizeof(orientation) == sizeof(ALfloat[6]), "Invalid Vector3 pair size");
+    CheckContext(mContext);
+    Batcher batcher = mContext->getBatcher();
+    alListenerfv(AL_POSITION, position.getPtr());
+    alListenerfv(AL_VELOCITY, velocity.getPtr());
+    alListenerfv(AL_ORIENTATION, orientation.first.getPtr());
+}
+
 void ALListener::setPosition(ALfloat x, ALfloat y, ALfloat z)
 {
     CheckContext(mContext);
@@ -1019,7 +1029,10 @@ void ALListener::setMetersPerUnit(ALfloat m_u)
 }
 
 
+using Vector3Pair = std::pair<Vector3,Vector3>;
+
 DECL_THUNK1(void, Listener, setGain,, ALfloat)
+DECL_THUNK3(void, Listener, set3DParameters,, const Vector3&, const Vector3&, Vector3Pair)
 DECL_THUNK3(void, Listener, setPosition,, ALfloat, ALfloat, ALfloat)
 DECL_THUNK1(void, Listener, setPosition,, const ALfloat*)
 DECL_THUNK3(void, Listener, setVelocity,, ALfloat, ALfloat, ALfloat)
