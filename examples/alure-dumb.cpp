@@ -77,18 +77,24 @@ static long cb_get_size(void *user_data)
 // Inherit from alure::Decoder to make a custom decoder (DUMB for this example)
 class DumbDecoder : public alure::Decoder {
     alure::UniquePtr<std::istream> mFile;
+
     alure::UniquePtr<DUMBFILE_SYSTEM> mDfs;
     DUMBFILE *mDumbfile;
     DUH *mDuh;
     DUH_SIGRENDERER *mRenderer;
+
+    alure::SampleType mSampleType;
     ALuint mFrequency;
+
     alure::Vector<sample_t> mSampleBuf;
     uint64_t mStreamPos;
 
 public:
-    DumbDecoder(alure::UniquePtr<std::istream> file, alure::UniquePtr<DUMBFILE_SYSTEM> dfs, DUMBFILE *dfile, DUH *duh, DUH_SIGRENDERER *renderer, ALuint freq)
+    DumbDecoder(alure::UniquePtr<std::istream> file, alure::UniquePtr<DUMBFILE_SYSTEM> dfs,
+                DUMBFILE *dfile, DUH *duh, DUH_SIGRENDERER *renderer, alure::SampleType stype,
+                ALuint srate)
       : mFile(std::move(file)), mDfs(std::move(dfs)), mDumbfile(dfile), mDuh(duh)
-      , mRenderer(renderer), mFrequency(freq), mStreamPos(0)
+      , mRenderer(renderer), mSampleType(stype), mFrequency(srate), mStreamPos(0)
     { }
     ~DumbDecoder() override final
     {
@@ -112,8 +118,8 @@ public:
     alure::SampleType getSampleType() const override final
     {
         // DUMB renders to 8.24 normalized fixed point, which we convert to
-        // signed 16-bit samples
-        return alure::SampleType::Int16;
+        // 32-bit float or signed 16-bit samples
+        return mSampleType;
     }
 
     uint64_t getLength() const override final
@@ -150,12 +156,22 @@ public:
         dumb_silence(samples[0], mSampleBuf.size());
         ret = duh_sigrenderer_generate_samples(mRenderer, 1.0f, 65536.0f/mFrequency, count,
                                                samples.data());
-        for(ALuint i = 0;i < ret*2;i++)
+        if(mSampleType == alure::SampleType::Float32)
         {
-            sample_t smp = samples[0][i]>>8;
-            if(smp < -32768) smp = -32768;
-            else if(smp > 32767) smp = 32767;
-            ((ALshort*)ptr)[i] = smp;
+            ALfloat *out = reinterpret_cast<ALfloat*>(ptr);
+            for(ALuint i = 0;i < ret*2;i++)
+                out[i] = (ALfloat)samples[0][i] * (1.0f/8388608.0f);
+        }
+        else
+        {
+            ALshort *out = reinterpret_cast<ALshort*>(ptr);
+            for(ALuint i = 0;i < ret*2;i++)
+            {
+                sample_t smp = samples[0][i]>>8;
+                if(smp < -32768) smp = -32768;
+                else if(smp > 32767) smp = 32767;
+                out[i] = smp;
+            }
         }
         mStreamPos += ret;
 
@@ -183,17 +199,21 @@ class DumbFactory : public alure::DecoderFactory {
         DUMBFILE *dfile = dumbfile_open_ex(file.get(), dfs.get());
         if(!dfile) return nullptr;
 
-        ALuint freq = alure::Context::GetCurrent().getDevice().getFrequency();
-        DUH_SIGRENDERER *renderer;
-        DUH *duh;
+        alure::Context ctx = alure::Context::GetCurrent();
+        alure::SampleType stype = alure::SampleType::Float32;
+        if(!ctx.isSupported(alure::ChannelConfig::Stereo, stype))
+            stype = alure::SampleType::Int16;
+        ALuint freq = ctx.getDevice().getFrequency();
 
         for(auto init : init_funcs)
         {
+            DUH *duh;
             if((duh=init(dfile)) != nullptr)
             {
+                DUH_SIGRENDERER *renderer;
                 if((renderer=duh_start_sigrenderer(duh, 0, 2, 0)) != nullptr)
                     return alure::MakeShared<DumbDecoder>(
-                        std::move(file), std::move(dfs), dfile, duh, renderer, freq
+                        std::move(file), std::move(dfs), dfile, duh, renderer, stype, freq
                     );
 
                 unload_duh(duh);
@@ -203,11 +223,13 @@ class DumbFactory : public alure::DecoderFactory {
             dumbfile_seek(dfile, 0, SEEK_SET);
         }
 
+        DUH *duh;
         if((duh=dumb_read_mod(dfile, 1)) != nullptr)
         {
+            DUH_SIGRENDERER *renderer;
             if((renderer=duh_start_sigrenderer(duh, 0, 2, 0)) != nullptr)
                 return alure::MakeShared<DumbDecoder>(
-                    std::move(file), std::move(dfs), dfile, duh, renderer, freq
+                    std::move(file), std::move(dfs), dfile, duh, renderer, stype, freq
                 );
 
             unload_duh(duh);
