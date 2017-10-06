@@ -413,10 +413,14 @@ public:                                                                       \
     BaseT() : pImpl(nullptr) { }                                              \
     BaseT(ImplT *impl) : pImpl(impl) { }                                      \
     BaseT(const BaseT&) = default;                                            \
-    BaseT(BaseT&&) = default;                                                 \
+    BaseT(BaseT&& rhs) : pImpl(rhs.pImpl) { rhs.pImpl = nullptr; }            \
                                                                               \
     BaseT& operator=(const BaseT&) = default;                                 \
-    BaseT& operator=(BaseT&&) = default;                                      \
+    BaseT& operator=(BaseT&& rhs)                                             \
+    {                                                                         \
+        pImpl = rhs.pImpl; rhs.pImpl = nullptr;                               \
+        return *this;                                                         \
+    }                                                                         \
                                                                               \
     bool operator==(const BaseT &rhs) const { return pImpl == rhs.pImpl; }    \
     bool operator==(BaseT&& rhs) const { return pImpl == rhs.pImpl; }         \
