@@ -630,10 +630,9 @@ public:
 
     /**
      * Creates and caches a Buffer using the given name. The name may alias an
-     * audio file, but it must not currently exist in the buffer cache. The
-     * returned buffer is normal in all other respects; getBuffer and
-     * getBufferAsync can (re-)retrieve it and removeBuffer must be used to
-     * remove it from the cache.
+     * audio file, but it must not currently exist in the buffer cache. As with
+     * other cached buffers, removeBuffer must be used to remove it from the
+     * cache.
      */
     Buffer createBufferFrom(const String &name, SharedPtr<Decoder> decoder);
 
@@ -655,8 +654,8 @@ public:
      */
     void removeBuffer(const String &name);
     /**
-     * Deletes the given cached buffer instance. The buffer must not be in use
-     * by a Source.
+     * Deletes the given cached buffer. The buffer must not be in use by a
+     * Source.
      */
     void removeBuffer(Buffer buffer);
 
