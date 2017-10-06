@@ -105,8 +105,8 @@ public:
         alGenBuffers(mBufferIds.size(), &mBufferIds[0]);
     }
 
-    uint64_t getLoopStart() const { return mLoopPts.first; }
-    uint64_t getLoopEnd() const { return mLoopPts.second; }
+    int64_t getLoopStart() const { return mLoopPts.first; }
+    int64_t getLoopEnd() const { return mLoopPts.second; }
 
     bool hasLooped() const { return mHasLooped.load(std::memory_order_acquire); }
     bool hasMoreData() const { return !mDone.load(std::memory_order_acquire); }
@@ -664,32 +664,21 @@ std::pair<uint64_t,std::chrono::nanoseconds> ALSource::getSampleOffsetLatency() 
             alGetSourcei(mId, AL_SAMPLE_OFFSET, &srcpos);
         alGetSourcei(mId, AL_SOURCE_STATE, &state);
 
-        uint64_t streampos = mStream->getPosition();
+        int64_t streampos = mStream->getPosition();
         if(state != AL_STOPPED)
         {
             // The amount of samples in the queue waiting to play
             ALuint inqueue = queued*mStream->getUpdateLength() - srcpos;
-
-            if(streampos >= inqueue)
-            {
-                streampos -= inqueue;
-                if(streampos < mStream->getLoopStart() && mStream->hasLooped())
-                {
-                    uint64_t looplen = mStream->getLoopEnd() - mStream->getLoopStart();
-                    do {
-                        streampos += looplen;
-                    } while(streampos < mStream->getLoopStart());
-                }
-            }
-            else if(!mStream->hasLooped())
+            if(!mStream->hasLooped())
             {
                 // A non-looped stream should never have more samples queued
                 // than have been read...
-                streampos = 0;
+                streampos = std::max<int64_t>(streampos, inqueue) - inqueue;
             }
             else
             {
-                uint64_t looplen = mStream->getLoopEnd() - mStream->getLoopStart();
+                streampos -= inqueue;
+                int64_t looplen = mStream->getLoopEnd() - mStream->getLoopStart();
                 while(streampos < mStream->getLoopStart())
                     streampos += looplen;
             }
@@ -742,7 +731,7 @@ std::pair<Seconds,Seconds> ALSource::getSecOffsetLatency() const
         alGetSourcei(mId, AL_SOURCE_STATE, &state);
 
         ALdouble frac = 0.0;
-        uint64_t streampos = mStream->getPosition();
+        int64_t streampos = mStream->getPosition();
         if(state != AL_STOPPED)
         {
             srcpos *= mStream->getFrequency();
@@ -750,27 +739,16 @@ std::pair<Seconds,Seconds> ALSource::getSecOffsetLatency() const
 
             // The amount of samples in the queue waiting to play
             ALuint inqueue = queued*mStream->getUpdateLength() - (ALuint)std::ceil(srcpos);
-
-            if(streampos >= inqueue)
-            {
-                streampos -= inqueue;
-                if(streampos < mStream->getLoopStart() && mStream->hasLooped())
-                {
-                    uint64_t looplen = mStream->getLoopEnd() - mStream->getLoopStart();
-                    do {
-                        streampos += looplen;
-                    } while(streampos < mStream->getLoopStart());
-                }
-            }
-            else if(!mStream->hasLooped())
+            if(!mStream->hasLooped())
             {
                 // A non-looped stream should never have more samples queued
                 // than have been read...
-                streampos = 0;
+                streampos = std::max<int64_t>(streampos, inqueue) - inqueue;
             }
             else
             {
-                uint64_t looplen = mStream->getLoopEnd() - mStream->getLoopStart();
+                streampos -= inqueue;
+                int64_t looplen = mStream->getLoopEnd() - mStream->getLoopStart();
                 while(streampos < mStream->getLoopStart())
                     streampos += looplen;
             }
