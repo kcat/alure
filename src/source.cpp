@@ -667,38 +667,38 @@ uint64_t ALSource::getOffset(uint64_t *latency) const
         }
         alGetSourcei(mId, AL_SOURCE_STATE, &state);
 
-        uint64_t pos = mStream->getPosition();
+        uint64_t streampos = mStream->getPosition();
         if(state != AL_STOPPED)
         {
             // The amount of samples in the queue waiting to play
             ALuint inqueue = queued*mStream->getUpdateLength() - srcpos;
 
-            if(pos >= inqueue)
+            if(streampos >= inqueue)
             {
-                pos -= inqueue;
-                if(pos < mStream->getLoopStart() && mStream->hasLooped())
+                streampos -= inqueue;
+                if(streampos < mStream->getLoopStart() && mStream->hasLooped())
                 {
                     uint64_t looplen = mStream->getLoopEnd() - mStream->getLoopStart();
                     do {
-                        pos += looplen;
-                    } while(pos < mStream->getLoopStart());
+                        streampos += looplen;
+                    } while(streampos < mStream->getLoopStart());
                 }
             }
             else if(!mStream->hasLooped())
             {
                 // A non-looped stream should never have more samples queued
                 // than have been read...
-                pos = 0;
+                streampos = 0;
             }
             else
             {
                 uint64_t looplen = mStream->getLoopEnd() - mStream->getLoopStart();
-                while(pos < mStream->getLoopStart())
-                    pos += looplen;
+                while(streampos < mStream->getLoopStart())
+                    streampos += looplen;
             }
         }
 
-        return pos;
+        return streampos;
     }
 
     ALint srcpos = 0;
