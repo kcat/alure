@@ -113,6 +113,7 @@ public:
 
     void setOffset(uint64_t offset);
     std::pair<uint64_t,std::chrono::nanoseconds> getSampleOffsetLatency() const;
+    std::pair<Seconds,Seconds> getSecOffsetLatency() const;
 
     void setLooping(bool looping);
     bool getLooping() const { return mLooping; }

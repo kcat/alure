@@ -79,6 +79,9 @@ class DecoderFactory;
 class MessageHandler;
 
 
+// Duration in seconds, using double precision
+using Seconds = std::chrono::duration<double>;
+
 // A SharedPtr implementation, defaults to C++11's std::shared_ptr. If this is
 // changed, you must recompile the library.
 template<typename T>
@@ -844,6 +847,16 @@ public:
      */
     std::pair<uint64_t,std::chrono::nanoseconds> getSampleOffsetLatency() const;
     uint64_t getSampleOffset() const { return std::get<0>(getSampleOffsetLatency()); }
+    /**
+     * Retrieves the source offset and latency in seconds. For streaming
+     * sources, this will be the offset from the beginning of the stream based
+     * on the decoder's reported position.
+     *
+     * If the AL_SOFT_source_latency extension is unsupported, the latency will
+     * be 0.
+     */
+    std::pair<Seconds,Seconds> getSecOffsetLatency() const;
+    Seconds getSecOffset() const { return std::get<0>(getSecOffsetLatency()); }
 
     /**
      * Specifies if the source should loop on the Buffer or Decoder object's

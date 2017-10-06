@@ -62,6 +62,8 @@ public:
     ALuint getNumUpdates() const { return mNumUpdates; }
     ALuint getUpdateLength() const { return mUpdateLen; }
 
+    ALuint getFrequency() const { return mFrequency; }
+
     bool seek(uint64_t pos)
     {
         if(!mDecoder->seek(pos))
@@ -710,6 +712,91 @@ std::pair<uint64_t,std::chrono::nanoseconds> ALSource::getSampleOffsetLatency() 
     return { srcpos, latency };
 }
 
+std::pair<Seconds,Seconds> ALSource::getSecOffsetLatency() const
+{
+    CheckContext(mContext);
+    if(mId == 0)
+        return { Seconds::zero(), Seconds::zero() };
+
+    if(mStream)
+    {
+        std::lock_guard<std::mutex> lock(mMutex);
+        ALint queued = 0, state = -1;
+        ALdouble srcpos = 0;
+        Seconds latency(0.0);
+
+        alGetSourcei(mId, AL_BUFFERS_QUEUED, &queued);
+        if(mContext->hasExtension(SOFT_source_latency))
+        {
+            ALdouble val[2];
+            mContext->alGetSourcedvSOFT(mId, AL_SEC_OFFSET_LATENCY_SOFT, val);
+            srcpos = val[0];
+            latency = Seconds(val[1]);
+        }
+        else
+        {
+            ALfloat f;
+            alGetSourcef(mId, AL_SEC_OFFSET, &f);
+            srcpos = f;
+        }
+        alGetSourcei(mId, AL_SOURCE_STATE, &state);
+
+        ALdouble frac = 0.0;
+        uint64_t streampos = mStream->getPosition();
+        if(state != AL_STOPPED)
+        {
+            srcpos *= mStream->getFrequency();
+            frac = srcpos - std::floor(srcpos);
+
+            // The amount of samples in the queue waiting to play
+            ALuint inqueue = queued*mStream->getUpdateLength() - (ALuint)std::ceil(srcpos);
+
+            if(streampos >= inqueue)
+            {
+                streampos -= inqueue;
+                if(streampos < mStream->getLoopStart() && mStream->hasLooped())
+                {
+                    uint64_t looplen = mStream->getLoopEnd() - mStream->getLoopStart();
+                    do {
+                        streampos += looplen;
+                    } while(streampos < mStream->getLoopStart());
+                }
+            }
+            else if(!mStream->hasLooped())
+            {
+                // A non-looped stream should never have more samples queued
+                // than have been read...
+                streampos = 0;
+            }
+            else
+            {
+                uint64_t looplen = mStream->getLoopEnd() - mStream->getLoopStart();
+                while(streampos < mStream->getLoopStart())
+                    streampos += looplen;
+            }
+        }
+
+        return { Seconds((streampos+frac) / mStream->getFrequency()), latency };
+    }
+
+    ALdouble srcpos = 0.0;
+    Seconds latency(0.0);
+    if(mContext->hasExtension(SOFT_source_latency))
+    {
+        ALdouble val[2];
+        mContext->alGetSourcedvSOFT(mId, AL_SAMPLE_OFFSET_LATENCY_SOFT, val);
+        srcpos = val[0];
+        latency = Seconds(val[1]);
+    }
+    else
+    {
+        ALfloat f;
+        alGetSourcef(mId, AL_SEC_OFFSET, &f);
+        srcpos = f;
+    }
+    return { Seconds(srcpos), latency };
+}
+
 
 void ALSource::setLooping(bool looping)
 {
@@ -1224,6 +1311,7 @@ void ALSource::release()
 
 // Need to use these to avoid extraneous commas in macro parameter lists
 using UInt64NSecPair = std::pair<uint64_t,std::chrono::nanoseconds>;
+using SecondsPair = std::pair<Seconds,Seconds>;
 using ALfloatPair = std::pair<ALfloat,ALfloat>;
 using Vector3Pair = std::pair<Vector3,Vector3>;
 using BoolTriple = std::tuple<bool,bool,bool>;
@@ -1239,6 +1327,7 @@ DECL_THUNK1(void, Source, setPriority,, ALuint)
 DECL_THUNK0(ALuint, Source, getPriority, const)
 DECL_THUNK1(void, Source, setOffset,, uint64_t)
 DECL_THUNK0(UInt64NSecPair, Source, getSampleOffsetLatency, const)
+DECL_THUNK0(SecondsPair, Source, getSecOffsetLatency, const)
 DECL_THUNK1(void, Source, setLooping,, bool)
 DECL_THUNK0(bool, Source, getLooping, const)
 DECL_THUNK1(void, Source, setPitch,, ALfloat)

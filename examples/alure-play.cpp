@@ -44,7 +44,7 @@ int main(int argc, char *argv[])
         while(source.isPlaying())
         {
             std::cout<< "\r "<<std::setiosflags(std::ios::fixed)<<std::setprecision(2)<<
-                        (source.getSampleOffset()*invfreq)<<" / "<<(buffer.getLength()*invfreq);
+                        source.getSecOffset().count()<<" / "<<(buffer.getLength()*invfreq);
             std::cout.flush();
             std::this_thread::sleep_for(std::chrono::milliseconds(25));
             ctx.update();

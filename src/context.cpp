@@ -218,6 +218,7 @@ static void LoadSourceResampler(ALContext *ctx)
 static void LoadSourceLatency(ALContext *ctx)
 {
     LoadALFunc(&ctx->alGetSourcei64vSOFT, "alGetSourcei64vSOFT");
+    LoadALFunc(&ctx->alGetSourcedvSOFT, "alGetSourcedvSOFT");
 }
 
 static const struct {
@@ -378,7 +379,7 @@ ALContext::ALContext(ALCcontext *context, ALDevice *device)
     mHasExt{false}, mPendingBuffers(16, sizeof(PendingBuffer)),
     mWakeInterval(std::chrono::milliseconds::zero()), mQuitThread(false),
     mIsConnected(true), mIsBatching(false),
-    alGetSourcei64vSOFT(0),
+    alGetSourcei64vSOFT(0), alGetSourcedvSOFT(0),
     alGenEffects(0), alDeleteEffects(0), alIsEffect(0),
     alEffecti(0), alEffectiv(0), alEffectf(0), alEffectfv(0),
     alGetEffecti(0), alGetEffectiv(0), alGetEffectf(0), alGetEffectfv(0),
