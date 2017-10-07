@@ -1139,9 +1139,9 @@ void ALSource::setFilterParams(ALuint &filterid, const FilterParams &params)
         mContext->alFilteri(filterid, AL_FILTER_TYPE, AL_FILTER_BANDPASS);
         if(alGetError() == AL_NO_ERROR)
         {
-            mContext->alFilterf(filterid, AL_BANDPASS_GAIN, std::min<ALfloat>(params.mGain, 1.0f));
-            mContext->alFilterf(filterid, AL_BANDPASS_GAINHF, std::min<ALfloat>(params.mGainHF, 1.0f));
-            mContext->alFilterf(filterid, AL_BANDPASS_GAINLF, std::min<ALfloat>(params.mGainLF, 1.0f));
+            mContext->alFilterf(filterid, AL_BANDPASS_GAIN, std::min(params.mGain, 1.0f));
+            mContext->alFilterf(filterid, AL_BANDPASS_GAINHF, std::min(params.mGainHF, 1.0f));
+            mContext->alFilterf(filterid, AL_BANDPASS_GAINLF, std::min(params.mGainLF, 1.0f));
             filterset = true;
         }
     }
@@ -1150,8 +1150,8 @@ void ALSource::setFilterParams(ALuint &filterid, const FilterParams &params)
         mContext->alFilteri(filterid, AL_FILTER_TYPE, AL_FILTER_HIGHPASS);
         if(alGetError() == AL_NO_ERROR)
         {
-            mContext->alFilterf(filterid, AL_HIGHPASS_GAIN, std::min<ALfloat>(params.mGain, 1.0f));
-            mContext->alFilterf(filterid, AL_HIGHPASS_GAINLF, std::min<ALfloat>(params.mGainLF, 1.0f));
+            mContext->alFilterf(filterid, AL_HIGHPASS_GAIN, std::min(params.mGain, 1.0f));
+            mContext->alFilterf(filterid, AL_HIGHPASS_GAINLF, std::min(params.mGainLF, 1.0f));
             filterset = true;
         }
     }
@@ -1160,8 +1160,8 @@ void ALSource::setFilterParams(ALuint &filterid, const FilterParams &params)
         mContext->alFilteri(filterid, AL_FILTER_TYPE, AL_FILTER_LOWPASS);
         if(alGetError() == AL_NO_ERROR)
         {
-            mContext->alFilterf(filterid, AL_LOWPASS_GAIN, std::min<ALfloat>(params.mGain, 1.0f));
-            mContext->alFilterf(filterid, AL_LOWPASS_GAINHF, std::min<ALfloat>(params.mGainHF, 1.0f));
+            mContext->alFilterf(filterid, AL_LOWPASS_GAIN, std::min(params.mGain, 1.0f));
+            mContext->alFilterf(filterid, AL_LOWPASS_GAINHF, std::min(params.mGainHF, 1.0f));
             filterset = true;
         }
     }
