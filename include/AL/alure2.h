@@ -437,7 +437,7 @@ class ALURE_API Device {
 
 public:
     /** Retrieves the device name as given by type. */
-    String getName(PlaybackName type=PlaybackName::Basic) const;
+    String getName(PlaybackName type=PlaybackName::Full) const;
     /** Queries the existence of an ALC extension on this device. */
     bool queryExtension(const String &name) const;
 
