@@ -44,18 +44,19 @@ int main(int argc, char *argv[])
         std::cout<< "    "<<name <<'\n';
     std::cout.flush();
 
-    int i = fileidx;
     alure::Vector<alure::AttributePair> attrs;
     attrs.push_back({ALC_HRTF_SOFT, ALC_TRUE});
-    if(argc-i > 1 && strcasecmp(argv[i], "-hrtf") == 0)
+    if(argc-fileidx > 1 && strcasecmp(argv[fileidx], "-hrtf") == 0)
     {
         // Find the given HRTF and add it to the attributes list
-        auto iter = std::find(hrtf_names.begin(), hrtf_names.end(), argv[i+1]);
+        const char *hrtf_name = argv[fileidx+1];
+        fileidx += 2;
+
+        auto iter = std::find(hrtf_names.begin(), hrtf_names.end(), hrtf_name);
         if(iter == hrtf_names.end())
-            std::cerr<< "HRTF \""<<argv[i+1]<<"\" not found" <<std::endl;
+            std::cerr<< "HRTF \""<<hrtf_name<<"\" not found" <<std::endl;
         else
             attrs.push_back({ALC_HRTF_ID_SOFT, std::distance(hrtf_names.begin(), iter)});
-        i += 2;
     }
     attrs.push_back({0,0});
     alure::Context ctx = dev.createContext(attrs);
@@ -63,7 +64,7 @@ int main(int argc, char *argv[])
 
     std::cout<< "Using HRTF \""<<dev.getCurrentHRTF()<<"\"" <<std::endl;
 
-    for(;i < argc;i++)
+    for(int i = fileidx;i < argc;i++)
     {
         if(argc-i > 1 && strcasecmp(argv[i], "-hrtf") == 0)
         {

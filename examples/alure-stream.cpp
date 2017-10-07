@@ -33,20 +33,8 @@ int main(int argc, char *argv[])
 
     for(int i = fileidx;i < argc;i++)
     {
-        float offset = 0.0f;
-        if(i+2 < argc && strcmp(argv[i], "-start") == 0)
-        {
-            std::stringstream sstr(argv[i+1]);
-            sstr >> offset;
-
-            i += 2;
-        }
-
         alure::SharedPtr<alure::Decoder> decoder(ctx.createDecoder(argv[i]));
         alure::Source source = ctx.createSource();
-
-        if(offset > 0.0f)
-            source.setOffset(uint64_t(offset * decoder->getFrequency()));
 
         source.play(decoder, 12000, 4);
         std::cout<< "Playing "<<argv[i]<<" ("<<alure::GetSampleTypeName(decoder->getSampleType())<<", "

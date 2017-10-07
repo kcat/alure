@@ -2,6 +2,7 @@
  * An example showing how to load and apply a reverb effect to a source.
  */
 
+#include <algorithm>
 #include <iostream>
 #include <iomanip>
 #include <cstring>
@@ -17,7 +18,7 @@ static inline size_t countof(const T(&)[N])
 { return N; }
 
 #define DECL(x) { #x, EFX_REVERB_PRESET_##x }
-static const struct {
+static const struct ReverbEntry {
     const char name[32];
     EFXEAXREVERBPROPERTIES props;
 } reverblist[] = {
@@ -174,35 +175,32 @@ int main(int argc, char *argv[])
     bool gotreverb = false;
     alure::Effect effect = ctx.createEffect();
 
-    int i = fileidx;
-    if(argc-i >= 2 && strcasecmp(argv[i], "-preset") == 0)
+    if(argc-fileidx >= 2 && strcasecmp(argv[fileidx], "-preset") == 0)
     {
-        for(size_t j = 0;j < countof(reverblist);j++)
-        {
-            if(strcasecmp(argv[i+1], reverblist[j].name) == 0)
-            {
-                std::cout<< "Loading preset "<<reverblist[j].name <<std::endl;
-                std::cout.flush();
+        const char *reverb_name = argv[fileidx+1];
+        fileidx += 2;
 
-                effect.setReverbProperties(reverblist[j].props);
-                gotreverb = true;
-                break;
-            }
+        auto iter = std::find_if(std::begin(reverblist), std::end(reverblist),
+            [reverb_name](const ReverbEntry &entry) -> bool
+            { return strcasecmp(reverb_name, entry.name) == 0; }
+        );
+        if(iter != std::end(reverblist))
+        {
+            std::cout<< "Loading preset "<<iter->name <<std::endl;
+            effect.setReverbProperties(iter->props);
+            gotreverb = true;
         }
-        i += 2;
     }
     if(!gotreverb)
     {
         std::cout<< "Loading generic preset" <<std::endl;
-        std::cout.flush();
-
         effect.setReverbProperties(EFX_REVERB_PRESET_GENERIC);
     }
 
     alure::AuxiliaryEffectSlot auxslot = ctx.createAuxiliaryEffectSlot();
     auxslot.applyEffect(effect);
 
-    for(;i < argc;i++)
+    for(int i = fileidx;i < argc;i++)
     {
         alure::SharedPtr<alure::Decoder> decoder(ctx.createDecoder(argv[i]));
         alure::Source source = ctx.createSource();
