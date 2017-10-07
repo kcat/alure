@@ -50,7 +50,7 @@ public:
 
     void removeContext(ALContext *ctx);
 
-    String getName(PlaybackDeviceName type) const;
+    String getName(PlaybackName type) const;
     bool queryExtension(const String &name) const;
 
     ALCuint getALCVersion() const;

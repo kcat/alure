@@ -81,14 +81,14 @@ void ALDevice::removeContext(ALContext *ctx)
 }
 
 
-String ALDevice::getName(PlaybackDeviceName type) const
+String ALDevice::getName(PlaybackName type) const
 {
-    if(type == PlaybackDeviceName::Complete && !alcIsExtensionPresent(mDevice, "ALC_ENUMERATE_ALL_EXT"))
-        type = PlaybackDeviceName::Basic;
+    if(type == PlaybackName::Full && !alcIsExtensionPresent(mDevice, "ALC_ENUMERATE_ALL_EXT"))
+        type = PlaybackName::Basic;
     alcGetError(mDevice);
     const ALCchar *name = alcGetString(mDevice, (ALenum)type);
     if(alcGetError(mDevice) != ALC_NO_ERROR || !name)
-        name = alcGetString(mDevice, (ALenum)PlaybackDeviceName::Basic);
+        name = alcGetString(mDevice, (ALenum)PlaybackName::Basic);
     return name ? String(name) : String();
 }
 
@@ -277,7 +277,7 @@ void ALDevice::close()
 }
 
 
-DECL_THUNK1(String, Device, getName, const, PlaybackDeviceName)
+DECL_THUNK1(String, Device, getName, const, PlaybackName)
 DECL_THUNK1(bool, Device, queryExtension, const, const String&)
 DECL_THUNK0(ALCuint, Device, getALCVersion, const)
 DECL_THUNK0(ALCuint, Device, getEFXVersion, const)

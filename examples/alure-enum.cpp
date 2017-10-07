@@ -35,7 +35,7 @@ int main(int argc, char *argv[])
     std::cout<<std::endl;
 
     alure::Device dev = devMgr.openPlayback((argc > 1) ? argv[1] : "");
-    std::cout<< "Info for device \""<<dev.getName(alure::PlaybackDeviceName::Complete)<<"\":" <<std::endl;
+    std::cout<< "Info for device \""<<dev.getName(alure::PlaybackName::Full)<<"\":" <<std::endl;
     ALCuint version = dev.getALCVersion();
     std::cout<< "ALC version: "<<alure::MajorVersion(version)<<"."<<alure::MinorVersion(version) <<std::endl;
     version = dev.getEFXVersion();

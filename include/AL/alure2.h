@@ -401,9 +401,9 @@ public:
 };
 
 
-enum class PlaybackDeviceName {
+enum class PlaybackName {
     Basic = ALC_DEVICE_SPECIFIER,
-    Complete = ALC_ALL_DEVICES_SPECIFIER
+    Full = ALC_ALL_DEVICES_SPECIFIER
 };
 
 #define MAKE_PIMPL(BaseT, ImplT)                                              \
@@ -437,7 +437,7 @@ class ALURE_API Device {
 
 public:
     /** Retrieves the device name as given by type. */
-    String getName(PlaybackDeviceName type=PlaybackDeviceName::Basic) const;
+    String getName(PlaybackName type=PlaybackName::Basic) const;
     /** Queries the existence of an ALC extension on this device. */
     bool queryExtension(const String &name) const;
 
