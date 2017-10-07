@@ -551,12 +551,6 @@ ALint ALSource::refillBufferStream()
 }
 
 
-void ALSource::update()
-{
-    CheckContext(mContext);
-    updateNoCtxCheck();
-}
-
 void ALSource::updateNoCtxCheck()
 {
     if(mId == 0)
@@ -1392,7 +1386,6 @@ DECL_THUNK1(void, Source, setDirectFilter,, const FilterParams&)
 DECL_THUNK2(void, Source, setSendFilter,, ALuint, const FilterParams&)
 DECL_THUNK2(void, Source, setAuxiliarySend,, AuxiliaryEffectSlot, ALuint)
 DECL_THUNK3(void, Source, setAuxiliarySendFilter,, AuxiliaryEffectSlot, ALuint, const FilterParams&)
-DECL_THUNK0(void, Source, update,)
 void Source::release()
 {
     pImpl->release();

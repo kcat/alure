@@ -1045,12 +1045,6 @@ public:
     void setAuxiliarySendFilter(AuxiliaryEffectSlot slot, ALuint send, const FilterParams &filter);
 
     /**
-     * Updates the source, ensuring that resources are released when playback
-     * is finished.
-     */
-    void update();
-
-    /**
      * Releases the source, stopping playback, releasing resources, and
      * returning it to the system.
      */
