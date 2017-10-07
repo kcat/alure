@@ -205,7 +205,7 @@ void ALDevice::reset(ArrayView<AttributePair> attributes)
              * list and add the 0 sentinel.
              */
             Vector<AttributePair> attrs;
-            attrs.reserve(attributes.size());
+            attrs.reserve(attributes.size() + 1);
             std::copy(attributes.begin(), attributes.end(), std::back_inserter(attrs));
             attrs.push_back({0, 0});
             return alcResetDeviceSOFT(mDevice, &std::get<0>(attrs.front()));
@@ -236,7 +236,7 @@ Context ALDevice::createContext(ArrayView<AttributePair> attributes)
              * list and add the 0 sentinel.
              */
             Vector<AttributePair> attrs;
-            attrs.reserve(attributes.size());
+            attrs.reserve(attributes.size() + 1);
             std::copy(attributes.begin(), attributes.end(), std::back_inserter(attrs));
             attrs.push_back({0, 0});
             return alcCreateContext(mDevice, &std::get<0>(attrs.front()));
