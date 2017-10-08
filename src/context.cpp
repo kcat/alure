@@ -189,6 +189,9 @@ public:
 namespace alure
 {
 
+Decoder::~Decoder() { }
+DecoderFactory::~DecoderFactory() { }
+
 static const std::pair<String,UniquePtr<DecoderFactory>> sDefaultDecoders[] = {
     { "_alure_int_wave", MakeUnique<WaveDecoderFactory>() },
 
@@ -257,6 +260,8 @@ UniquePtr<DecoderFactory> UnregisterDecoder(const String &name)
     return nullptr;
 }
 
+
+FileIOFactory::~FileIOFactory() { }
 
 class DefaultFileIOFactory : public FileIOFactory {
     UniquePtr<std::istream> openFile(const String &name) override final

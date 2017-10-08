@@ -1192,7 +1192,7 @@ public:
  */
 class ALURE_API Decoder {
 public:
-    virtual ~Decoder() { }
+    virtual ~Decoder();
 
     /** Retrieves the sample frequency, in hz, of the audio being decoded. */
     virtual ALuint getFrequency() const = 0;
@@ -1239,7 +1239,7 @@ public:
  */
 class ALURE_API DecoderFactory {
 public:
-    virtual ~DecoderFactory() { }
+    virtual ~DecoderFactory();
 
     /**
      * Creates and returns a Decoder instance for the given resource file. If
@@ -1299,7 +1299,7 @@ public:
      */
     static FileIOFactory &get();
 
-    virtual ~FileIOFactory() { }
+    virtual ~FileIOFactory();
 
     /** Opens a read-only binary file for the given name. */
     virtual UniquePtr<std::istream> openFile(const String &name) = 0;
