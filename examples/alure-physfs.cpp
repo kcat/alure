@@ -173,6 +173,20 @@ public:
         }
         return true;
     }
+
+    static void ListDirectory(std::string&& dir)
+    {
+        char **files = PHYSFS_enumerateFiles(dir.c_str());
+        for(int i = 0;files[i];i++)
+        {
+            std::string file = dir + files[i];
+            if(PHYSFS_isDirectory(file.c_str()))
+                ListDirectory(file+"/");
+            else
+                std::cout<<"  "<<file<<"\n";
+        }
+        PHYSFS_freeList(files);
+    }
 };
 
 } // namespace
@@ -214,6 +228,9 @@ int main(int argc, char *argv[])
         if(strcasecmp(argv[i], "-add") == 0 && argc-i > 1)
         {
             FileFactory::Mount(argv[++i]);
+            std::cout<<"Available files:\n";
+            FileFactory::ListDirectory("/");
+            std::cout.flush();
             continue;
         }
 
