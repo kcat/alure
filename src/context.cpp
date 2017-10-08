@@ -39,7 +39,152 @@
 #include "source.h"
 #include "auxeffectslot.h"
 #include "effect.h"
-#include <sourcegroup.h>
+#include "sourcegroup.h"
+
+#ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#endif
+
+namespace
+{
+
+#ifdef _WIN32
+// Windows' std::ifstream fails with non-ANSI paths since the standard only
+// specifies names using const char* (or std::string). MSVC has a non-standard
+// extension using const wchar_t* (or std::wstring?) to handle Unicode paths,
+// but not all Windows compilers support it. So we have to make our own istream
+// that accepts UTF-8 paths and forwards to Unicode-aware I/O functions.
+class StreamBuf : public std::streambuf {
+    std::array<traits_type::char_type,4096> mBuffer;
+    HANDLE mFile;
+
+    int_type underflow() override final
+    {
+        if(mFile != INVALID_HANDLE_VALUE && gptr() == egptr())
+        {
+            // Read in the next chunk of data, and set the pointers on success
+            DWORD got = 0;
+            if(!ReadFile(mFile, mBuffer.data(), mBuffer.size(), &got, NULL))
+                got = 0;
+            setg(mBuffer.data(), mBuffer.data(), mBuffer.data()+got);
+        }
+        if(gptr() == egptr())
+            return traits_type::eof();
+        return traits_type::to_int_type(*gptr());
+    }
+
+    pos_type seekoff(off_type offset, std::ios_base::seekdir whence, std::ios_base::openmode mode) override final
+    {
+        if(mFile == INVALID_HANDLE_VALUE || (mode&std::ios_base::out) || !(mode&std::ios_base::in))
+            return traits_type::eof();
+
+        LARGE_INTEGER fpos;
+        switch(whence)
+        {
+            case std::ios_base::beg:
+                fpos.QuadPart = offset;
+                if(!SetFilePointerEx(mFile, fpos, &fpos, FILE_BEGIN))
+                    return traits_type::eof();
+                break;
+
+            case std::ios_base::cur:
+                // If the offset remains in the current buffer range, just
+                // update the pointer.
+                if((offset >= 0 && offset < off_type(egptr()-gptr())) ||
+                   (offset < 0 && -offset <= off_type(gptr()-eback())))
+                {
+                    // Get the current file offset to report the correct read
+                    // offset.
+                    fpos.QuadPart = 0;
+                    if(!SetFilePointerEx(mFile, fpos, &fpos, FILE_CURRENT))
+                        return traits_type::eof();
+                    setg(eback(), gptr()+offset, egptr());
+                    return fpos.QuadPart - off_type(egptr()-gptr());
+                }
+                // Need to offset for the file offset being at egptr() while
+                // the requested offset is relative to gptr().
+                offset -= off_type(egptr()-gptr());
+                fpos.QuadPart = offset;
+                if(!SetFilePointerEx(mFile, fpos, &fpos, FILE_CURRENT))
+                    return traits_type::eof();
+                break;
+
+            case std::ios_base::end:
+                fpos.QuadPart = offset;
+                if(!SetFilePointerEx(mFile, fpos, &fpos, FILE_END))
+                    return traits_type::eof();
+                break;
+
+            default:
+                return traits_type::eof();
+        }
+        setg(0, 0, 0);
+        return fpos.QuadPart;
+    }
+
+    pos_type seekpos(pos_type pos, std::ios_base::openmode mode) override final
+    {
+        // Simplified version of seekoff
+        if(mFile == INVALID_HANDLE_VALUE || (mode&std::ios_base::out) || !(mode&std::ios_base::in))
+            return traits_type::eof();
+
+        LARGE_INTEGER fpos;
+        fpos.QuadPart = pos;
+        if(!SetFilePointerEx(mFile, fpos, &fpos, FILE_BEGIN))
+            return traits_type::eof();
+
+        setg(0, 0, 0);
+        return fpos.QuadPart;
+    }
+
+public:
+    bool open(const char *filename)
+    {
+        alure::Vector<wchar_t> wname;
+        int wnamelen;
+
+        wnamelen = MultiByteToWideChar(CP_UTF8, 0, filename, -1, NULL, 0);
+        if(wnamelen <= 0) return false;
+
+        wname.resize(wnamelen);
+        MultiByteToWideChar(CP_UTF8, 0, filename, -1, wname.data(), wnamelen);
+
+        mFile = CreateFileW(wname.data(), GENERIC_READ, FILE_SHARE_READ, NULL,
+                            OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+        if(mFile == INVALID_HANDLE_VALUE) return false;
+        return true;
+    }
+
+    bool is_open() const { return mFile != INVALID_HANDLE_VALUE; }
+
+    StreamBuf() : mFile(INVALID_HANDLE_VALUE)
+    { }
+    ~StreamBuf() override final
+    {
+        if(mFile != INVALID_HANDLE_VALUE)
+            CloseHandle(mFile);
+        mFile = INVALID_HANDLE_VALUE;
+    }
+};
+
+// Inherit from std::istream to use our custom streambuf
+class Stream : public std::istream {
+public:
+    Stream(const char *filename) : std::istream(new StreamBuf())
+    {
+        // Set the failbit if the file failed to open.
+        if(!(static_cast<StreamBuf*>(rdbuf())->open(filename)))
+            clear(failbit);
+    }
+    ~Stream() override final
+    { delete rdbuf(); }
+
+    bool is_open() const { return static_cast<StreamBuf*>(rdbuf())->is_open(); }
+};
+#endif
+
+}
 
 namespace alure
 {
@@ -116,7 +261,11 @@ UniquePtr<DecoderFactory> UnregisterDecoder(const String &name)
 class DefaultFileIOFactory : public FileIOFactory {
     UniquePtr<std::istream> openFile(const String &name) override final
     {
+#ifdef _WIN32
+        auto file = MakeUnique<Stream>(name.c_str());
+#else
         auto file = MakeUnique<std::ifstream>(name.c_str(), std::ios::binary);
+#endif
         if(!file->is_open()) file = nullptr;
         return std::move(file);
     }
