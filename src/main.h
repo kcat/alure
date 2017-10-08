@@ -35,17 +35,10 @@ ret C::Name(T1 a, T2 b, T3 c, T4 d, T5 e, T6 f) cv                            \
                        std::forward<_t5&&>(e), std::forward<_t6&&>(f));       \
 }
 
-namespace alure
-{
-
-template<typename T, typename T2>
-inline T cast(T2 obj)
-#ifndef ALURE_USE_RTTI
-{ return obj ? static_cast<T>(obj) : 0; }
+#ifdef __GNUC__
+#define EXPECT(x, y) __builtin_expect((x), (y))
 #else
-{ return obj ? dynamic_cast<T>(obj) : 0; }
+#define EXPECT(x, y) (x)
 #endif
-
-} // namespace alure
 
 #endif /* ALURE_MAIN_H */

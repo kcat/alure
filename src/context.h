@@ -286,7 +286,7 @@ public:
 
 inline void CheckContext(const ALContext *ctx)
 {
-    if(ctx != ALContext::GetCurrent())
+    if(EXPECT(ctx != ALContext::GetCurrent(), false))
         throw std::runtime_error("Called context is not current");
 }
 
