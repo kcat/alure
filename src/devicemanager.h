@@ -7,11 +7,11 @@ namespace alure {
 
 class ALDevice;
 
-class ALDeviceManager : public DeviceManager {
+class ALDeviceManager {
     Vector<UniquePtr<ALDevice>> mDevices;
 
     ALDeviceManager();
-    virtual ~ALDeviceManager();
+    ~ALDeviceManager();
 
 public:
     static ALCboolean (ALC_APIENTRY*SetThreadContext)(ALCcontext*);
@@ -20,13 +20,13 @@ public:
 
     void removeDevice(ALDevice *dev);
 
-    bool queryExtension(const String &name) const override final;
+    bool queryExtension(const String &name) const;
 
-    Vector<String> enumerate(DeviceEnumeration type) const override final;
-    String defaultDeviceName(DefaultDeviceType type) const override final;
+    Vector<String> enumerate(DeviceEnumeration type) const;
+    String defaultDeviceName(DefaultDeviceType type) const;
 
-    Device openPlayback(const String &name) override final;
-    Device openPlayback(const String &name, const std::nothrow_t&) override final;
+    Device openPlayback(const String &name);
+    Device openPlayback(const String &name, const std::nothrow_t&);
 };
 
 } // namespace alure

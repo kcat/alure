@@ -22,21 +22,11 @@ static inline void GetDeviceProc(T **func, ALCdevice *device, const char *name)
 
 ALCboolean (ALC_APIENTRY*ALDeviceManager::SetThreadContext)(ALCcontext*);
 
-DeviceManager &DeviceManager::get()
-{
-    return ALDeviceManager::get();
-}
-
-Device DeviceManager::openPlayback(const std::nothrow_t&)
-{ return openPlayback(String(), std::nothrow); }
-
-
 ALDeviceManager &ALDeviceManager::get()
 {
     static ALDeviceManager singleton;
     return singleton;
 }
-
 
 ALDeviceManager::ALDeviceManager()
 {
@@ -106,5 +96,16 @@ void ALDeviceManager::removeDevice(ALDevice *dev)
     );
     if(iter != mDevices.end()) mDevices.erase(iter);
 }
+
+
+DeviceManager DeviceManager::get()
+{ return DeviceManager(&ALDeviceManager::get()); }
+DECL_THUNK1(bool, DeviceManager, queryExtension, const, const String&)
+DECL_THUNK1(Vector<String>, DeviceManager, enumerate, const, DeviceEnumeration)
+DECL_THUNK1(String, DeviceManager, defaultDeviceName, const, DefaultDeviceType)
+DECL_THUNK1(Device, DeviceManager, openPlayback,, const String&)
+DECL_THUNK2(Device, DeviceManager, openPlayback,, const String&, const std::nothrow_t&)
+Device DeviceManager::openPlayback(const std::nothrow_t&)
+{ return openPlayback(String(), std::nothrow); }
 
 }

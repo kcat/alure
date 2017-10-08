@@ -58,6 +58,7 @@ typedef struct {
 namespace alure {
 
 class DeviceManager;
+class ALDeviceManager;
 class Device;
 class ALDevice;
 class Context;
@@ -355,57 +356,6 @@ constexpr inline ALCuint MinorVersion(ALCuint version)
 { return version&0xffff; }
 
 
-enum class DeviceEnumeration {
-    Basic = ALC_DEVICE_SPECIFIER,
-    Full = ALC_ALL_DEVICES_SPECIFIER,
-    Capture = ALC_CAPTURE_DEVICE_SPECIFIER
-};
-
-enum class DefaultDeviceType {
-    Basic = ALC_DEFAULT_DEVICE_SPECIFIER,
-    Full = ALC_DEFAULT_ALL_DEVICES_SPECIFIER,
-    Capture = ALC_CAPTURE_DEFAULT_DEVICE_SPECIFIER
-};
-
-/**
- * A class managing Device objects and other related functionality. This class
- * is a singleton, only one instance will exist in a process.
- */
-class ALURE_API DeviceManager {
-public:
-    /** Retrieves the DeviceManager instance. */
-    static DeviceManager &get();
-
-    /** Queries the existence of a non-device-specific ALC extension. */
-    virtual bool queryExtension(const String &name) const = 0;
-
-    /** Enumerates available device names of the given type. */
-    virtual Vector<String> enumerate(DeviceEnumeration type) const = 0;
-    /** Retrieves the default device of the given type. */
-    virtual String defaultDeviceName(DefaultDeviceType type) const = 0;
-
-    /**
-     * Opens the playback device given by name, or the default if blank. Throws
-     * an exception on error.
-     */
-    virtual Device openPlayback(const String &name=String()) = 0;
-
-    /**
-     * Opens the playback device given by name, or the default if blank.
-     * Returns an empty Device on error.
-     */
-    virtual Device openPlayback(const String &name, const std::nothrow_t&) = 0;
-
-    /** Opens the default playback device. Returns an empty Device on error. */
-    Device openPlayback(const std::nothrow_t&);
-};
-
-
-enum class PlaybackName {
-    Basic = ALC_DEVICE_SPECIFIER,
-    Full = ALC_ALL_DEVICES_SPECIFIER
-};
-
 #define MAKE_PIMPL(BaseT, ImplT)                                              \
 private:                                                                      \
     ImplT *pImpl;                                                             \
@@ -431,6 +381,65 @@ public:                                                                       \
     operator bool() const { return !!pImpl; }                                 \
                                                                               \
     handle_type getHandle() const { return pImpl; }
+
+enum class DeviceEnumeration {
+    Basic = ALC_DEVICE_SPECIFIER,
+    Full = ALC_ALL_DEVICES_SPECIFIER,
+    Capture = ALC_CAPTURE_DEVICE_SPECIFIER
+};
+
+enum class DefaultDeviceType {
+    Basic = ALC_DEFAULT_DEVICE_SPECIFIER,
+    Full = ALC_DEFAULT_ALL_DEVICES_SPECIFIER,
+    Capture = ALC_CAPTURE_DEFAULT_DEVICE_SPECIFIER
+};
+
+/**
+ * A class managing Device objects and other related functionality. This class
+ * is a singleton, only one instance will exist in a process.
+ */
+class ALURE_API DeviceManager {
+    ALDeviceManager *pImpl;
+
+    DeviceManager(ALDeviceManager *impl) : pImpl(impl) { }
+    friend class ALDeviceManager;
+
+public:
+    DeviceManager(const DeviceManager&) = default;
+    DeviceManager(DeviceManager&& rhs) : pImpl(rhs.pImpl) { }
+
+    /** Retrieves the DeviceManager instance. */
+    static DeviceManager get();
+
+    /** Queries the existence of a non-device-specific ALC extension. */
+    bool queryExtension(const String &name) const;
+
+    /** Enumerates available device names of the given type. */
+    Vector<String> enumerate(DeviceEnumeration type) const;
+    /** Retrieves the default device of the given type. */
+    String defaultDeviceName(DefaultDeviceType type) const;
+
+    /**
+     * Opens the playback device given by name, or the default if blank. Throws
+     * an exception on error.
+     */
+    Device openPlayback(const String &name=String());
+
+    /**
+     * Opens the playback device given by name, or the default if blank.
+     * Returns an empty Device on error.
+     */
+    Device openPlayback(const String &name, const std::nothrow_t&);
+
+    /** Opens the default playback device. Returns an empty Device on error. */
+    Device openPlayback(const std::nothrow_t&);
+};
+
+
+enum class PlaybackName {
+    Basic = ALC_DEVICE_SPECIFIER,
+    Full = ALC_ALL_DEVICES_SPECIFIER
+};
 
 class ALURE_API Device {
     MAKE_PIMPL(Device, ALDevice)
@@ -1371,6 +1380,8 @@ public:
      */
     virtual String resourceNotFound(const String &name);
 };
+
+#undef MAKE_PIMPL
 
 } // namespace alure
 
