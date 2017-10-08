@@ -20,8 +20,8 @@ int main(int argc, char *argv[])
         std::cout<< "  "<<name<<((defname==name)?"  [DEFAULT]":"") <<'\n';
     std::cout<<std::endl;
 
-    list = devMgr.enumerate(alure::DeviceEnumeration::Complete);
-    defname = devMgr.defaultDeviceName(alure::DefaultDeviceType::Complete);
+    list = devMgr.enumerate(alure::DeviceEnumeration::Full);
+    defname = devMgr.defaultDeviceName(alure::DefaultDeviceType::Full);
     std::cout<< "Available devices:\n";
     for(const auto &name : list)
         std::cout<< "  "<<name<<((defname==name)?"  [DEFAULT]":"") <<'\n';

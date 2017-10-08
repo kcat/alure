@@ -357,13 +357,13 @@ constexpr inline ALCuint MinorVersion(ALCuint version)
 
 enum class DeviceEnumeration {
     Basic = ALC_DEVICE_SPECIFIER,
-    Complete = ALC_ALL_DEVICES_SPECIFIER,
+    Full = ALC_ALL_DEVICES_SPECIFIER,
     Capture = ALC_CAPTURE_DEVICE_SPECIFIER
 };
 
 enum class DefaultDeviceType {
     Basic = ALC_DEFAULT_DEVICE_SPECIFIER,
-    Complete = ALC_DEFAULT_ALL_DEVICES_SPECIFIER,
+    Full = ALC_DEFAULT_ALL_DEVICES_SPECIFIER,
     Capture = ALC_CAPTURE_DEFAULT_DEVICE_SPECIFIER
 };
 
