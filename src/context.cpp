@@ -782,8 +782,7 @@ Buffer ALContext::getBuffer(const String &name)
         return Buffer(buffer);
     }
 
-    auto decoder = createDecoder(name);
-    return doCreateBuffer(name, iter, std::move(decoder));
+    return doCreateBuffer(name, iter, createDecoder(name));
 }
 
 Buffer ALContext::getBufferAsync(const String &name)
@@ -797,10 +796,8 @@ Buffer ALContext::getBufferAsync(const String &name)
     );
     if(iter != mBuffers.end() && (*iter)->getName() == name)
         return Buffer(iter->get());
-    // NOTE: 'iter' is used later to insert a new entry!
 
-    auto decoder = createDecoder(name);
-    return doCreateBufferAsync(name, iter, std::move(decoder));
+    return doCreateBufferAsync(name, iter, createDecoder(name));
 }
 
 Buffer ALContext::createBufferFrom(const String &name, SharedPtr<Decoder> decoder)
@@ -814,7 +811,6 @@ Buffer ALContext::createBufferFrom(const String &name, SharedPtr<Decoder> decode
     );
     if(iter != mBuffers.end() && (*iter)->getName() == name)
         throw std::runtime_error("Buffer \""+name+"\" already exists");
-    // NOTE: 'iter' is used later to insert a new entry!
 
     return doCreateBuffer(name, iter, std::move(decoder));
 }
@@ -830,7 +826,6 @@ Buffer ALContext::createBufferAsyncFrom(const String &name, SharedPtr<Decoder> d
     );
     if(iter != mBuffers.end() && (*iter)->getName() == name)
         throw std::runtime_error("Buffer \""+name+"\" already exists");
-    // NOTE: 'iter' is used later to insert a new entry!
 
     return doCreateBufferAsync(name, iter, std::move(decoder));
 }
