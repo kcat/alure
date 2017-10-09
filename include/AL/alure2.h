@@ -687,8 +687,15 @@ public:
     SourceGroup createSourceGroup(String name);
     SourceGroup getSourceGroup(const String &name);
 
+    /** Sets the doppler factor to apply to all source calculations. */
     void setDopplerFactor(ALfloat factor);
 
+    /**
+     * Sets the speed of sound propogation, in units per second, to calculate
+     * the doppler effect along with other distance-related time effects. The
+     * default is 343.3 units per second (a realistic speed assuming 1 meter
+     * per unit).
+     */
     void setSpeedOfSound(ALfloat speed);
 
     void setDistanceModel(DistanceModel model);
@@ -705,20 +712,42 @@ class ALURE_API Listener {
     MAKE_PIMPL(Listener, ALListener)
 
 public:
+    /** Sets the "master" gain for all context output. */
     void setGain(ALfloat gain);
 
+    /**
+     * Specifies the listener's 3D position, velocity, and orientation
+     * together.
+     */
     void set3DParameters(const Vector3 &position, const Vector3 &velocity, std::pair<Vector3,Vector3> orientation);
 
+    /** Specifies the listener's 3D position. */
     void setPosition(ALfloat x, ALfloat y, ALfloat z);
     void setPosition(const ALfloat *pos);
 
+    /**
+     * Specifies the listener's 3D velocity, in units per second. As with
+     * OpenAL, this does not actually alter the listener's position, and
+     * instead just alters the pitch as determined by the doppler effect.
+     */
     void setVelocity(ALfloat x, ALfloat y, ALfloat z);
     void setVelocity(const ALfloat *vel);
 
+    /**
+     * Specifies the listener's 3D orientation, using position-relative 'at'
+     * and 'up' direction vectors.
+     */
     void setOrientation(ALfloat x1, ALfloat y1, ALfloat z1, ALfloat x2, ALfloat y2, ALfloat z2);
     void setOrientation(const ALfloat *at, const ALfloat *up);
     void setOrientation(const ALfloat *ori);
 
+    /**
+     * Sets the number of meters per unit, used for various effects that rely
+     * on the distance in meters (including air absorption and initial reverb
+     * decay). If this is changed, it's strongly recommended to also set the
+     * speed of sound (e.g. context.setSpeedOfSound(343.3 / m_u) to maintain a
+     * realistic 343.3m/s for sound propgation).
+     */
     void setMetersPerUnit(ALfloat m_u);
 };
 
@@ -1043,12 +1072,12 @@ public:
      */
     void setSendFilter(ALuint send, const FilterParams &filter);
     /**
-     * Connects the effect slot slot to the given send path. Any filter
-     * properties on the send path remain as they were.
+     * Connects the effect slot to the given send path. Any filter properties
+     * on the send path remain as they were.
      */
     void setAuxiliarySend(AuxiliaryEffectSlot slot, ALuint send);
     /**
-     * Connects the effect slot slot to the given send path, using the filter
+     * Connects the effect slot to the given send path, using the filter
      * properties.
      */
     void setAuxiliarySendFilter(AuxiliaryEffectSlot slot, ALuint send, const FilterParams &filter);
