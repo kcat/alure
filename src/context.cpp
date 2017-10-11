@@ -56,7 +56,7 @@ namespace
 // but not all Windows compilers support it. So we have to make our own istream
 // that accepts UTF-8 paths and forwards to Unicode-aware I/O functions.
 class StreamBuf : public std::streambuf {
-    std::array<traits_type::char_type,4096> mBuffer;
+    alure::Array<traits_type::char_type,4096> mBuffer;
     HANDLE mFile;
 
     int_type underflow() override final

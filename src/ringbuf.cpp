@@ -165,9 +165,9 @@ void RingBuffer::write_advance(size_t cnt)
     mWritePtr.store(tmp);
 }
 
-std::array<RingBuffer::Data,2> RingBuffer::get_read_vector() const
+Array<RingBuffer::Data,2> RingBuffer::get_read_vector() const
 {
-    std::array<Data,2> vec;
+    Array<Data,2> vec;
     size_t free_cnt;
     size_t cnt2;
     size_t w, r;
@@ -198,9 +198,9 @@ std::array<RingBuffer::Data,2> RingBuffer::get_read_vector() const
     return vec;
 }
 
-std::array<RingBuffer::Data,2> RingBuffer::get_write_vector() const
+Array<RingBuffer::Data,2> RingBuffer::get_write_vector() const
 {
-    std::array<Data,2> vec;
+    Array<Data,2> vec;
     size_t free_cnt;
     size_t cnt2;
     size_t w, r;

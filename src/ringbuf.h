@@ -73,13 +73,13 @@ public:
      * values at `vec' to hold the current readable data. If the readable data
      * is in one segment the second segment has zero length.
      */
-    std::array<Data,2> get_read_vector() const;
+    Array<Data,2> get_read_vector() const;
 
     /* The non-copying data writer. `vec' is an array of two places. Set the
      * values at `vec' to hold the current writeable data. If the writeable
      * data is in one segment the second segment has zero length.
      */
-    std::array<Data,2> get_write_vector() const;
+    Array<Data,2> get_write_vector() const;
 };
 
 } // namespace alure

@@ -151,7 +151,7 @@ public:
         ALuint ret = 0;
 
         mSampleBuf.resize(count*2);
-        std::array<sample_t*,1> samples{{mSampleBuf.data()}};
+        alure::Array<sample_t*,1> samples{{mSampleBuf.data()}};
 
         dumb_silence(samples[0], mSampleBuf.size());
         ret = duh_sigrenderer_generate_samples(mRenderer, 1.0f, 65536.0f/mFrequency, count,
@@ -183,7 +183,7 @@ public:
 class DumbFactory : public alure::DecoderFactory {
     alure::SharedPtr<alure::Decoder> createDecoder(alure::UniquePtr<std::istream> &file) override final
     {
-        static const std::array<DUH*(*)(DUMBFILE*),3> init_funcs{{
+        static const alure::Array<DUH*(*)(DUMBFILE*),3> init_funcs{{
             dumb_read_it, dumb_read_xm, dumb_read_s3m
         }};
 

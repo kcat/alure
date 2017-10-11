@@ -21,7 +21,7 @@ namespace
 
 // Inherit from std::streambuf to handle custom I/O (PhysFS for this example)
 class StreamBuf : public std::streambuf {
-    using BufferArrayT = std::array<traits_type::char_type,4096>;
+    using BufferArrayT = alure::Array<traits_type::char_type,4096>;
     BufferArrayT mBuffer;
     PHYSFS_File *mFile;
 

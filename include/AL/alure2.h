@@ -112,13 +112,18 @@ constexpr inline UniquePtr<T> MakeUnique(Args&&... args)
 template<typename T>
 using Vector = std::vector<T>;
 
+// A static-sized Array implementation, defaults to C++11's std::array. If this
+// is changed, you must recompile the library.
+template<typename T, std::size_t N>
+using Array = std::array<T, N>;
+
 // A String implementation, default's to C++'s std::string. If this is changed,
 // you must recompile the library.
 using String = std::string;
 
 // A rather simple ArrayView container. This allows accepting various array
-// types (std::array, Vector, a static-sized array, a dynamic array + size)
-// without copying its elements.
+// types (Array, Vector, a static-sized array, a dynamic array + size) without
+// copying its elements.
 template<typename T>
 class ArrayView {
     T *mElems;
@@ -214,7 +219,7 @@ struct FilterParams {
 
 
 class ALURE_API Vector3 {
-    std::array<ALfloat,3> mValue;
+    Array<ALfloat,3> mValue;
 
 public:
     constexpr Vector3() noexcept
