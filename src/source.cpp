@@ -453,6 +453,11 @@ void ALSource::makeStopped()
 void ALSource::stop()
 {
     CheckContext(mContext);
+    if(mIsAsync.load(std::memory_order_acquire))
+    {
+        mContext->removeStream(this);
+        mIsAsync.store(false, std::memory_order_release);
+    }
     makeStopped();
 }
 

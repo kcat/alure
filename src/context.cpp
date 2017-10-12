@@ -849,8 +849,6 @@ void ALContext::removeBuffer(const String &name)
 
 ALuint ALContext::getSourceId(ALuint maxprio)
 {
-    CheckContext(this);
-
     ALuint id = 0;
     if(mSourceIds.empty())
     {
@@ -867,7 +865,7 @@ ALuint ALContext::getSourceId(ALuint maxprio)
         }
         if(lowest && lowest->getPriority() < maxprio)
         {
-            lowest->makeStopped();
+            lowest->stop();
             if(mMessage.get())
                 mMessage->sourceForceStopped(lowest);
         }
