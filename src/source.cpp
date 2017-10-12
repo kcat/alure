@@ -762,7 +762,7 @@ std::pair<Seconds,Seconds> ALSource::getSecOffsetLatency() const
     if(mContext->hasExtension(SOFT_source_latency))
     {
         ALdouble val[2];
-        mContext->alGetSourcedvSOFT(mId, AL_SAMPLE_OFFSET_LATENCY_SOFT, val);
+        mContext->alGetSourcedvSOFT(mId, AL_SEC_OFFSET_LATENCY_SOFT, val);
         srcpos = val[0];
         latency = Seconds(val[1]);
     }
