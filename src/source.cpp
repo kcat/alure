@@ -39,7 +39,7 @@ class ALBufferStream {
 
     uint64_t mSamplePos;
     std::pair<uint64_t,uint64_t> mLoopPts;
-    std::atomic<bool> mHasLooped;
+    bool mHasLooped;
     std::atomic<bool> mDone;
 
 public:
@@ -71,7 +71,7 @@ public:
         if(!mDecoder->seek(pos))
             return false;
         mSamplePos = pos;
-        mHasLooped.store(false, std::memory_order_relaxed);
+        mHasLooped = false;
         mDone.store(false, std::memory_order_release);
         return true;
     }
@@ -111,7 +111,7 @@ public:
     int64_t getLoopStart() const { return mLoopPts.first; }
     int64_t getLoopEnd() const { return mLoopPts.second; }
 
-    bool hasLooped() const { return mHasLooped.load(std::memory_order_acquire); }
+    bool hasLooped() const { return mHasLooped; }
     bool hasMoreData() const { return !mDone.load(std::memory_order_acquire); }
     bool streamMoreData(ALuint srcid, bool loop)
     {
@@ -139,7 +139,7 @@ public:
                 if(!mDecoder->seek(mLoopPts.first))
                     break;
                 mSamplePos = mLoopPts.first;
-                mHasLooped.store(true, std::memory_order_release);
+                mHasLooped = true;
 
                 len = std::min<uint64_t>(mUpdateLen-frames, mLoopPts.second-mLoopPts.first);
                 ALuint got = mDecoder->read(&mData[frames*mFrameSize], len);
