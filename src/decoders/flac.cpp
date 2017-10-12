@@ -19,7 +19,6 @@ class FlacDecoder : public Decoder {
     SampleType mSampleType;
     ALuint mFrequency;
     ALuint mFrameSize;
-    uint64_t mSamplePos;
 
     Vector<ALubyte> mData;
 
@@ -193,7 +192,7 @@ class FlacDecoder : public Decoder {
 public:
     FlacDecoder()
       : mFlacFile(nullptr), mChannelConfig(ChannelConfig::Mono), mSampleType(SampleType::Int16)
-      , mFrequency(0), mFrameSize(0), mSamplePos(0), mOutBytes(nullptr), mOutMax(0), mOutLen(0)
+      , mFrequency(0), mFrameSize(0), mOutBytes(nullptr), mOutMax(0), mOutLen(0)
     { }
     ~FlacDecoder() override final;
 
@@ -204,7 +203,6 @@ public:
     SampleType getSampleType() const override final;
 
     uint64_t getLength() const override final;
-    uint64_t getPosition() const override final;
     bool seek(uint64_t pos) override final;
 
     std::pair<uint64_t,uint64_t> getLoopPoints() const override final;
@@ -273,16 +271,10 @@ uint64_t FlacDecoder::getLength() const
     return FLAC__stream_decoder_get_total_samples(mFlacFile);
 }
 
-uint64_t FlacDecoder::getPosition() const
-{
-    return mSamplePos;
-}
-
 bool FlacDecoder::seek(uint64_t pos)
 {
     if(!FLAC__stream_decoder_seek_absolute(mFlacFile, pos))
         return false;
-    mSamplePos = pos;
     return true;
 }
 
@@ -311,11 +303,7 @@ ALuint FlacDecoder::read(ALvoid *ptr, ALuint count)
            FLAC__stream_decoder_get_state(mFlacFile) == FLAC__STREAM_DECODER_END_OF_STREAM)
             break;
     }
-    ALuint ret = mOutLen / mFrameSize;
-
-    mSamplePos += ret;
-
-    return ret;
+    return mOutLen / mFrameSize;
 }
 
 

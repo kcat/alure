@@ -37,6 +37,7 @@ class ALBufferStream {
     Vector<ALuint> mBufferIds;
     ALuint mCurrentIdx;
 
+    uint64_t mSamplePos;
     std::pair<uint64_t,uint64_t> mLoopPts;
     std::atomic<bool> mHasLooped;
     std::atomic<bool> mDone;
@@ -45,7 +46,8 @@ public:
     ALBufferStream(SharedPtr<Decoder> decoder, ALuint updatelen, ALuint numupdates)
       : mDecoder(decoder), mUpdateLen(updatelen), mNumUpdates(numupdates),
         mFormat(AL_NONE), mFrequency(0), mFrameSize(0), mSilence(0),
-        mCurrentIdx(0), mLoopPts{0,0}, mHasLooped(false), mDone(false)
+        mCurrentIdx(0), mSamplePos(0), mLoopPts{0,0}, mHasLooped(false),
+        mDone(false)
     { }
     ~ALBufferStream()
     {
@@ -57,7 +59,7 @@ public:
     }
 
     uint64_t getLength() const { return mDecoder->getLength(); }
-    uint64_t getPosition() const { return mDecoder->getPosition(); }
+    uint64_t getPosition() const { return mSamplePos; }
 
     ALuint getNumUpdates() const { return mNumUpdates; }
     ALuint getUpdateLength() const { return mUpdateLen; }
@@ -68,7 +70,8 @@ public:
     {
         if(!mDecoder->seek(pos))
             return false;
-        mHasLooped.store(false, std::memory_order_release);
+        mSamplePos = pos;
+        mHasLooped.store(false, std::memory_order_relaxed);
         mDone.store(false, std::memory_order_release);
         return true;
     }
@@ -116,42 +119,40 @@ public:
             return false;
 
         ALuint frames;
-        if(!loop)
-            frames = mDecoder->read(&mData[0], mUpdateLen);
+        ALuint len = mUpdateLen;
+        if(loop && mSamplePos <= mLoopPts.second)
+            len = std::min<uint64_t>(len, mLoopPts.second - mSamplePos);
         else
+            loop = false;
+
+        frames = mDecoder->read(mData.data(), len);
+        mSamplePos += frames;
+        if(frames < mUpdateLen && loop && mSamplePos > 0)
         {
-            ALuint len = mUpdateLen;
-            uint64_t pos = mDecoder->getPosition();
-            if(pos <= mLoopPts.second)
-                len = std::min<uint64_t>(len, mLoopPts.second - pos);
-            else
-                loop = false;
-
-            frames = mDecoder->read(&mData[0], len);
-            if(frames < mUpdateLen && loop && pos+frames > 0)
+            if(mSamplePos < mLoopPts.second)
             {
-                if(pos+frames < mLoopPts.second)
-                {
-                    mLoopPts.second = pos+frames;
-                    mLoopPts.first = std::min(mLoopPts.first, mLoopPts.second-1);
-                }
-
-                do {
-                    if(!mDecoder->seek(mLoopPts.first))
-                        break;
-                    mHasLooped.store(true, std::memory_order_release);
-
-                    len = std::min<uint64_t>(mUpdateLen-frames, mLoopPts.second-mLoopPts.first);
-                    ALuint got = mDecoder->read(&mData[frames*mFrameSize], len);
-                    if(got == 0) break;
-                    frames += got;
-                } while(frames < mUpdateLen);
+                mLoopPts.second = mSamplePos;
+                mLoopPts.first = std::min(mLoopPts.first, mLoopPts.second-1);
             }
+
+            do {
+                if(!mDecoder->seek(mLoopPts.first))
+                    break;
+                mSamplePos = mLoopPts.first;
+                mHasLooped.store(true, std::memory_order_release);
+
+                len = std::min<uint64_t>(mUpdateLen-frames, mLoopPts.second-mLoopPts.first);
+                ALuint got = mDecoder->read(&mData[frames*mFrameSize], len);
+                if(got == 0) break;
+                mSamplePos += got;
+                frames += got;
+            } while(frames < mUpdateLen);
         }
         if(frames < mUpdateLen)
         {
             mDone.store(true, std::memory_order_release);
             if(frames == 0) return false;
+            mSamplePos += mUpdateLen - frames;
             std::fill(mData.begin() + frames*mFrameSize, mData.end(), mSilence);
         }
 

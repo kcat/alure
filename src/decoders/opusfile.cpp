@@ -148,7 +148,6 @@ public:
     SampleType getSampleType() const override final;
 
     uint64_t getLength() const override final;
-    uint64_t getPosition() const override final;
     bool seek(uint64_t pos) override final;
 
     std::pair<uint64_t,uint64_t> getLoopPoints() const override final;
@@ -183,12 +182,6 @@ uint64_t OpusFileDecoder::getLength() const
 {
     ogg_int64_t len = op_pcm_total(mOggFile, -1);
     return std::max<ogg_int64_t>(len, 0);
-}
-
-uint64_t OpusFileDecoder::getPosition() const
-{
-    ogg_int64_t pos = op_pcm_tell(mOggFile);
-    return std::max<ogg_int64_t>(pos, 0);
 }
 
 bool OpusFileDecoder::seek(uint64_t pos)

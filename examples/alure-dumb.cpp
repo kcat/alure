@@ -87,14 +87,13 @@ class DumbDecoder : public alure::Decoder {
     ALuint mFrequency;
 
     alure::Vector<sample_t> mSampleBuf;
-    uint64_t mStreamPos;
 
 public:
     DumbDecoder(alure::UniquePtr<std::istream> file, alure::UniquePtr<DUMBFILE_SYSTEM> dfs,
                 DUMBFILE *dfile, DUH *duh, DUH_SIGRENDERER *renderer, alure::SampleType stype,
                 ALuint srate)
       : mFile(std::move(file)), mDfs(std::move(dfs)), mDumbfile(dfile), mDuh(duh)
-      , mRenderer(renderer), mSampleType(stype), mFrequency(srate), mStreamPos(0)
+      , mRenderer(renderer), mSampleType(stype), mFrequency(srate)
     { }
     ~DumbDecoder() override final
     {
@@ -127,11 +126,6 @@ public:
         // Modules have no explicit length, they just keep playing as long as
         // more samples get generated.
         return 0;
-    }
-
-    uint64_t getPosition() const override final
-    {
-        return mStreamPos;
     }
 
     bool seek(uint64_t) override final
@@ -173,7 +167,6 @@ public:
                 out[i] = smp;
             }
         }
-        mStreamPos += ret;
 
         return ret;
     }

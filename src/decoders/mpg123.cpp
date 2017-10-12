@@ -47,7 +47,6 @@ public:
     SampleType getSampleType() const override final;
 
     uint64_t getLength() const override final;
-    uint64_t getPosition() const override final;
     bool seek(uint64_t pos) override final;
 
     std::pair<uint64_t,uint64_t> getLoopPoints() const override final;
@@ -87,12 +86,6 @@ uint64_t Mpg123Decoder::getLength() const
 {
     off_t len = mpg123_length(mMpg123);
     return (ALuint)std::max<off_t>(len, 0);
-}
-
-uint64_t Mpg123Decoder::getPosition() const
-{
-    off_t pos = mpg123_tell(mMpg123);
-    return (ALuint)std::max<off_t>(pos, 0);
 }
 
 bool Mpg123Decoder::seek(uint64_t pos)

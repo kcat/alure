@@ -83,7 +83,6 @@ public:
     SampleType getSampleType() const override final;
 
     uint64_t getLength() const override final;
-    uint64_t getPosition() const override final;
     bool seek(uint64_t pos) override final;
 
     std::pair<uint64_t,uint64_t> getLoopPoints() const override final;
@@ -115,12 +114,6 @@ SampleType WaveDecoder::getSampleType() const
 uint64_t WaveDecoder::getLength() const
 {
     return (mEnd - mStart) / mFrameSize;
-}
-
-uint64_t WaveDecoder::getPosition() const
-{
-    mFile->clear();
-    return (std::max(mFile->tellg(), mStart) - mStart) / mFrameSize;
 }
 
 bool WaveDecoder::seek(uint64_t pos)

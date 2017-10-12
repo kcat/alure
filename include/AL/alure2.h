@@ -1242,11 +1242,6 @@ public:
      */
     virtual uint64_t getLength() const = 0;
     /**
-     * Retrieves the current sample frame position (i.e. the number of sample
-     * frames from the beginning).
-     */
-    virtual uint64_t getPosition() const = 0;
-    /**
      * Seek to pos, specified in sample frames. Returns true if the seek was
      * successful.
      */

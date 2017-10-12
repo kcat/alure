@@ -78,7 +78,6 @@ public:
     SampleType getSampleType() const override final;
 
     uint64_t getLength() const override final;
-    uint64_t getPosition() const override final;
     bool seek(uint64_t pos) override final;
 
     std::pair<uint64_t,uint64_t> getLoopPoints() const override final;
@@ -112,12 +111,6 @@ SampleType SndFileDecoder::getSampleType() const
 uint64_t SndFileDecoder::getLength() const
 {
     return std::max<sf_count_t>(mSndInfo.frames, 0);
-}
-
-uint64_t SndFileDecoder::getPosition() const
-{
-    sf_count_t pos = sf_seek(mSndFile, 0, SEEK_CUR);
-    return std::max<sf_count_t>(pos, 0);
 }
 
 bool SndFileDecoder::seek(uint64_t pos)
