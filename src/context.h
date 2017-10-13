@@ -11,6 +11,8 @@
 #include <stack>
 #include <queue>
 #include <set>
+// TODO: Can use <variant> with a C++17-compliant compiler.
+#include "mpark/variant.hpp"
 
 #include "alc.h"
 #include "alext.h"
@@ -23,6 +25,20 @@
 #define F_PI (3.14159265358979323846f)
 
 namespace alure {
+
+// TODO: Can use std::variant stuff with a C++17-compliant compiler.
+template<typename T>
+using AddPointerT = typename std::add_pointer<T>::type;
+template<typename ...Ts>
+using Variant = mpark::variant<Ts...>;
+template<typename T, typename ...Ts>
+inline constexpr T& Get(Variant<Ts...> &v) { return mpark::get<T>(v); }
+template<size_t I, typename ...Ts>
+inline constexpr mpark::variant_alternative_t<I,Variant<Ts...>>& Get(Variant<Ts...> &v) { return mpark::get<I>(v); }
+template<typename T, typename ...Ts>
+inline constexpr AddPointerT<T> GetIf(Variant<Ts...> *v) noexcept { return mpark::get_if<T>(v); }
+template<size_t I, typename ...Ts>
+inline constexpr AddPointerT<mpark::variant_alternative_t<I,Variant<Ts...>>> GetIf(Variant<Ts...> *v) noexcept { return mpark::get_if<I>(v); }
 
 class ALDevice;
 class ALBuffer;
@@ -95,6 +111,9 @@ public:
     void setMetersPerUnit(ALfloat m_u);
 };
 
+
+using BufferOrExceptT = Variant<Buffer,std::runtime_error>;
+
 class ALContext {
     static ALContext *sCurrentCtx;
     static thread_local ALContext *sThreadCurrentCtx;
@@ -155,8 +174,8 @@ private:
     std::once_flag mSetExts;
     void setupExts();
 
-    Buffer doCreateBuffer(const String &name, Vector<UniquePtr<ALBuffer>>::iterator iter, SharedPtr<Decoder> decoder);
-    Buffer doCreateBufferAsync(const String &name, Vector<UniquePtr<ALBuffer>>::iterator iter, SharedPtr<Decoder> decoder);
+    BufferOrExceptT doCreateBuffer(const String &name, Vector<UniquePtr<ALBuffer>>::iterator iter, SharedPtr<Decoder> decoder);
+    BufferOrExceptT doCreateBufferAsync(const String &name, Vector<UniquePtr<ALBuffer>>::iterator iter, SharedPtr<Decoder> decoder);
 
     bool mIsConnected : 1;
     bool mIsBatching : 1;

@@ -667,8 +667,9 @@ ALsizei ALContext::getDefaultResamplerIndex() const
 }
 
 
-Buffer ALContext::doCreateBuffer(const String &name, Vector<UniquePtr<ALBuffer>>::iterator iter, SharedPtr<Decoder> decoder)
+BufferOrExceptT ALContext::doCreateBuffer(const String &name, Vector<UniquePtr<ALBuffer>>::iterator iter, SharedPtr<Decoder> decoder)
 {
+    BufferOrExceptT retval;
     ALuint srate = decoder->getFrequency();
     ChannelConfig chans = decoder->getChannelConfig();
     SampleType type = decoder->getSampleType();
@@ -676,7 +677,7 @@ Buffer ALContext::doCreateBuffer(const String &name, Vector<UniquePtr<ALBuffer>>
 
     Vector<ALbyte> data(FramesToBytes(frames, chans, type));
     frames = decoder->read(&data[0], frames);
-    if(!frames) throw std::runtime_error("No samples for buffer");
+    if(!frames) return (retval = std::runtime_error("No samples for buffer"));
     data.resize(FramesToBytes(frames, chans, type));
 
     std::pair<uint64_t,uint64_t> loop_pts = decoder->getLoopPoints();
@@ -695,7 +696,7 @@ Buffer ALContext::doCreateBuffer(const String &name, Vector<UniquePtr<ALBuffer>>
     {
         std::stringstream sstr;
         sstr<< "Format not supported ("<<GetSampleTypeName(type)<<", "<<GetChannelConfigName(chans)<<")";
-        throw std::runtime_error(sstr.str());
+        return (retval = std::runtime_error(sstr.str()));
     }
 
     if(mMessage.get())
@@ -703,48 +704,46 @@ Buffer ALContext::doCreateBuffer(const String &name, Vector<UniquePtr<ALBuffer>>
 
     alGetError();
     ALuint bid = 0;
-    try {
-        alGenBuffers(1, &bid);
-        alBufferData(bid, format, &data[0], data.size(), srate);
-        if(hasExtension(SOFT_loop_points))
-        {
-            ALint pts[2]{(ALint)loop_pts.first, (ALint)loop_pts.second};
-            alBufferiv(bid, AL_LOOP_POINTS_SOFT, pts);
-        }
-        if(alGetError() != AL_NO_ERROR)
-            throw std::runtime_error("Failed to buffer data");
-
-        return Buffer(mBuffers.insert(iter,
-            MakeUnique<ALBuffer>(this, bid, srate, chans, type, true, name)
-        )->get());
+    alGenBuffers(1, &bid);
+    alBufferData(bid, format, &data[0], data.size(), srate);
+    if(hasExtension(SOFT_loop_points))
+    {
+        ALint pts[2]{(ALint)loop_pts.first, (ALint)loop_pts.second};
+        alBufferiv(bid, AL_LOOP_POINTS_SOFT, pts);
     }
-    catch(...) {
+    if(alGetError() != AL_NO_ERROR)
+    {
         alDeleteBuffers(1, &bid);
-        throw;
+        return (retval = std::runtime_error("Failed to buffer data"));
     }
+
+    return (retval = mBuffers.insert(iter,
+        MakeUnique<ALBuffer>(this, bid, srate, chans, type, true, name)
+    )->get());
 }
 
-Buffer ALContext::doCreateBufferAsync(const String &name, Vector<UniquePtr<ALBuffer>>::iterator iter, SharedPtr<Decoder> decoder)
+BufferOrExceptT ALContext::doCreateBufferAsync(const String &name, Vector<UniquePtr<ALBuffer>>::iterator iter, SharedPtr<Decoder> decoder)
 {
+    BufferOrExceptT retval;
     ALuint srate = decoder->getFrequency();
     ChannelConfig chans = decoder->getChannelConfig();
     SampleType type = decoder->getSampleType();
     ALuint frames = decoder->getLength();
-    if(!frames) throw std::runtime_error("No samples for buffer");
+    if(!frames) return (retval = std::runtime_error("No samples for buffer"));
 
     ALenum format = GetFormat(chans, type);
     if(format == AL_NONE)
     {
         std::stringstream sstr;
         sstr<< "Format not supported ("<<GetSampleTypeName(type)<<", "<<GetChannelConfigName(chans)<<")";
-        throw std::runtime_error(sstr.str());
+        return (retval = std::runtime_error(sstr.str()));
     }
 
     alGetError();
     ALuint bid = 0;
     alGenBuffers(1, &bid);
     if(alGetError() != AL_NO_ERROR)
-        throw std::runtime_error("Failed to buffer data");
+        return (retval = std::runtime_error("Failed to buffer data"));
 
     auto buffer = MakeUnique<ALBuffer>(this, bid, srate, chans, type, false, name);
 
@@ -752,15 +751,16 @@ Buffer ALContext::doCreateBufferAsync(const String &name, Vector<UniquePtr<ALBuf
         mThread = std::thread(std::mem_fn(&ALContext::backgroundProc), this);
 
     while(mPendingBuffers.write_space() == 0)
+    {
+        mWakeThread.notify_all();
         std::this_thread::yield();
+    }
 
     RingBuffer::Data ringdata = mPendingBuffers.get_write_vector()[0];
     new(ringdata.buf) PendingBuffer{name, buffer.get(), decoder, format, frames};
     mPendingBuffers.write_advance(1);
-    mWakeMutex.lock(); mWakeMutex.unlock();
-    mWakeThread.notify_all();
 
-    return Buffer(mBuffers.insert(iter, std::move(buffer))->get());
+    return (retval = mBuffers.insert(iter, std::move(buffer))->get());
 }
 
 Buffer ALContext::getBuffer(const String &name)
@@ -782,7 +782,11 @@ Buffer ALContext::getBuffer(const String &name)
         return Buffer(buffer);
     }
 
-    return doCreateBuffer(name, iter, createDecoder(name));
+    BufferOrExceptT ret = doCreateBuffer(name, iter, createDecoder(name));
+    Buffer *buffer = GetIf<Buffer>(&ret);
+    if(EXPECT(!buffer, false))
+        throw Get<std::runtime_error>(ret);
+    return *buffer;
 }
 
 Buffer ALContext::getBufferAsync(const String &name)
@@ -797,7 +801,13 @@ Buffer ALContext::getBufferAsync(const String &name)
     if(iter != mBuffers.end() && (*iter)->getName() == name)
         return Buffer(iter->get());
 
-    return doCreateBufferAsync(name, iter, createDecoder(name));
+    BufferOrExceptT ret = doCreateBufferAsync(name, iter, createDecoder(name));
+    Buffer *buffer = GetIf<Buffer>(&ret);
+    if(EXPECT(!buffer, false))
+        throw Get<std::runtime_error>(ret);
+    mWakeMutex.lock(); mWakeMutex.unlock();
+    mWakeThread.notify_all();
+    return *buffer;
 }
 
 Buffer ALContext::createBufferFrom(const String &name, SharedPtr<Decoder> decoder)
@@ -812,7 +822,11 @@ Buffer ALContext::createBufferFrom(const String &name, SharedPtr<Decoder> decode
     if(iter != mBuffers.end() && (*iter)->getName() == name)
         throw std::runtime_error("Buffer \""+name+"\" already exists");
 
-    return doCreateBuffer(name, iter, std::move(decoder));
+    BufferOrExceptT ret = doCreateBuffer(name, iter, std::move(decoder));
+    Buffer *buffer = GetIf<Buffer>(&ret);
+    if(EXPECT(!buffer, false))
+        throw Get<std::runtime_error>(ret);
+    return *buffer;
 }
 
 Buffer ALContext::createBufferAsyncFrom(const String &name, SharedPtr<Decoder> decoder)
@@ -827,7 +841,13 @@ Buffer ALContext::createBufferAsyncFrom(const String &name, SharedPtr<Decoder> d
     if(iter != mBuffers.end() && (*iter)->getName() == name)
         throw std::runtime_error("Buffer \""+name+"\" already exists");
 
-    return doCreateBufferAsync(name, iter, std::move(decoder));
+    BufferOrExceptT ret = doCreateBufferAsync(name, iter, std::move(decoder));
+    Buffer *buffer = GetIf<Buffer>(&ret);
+    if(EXPECT(!buffer, false))
+        throw Get<std::runtime_error>(ret);
+    mWakeMutex.lock(); mWakeMutex.unlock();
+    mWakeThread.notify_all();
+    return *buffer;
 }
 
 
