@@ -649,6 +649,25 @@ public:
     Buffer getBufferAsync(const String &name);
 
     /**
+     * Creates and caches Buffers for the given audio file or resource names.
+     * Duplicate names or names of buffers already cached are ignored.
+     *
+     * The Buffer objects will be scheduled for loading asynchronously, and
+     * should be retrieved later when needed using getBufferAsync or getBuffer.
+     * Buffers that cannot be loaded, for example due to an unsupported format,
+     * will be ignored and a later call to getBuffer or getBufferAsync will
+     * throw an exception. Precached buffers must also be cleaned up with calls
+     * to removeBuffer when no longer needed.
+     *
+     * Note that you should avoid trying to asynchronously cache more than 16
+     * buffers at a time. The internal ringbuffer used to communicate with the
+     * background thread can only hold 16 async load requests, and trying to
+     * add more will cause the call to stall until the background thread
+     * completes some loads for more to be filled in.
+     */
+    void precacheBuffersAsync(ArrayView<String> names);
+
+    /**
      * Creates and caches a Buffer using the given name. The name may alias an
      * audio file, but it must not currently exist in the buffer cache. As with
      * other cached buffers, removeBuffer must be used to remove it from the

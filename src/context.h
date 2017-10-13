@@ -279,6 +279,7 @@ public:
 
     Buffer getBuffer(const String &name);
     Buffer getBufferAsync(const String &name);
+    void precacheBuffersAsync(ArrayView<String> names);
     Buffer createBufferFrom(const String &name, SharedPtr<Decoder> decoder);
     Buffer createBufferAsyncFrom(const String &name, SharedPtr<Decoder> decoder);
     void removeBuffer(const String &name);

@@ -743,7 +743,7 @@ BufferOrExceptT ALContext::doCreateBufferAsync(const String &name, Vector<Unique
     ALuint bid = 0;
     alGenBuffers(1, &bid);
     if(alGetError() != AL_NO_ERROR)
-        return (retval = std::runtime_error("Failed to buffer data"));
+        return (retval = std::runtime_error("Failed to create buffer"));
 
     auto buffer = MakeUnique<ALBuffer>(this, bid, srate, chans, type, false, name);
 
@@ -808,6 +808,26 @@ Buffer ALContext::getBufferAsync(const String &name)
     mWakeMutex.lock(); mWakeMutex.unlock();
     mWakeThread.notify_all();
     return *buffer;
+}
+
+void ALContext::precacheBuffersAsync(ArrayView<String> names)
+{
+    CheckContext(this);
+
+    auto hasher = std::hash<String>();
+    for(const String &name : names)
+    {
+        auto iter = std::lower_bound(mBuffers.begin(), mBuffers.end(), hasher(name),
+            [hasher](const UniquePtr<ALBuffer> &lhs, size_t rhs) -> bool
+            { return hasher(lhs->getName()) < rhs; }
+        );
+        if(iter != mBuffers.end() && (*iter)->getName() == name)
+            continue;
+
+        doCreateBufferAsync(name, iter, createDecoder(name));
+    }
+    mWakeMutex.lock(); mWakeMutex.unlock();
+    mWakeThread.notify_all();
 }
 
 Buffer ALContext::createBufferFrom(const String &name, SharedPtr<Decoder> decoder)
@@ -1095,6 +1115,7 @@ DECL_THUNK0(const Vector<String>&, Context, getAvailableResamplers,)
 DECL_THUNK0(ALsizei, Context, getDefaultResamplerIndex, const)
 DECL_THUNK1(Buffer, Context, getBuffer,, const String&)
 DECL_THUNK1(Buffer, Context, getBufferAsync,, const String&)
+DECL_THUNK1(void, Context, precacheBuffersAsync,, ArrayView<String>)
 DECL_THUNK2(Buffer, Context, createBufferFrom,, const String&, SharedPtr<Decoder>)
 DECL_THUNK2(Buffer, Context, createBufferAsyncFrom,, const String&, SharedPtr<Decoder>)
 DECL_THUNK1(void, Context, removeBuffer,, const String&)
