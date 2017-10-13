@@ -36,12 +36,12 @@ int main(int argc, char *argv[])
 
     alure::Device dev = devMgr.openPlayback((argc > 1) ? argv[1] : "");
     std::cout<< "Info for device \""<<dev.getName(alure::PlaybackName::Full)<<"\":" <<std::endl;
-    ALCuint version = dev.getALCVersion();
-    std::cout<< "ALC version: "<<alure::MajorVersion(version)<<"."<<alure::MinorVersion(version) <<std::endl;
+    alure::Version version = dev.getALCVersion();
+    std::cout<< "ALC version: "<<version.getMajor()<<"."<<version.getMinor() <<std::endl;
     version = dev.getEFXVersion();
-    if(version)
+    if(!version.isZero())
     {
-        std::cout<< "EFX version: "<<alure::MajorVersion(version)<<"."<<alure::MinorVersion(version) <<'\n';
+        std::cout<< "EFX version: "<<version.getMajor()<<"."<<version.getMinor() <<'\n';
         std::cout<< "Max auxiliary sends: "<<dev.getMaxAuxiliarySends() <<std::endl;
     }
     else

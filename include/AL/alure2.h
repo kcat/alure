@@ -5,6 +5,7 @@
 #include <string>
 #include <memory>
 #include <utility>
+#include <limits>
 #include <chrono>
 #include <array>
 #include <cmath>
@@ -341,25 +342,21 @@ ALURE_API ALuint FramesToBytes(ALuint frames, ChannelConfig chans, SampleType ty
 ALURE_API ALuint BytesToFrames(ALuint bytes, ChannelConfig chans, SampleType type);
 
 
-/**
- * Creates a version number value using the specified major and minor values.
- */
-constexpr inline ALCuint MakeVersion(ALCushort major, ALCushort minor)
-{ return (major<<16) | minor; }
+/** Class for storing a major.minor version number. */
+class Version {
+    ALuint mMajor : 16;
+    ALuint mMinor : 16;
 
-/**
- * Retrieves the major version of a version number value created by
- * MakeVersion.
- */
-constexpr inline ALCuint MajorVersion(ALCuint version)
-{ return version>>16; }
-/**
- * Retrieves the minor version of a version number value created by
- * MakeVersion.
- */
-constexpr inline ALCuint MinorVersion(ALCuint version)
-{ return version&0xffff; }
+public:
+    Version(ALuint _maj, ALuint _min)
+      : mMajor(std::min<ALuint>(_maj, std::numeric_limits<ALushort>::max()))
+      , mMinor(std::min<ALuint>(_min, std::numeric_limits<ALushort>::max()))
+    { }
 
+    constexpr ALuint getMajor() const noexcept { return mMajor; }
+    constexpr ALuint getMinor() const noexcept { return mMinor; }
+    constexpr bool isZero() const noexcept { return mMajor == 0 && mMinor == 0; }
+};
 
 #define MAKE_PIMPL(BaseT, ImplT)                                              \
 private:                                                                      \
@@ -459,14 +456,14 @@ public:
      * Retrieves the ALC version supported by this device, as constructed by
      * MakeVersion.
      */
-    ALCuint getALCVersion() const;
+    Version getALCVersion() const;
 
     /**
      * Retrieves the EFX version supported by this device, as constructed by
      * MakeVersion. If the ALC_EXT_EFX extension is unsupported, this will be
-     * 0.
+     * 0.0.
      */
-    ALCuint getEFXVersion() const;
+    Version getEFXVersion() const;
 
     /** Retrieves the device's playback frequency, in hz. */
     ALCuint getFrequency() const;

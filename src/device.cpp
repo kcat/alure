@@ -97,33 +97,27 @@ bool ALDevice::queryExtension(const String &name) const
     return alcIsExtensionPresent(mDevice, name.c_str());
 }
 
-ALCuint ALDevice::getALCVersion() const
+Version ALDevice::getALCVersion() const
 {
     ALCint major=-1, minor=-1;
     alcGetIntegerv(mDevice, ALC_MAJOR_VERSION, 1, &major);
     alcGetIntegerv(mDevice, ALC_MINOR_VERSION, 1, &minor);
     if(major < 0 || minor < 0)
         throw std::runtime_error("ALC version error");
-    return MakeVersion(
-        (ALCushort)std::min<ALCint>(major, std::numeric_limits<ALCushort>::max()),
-        (ALCushort)std::min<ALCint>(minor, std::numeric_limits<ALCushort>::max())
-    );
+    return Version{ (ALCuint)major, (ALCuint)minor };
 }
 
-ALCuint ALDevice::getEFXVersion() const
+Version ALDevice::getEFXVersion() const
 {
     if(!alcIsExtensionPresent(mDevice, "ALC_EXT_EFX"))
-        return 0;
+        return Version{ 0u, 0u };
 
     ALCint major=-1, minor=-1;
     alcGetIntegerv(mDevice, ALC_EFX_MAJOR_VERSION, 1, &major);
     alcGetIntegerv(mDevice, ALC_EFX_MINOR_VERSION, 1, &minor);
     if(major < 0 || minor < 0)
         throw std::runtime_error("EFX version error");
-    return MakeVersion(
-        (ALCushort)std::min<ALCint>(major, std::numeric_limits<ALCushort>::max()),
-        (ALCushort)std::min<ALCint>(minor, std::numeric_limits<ALCushort>::max())
-    );
+    return Version{ (ALCuint)major, (ALCuint)minor };
 }
 
 ALCuint ALDevice::getFrequency() const
@@ -279,8 +273,8 @@ void ALDevice::close()
 
 DECL_THUNK1(String, Device, getName, const, PlaybackName)
 DECL_THUNK1(bool, Device, queryExtension, const, const String&)
-DECL_THUNK0(ALCuint, Device, getALCVersion, const)
-DECL_THUNK0(ALCuint, Device, getEFXVersion, const)
+DECL_THUNK0(Version, Device, getALCVersion, const)
+DECL_THUNK0(Version, Device, getEFXVersion, const)
 DECL_THUNK0(ALCuint, Device, getFrequency, const)
 DECL_THUNK0(ALCuint, Device, getMaxAuxiliarySends, const)
 DECL_THUNK0(Vector<String>, Device, enumerateHRTFNames, const)

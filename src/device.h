@@ -53,8 +53,8 @@ public:
     String getName(PlaybackName type) const;
     bool queryExtension(const String &name) const;
 
-    ALCuint getALCVersion() const;
-    ALCuint getEFXVersion() const;
+    Version getALCVersion() const;
+    Version getEFXVersion() const;
 
     ALCuint getFrequency() const;
 
