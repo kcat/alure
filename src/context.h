@@ -274,7 +274,7 @@ public:
 
     bool isSupported(ChannelConfig channels, SampleType type) const;
 
-    const Vector<String> &getAvailableResamplers();
+    ArrayView<String> getAvailableResamplers();
     ALsizei getDefaultResamplerIndex() const;
 
     Buffer getBuffer(const String &name);

@@ -127,21 +127,21 @@ using String = std::string;
 // copying its elements.
 template<typename T>
 class ArrayView {
-    T *mElems;
+    const T *mElems;
     size_t mNumElems;
 
 public:
-    typedef T *iterator;
+    typedef const T *iterator;
     typedef const T *const_iterator;
 
     ArrayView() : mElems(nullptr), mNumElems(0) { }
     ArrayView(const ArrayView &rhs) : mElems(rhs.data()), mNumElems(rhs.size()) { }
     ArrayView(ArrayView&& rhs) : mElems(rhs.data()), mNumElems(rhs.size()) { }
-    ArrayView(T *elems, size_t num_elems) : mElems(elems), mNumElems(num_elems) { }
-    template<size_t N>
-    ArrayView(T (&elems)[N]) : mElems(elems), mNumElems(N) { }
+    ArrayView(const T *elems, size_t num_elems) : mElems(elems), mNumElems(num_elems) { }
     template<typename OtherT>
     ArrayView(OtherT &arr) : mElems(arr.data()), mNumElems(arr.size()) { }
+    template<size_t N>
+    ArrayView(const T (&elems)[N]) : mElems(elems), mNumElems(N) { }
 
     ArrayView& operator=(const ArrayView &rhs)
     {
@@ -153,33 +153,28 @@ public:
         mElems = rhs.data();
         mNumElems = rhs.size();
     }
-    template<size_t N>
-    ArrayView& operator=(T (&elems)[N])
-    {
-        mElems = elems;
-        mNumElems = N;
-    }
     template<typename OtherT>
     ArrayView& operator=(OtherT &arr)
     {
         mElems = arr.data();
         mNumElems = arr.size();
     }
-
+    template<size_t N>
+    ArrayView& operator=(const T (&elems)[N])
+    {
+        mElems = elems;
+        mNumElems = N;
+    }
 
     const T *data() const { return mElems; }
-    T *data() { return mElems; }
 
     size_t size() const { return mNumElems; }
     bool empty() const { return mNumElems == 0; }
 
     const T& operator[](size_t i) const { return mElems[i]; }
-    T& operator[](size_t i) { return mElems[i]; }
 
     const T& front() const { return mElems[0]; }
-    T& front() { return mElems[0]; }
     const T& back() const { return mElems[mNumElems-1]; }
-    T& back() { return mElems[mNumElems-1]; }
 
     const T& at(size_t i) const
     {
@@ -187,18 +182,10 @@ public:
             throw std::out_of_range("alure::ArrayView::at: element out of range");
         return mElems[i];
     }
-    T& at(size_t i)
-    {
-        if(i >= mNumElems)
-            throw std::out_of_range("alure::ArrayView::at: element out of range");
-        return mElems[i];
-    }
 
-    iterator begin() { return mElems; }
     const_iterator begin() const { return mElems; }
     const_iterator cbegin() const { return mElems; }
 
-    iterator end() { return mElems + mNumElems; }
     const_iterator end() const { return mElems + mNumElems; }
     const_iterator cend() const { return mElems + mNumElems; }
 };
@@ -613,15 +600,15 @@ public:
     /**
      * Queries the list of resamplers supported by the context. If the
      * AL_SOFT_source_resampler extension is unsupported this will be an empty
-     * vector, otherwise there will be at least one entry.
+     * array, otherwise there will be at least one entry.
      */
-    const Vector<String> &getAvailableResamplers();
+    ArrayView<String> getAvailableResamplers();
     /**
      * Queries the context's default resampler index. Be aware, if the
      * AL_SOFT_source_resampler extension is unsupported the resampler list
      * will be empty and this will resturn 0. If you try to access the
      * resampler list with this index without the extension, undefined behavior
-     * (accessing an out of bounds array index) will occur.
+     * will occur (accessing an out of bounds array index).
      */
     ALsizei getDefaultResamplerIndex() const;
 

@@ -649,7 +649,7 @@ bool ALContext::isSupported(ChannelConfig channels, SampleType type) const
 }
 
 
-const Vector<String> &ALContext::getAvailableResamplers()
+ArrayView<String> ALContext::getAvailableResamplers()
 {
     CheckContext(this);
     if(mResamplers.empty() && hasExtension(SOFT_source_resampler))
@@ -1117,7 +1117,7 @@ DECL_THUNK1(void, Context, setAsyncWakeInterval,, std::chrono::milliseconds)
 DECL_THUNK0(std::chrono::milliseconds, Context, getAsyncWakeInterval, const)
 DECL_THUNK1(SharedPtr<Decoder>, Context, createDecoder,, const String&)
 DECL_THUNK2(bool, Context, isSupported, const, ChannelConfig, SampleType)
-DECL_THUNK0(const Vector<String>&, Context, getAvailableResamplers,)
+DECL_THUNK0(ArrayView<String>, Context, getAvailableResamplers,)
 DECL_THUNK0(ALsizei, Context, getDefaultResamplerIndex, const)
 DECL_THUNK1(Buffer, Context, getBuffer,, const String&)
 DECL_THUNK1(Buffer, Context, getBufferAsync,, const String&)
