@@ -504,14 +504,18 @@ void ALContext::backgroundProc()
         {
             ctxlock.unlock();
 
-            std::chrono::milliseconds interval = mWakeInterval.load();
+            std::chrono::milliseconds interval = mWakeInterval.load(std::memory_order_relaxed);
             if(interval.count() == 0)
                 mWakeThread.wait(wakelock);
             else
             {
                 auto now = std::chrono::steady_clock::now() - basetime;
-                while((waketime - now).count() <= 0) waketime += interval;
-                mWakeThread.wait_until(wakelock, waketime + basetime);
+                if(now > waketime)
+                {
+                    auto mult = (now-waketime + interval-std::chrono::milliseconds(1)) / interval;
+                    waketime += interval * mult;
+                    mWakeThread.wait_until(wakelock, waketime + basetime);
+                }
             }
             wakelock.unlock();
 
@@ -609,6 +613,8 @@ SharedPtr<MessageHandler> ALContext::setMessageHandler(SharedPtr<MessageHandler>
 
 void ALContext::setAsyncWakeInterval(std::chrono::milliseconds msec)
 {
+    if(msec.count() < 0 || msec > std::chrono::milliseconds(1000))
+        throw std::runtime_error("Async wake interval out of range");
     mWakeInterval.store(msec);
     mWakeMutex.lock(); mWakeMutex.unlock();
     mWakeThread.notify_all();
@@ -1079,7 +1085,7 @@ void ALContext::update()
 {
     CheckContext(this);
     std::for_each(mUsedSources.begin(), mUsedSources.end(), std::mem_fn(&ALSource::updateNoCtxCheck));
-    if(!mWakeInterval.load().count())
+    if(!mWakeInterval.load(std::memory_order_relaxed).count())
     {
         // For performance reasons, don't wait for the thread's mutex. This
         // should be called often enough to keep up with any and all streams
