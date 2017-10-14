@@ -789,9 +789,9 @@ Buffer ALContext::getBuffer(const String &name)
     }
 
     BufferOrExceptT ret = doCreateBuffer(name, iter, createDecoder(name));
-    Buffer *buffer = GetIf<Buffer>(&ret);
+    Buffer *buffer = std::get_if<Buffer>(&ret);
     if(EXPECT(!buffer, false))
-        throw Get<std::runtime_error>(ret);
+        throw std::get<std::runtime_error>(ret);
     return *buffer;
 }
 
@@ -808,9 +808,9 @@ Buffer ALContext::getBufferAsync(const String &name)
         return Buffer(iter->get());
 
     BufferOrExceptT ret = doCreateBufferAsync(name, iter, createDecoder(name));
-    Buffer *buffer = GetIf<Buffer>(&ret);
+    Buffer *buffer = std::get_if<Buffer>(&ret);
     if(EXPECT(!buffer, false))
-        throw Get<std::runtime_error>(ret);
+        throw std::get<std::runtime_error>(ret);
     mWakeMutex.lock(); mWakeMutex.unlock();
     mWakeThread.notify_all();
     return *buffer;
@@ -849,9 +849,9 @@ Buffer ALContext::createBufferFrom(const String &name, SharedPtr<Decoder> decode
         throw std::runtime_error("Buffer \""+name+"\" already exists");
 
     BufferOrExceptT ret = doCreateBuffer(name, iter, std::move(decoder));
-    Buffer *buffer = GetIf<Buffer>(&ret);
+    Buffer *buffer = std::get_if<Buffer>(&ret);
     if(EXPECT(!buffer, false))
-        throw Get<std::runtime_error>(ret);
+        throw std::get<std::runtime_error>(ret);
     return *buffer;
 }
 
@@ -868,9 +868,9 @@ Buffer ALContext::createBufferAsyncFrom(const String &name, SharedPtr<Decoder> d
         throw std::runtime_error("Buffer \""+name+"\" already exists");
 
     BufferOrExceptT ret = doCreateBufferAsync(name, iter, std::move(decoder));
-    Buffer *buffer = GetIf<Buffer>(&ret);
+    Buffer *buffer = std::get_if<Buffer>(&ret);
     if(EXPECT(!buffer, false))
-        throw Get<std::runtime_error>(ret);
+        throw std::get<std::runtime_error>(ret);
     mWakeMutex.lock(); mWakeMutex.unlock();
     mWakeThread.notify_all();
     return *buffer;

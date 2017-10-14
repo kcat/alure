@@ -11,8 +11,11 @@
 #include <stack>
 #include <queue>
 #include <set>
-// TODO: Can use <variant> with a C++17-compliant compiler.
+#if __cplusplus >= 201703L
+#include <variant>
+#else
 #include "mpark/variant.hpp"
+#endif
 
 #include "alc.h"
 #include "alext.h"
@@ -24,21 +27,15 @@
 
 #define F_PI (3.14159265358979323846f)
 
-namespace alure {
+#if !(__cplusplus >= 201703L)
+namespace std {
+using mpark::variant;
+using mpark::get;
+using mpark::get_if;
+} // namespace std
+#endif
 
-// TODO: Can use std::variant stuff with a C++17-compliant compiler.
-template<typename T>
-using AddPointerT = typename std::add_pointer<T>::type;
-template<typename ...Ts>
-using Variant = mpark::variant<Ts...>;
-template<typename T, typename ...Ts>
-inline constexpr T& Get(Variant<Ts...> &v) { return mpark::get<T>(v); }
-template<size_t I, typename ...Ts>
-inline constexpr mpark::variant_alternative_t<I,Variant<Ts...>>& Get(Variant<Ts...> &v) { return mpark::get<I>(v); }
-template<typename T, typename ...Ts>
-inline constexpr AddPointerT<T> GetIf(Variant<Ts...> *v) noexcept { return mpark::get_if<T>(v); }
-template<size_t I, typename ...Ts>
-inline constexpr AddPointerT<mpark::variant_alternative_t<I,Variant<Ts...>>> GetIf(Variant<Ts...> *v) noexcept { return mpark::get_if<I>(v); }
+namespace alure {
 
 class ALDevice;
 class ALBuffer;
@@ -112,7 +109,7 @@ public:
 };
 
 
-using BufferOrExceptT = Variant<Buffer,std::runtime_error>;
+using BufferOrExceptT = std::variant<Buffer,std::runtime_error>;
 
 class ALContext {
     static ALContext *sCurrentCtx;
