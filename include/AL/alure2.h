@@ -452,16 +452,12 @@ public:
     /** Queries the existence of an ALC extension on this device. */
     bool queryExtension(const String &name) const;
 
-    /**
-     * Retrieves the ALC version supported by this device, as constructed by
-     * MakeVersion.
-     */
+    /** Retrieves the ALC version supported by this device. */
     Version getALCVersion() const;
 
     /**
-     * Retrieves the EFX version supported by this device, as constructed by
-     * MakeVersion. If the ALC_EXT_EFX extension is unsupported, this will be
-     * 0.0.
+     * Retrieves the EFX version supported by this device. If the ALC_EXT_EFX
+     * extension is unsupported, this will be 0.0.
      */
     Version getEFXVersion() const;
 
@@ -632,12 +628,17 @@ public:
     /**
      * Creates and caches a Buffer for the given audio file or resource name.
      * Multiple calls with the same name will return the same Buffer object.
+     * Cached buffers must be freed using removeBuffer before destroying the
+     * context. If the buffer can't be loaded it will throw an exception.
      */
     Buffer getBuffer(const String &name);
 
     /**
      * Creates and caches a Buffer for the given audio file or resource name.
      * Multiple calls with the same name will return the same Buffer object.
+     * Cached buffers must be freed using removeBuffer before destroying the
+     * context. If the buffer can't be created it will throw an exception, and
+     * if it fails to load will be silent.
      *
      * The returned Buffer object will be scheduled for loading asynchronously,
      * and must be checked with a call to Buffer::getLoadStatus prior to being
@@ -647,14 +648,14 @@ public:
 
     /**
      * Creates and caches Buffers for the given audio file or resource names.
-     * Duplicate names or names of buffers already cached are ignored.
+     * Duplicate names and buffers already cached are ignored. Cached buffers
+     * must be freed using removeBuffer before destroying the context.
      *
      * The Buffer objects will be scheduled for loading asynchronously, and
      * should be retrieved later when needed using getBufferAsync or getBuffer.
      * Buffers that cannot be loaded, for example due to an unsupported format,
      * will be ignored and a later call to getBuffer or getBufferAsync will
-     * throw an exception. Precached buffers must also be cleaned up with calls
-     * to removeBuffer when no longer needed.
+     * throw an exception.
      *
      * Note that you should avoid trying to asynchronously cache more than 16
      * buffers at a time. The internal ringbuffer used to communicate with the
@@ -666,9 +667,7 @@ public:
 
     /**
      * Creates and caches a Buffer using the given name. The name may alias an
-     * audio file, but it must not currently exist in the buffer cache. As with
-     * other cached buffers, removeBuffer must be used to remove it from the
-     * cache.
+     * audio file, but it must not currently exist in the buffer cache.
      */
     Buffer createBufferFrom(const String &name, SharedPtr<Decoder> decoder);
 
@@ -715,17 +714,14 @@ public:
      * Sets the speed of sound propogation, in units per second, to calculate
      * the doppler effect along with other distance-related time effects. The
      * default is 343.3 units per second (a realistic speed assuming 1 meter
-     * per unit).
+     * per unit). If this is adjusted for a different unit scale,
+     * Listener::setMetersPerUnit should also be adjusted.
      */
     void setSpeedOfSound(ALfloat speed);
 
     void setDistanceModel(DistanceModel model);
 
-    /**
-     * Updates the context and all sources belonging to this context (you do
-     * not need to call the individual sources' update method if you call this
-     * function).
-     */
+    /** Updates the context and all sources belonging to this context. */
     void update();
 };
 
@@ -1031,8 +1027,8 @@ public:
      * effectively a distance scaling relative to the reference distance. Note:
      * the room rolloff factor is 0 by default, disabling distance attenuation
      * for send paths. This is because the reverb engine will, by default,
-     * apply a more realistic room attenuation based on the reverb decay time
-     * and direct path attenuation.
+     * apply a more realistic room decay based on the reverb decay time and
+     * distance.
      */
     void setRolloffFactors(ALfloat factor, ALfloat roomfactor=0.0f);
     std::pair<ALfloat,ALfloat> getRolloffFactors() const;
@@ -1047,7 +1043,10 @@ public:
     void setDopplerFactor(ALfloat factor);
     ALfloat getDopplerFactor() const;
 
-    /** Specifies if the source properties are relative to the listener. */
+    /**
+     * Specifies if the source's position, velocity, and direction/orientation
+     * are relative to the listener.
+     */
     void setRelative(bool relative);
     bool getRelative() const;
 
@@ -1070,12 +1069,24 @@ public:
     void setStereoAngles(ALfloat leftAngle, ALfloat rightAngle);
     std::pair<ALfloat,ALfloat> getStereoAngles() const;
 
+    /**
+     * Specifies if the source always has 3D spatialization features (On),
+     * never has 3D spatialization features (Off), or if spatialization is
+     * enabled based on playing a mono sound or not (Auto, default). Has no
+     * effect without the AL_SOFT_source_spatialize extension.
+     */
     void set3DSpatialize(Spatialize spatialize);
     Spatialize get3DSpatialize() const;
 
     void setResamplerIndex(ALsizei index);
     ALsizei getResamplerIndex() const;
 
+    /**
+     * Specifies a multiplier for the amount of atmospheric high-frequency
+     * absorption, ranging from 0 to 10. A factor of 1 results in a nominal
+     * -0.05dB per meter, with higher values simulating foggy air and lower
+     * values simulating dryer air. The default is 0.
+     */
     void setAirAbsorptionFactor(ALfloat factor);
     ALfloat getAirAbsorptionFactor() const;
 
@@ -1304,7 +1315,7 @@ public:
  * ones.
  *
  * Alure retains a reference to the DecoderFactory instance and will release it
- * (potentially destroying the object) when the library unloads.
+ * (destructing the object) when the library unloads.
  *
  * \param name A unique name identifying this decoder factory.
  * \param factory A DecoderFactory instance used to create Decoder instances.
@@ -1334,7 +1345,7 @@ public:
     /**
      * Sets the factory instance to be used by the audio decoders. If a
      * previous factory was set, it's returned to the application. Passing in a
-     * NULL factory reverts to the default.
+     * nullptr reverts to the default.
      */
     static UniquePtr<FileIOFactory> set(UniquePtr<FileIOFactory> factory);
 
@@ -1375,10 +1386,6 @@ public:
      * that method must be called regularly to be notified when a device is
      * disconnected. This method may not be called if the device lacks support
      * for the ALC_EXT_disconnect extension.
-     *
-     * WARNING: Do not attempt to clean up resources within this callback
-     * method, as Alure is in the middle of doing updates. Instead, flag the
-     * device as having been lost and do cleanup later.
      */
     virtual void deviceDisconnected(Device device);
 
@@ -1386,14 +1393,14 @@ public:
      * Called when the given source reaches the end of the buffer or stream.
      *
      * Sources that stopped automatically will be detected upon a call to
-     * Context::update or Source::update.
+     * Context::update.
      */
     virtual void sourceStopped(Source source);
 
     /**
      * Called when the given source was forced to stop. This can be because
      * either there were no more system sources and a higher-priority source
-     * needs to play, or it's part of a SourceGroup (or sub-group thereof) that
+     * preempted it, or it's part of a SourceGroup (or sub-group thereof) that
      * had its SourceGroup::stopAll method called.
      */
     virtual void sourceForceStopped(Source source);
