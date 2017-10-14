@@ -896,8 +896,8 @@ public:
     void setOffset(uint64_t offset);
     /**
      * Retrieves the source offset in sample frames and its latency in nano-
-     * seconds. For streaming sources, this will be the offset from the
-     * beginning of the stream based on the decoder's reported position.
+     * seconds. For streaming sources this will be the offset based on the
+     * decoder's read position.
      *
      * If the AL_SOFT_source_latency extension is unsupported, the latency will
      * be 0.
@@ -906,8 +906,7 @@ public:
     uint64_t getSampleOffset() const { return std::get<0>(getSampleOffsetLatency()); }
     /**
      * Retrieves the source offset and latency in seconds. For streaming
-     * sources, this will be the offset from the beginning of the stream based
-     * on the decoder's reported position.
+     * sources this will be the offset based on the decoder's read position.
      *
      * If the AL_SOFT_source_latency extension is unsupported, the latency will
      * be 0.
