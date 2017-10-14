@@ -676,7 +676,7 @@ BufferOrExceptT ALContext::doCreateBuffer(const String &name, Vector<UniquePtr<A
     ALuint frames = decoder->getLength();
 
     Vector<ALbyte> data(FramesToBytes(frames, chans, type));
-    frames = decoder->read(&data[0], frames);
+    frames = decoder->read(data.data(), frames);
     if(!frames) return (retval = std::runtime_error("No samples for buffer"));
     data.resize(FramesToBytes(frames, chans, type));
 
@@ -705,7 +705,7 @@ BufferOrExceptT ALContext::doCreateBuffer(const String &name, Vector<UniquePtr<A
     alGetError();
     ALuint bid = 0;
     alGenBuffers(1, &bid);
-    alBufferData(bid, format, &data[0], data.size(), srate);
+    alBufferData(bid, format, data.data(), data.size(), srate);
     if(hasExtension(SOFT_loop_points))
     {
         ALint pts[2]{(ALint)loop_pts.first, (ALint)loop_pts.second};

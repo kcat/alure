@@ -292,7 +292,7 @@ ALuint FlacDecoder::read(ALvoid *ptr, ALuint count)
     if(mData.size() > 0)
     {
         size_t rem = std::min(mData.size(), (size_t)mOutMax);
-        memcpy(ptr, &mData[0], rem);
+        memcpy(ptr, mData.data(), rem);
         mOutLen += rem;
         mData.erase(mData.begin(), mData.begin()+rem);
     }

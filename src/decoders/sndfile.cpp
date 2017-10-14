@@ -148,7 +148,7 @@ SharedPtr<Decoder> SndFileDecoderFactory::createDecoder(UniquePtr<std::istream> 
 
     ChannelConfig sconfig;
     Vector<int> chanmap(sndinfo.channels);
-    if(sf_command(sndfile, SFC_GET_CHANNEL_MAP_INFO, &chanmap[0], chanmap.size()*sizeof(int)) == SF_TRUE)
+    if(sf_command(sndfile, SFC_GET_CHANNEL_MAP_INFO, chanmap.data(), chanmap.size()*sizeof(int)) == SF_TRUE)
     {
         auto matches = [](const Vector<int> &first, std::initializer_list<int> second) -> bool
         {

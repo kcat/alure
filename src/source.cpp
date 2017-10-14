@@ -53,7 +53,7 @@ public:
     {
         if(!mBufferIds.empty())
         {
-            alDeleteBuffers(mBufferIds.size(), &mBufferIds[0]);
+            alDeleteBuffers(mBufferIds.size(), mBufferIds.data());
             mBufferIds.clear();
         }
     }
@@ -105,7 +105,7 @@ public:
         else mSilence = 0x00;
 
         mBufferIds.assign(mNumUpdates, 0);
-        alGenBuffers(mBufferIds.size(), &mBufferIds[0]);
+        alGenBuffers(mBufferIds.size(), mBufferIds.data());
     }
 
     int64_t getLoopStart() const { return mLoopPts.first; }
@@ -156,7 +156,7 @@ public:
             std::fill(mData.begin() + frames*mFrameSize, mData.end(), mSilence);
         }
 
-        alBufferData(mBufferIds[mCurrentIdx], mFormat, &mData[0], mData.size(), mFrequency);
+        alBufferData(mBufferIds[mCurrentIdx], mFormat, mData.data(), mData.size(), mFrequency);
         alSourceQueueBuffers(srcid, 1, &mBufferIds[mCurrentIdx]);
         mCurrentIdx = (mCurrentIdx+1) % mBufferIds.size();
         return true;
