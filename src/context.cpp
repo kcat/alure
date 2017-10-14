@@ -1091,8 +1091,8 @@ void ALContext::update()
     {
         ALCint connected;
         alcGetIntegerv(alcGetContextsDevice(mContext), ALC_CONNECTED, 1, &connected);
-        if(!connected && mMessage.get()) mMessage->deviceDisconnected(Device(mDevice));
         mIsConnected = connected;
+        if(!connected && mMessage.get()) mMessage->deviceDisconnected(Device(mDevice));
     }
 }
 
