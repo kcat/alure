@@ -1408,7 +1408,7 @@ public:
      * \param samplerate Sample rate of the given audio data.
      * \param data The audio data that is about to be fed to the OpenAL buffer.
      */
-    virtual void bufferLoading(const String &name, ChannelConfig channels, SampleType type, ALuint samplerate, const Vector<ALbyte> &data);
+    virtual void bufferLoading(const String &name, ChannelConfig channels, SampleType type, ALuint samplerate, const ArrayView<ALbyte> data);
 
     /**
      * Called when a resource isn't found, allowing the app to substitute in a

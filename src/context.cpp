@@ -309,7 +309,7 @@ void MessageHandler::sourceForceStopped(Source)
 {
 }
 
-void MessageHandler::bufferLoading(const String&, ChannelConfig, SampleType, ALuint, const Vector<ALbyte>&)
+void MessageHandler::bufferLoading(const String&, ChannelConfig, SampleType, ALuint, const ArrayView<ALbyte>)
 {
 }
 
