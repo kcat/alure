@@ -130,7 +130,8 @@ private:
     DeviceImpl *const mDevice;
     std::deque<SourceImpl> mAllSources;
     std::queue<SourceImpl*> mFreeSources;
-    Vector<SourceImpl*> mUsedSources;
+    Vector<SourceBufferUpdateEntry> mPlaySources;
+    Vector<SourceStreamUpdateEntry> mStreamSources;
 
     Vector<UniquePtr<BufferImpl>> mBuffers;
 
@@ -230,11 +231,14 @@ public:
     ALuint getSourceId(ALuint maxprio);
     void insertSourceId(ALuint id) { mSourceIds.push(id); }
 
+    void addPlayingSource(SourceBufferUpdateEntry&& entry);
+    void addPlayingSource(SourceStreamUpdateEntry&& entry);
+    void removePlayingSource(SourceImpl *source);
+
     void addStream(SourceImpl *source);
     void removeStream(SourceImpl *source);
     void removeStreamNoLock(SourceImpl *source);
 
-    void freeSource(SourceImpl *source);
     void freeSourceGroup(SourceGroupImpl *group);
 
     Batcher getBatcher()

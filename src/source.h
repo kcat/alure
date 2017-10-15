@@ -86,7 +86,8 @@ public:
 
     ALuint getId() const { return mId; }
 
-    void updateNoCtxCheck();
+    bool playUpdate(ALuint id);
+    bool playUpdate(std::atomic<bool> *isAsync);
     bool updateAsync();
 
     void setGroup(SourceGroupImpl *group);
@@ -97,7 +98,7 @@ public:
 
     void checkPaused();
     void unsetPaused() { mPaused = false; }
-    void makeStopped();
+    void makeStopped(bool dolock=true);
 
     void play(Buffer buffer);
     void play(SharedPtr<Decoder> decoder, ALuint updatelen, ALuint queuesize);
@@ -197,6 +198,16 @@ public:
     void setAuxiliarySendFilter(AuxiliaryEffectSlot slot, ALuint send, const FilterParams &filter);
 
     void release();
+};
+
+
+struct SourceBufferUpdateEntry {
+    SourceImpl *mSource;
+    ALuint mId;
+};
+struct SourceStreamUpdateEntry {
+    SourceImpl *mSource;
+    std::atomic<bool> *mIsAsync;
 };
 
 } // namespace alure

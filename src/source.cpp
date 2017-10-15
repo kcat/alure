@@ -335,11 +335,9 @@ void SourceImpl::play(Buffer buffer)
     if(!albuf->isReady())
         throw std::runtime_error("Buffer is not ready");
 
-    if(mIsAsync.load(std::memory_order_acquire))
-    {
+    if(mStream)
         mContext->removeStream(this);
-        mIsAsync.store(false, std::memory_order_release);
-    }
+    mIsAsync.store(false, std::memory_order_release);
 
     if(mId == 0)
     {
@@ -348,6 +346,7 @@ void SourceImpl::play(Buffer buffer)
     }
     else
     {
+        mContext->removePlayingSource(this);
         alSourceRewind(mId);
         alSourcei(mId, AL_BUFFER, 0);
         alSourcei(mId, AL_LOOPING, mLooping ? AL_TRUE : AL_FALSE);
@@ -356,7 +355,6 @@ void SourceImpl::play(Buffer buffer)
     mOffset = 0;
 
     mStream.reset();
-
     if(mBuffer)
         mBuffer->removeSource(Source(this));
     mBuffer = albuf;
@@ -365,6 +363,7 @@ void SourceImpl::play(Buffer buffer)
     alSourcei(mId, AL_BUFFER, mBuffer->getId());
     alSourcePlay(mId);
     mPaused.store(false, std::memory_order_release);
+    mContext->addPlayingSource({this, mId});
 }
 
 void SourceImpl::play(SharedPtr<Decoder> decoder, ALuint updatelen, ALuint queuesize)
@@ -378,11 +377,9 @@ void SourceImpl::play(SharedPtr<Decoder> decoder, ALuint updatelen, ALuint queue
     auto stream = MakeUnique<ALBufferStream>(decoder, updatelen, queuesize);
     stream->prepare();
 
-    if(mIsAsync.load(std::memory_order_acquire))
-    {
+    if(mStream)
         mContext->removeStream(this);
-        mIsAsync.store(false, std::memory_order_release);
-    }
+    mIsAsync.store(false, std::memory_order_release);
 
     if(mId == 0)
     {
@@ -391,12 +388,14 @@ void SourceImpl::play(SharedPtr<Decoder> decoder, ALuint updatelen, ALuint queue
     }
     else
     {
+        mContext->removePlayingSource(this);
         alSourceRewind(mId);
         alSourcei(mId, AL_BUFFER, 0);
         alSourcei(mId, AL_LOOPING, AL_FALSE);
         alSourcei(mId, AL_SAMPLE_OFFSET, 0);
     }
 
+    mStream.reset();
     if(mBuffer)
         mBuffer->removeSource(Source(this));
     mBuffer = 0;
@@ -416,16 +415,20 @@ void SourceImpl::play(SharedPtr<Decoder> decoder, ALuint updatelen, ALuint queue
 
     mContext->addStream(this);
     mIsAsync.store(true, std::memory_order_release);
+    mContext->addPlayingSource({this, &mIsAsync});
 }
 
 
-void SourceImpl::makeStopped()
+void SourceImpl::makeStopped(bool dolock)
 {
-    if(mIsAsync.load(std::memory_order_acquire))
+    if(mStream)
     {
-        mContext->removeStreamNoLock(this);
-        mIsAsync.store(false, std::memory_order_release);
+        if(dolock)
+            mContext->removeStream(this);
+        else
+            mContext->removeStreamNoLock(this);
     }
+    mIsAsync.store(false, std::memory_order_release);
 
     if(mId != 0)
     {
@@ -441,11 +444,10 @@ void SourceImpl::makeStopped()
         mId = 0;
     }
 
+    mStream.reset();
     if(mBuffer)
         mBuffer->removeSource(Source(this));
     mBuffer = 0;
-
-    mStream.reset();
 
     mPaused.store(false, std::memory_order_release);
 }
@@ -453,11 +455,7 @@ void SourceImpl::makeStopped()
 void SourceImpl::stop()
 {
     CheckContext(mContext);
-    if(mIsAsync.load(std::memory_order_acquire))
-    {
-        mContext->removeStream(this);
-        mIsAsync.store(false, std::memory_order_release);
-    }
+    mContext->removePlayingSource(this);
     makeStopped();
 }
 
@@ -534,6 +532,29 @@ bool SourceImpl::isPaused() const
 }
 
 
+bool SourceImpl::playUpdate(ALuint id)
+{
+    ALint state = -1;
+    alGetSourcei(id, AL_SOURCE_STATE, &state);
+    if(EXPECT((state == AL_PLAYING || state == AL_PAUSED), true))
+        return true;
+
+    makeStopped();
+    mContext->send(&MessageHandler::sourceStopped, Source(this));
+    return false;
+}
+
+bool SourceImpl::playUpdate(std::atomic<bool> *isAsync)
+{
+    if(EXPECT(isAsync->load(std::memory_order_acquire), true))
+        return true;
+
+    makeStopped();
+    mContext->send(&MessageHandler::sourceStopped, Source(this));
+    return false;
+}
+
+
 ALint SourceImpl::refillBufferStream()
 {
     ALint processed;
@@ -554,32 +575,6 @@ ALint SourceImpl::refillBufferStream()
     }
 
     return queued;
-}
-
-
-void SourceImpl::updateNoCtxCheck()
-{
-    if(mId == 0)
-        return;
-
-    if(mStream)
-    {
-        if(!mIsAsync.load(std::memory_order_acquire))
-        {
-            stop();
-            mContext->send(&MessageHandler::sourceStopped, Source(this));
-        }
-    }
-    else
-    {
-        ALint state = -1;
-        alGetSourcei(mId, AL_SOURCE_STATE, &state);
-        if(state != AL_PLAYING && state != AL_PAUSED)
-        {
-            stop();
-            mContext->send(&MessageHandler::sourceStopped, Source(this));
-        }
-    }
 }
 
 bool SourceImpl::updateAsync()
@@ -1275,29 +1270,7 @@ void SourceImpl::setAuxiliarySendFilter(AuxiliaryEffectSlot auxslot, ALuint send
 
 void SourceImpl::release()
 {
-    CheckContext(mContext);
-
-    if(mIsAsync.load(std::memory_order_acquire))
-    {
-        mContext->removeStream(this);
-        mIsAsync.store(false, std::memory_order_release);
-    }
-
-    if(mId != 0)
-    {
-        alSourceRewind(mId);
-        alSourcei(mId, AL_BUFFER, 0);
-        if(mContext->hasExtension(EXT_EFX))
-        {
-            alSourcei(mId, AL_DIRECT_FILTER, AL_FILTER_NULL);
-            for(auto &i : mEffectSlots)
-                alSource3i(mId, AL_AUXILIARY_SEND_FILTER, 0, i.first, AL_FILTER_NULL);
-        }
-        mContext->insertSourceId(mId);
-        mId = 0;
-    }
-
-    mContext->freeSource(this);
+    stop();
 
     if(mDirectFilter)
         mContext->alDeleteFilters(1, &mDirectFilter);
@@ -1311,12 +1284,6 @@ void SourceImpl::release()
             mContext->alDeleteFilters(1, &i.second.mFilter);
     }
     mEffectSlots.clear();
-
-    if(mBuffer)
-        mBuffer->removeSource(Source(this));
-    mBuffer = 0;
-
-    mStream.reset();
 
     resetProperties();
 }

@@ -292,7 +292,8 @@ void SourceGroupImpl::updateStoppedStatus() const
 {
     for(SourceImpl *alsrc : mSources)
     {
-        alsrc->makeStopped();
+        mContext->removePlayingSource(alsrc);
+        alsrc->makeStopped(false);
         mContext->send(&MessageHandler::sourceForceStopped, alsrc);
     }
     for(SourceGroupImpl *group : mSubGroups)
@@ -302,17 +303,16 @@ void SourceGroupImpl::updateStoppedStatus() const
 void SourceGroupImpl::stopAll() const
 {
     CheckContext(mContext);
-    auto lock = mContext->getSourceStreamLock();
 
     Vector<ALuint> sourceids;
     sourceids.reserve(16);
     collectSourceIds(sourceids);
     if(!sourceids.empty())
     {
+        auto lock = mContext->getSourceStreamLock();
         alSourceRewindv(sourceids.size(), sourceids.data());
         updateStoppedStatus();
     }
-    lock.unlock();
 }
 
 

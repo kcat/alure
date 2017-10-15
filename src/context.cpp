@@ -476,14 +476,12 @@ void ContextImpl::backgroundProc()
     {
         {
             std::lock_guard<std::mutex> srclock(mSourceStreamMutex);
-            auto source = mStreamingSources.begin();
-            while(source != mStreamingSources.end())
-            {
-                if(!(*source)->updateAsync())
-                    source = mStreamingSources.erase(source);
-                else
-                    ++source;
-            }
+            mStreamingSources.erase(
+                std::remove_if(mStreamingSources.begin(), mStreamingSources.end(),
+                    [](SourceImpl *source) -> bool
+                    { return !source->updateAsync(); }
+                ), mStreamingSources.end()
+            );
         }
 
         // Only do one pending buffer at a time. In case there's several large
@@ -904,10 +902,15 @@ ALuint ContextImpl::getSourceId(ALuint maxprio)
             return id;
 
         SourceImpl *lowest = nullptr;
-        for(SourceImpl *src : mUsedSources)
+        for(SourceBufferUpdateEntry &entry : mPlaySources)
         {
-            if(src->getId() != 0 && (!lowest || src->getPriority() < lowest->getPriority()))
-                lowest = src;
+            if(!lowest || entry.mSource->getPriority() < lowest->getPriority())
+                lowest = entry.mSource;
+        }
+        for(SourceStreamUpdateEntry &entry : mStreamSources)
+        {
+            if(!lowest || entry.mSource->getPriority() < lowest->getPriority())
+                lowest = entry.mSource;
         }
         if(lowest && lowest->getPriority() < maxprio)
         {
@@ -940,17 +943,47 @@ Source ContextImpl::createSource()
         mAllSources.emplace_back(this);
         source = &mAllSources.back();
     }
-    auto iter = std::lower_bound(mUsedSources.begin(), mUsedSources.end(), source);
-    if(iter == mUsedSources.end() || *iter != source)
-        mUsedSources.insert(iter, source);
     return Source(source);
 }
 
-void ContextImpl::freeSource(SourceImpl *source)
+
+void ContextImpl::addPlayingSource(SourceBufferUpdateEntry&& entry)
 {
-    auto iter = std::lower_bound(mUsedSources.begin(), mUsedSources.end(), source);
-    if(iter != mUsedSources.end() && *iter == source) mUsedSources.erase(iter);
-    mFreeSources.push(source);
+    auto iter = std::lower_bound(mPlaySources.begin(), mPlaySources.end(), entry,
+        [](const SourceBufferUpdateEntry &lhs, const SourceBufferUpdateEntry &rhs) -> bool
+        { return lhs.mSource < rhs.mSource; }
+    );
+    if(iter == mPlaySources.end() || iter->mSource != entry.mSource)
+        mPlaySources.insert(iter, std::move(entry));
+}
+
+void ContextImpl::addPlayingSource(SourceStreamUpdateEntry&& entry)
+{
+    auto iter = std::lower_bound(mStreamSources.begin(), mStreamSources.end(), entry,
+        [](const SourceStreamUpdateEntry &lhs, const SourceStreamUpdateEntry &rhs) -> bool
+        { return lhs.mSource < rhs.mSource; }
+    );
+    if(iter == mStreamSources.end() || iter->mSource != entry.mSource)
+        mStreamSources.insert(iter, std::move(entry));
+}
+
+void ContextImpl::removePlayingSource(SourceImpl *source)
+{
+    auto iter0 = std::lower_bound(mPlaySources.begin(), mPlaySources.end(), source,
+        [](const SourceBufferUpdateEntry &lhs, SourceImpl *rhs) -> bool
+        { return lhs.mSource < rhs; }
+    );
+    if(iter0 != mPlaySources.end() && iter0->mSource == source)
+        mPlaySources.erase(iter0);
+    else
+    {
+        auto iter1 = std::lower_bound(mStreamSources.begin(), mStreamSources.end(), source,
+            [](const SourceStreamUpdateEntry &lhs, SourceImpl *rhs) -> bool
+            { return lhs.mSource < rhs; }
+        );
+        if(iter1 != mStreamSources.end() && iter1->mSource == source)
+            mStreamSources.erase(iter1);
+    }
 }
 
 
@@ -1084,7 +1117,18 @@ void ContextImpl::setDistanceModel(DistanceModel model)
 void ContextImpl::update()
 {
     CheckContext(this);
-    std::for_each(mUsedSources.begin(), mUsedSources.end(), std::mem_fn(&SourceImpl::updateNoCtxCheck));
+    mPlaySources.erase(
+        std::remove_if(mPlaySources.begin(), mPlaySources.end(),
+            [](const SourceBufferUpdateEntry &entry) -> bool
+            { return !entry.mSource->playUpdate(entry.mId); }
+        ), mPlaySources.end()
+    );
+    mStreamSources.erase(
+        std::remove_if(mStreamSources.begin(), mStreamSources.end(),
+            [](const SourceStreamUpdateEntry &entry) -> bool
+            { return !entry.mSource->playUpdate(entry.mIsAsync); }
+        ), mStreamSources.end()
+    );
     if(!mWakeInterval.load(std::memory_order_relaxed).count())
     {
         // For performance reasons, don't wait for the thread's mutex. This
