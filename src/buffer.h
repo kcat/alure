@@ -11,12 +11,12 @@
 
 namespace alure {
 
-class ALContext;
+class ContextImpl;
 
 ALenum GetFormat(ChannelConfig chans, SampleType type);
 
-class ALBuffer {
-    ALContext *const mContext;
+class BufferImpl {
+    ContextImpl *const mContext;
     ALuint mId;
 
     ALuint mFrequency;
@@ -31,7 +31,7 @@ class ALBuffer {
     const String mName;
 
 public:
-    ALBuffer(ALContext *context, ALuint id, ALuint freq, ChannelConfig config, SampleType type, bool preloaded, const String &name)
+    BufferImpl(ContextImpl *context, ALuint id, ALuint freq, ChannelConfig config, SampleType type, bool preloaded, const String &name)
       : mContext(context), mId(id), mFrequency(freq), mChannelConfig(config), mSampleType(type),
         mLoadStatus(preloaded ? BufferLoadStatus::Ready : BufferLoadStatus::Pending),
         mIsLoaded(preloaded), mName(name)
@@ -39,7 +39,7 @@ public:
 
     void cleanup();
 
-    ALContext *getContext() { return mContext; }
+    ContextImpl *getContext() { return mContext; }
     ALuint getId() const { return mId; }
 
     void addSource(Source source) { mSources.push_back(source); }
@@ -49,7 +49,7 @@ public:
         if(iter != mSources.cend()) mSources.erase(iter);
     }
 
-    void load(ALuint frames, ALenum format, SharedPtr<Decoder> decoder, const String &name, ALContext *ctx);
+    void load(ALuint frames, ALenum format, SharedPtr<Decoder> decoder, const String &name, ContextImpl *ctx);
 
     bool isReady() const { return mLoadStatus == BufferLoadStatus::Ready; }
 

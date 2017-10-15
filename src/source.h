@@ -12,33 +12,33 @@
 
 namespace alure {
 
-class ALContext;
-class ALBuffer;
+class ContextImpl;
+class BufferImpl;
 class ALBufferStream;
-class ALAuxiliaryEffectSlot;
-class ALSourceGroup;
+class AuxiliaryEffectSlotImpl;
+class SourceGroupImpl;
 
 struct SendProps {
-    ALAuxiliaryEffectSlot *mSlot;
+    AuxiliaryEffectSlotImpl *mSlot;
     ALuint mFilter;
 
-    SendProps(ALAuxiliaryEffectSlot *slot) : mSlot(slot), mFilter(AL_FILTER_NULL)
+    SendProps(AuxiliaryEffectSlotImpl *slot) : mSlot(slot), mFilter(AL_FILTER_NULL)
     { }
     SendProps(ALuint filter) : mSlot(0), mFilter(filter)
     { }
-    SendProps(ALAuxiliaryEffectSlot *slot, ALuint filter) : mSlot(slot), mFilter(filter)
+    SendProps(AuxiliaryEffectSlotImpl *slot, ALuint filter) : mSlot(slot), mFilter(filter)
     { }
 };
 typedef std::unordered_map<ALuint,SendProps> SendPropMap;
 
-class ALSource {
-    ALContext *const mContext;
+class SourceImpl {
+    ContextImpl *const mContext;
     ALuint mId;
 
-    ALBuffer *mBuffer;
+    BufferImpl *mBuffer;
     UniquePtr<ALBufferStream> mStream;
 
-    ALSourceGroup *mGroup;
+    SourceGroupImpl *mGroup;
 
     mutable std::mutex mMutex;
     std::atomic<bool> mIsAsync;
@@ -81,15 +81,15 @@ class ALSource {
     void setFilterParams(ALuint &filterid, const FilterParams &params);
 
 public:
-    ALSource(ALContext *context);
-    ~ALSource();
+    SourceImpl(ContextImpl *context);
+    ~SourceImpl();
 
     ALuint getId() const { return mId; }
 
     void updateNoCtxCheck();
     bool updateAsync();
 
-    void setGroup(ALSourceGroup *group);
+    void setGroup(SourceGroupImpl *group);
     void unsetGroup();
 
     void groupUpdate();

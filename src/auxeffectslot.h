@@ -11,19 +11,19 @@
 
 namespace alure {
 
-class ALContext;
+class ContextImpl;
 
 inline bool operator==(const SourceSend &lhs, const SourceSend &rhs)
 { return lhs.mSource == rhs.mSource && lhs.mSend == rhs.mSend; }
 
-class ALAuxiliaryEffectSlot {
-    ALContext *const mContext;
+class AuxiliaryEffectSlotImpl {
+    ContextImpl *const mContext;
     ALuint mId;
 
     Vector<SourceSend> mSourceSends;
 
 public:
-    ALAuxiliaryEffectSlot(ALContext *context, ALuint id)
+    AuxiliaryEffectSlotImpl(ContextImpl *context, ALuint id)
       : mContext(context), mId(id)
     { }
 
@@ -35,7 +35,7 @@ public:
         if(iter != mSourceSends.cend()) mSourceSends.erase(iter);
     }
 
-    ALContext *getContext() { return mContext; }
+    ContextImpl *getContext() { return mContext; }
     const ALuint &getId() const { return mId; }
 
     void setGain(ALfloat gain);

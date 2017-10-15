@@ -14,7 +14,7 @@
 namespace alure
 {
 
-void ALAuxiliaryEffectSlot::setGain(ALfloat gain)
+void AuxiliaryEffectSlotImpl::setGain(ALfloat gain)
 {
     if(!(gain >= 0.0f && gain <= 1.0f))
         throw std::runtime_error("Gain out of range");
@@ -22,15 +22,15 @@ void ALAuxiliaryEffectSlot::setGain(ALfloat gain)
     mContext->alAuxiliaryEffectSlotf(mId, AL_EFFECTSLOT_GAIN, gain);
 }
 
-void ALAuxiliaryEffectSlot::setSendAuto(bool sendauto)
+void AuxiliaryEffectSlotImpl::setSendAuto(bool sendauto)
 {
     CheckContext(mContext);
     mContext->alAuxiliaryEffectSloti(mId, AL_EFFECTSLOT_AUXILIARY_SEND_AUTO, sendauto ? AL_TRUE : AL_FALSE);
 }
 
-void ALAuxiliaryEffectSlot::applyEffect(Effect effect)
+void AuxiliaryEffectSlotImpl::applyEffect(Effect effect)
 {
-    const ALEffect *eff = effect.getHandle();
+    const EffectImpl *eff = effect.getHandle();
     if(!eff) throw std::runtime_error("Invalid Effect");
     CheckContext(mContext);
 
@@ -38,7 +38,7 @@ void ALAuxiliaryEffectSlot::applyEffect(Effect effect)
 }
 
 
-void ALAuxiliaryEffectSlot::release()
+void AuxiliaryEffectSlotImpl::release()
 {
     CheckContext(mContext);
     if(isInUse())

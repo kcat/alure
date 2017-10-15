@@ -37,9 +37,9 @@ using mpark::get_if;
 
 namespace alure {
 
-class ALDevice;
-class ALBuffer;
-class ALSourceGroup;
+class DeviceImpl;
+class BufferImpl;
+class SourceGroupImpl;
 
 enum ALExtension {
     EXT_EFX,
@@ -85,11 +85,11 @@ public:
 };
 
 
-class ALListener {
-    ALContext *const mContext;
+class ListenerImpl {
+    ContextImpl *const mContext;
 
 public:
-    ALListener(ALContext *ctx) : mContext(ctx) { }
+    ListenerImpl(ContextImpl *ctx) : mContext(ctx) { }
 
     void setGain(ALfloat gain);
 
@@ -111,30 +111,30 @@ public:
 
 using BufferOrExceptT = std::variant<Buffer,std::runtime_error>;
 
-class ALContext {
-    static ALContext *sCurrentCtx;
-    static thread_local ALContext *sThreadCurrentCtx;
+class ContextImpl {
+    static ContextImpl *sCurrentCtx;
+    static thread_local ContextImpl *sThreadCurrentCtx;
 
 public:
-    static void MakeCurrent(ALContext *context);
-    static ALContext *GetCurrent() { return sThreadCurrentCtx ? sThreadCurrentCtx : sCurrentCtx; }
+    static void MakeCurrent(ContextImpl *context);
+    static ContextImpl *GetCurrent() { return sThreadCurrentCtx ? sThreadCurrentCtx : sCurrentCtx; }
 
-    static void MakeThreadCurrent(ALContext *context);
-    static ALContext *GetThreadCurrent() { return sThreadCurrentCtx; }
+    static void MakeThreadCurrent(ContextImpl *context);
+    static ContextImpl *GetThreadCurrent() { return sThreadCurrentCtx; }
 
 private:
-    ALListener mListener;
+    ListenerImpl mListener;
     ALCcontext *mContext;
     std::stack<ALuint> mSourceIds;
 
-    ALDevice *const mDevice;
-    std::deque<ALSource> mAllSources;
-    std::queue<ALSource*> mFreeSources;
-    Vector<ALSource*> mUsedSources;
+    DeviceImpl *const mDevice;
+    std::deque<SourceImpl> mAllSources;
+    std::queue<SourceImpl*> mFreeSources;
+    Vector<SourceImpl*> mUsedSources;
 
-    Vector<UniquePtr<ALBuffer>> mBuffers;
+    Vector<UniquePtr<BufferImpl>> mBuffers;
 
-    Vector<UniquePtr<ALSourceGroup>> mSourceGroups;
+    Vector<UniquePtr<SourceGroupImpl>> mSourceGroups;
 
     RefCount mRefs;
 
@@ -146,7 +146,7 @@ private:
 
     struct PendingBuffer {
         String mName;
-        ALBuffer *mBuffer;
+        BufferImpl *mBuffer;
         SharedPtr<Decoder> mDecoder;
         ALenum mFormat;
         ALuint mFrames;
@@ -155,7 +155,7 @@ private:
     };
     RingBuffer mPendingBuffers;
 
-    Vector<ALSource*> mStreamingSources;
+    Vector<SourceImpl*> mStreamingSources;
     std::mutex mSourceStreamMutex;
 
     std::atomic<std::chrono::milliseconds> mWakeInterval;
@@ -171,15 +171,15 @@ private:
     std::once_flag mSetExts;
     void setupExts();
 
-    BufferOrExceptT doCreateBuffer(const String &name, Vector<UniquePtr<ALBuffer>>::iterator iter, SharedPtr<Decoder> decoder);
-    BufferOrExceptT doCreateBufferAsync(const String &name, Vector<UniquePtr<ALBuffer>>::iterator iter, SharedPtr<Decoder> decoder);
+    BufferOrExceptT doCreateBuffer(const String &name, Vector<UniquePtr<BufferImpl>>::iterator iter, SharedPtr<Decoder> decoder);
+    BufferOrExceptT doCreateBufferAsync(const String &name, Vector<UniquePtr<BufferImpl>>::iterator iter, SharedPtr<Decoder> decoder);
 
     bool mIsConnected : 1;
     bool mIsBatching : 1;
 
 public:
-    ALContext(ALCcontext *context, ALDevice *device);
-    ~ALContext();
+    ContextImpl(ALCcontext *context, DeviceImpl *device);
+    ~ContextImpl();
 
     ALCcontext *getContext() const { return mContext; }
     long addRef() { return ++mRefs; }
@@ -230,12 +230,12 @@ public:
     ALuint getSourceId(ALuint maxprio);
     void insertSourceId(ALuint id) { mSourceIds.push(id); }
 
-    void addStream(ALSource *source);
-    void removeStream(ALSource *source);
-    void removeStreamNoLock(ALSource *source);
+    void addStream(SourceImpl *source);
+    void removeStream(SourceImpl *source);
+    void removeStreamNoLock(SourceImpl *source);
 
-    void freeSource(ALSource *source);
-    void freeSourceGroup(ALSourceGroup *group);
+    void freeSource(SourceImpl *source);
+    void freeSourceGroup(SourceGroupImpl *group);
 
     Batcher getBatcher()
     {
@@ -301,9 +301,9 @@ public:
 };
 
 
-inline void CheckContext(const ALContext *ctx)
+inline void CheckContext(const ContextImpl *ctx)
 {
-    if(EXPECT(ctx != ALContext::GetCurrent(), false))
+    if(EXPECT(ctx != ContextImpl::GetCurrent(), false))
         throw std::runtime_error("Called context is not current");
 }
 

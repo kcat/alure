@@ -7,8 +7,8 @@
 namespace alure
 {
 
-class ALContext;
-class ALSource;
+class ContextImpl;
+class SourceImpl;
 
 struct SourceGroupProps {
     ALfloat mGain;
@@ -17,14 +17,14 @@ struct SourceGroupProps {
     SourceGroupProps() : mGain(1.0f), mPitch(1.0f) { }
 };
 
-class ALSourceGroup : SourceGroupProps {
-    ALContext *const mContext;
+class SourceGroupImpl : SourceGroupProps {
+    ContextImpl *const mContext;
 
-    Vector<ALSource*> mSources;
-    Vector<ALSourceGroup*> mSubGroups;
+    Vector<SourceImpl*> mSources;
+    Vector<SourceGroupImpl*> mSubGroups;
 
     SourceGroupProps mParentProps;
-    ALSourceGroup *mParent;
+    SourceGroupImpl *mParent;
 
     const String mName;
 
@@ -38,12 +38,12 @@ class ALSourceGroup : SourceGroupProps {
 
     void update(ALfloat gain, ALfloat pitch);
 
-    void setParentGroup(ALSourceGroup *group);
+    void setParentGroup(SourceGroupImpl *group);
     void unsetParentGroup();
 
-    void eraseSubGroup(ALSourceGroup *group);
+    void eraseSubGroup(SourceGroupImpl *group);
 
-    bool findInSubGroups(ALSourceGroup *group) const;
+    bool findInSubGroups(SourceGroupImpl *group) const;
 
     void collectPlayingSourceIds(Vector<ALuint> &sourceids) const;
     void updatePausedStatus() const;
@@ -55,7 +55,7 @@ class ALSourceGroup : SourceGroupProps {
     void updateStoppedStatus() const;
 
 public:
-    ALSourceGroup(ALContext *context, String name)
+    SourceGroupImpl(ContextImpl *context, String name)
       : mContext(context), mParent(nullptr), mName(std::move(name))
     { }
 

@@ -3,7 +3,6 @@
 
 #include "main.h"
 
-#include <map>
 #include <mutex>
 
 #include "alc.h"
@@ -12,8 +11,8 @@
 
 namespace alure {
 
-class ALContext;
-class ALBuffer;
+class ContextImpl;
+class BufferImpl;
 
 
 enum ALCExtension {
@@ -24,10 +23,10 @@ enum ALCExtension {
     ALC_EXTENSION_MAX
 };
 
-class ALDevice {
+class DeviceImpl {
     ALCdevice *mDevice;
 
-    Vector<UniquePtr<ALContext>> mContexts;
+    Vector<UniquePtr<ContextImpl>> mContexts;
 
     bool mHasExt[ALC_EXTENSION_MAX];
 
@@ -35,8 +34,8 @@ class ALDevice {
     void setupExts();
 
 public:
-    ALDevice(ALCdevice *device);
-    ~ALDevice();
+    DeviceImpl(ALCdevice *device);
+    ~DeviceImpl();
 
     ALCdevice *getDevice() const { return mDevice; }
 
@@ -48,7 +47,7 @@ public:
     LPALCGETSTRINGISOFT alcGetStringiSOFT;
     LPALCRESETDEVICESOFT alcResetDeviceSOFT;
 
-    void removeContext(ALContext *ctx);
+    void removeContext(ContextImpl *ctx);
 
     String getName(PlaybackName type) const;
     bool queryExtension(const String &name) const;

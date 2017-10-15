@@ -59,23 +59,23 @@ typedef struct {
 namespace alure {
 
 class DeviceManager;
-class ALDeviceManager;
+class DeviceManagerImpl;
 class Device;
-class ALDevice;
+class DeviceImpl;
 class Context;
-class ALContext;
+class ContextImpl;
 class Listener;
-class ALListener;
+class ListenerImpl;
 class Buffer;
-class ALBuffer;
+class BufferImpl;
 class Source;
-class ALSource;
+class SourceImpl;
 class SourceGroup;
-class ALSourceGroup;
+class SourceGroupImpl;
 class AuxiliaryEffectSlot;
-class ALAuxiliaryEffectSlot;
+class AuxiliaryEffectSlotImpl;
 class Effect;
-class ALEffect;
+class EffectImpl;
 class Decoder;
 class DecoderFactory;
 class MessageHandler;
@@ -388,9 +388,9 @@ enum class DefaultDeviceType {
  * is a singleton, only one instance will exist in a process.
  */
 class ALURE_API DeviceManager {
-    ALDeviceManager *pImpl;
+    DeviceManagerImpl *pImpl;
 
-    DeviceManager(ALDeviceManager *impl) : pImpl(impl) { }
+    DeviceManager(DeviceManagerImpl *impl) : pImpl(impl) { }
     friend class ALDeviceManager;
 
 public:
@@ -431,7 +431,7 @@ enum class PlaybackName {
 };
 
 class ALURE_API Device {
-    MAKE_PIMPL(Device, ALDevice)
+    MAKE_PIMPL(Device, DeviceImpl)
 
 public:
     /** Retrieves the device name as given by type. */
@@ -526,7 +526,7 @@ enum class DistanceModel {
 };
 
 class ALURE_API Context {
-    MAKE_PIMPL(Context, ALContext)
+    MAKE_PIMPL(Context, ContextImpl)
 
 public:
     /** Makes the specified context current for OpenAL operations. */
@@ -713,7 +713,7 @@ public:
 };
 
 class ALURE_API Listener {
-    MAKE_PIMPL(Listener, ALListener)
+    MAKE_PIMPL(Listener, ListenerImpl)
 
 public:
     /** Sets the "master" gain for all context output. */
@@ -762,7 +762,7 @@ enum class BufferLoadStatus {
 };
 
 class ALURE_API Buffer {
-    MAKE_PIMPL(Buffer, ALBuffer)
+    MAKE_PIMPL(Buffer, BufferImpl)
 
 public:
     /**
@@ -835,7 +835,7 @@ enum class Spatialize {
 };
 
 class ALURE_API Source {
-    MAKE_PIMPL(Source, ALSource)
+    MAKE_PIMPL(Source, SourceImpl)
 
 public:
     /**
@@ -1109,7 +1109,7 @@ public:
 
 
 class ALURE_API SourceGroup {
-    MAKE_PIMPL(SourceGroup, ALSourceGroup)
+    MAKE_PIMPL(SourceGroup, SourceGroupImpl)
 
 public:
     /** Retrieves the associated name of the source group. */
@@ -1182,7 +1182,7 @@ struct SourceSend {
 };
 
 class ALURE_API AuxiliaryEffectSlot {
-    MAKE_PIMPL(AuxiliaryEffectSlot, ALAuxiliaryEffectSlot)
+    MAKE_PIMPL(AuxiliaryEffectSlot, AuxiliaryEffectSlotImpl)
 
 public:
     void setGain(ALfloat gain);
@@ -1219,7 +1219,7 @@ public:
 
 
 class ALURE_API Effect {
-    MAKE_PIMPL(Effect, ALEffect)
+    MAKE_PIMPL(Effect, EffectImpl)
 
 public:
     /**

@@ -5,22 +5,22 @@
 
 namespace alure {
 
-class ALContext;
+class ContextImpl;
 
-class ALEffect {
-    ALContext *const mContext;
+class EffectImpl {
+    ContextImpl *const mContext;
     ALuint mId;
     ALenum mType;
 
 public:
-    ALEffect(ALContext *context, ALuint id) : mContext(context), mId(id), mType(AL_NONE)
+    EffectImpl(ContextImpl *context, ALuint id) : mContext(context), mId(id), mType(AL_NONE)
     { }
 
     void setReverbProperties(const EFXEAXREVERBPROPERTIES &props);
 
     void destroy();
 
-    ALContext *getContext() const { return mContext; }
+    ContextImpl *getContext() const { return mContext; }
     ALuint getId() const { return mId; }
 };
 

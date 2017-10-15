@@ -9,14 +9,14 @@
 namespace alure
 {
 
-void ALSourceGroup::eraseSubGroup(ALSourceGroup *group)
+void SourceGroupImpl::eraseSubGroup(SourceGroupImpl *group)
 {
     auto iter = std::lower_bound(mSubGroups.begin(), mSubGroups.end(), group);
     if(iter != mSubGroups.end() && *iter == group) mSubGroups.erase(iter);
 }
 
 
-void ALSourceGroup::setParentGroup(ALSourceGroup *group)
+void SourceGroupImpl::setParentGroup(SourceGroupImpl *group)
 {
     if(mParent)
         mParent->eraseSubGroup(this);
@@ -26,32 +26,32 @@ void ALSourceGroup::setParentGroup(ALSourceGroup *group)
     update(props.mGain, props.mPitch);
 }
 
-void ALSourceGroup::unsetParentGroup()
+void SourceGroupImpl::unsetParentGroup()
 {
     mParent = nullptr;
     update(1.0f, 1.0f);
 }
 
-void ALSourceGroup::update(ALfloat gain, ALfloat pitch)
+void SourceGroupImpl::update(ALfloat gain, ALfloat pitch)
 {
     mParentProps.mGain = gain;
     mParentProps.mPitch = pitch;
 
     gain *= mGain;
     pitch *= mPitch;
-    for(ALSource *alsrc : mSources)
+    for(SourceImpl *alsrc : mSources)
         alsrc->groupPropUpdate(gain, pitch);
-    for(ALSourceGroup *group : mSubGroups)
+    for(SourceGroupImpl *group : mSubGroups)
         group->update(gain, pitch);
 }
 
 
-bool ALSourceGroup::findInSubGroups(ALSourceGroup *group) const
+bool SourceGroupImpl::findInSubGroups(SourceGroupImpl *group) const
 {
     auto iter = std::lower_bound(mSubGroups.begin(), mSubGroups.end(), group);
     if(iter != mSubGroups.end() && *iter == group) return true;
 
-    for(ALSourceGroup *group : mSubGroups)
+    for(SourceGroupImpl *group : mSubGroups)
     {
         if(group->findInSubGroups(group))
             return true;
@@ -60,9 +60,9 @@ bool ALSourceGroup::findInSubGroups(ALSourceGroup *group) const
 }
 
 
-void ALSourceGroup::addSource(Source source)
+void SourceGroupImpl::addSource(Source source)
 {
-    ALSource *alsrc = source.getHandle();
+    SourceImpl *alsrc = source.getHandle();
     if(!alsrc) throw std::runtime_error("Source is not valid");
     CheckContext(mContext);
 
@@ -73,7 +73,7 @@ void ALSourceGroup::addSource(Source source)
     alsrc->setGroup(this);
 }
 
-void ALSourceGroup::removeSource(Source source)
+void SourceGroupImpl::removeSource(Source source)
 {
     CheckContext(mContext);
     auto iter = std::lower_bound(mSources.begin(), mSources.end(), source.getHandle());
@@ -85,13 +85,13 @@ void ALSourceGroup::removeSource(Source source)
 }
 
 
-void ALSourceGroup::addSources(ArrayView<Source> sources)
+void SourceGroupImpl::addSources(ArrayView<Source> sources)
 {
     CheckContext(mContext);
     if(sources.empty())
         return;
 
-    Vector<ALSource*> alsrcs;
+    Vector<SourceImpl*> alsrcs;
     alsrcs.reserve(sources.size());
 
     for(Source source : sources)
@@ -101,7 +101,7 @@ void ALSourceGroup::addSources(ArrayView<Source> sources)
     }
 
     Batcher batcher = mContext->getBatcher();
-    for(ALSource *alsrc : alsrcs)
+    for(SourceImpl *alsrc : alsrcs)
     {
         auto iter = std::lower_bound(mSources.begin(), mSources.end(), alsrc);
         if(iter != mSources.end() && *iter == alsrc) continue;
@@ -111,7 +111,7 @@ void ALSourceGroup::addSources(ArrayView<Source> sources)
     }
 }
 
-void ALSourceGroup::removeSources(ArrayView<Source> sources)
+void SourceGroupImpl::removeSources(ArrayView<Source> sources)
 {
     Batcher batcher = mContext->getBatcher();
     for(Source source : sources)
@@ -126,9 +126,9 @@ void ALSourceGroup::removeSources(ArrayView<Source> sources)
 }
 
 
-void ALSourceGroup::addSubGroup(SourceGroup group)
+void SourceGroupImpl::addSubGroup(SourceGroup group)
 {
-    ALSourceGroup *algrp = group.getHandle();
+    SourceGroupImpl *algrp = group.getHandle();
     if(!algrp) throw std::runtime_error("SourceGroup is not valid");
     CheckContext(mContext);
 
@@ -143,7 +143,7 @@ void ALSourceGroup::addSubGroup(SourceGroup group)
     algrp->setParentGroup(this);
 }
 
-void ALSourceGroup::removeSubGroup(SourceGroup group)
+void SourceGroupImpl::removeSubGroup(SourceGroup group)
 {
     auto iter = std::lower_bound(mSubGroups.begin(), mSubGroups.end(), group.getHandle());
     if(iter != mSubGroups.end() && *iter == group.getHandle())
@@ -155,26 +155,26 @@ void ALSourceGroup::removeSubGroup(SourceGroup group)
 }
 
 
-Vector<Source> ALSourceGroup::getSources() const
+Vector<Source> SourceGroupImpl::getSources() const
 {
     Vector<Source> ret;
     ret.reserve(mSources.size());
-    for(ALSource *src : mSources)
+    for(SourceImpl *src : mSources)
         ret.emplace_back(Source(src));
     return ret;
 }
 
-Vector<SourceGroup> ALSourceGroup::getSubGroups() const
+Vector<SourceGroup> SourceGroupImpl::getSubGroups() const
 {
     Vector<SourceGroup> ret;
     ret.reserve(mSubGroups.size());
-    for(ALSourceGroup *grp : mSubGroups)
+    for(SourceGroupImpl *grp : mSubGroups)
         ret.emplace_back(SourceGroup(grp));
     return ret;
 }
 
 
-void ALSourceGroup::setGain(ALfloat gain)
+void SourceGroupImpl::setGain(ALfloat gain)
 {
     if(!(gain >= 0.0f))
         throw std::runtime_error("Gain out of range");
@@ -183,13 +183,13 @@ void ALSourceGroup::setGain(ALfloat gain)
     gain *= mParentProps.mGain;
     ALfloat pitch = mPitch * mParentProps.mPitch;
     Batcher batcher = mContext->getBatcher();
-    for(ALSource *alsrc : mSources)
+    for(SourceImpl *alsrc : mSources)
         alsrc->groupPropUpdate(gain, pitch);
-    for(ALSourceGroup *group : mSubGroups)
+    for(SourceGroupImpl *group : mSubGroups)
         group->update(gain, pitch);
 }
 
-void ALSourceGroup::setPitch(ALfloat pitch)
+void SourceGroupImpl::setPitch(ALfloat pitch)
 {
     if(!(pitch > 0.0f))
         throw std::runtime_error("Pitch out of range");
@@ -198,33 +198,33 @@ void ALSourceGroup::setPitch(ALfloat pitch)
     ALfloat gain = mGain * mParentProps.mGain;
     pitch *= mParentProps.mPitch;
     Batcher batcher = mContext->getBatcher();
-    for(ALSource *alsrc : mSources)
+    for(SourceImpl *alsrc : mSources)
         alsrc->groupPropUpdate(gain, pitch);
-    for(ALSourceGroup *group : mSubGroups)
+    for(SourceGroupImpl *group : mSubGroups)
         group->update(gain, pitch);
 }
 
 
-void ALSourceGroup::collectPlayingSourceIds(Vector<ALuint> &sourceids) const
+void SourceGroupImpl::collectPlayingSourceIds(Vector<ALuint> &sourceids) const
 {
-    for(ALSource *alsrc : mSources)
+    for(SourceImpl *alsrc : mSources)
     {
         if(alsrc->isPlaying())
             sourceids.push_back(alsrc->getId());
     }
-    for(ALSourceGroup *group : mSubGroups)
+    for(SourceGroupImpl *group : mSubGroups)
         group->collectPlayingSourceIds(sourceids);
 }
 
-void ALSourceGroup::updatePausedStatus() const
+void SourceGroupImpl::updatePausedStatus() const
 {
-    for(ALSource *alsrc : mSources)
+    for(SourceImpl *alsrc : mSources)
         alsrc->checkPaused();
-    for(ALSourceGroup *group : mSubGroups)
+    for(SourceGroupImpl *group : mSubGroups)
         group->updatePausedStatus();
 }
 
-void ALSourceGroup::pauseAll() const
+void SourceGroupImpl::pauseAll() const
 {
     CheckContext(mContext);
     auto lock = mContext->getSourceStreamLock();
@@ -241,26 +241,26 @@ void ALSourceGroup::pauseAll() const
 }
 
 
-void ALSourceGroup::collectPausedSourceIds(Vector<ALuint> &sourceids) const
+void SourceGroupImpl::collectPausedSourceIds(Vector<ALuint> &sourceids) const
 {
-    for(ALSource *alsrc : mSources)
+    for(SourceImpl *alsrc : mSources)
     {
         if(alsrc->isPaused())
             sourceids.push_back(alsrc->getId());
     }
-    for(ALSourceGroup *group : mSubGroups)
+    for(SourceGroupImpl *group : mSubGroups)
         group->collectPausedSourceIds(sourceids);
 }
 
-void ALSourceGroup::updatePlayingStatus() const
+void SourceGroupImpl::updatePlayingStatus() const
 {
-    for(ALSource *alsrc : mSources)
+    for(SourceImpl *alsrc : mSources)
         alsrc->unsetPaused();
-    for(ALSourceGroup *group : mSubGroups)
+    for(SourceGroupImpl *group : mSubGroups)
         group->updatePlayingStatus();
 }
 
-void ALSourceGroup::resumeAll() const
+void SourceGroupImpl::resumeAll() const
 {
     CheckContext(mContext);
     auto lock = mContext->getSourceStreamLock();
@@ -277,29 +277,29 @@ void ALSourceGroup::resumeAll() const
 }
 
 
-void ALSourceGroup::collectSourceIds(Vector<ALuint> &sourceids) const
+void SourceGroupImpl::collectSourceIds(Vector<ALuint> &sourceids) const
 {
-    for(ALSource *alsrc : mSources)
+    for(SourceImpl *alsrc : mSources)
     {
         if(ALuint id = alsrc->getId())
             sourceids.push_back(id);
     }
-    for(ALSourceGroup *group : mSubGroups)
+    for(SourceGroupImpl *group : mSubGroups)
         group->collectSourceIds(sourceids);
 }
 
-void ALSourceGroup::updateStoppedStatus() const
+void SourceGroupImpl::updateStoppedStatus() const
 {
-    for(ALSource *alsrc : mSources)
+    for(SourceImpl *alsrc : mSources)
     {
         alsrc->makeStopped();
         mContext->send(&MessageHandler::sourceForceStopped, alsrc);
     }
-    for(ALSourceGroup *group : mSubGroups)
+    for(SourceGroupImpl *group : mSubGroups)
         group->updateStoppedStatus();
 }
 
-void ALSourceGroup::stopAll() const
+void SourceGroupImpl::stopAll() const
 {
     CheckContext(mContext);
     auto lock = mContext->getSourceStreamLock();
@@ -316,14 +316,14 @@ void ALSourceGroup::stopAll() const
 }
 
 
-void ALSourceGroup::release()
+void SourceGroupImpl::release()
 {
     CheckContext(mContext);
     Batcher batcher = mContext->getBatcher();
-    for(ALSource *source : mSources)
+    for(SourceImpl *source : mSources)
         source->unsetGroup();
     mSources.clear();
-    for(ALSourceGroup *group : mSubGroups)
+    for(SourceGroupImpl *group : mSubGroups)
         group->unsetParentGroup();
     mSubGroups.clear();
     if(mParent)

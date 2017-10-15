@@ -164,19 +164,19 @@ public:
 };
 
 
-ALSource::ALSource(ALContext *context)
+SourceImpl::SourceImpl(ContextImpl *context)
   : mContext(context), mId(0), mBuffer(0), mGroup(nullptr), mIsAsync(false),
     mDirectFilter(AL_FILTER_NULL)
 {
     resetProperties();
 }
 
-ALSource::~ALSource()
+SourceImpl::~SourceImpl()
 {
 }
 
 
-void ALSource::resetProperties()
+void SourceImpl::resetProperties()
 {
     if(mGroup)
         mGroup->removeSource(Source(this));
@@ -229,7 +229,7 @@ void ALSource::resetProperties()
     mPriority = 0;
 }
 
-void ALSource::applyProperties(bool looping, ALuint offset) const
+void SourceImpl::applyProperties(bool looping, ALuint offset) const
 {
     alSourcei(mId, AL_LOOPING, looping ? AL_TRUE : AL_FALSE);
     alSourcei(mId, AL_SAMPLE_OFFSET, offset);
@@ -284,7 +284,7 @@ void ALSource::applyProperties(bool looping, ALuint offset) const
 }
 
 
-void ALSource::setGroup(ALSourceGroup *group)
+void SourceImpl::setGroup(SourceGroupImpl *group)
 {
     if(mGroup)
         mGroup->removeSource(Source(this));
@@ -292,13 +292,13 @@ void ALSource::setGroup(ALSourceGroup *group)
     groupUpdate();
 }
 
-void ALSource::unsetGroup()
+void SourceImpl::unsetGroup()
 {
     mGroup = nullptr;
     groupUpdate();
 }
 
-void ALSource::groupUpdate()
+void SourceImpl::groupUpdate()
 {
     if(mId)
     {
@@ -315,7 +315,7 @@ void ALSource::groupUpdate()
     }
 }
 
-void ALSource::groupPropUpdate(ALfloat gain, ALfloat pitch)
+void SourceImpl::groupPropUpdate(ALfloat gain, ALfloat pitch)
 {
     if(mId)
     {
@@ -325,9 +325,9 @@ void ALSource::groupPropUpdate(ALfloat gain, ALfloat pitch)
 }
 
 
-void ALSource::play(Buffer buffer)
+void SourceImpl::play(Buffer buffer)
 {
-    ALBuffer *albuf = buffer.getHandle();
+    BufferImpl *albuf = buffer.getHandle();
     if(!albuf) throw std::runtime_error("Buffer is not valid");
     CheckContext(mContext);
     CheckContext(albuf->getContext());
@@ -367,7 +367,7 @@ void ALSource::play(Buffer buffer)
     mPaused.store(false, std::memory_order_release);
 }
 
-void ALSource::play(SharedPtr<Decoder> decoder, ALuint updatelen, ALuint queuesize)
+void SourceImpl::play(SharedPtr<Decoder> decoder, ALuint updatelen, ALuint queuesize)
 {
     if(updatelen < 64)
         throw std::runtime_error("Update length out of range");
@@ -419,7 +419,7 @@ void ALSource::play(SharedPtr<Decoder> decoder, ALuint updatelen, ALuint queuesi
 }
 
 
-void ALSource::makeStopped()
+void SourceImpl::makeStopped()
 {
     if(mIsAsync.load(std::memory_order_acquire))
     {
@@ -450,7 +450,7 @@ void ALSource::makeStopped()
     mPaused.store(false, std::memory_order_release);
 }
 
-void ALSource::stop()
+void SourceImpl::stop()
 {
     CheckContext(mContext);
     if(mIsAsync.load(std::memory_order_acquire))
@@ -462,7 +462,7 @@ void ALSource::stop()
 }
 
 
-void ALSource::checkPaused()
+void SourceImpl::checkPaused()
 {
     if(mPaused.load(std::memory_order_acquire) || mId == 0)
         return;
@@ -475,7 +475,7 @@ void ALSource::checkPaused()
                   std::memory_order_release);
 }
 
-void ALSource::pause()
+void SourceImpl::pause()
 {
     CheckContext(mContext);
     if(mPaused.load(std::memory_order_acquire))
@@ -494,7 +494,7 @@ void ALSource::pause()
     }
 }
 
-void ALSource::resume()
+void SourceImpl::resume()
 {
     CheckContext(mContext);
     if(!mPaused.load(std::memory_order_acquire))
@@ -506,7 +506,7 @@ void ALSource::resume()
 }
 
 
-bool ALSource::isPlaying() const
+bool SourceImpl::isPlaying() const
 {
     CheckContext(mContext);
     if(mId == 0) return false;
@@ -520,7 +520,7 @@ bool ALSource::isPlaying() const
                                    mStream && mStream->hasMoreData());
 }
 
-bool ALSource::isPaused() const
+bool SourceImpl::isPaused() const
 {
     CheckContext(mContext);
     if(mId == 0) return false;
@@ -534,7 +534,7 @@ bool ALSource::isPaused() const
 }
 
 
-ALint ALSource::refillBufferStream()
+ALint SourceImpl::refillBufferStream()
 {
     ALint processed;
     alGetSourcei(mId, AL_BUFFERS_PROCESSED, &processed);
@@ -557,7 +557,7 @@ ALint ALSource::refillBufferStream()
 }
 
 
-void ALSource::updateNoCtxCheck()
+void SourceImpl::updateNoCtxCheck()
 {
     if(mId == 0)
         return;
@@ -582,7 +582,7 @@ void ALSource::updateNoCtxCheck()
     }
 }
 
-bool ALSource::updateAsync()
+bool SourceImpl::updateAsync()
 {
     std::lock_guard<std::mutex> lock(mMutex);
 
@@ -603,13 +603,13 @@ bool ALSource::updateAsync()
 }
 
 
-void ALSource::setPriority(ALuint priority)
+void SourceImpl::setPriority(ALuint priority)
 {
     mPriority = priority;
 }
 
 
-void ALSource::setOffset(uint64_t offset)
+void SourceImpl::setOffset(uint64_t offset)
 {
     CheckContext(mContext);
     if(mId == 0)
@@ -640,7 +640,7 @@ void ALSource::setOffset(uint64_t offset)
     }
 }
 
-std::pair<uint64_t,std::chrono::nanoseconds> ALSource::getSampleOffsetLatency() const
+std::pair<uint64_t,std::chrono::nanoseconds> SourceImpl::getSampleOffsetLatency() const
 {
     CheckContext(mContext);
     if(mId == 0)
@@ -701,7 +701,7 @@ std::pair<uint64_t,std::chrono::nanoseconds> ALSource::getSampleOffsetLatency() 
     return { srcpos, latency };
 }
 
-std::pair<Seconds,Seconds> ALSource::getSecOffsetLatency() const
+std::pair<Seconds,Seconds> SourceImpl::getSecOffsetLatency() const
 {
     CheckContext(mContext);
     if(mId == 0)
@@ -776,7 +776,7 @@ std::pair<Seconds,Seconds> ALSource::getSecOffsetLatency() const
 }
 
 
-void ALSource::setLooping(bool looping)
+void SourceImpl::setLooping(bool looping)
 {
     CheckContext(mContext);
 
@@ -786,7 +786,7 @@ void ALSource::setLooping(bool looping)
 }
 
 
-void ALSource::setPitch(ALfloat pitch)
+void SourceImpl::setPitch(ALfloat pitch)
 {
     if(!(pitch > 0.0f))
         throw std::runtime_error("Pitch out of range");
@@ -797,7 +797,7 @@ void ALSource::setPitch(ALfloat pitch)
 }
 
 
-void ALSource::setGain(ALfloat gain)
+void SourceImpl::setGain(ALfloat gain)
 {
     if(!(gain >= 0.0f))
         throw std::runtime_error("Gain out of range");
@@ -807,7 +807,7 @@ void ALSource::setGain(ALfloat gain)
     mGain = gain;
 }
 
-void ALSource::setGainRange(ALfloat mingain, ALfloat maxgain)
+void SourceImpl::setGainRange(ALfloat mingain, ALfloat maxgain)
 {
     if(!(mingain >= 0.0f && maxgain <= 1.0f && maxgain >= mingain))
         throw std::runtime_error("Gain range out of range");
@@ -822,7 +822,7 @@ void ALSource::setGainRange(ALfloat mingain, ALfloat maxgain)
 }
 
 
-void ALSource::setDistanceRange(ALfloat refdist, ALfloat maxdist)
+void SourceImpl::setDistanceRange(ALfloat refdist, ALfloat maxdist)
 {
     if(!(refdist >= 0.0f && maxdist <= std::numeric_limits<float>::max() && refdist <= maxdist))
         throw std::runtime_error("Distance range out of range");
@@ -837,7 +837,7 @@ void ALSource::setDistanceRange(ALfloat refdist, ALfloat maxdist)
 }
 
 
-void ALSource::set3DParameters(const Vector3 &position, const Vector3 &velocity, const Vector3 &direction)
+void SourceImpl::set3DParameters(const Vector3 &position, const Vector3 &velocity, const Vector3 &direction)
 {
     CheckContext(mContext);
     if(mId != 0)
@@ -852,7 +852,7 @@ void ALSource::set3DParameters(const Vector3 &position, const Vector3 &velocity,
     mDirection = direction;
 }
 
-void ALSource::set3DParameters(const Vector3 &position, const Vector3 &velocity, std::pair<Vector3,Vector3> orientation)
+void SourceImpl::set3DParameters(const Vector3 &position, const Vector3 &velocity, std::pair<Vector3,Vector3> orientation)
 {
     static_assert(sizeof(orientation) == sizeof(ALfloat[6]), "Invalid Vector3 pair size");
     CheckContext(mContext);
@@ -872,7 +872,7 @@ void ALSource::set3DParameters(const Vector3 &position, const Vector3 &velocity,
 }
 
 
-void ALSource::setPosition(ALfloat x, ALfloat y, ALfloat z)
+void SourceImpl::setPosition(ALfloat x, ALfloat y, ALfloat z)
 {
     CheckContext(mContext);
     if(mId != 0)
@@ -882,7 +882,7 @@ void ALSource::setPosition(ALfloat x, ALfloat y, ALfloat z)
     mPosition[2] = z;
 }
 
-void ALSource::setPosition(const ALfloat *pos)
+void SourceImpl::setPosition(const ALfloat *pos)
 {
     CheckContext(mContext);
     if(mId != 0)
@@ -892,7 +892,7 @@ void ALSource::setPosition(const ALfloat *pos)
     mPosition[2] = pos[2];
 }
 
-void ALSource::setVelocity(ALfloat x, ALfloat y, ALfloat z)
+void SourceImpl::setVelocity(ALfloat x, ALfloat y, ALfloat z)
 {
     CheckContext(mContext);
     if(mId != 0)
@@ -902,7 +902,7 @@ void ALSource::setVelocity(ALfloat x, ALfloat y, ALfloat z)
     mVelocity[2] = z;
 }
 
-void ALSource::setVelocity(const ALfloat *vel)
+void SourceImpl::setVelocity(const ALfloat *vel)
 {
     CheckContext(mContext);
     if(mId != 0)
@@ -912,7 +912,7 @@ void ALSource::setVelocity(const ALfloat *vel)
     mVelocity[2] = vel[2];
 }
 
-void ALSource::setDirection(ALfloat x, ALfloat y, ALfloat z)
+void SourceImpl::setDirection(ALfloat x, ALfloat y, ALfloat z)
 {
     CheckContext(mContext);
     if(mId != 0)
@@ -922,7 +922,7 @@ void ALSource::setDirection(ALfloat x, ALfloat y, ALfloat z)
     mDirection[2] = z;
 }
 
-void ALSource::setDirection(const ALfloat *dir)
+void SourceImpl::setDirection(const ALfloat *dir)
 {
     CheckContext(mContext);
     if(mId != 0)
@@ -932,7 +932,7 @@ void ALSource::setDirection(const ALfloat *dir)
     mDirection[2] = dir[2];
 }
 
-void ALSource::setOrientation(ALfloat x1, ALfloat y1, ALfloat z1, ALfloat x2, ALfloat y2, ALfloat z2)
+void SourceImpl::setOrientation(ALfloat x1, ALfloat y1, ALfloat z1, ALfloat x2, ALfloat y2, ALfloat z2)
 {
     CheckContext(mContext);
     if(mId != 0)
@@ -950,7 +950,7 @@ void ALSource::setOrientation(ALfloat x1, ALfloat y1, ALfloat z1, ALfloat x2, AL
     mOrientation[1][2] = z2;
 }
 
-void ALSource::setOrientation(const ALfloat *at, const ALfloat *up)
+void SourceImpl::setOrientation(const ALfloat *at, const ALfloat *up)
 {
     CheckContext(mContext);
     if(mId != 0)
@@ -968,7 +968,7 @@ void ALSource::setOrientation(const ALfloat *at, const ALfloat *up)
     mOrientation[1][2] = up[2];
 }
 
-void ALSource::setOrientation(const ALfloat *ori)
+void SourceImpl::setOrientation(const ALfloat *ori)
 {
     CheckContext(mContext);
     if(mId != 0)
@@ -986,7 +986,7 @@ void ALSource::setOrientation(const ALfloat *ori)
 }
 
 
-void ALSource::setConeAngles(ALfloat inner, ALfloat outer)
+void SourceImpl::setConeAngles(ALfloat inner, ALfloat outer)
 {
     if(!(inner >= 0.0f && outer <= 360.0f && outer >= inner))
         throw std::runtime_error("Cone angles out of range");
@@ -1000,7 +1000,7 @@ void ALSource::setConeAngles(ALfloat inner, ALfloat outer)
     mConeOuterAngle = outer;
 }
 
-void ALSource::setOuterConeGains(ALfloat gain, ALfloat gainhf)
+void SourceImpl::setOuterConeGains(ALfloat gain, ALfloat gainhf)
 {
     if(!(gain >= 0.0f && gain <= 1.0f && gainhf >= 0.0f && gainhf <= 1.0f))
         throw std::runtime_error("Outer cone gain out of range");
@@ -1016,7 +1016,7 @@ void ALSource::setOuterConeGains(ALfloat gain, ALfloat gainhf)
 }
 
 
-void ALSource::setRolloffFactors(ALfloat factor, ALfloat roomfactor)
+void SourceImpl::setRolloffFactors(ALfloat factor, ALfloat roomfactor)
 {
     if(!(factor >= 0.0f && roomfactor >= 0.0f))
         throw std::runtime_error("Rolloff factor out of range");
@@ -1031,7 +1031,7 @@ void ALSource::setRolloffFactors(ALfloat factor, ALfloat roomfactor)
     mRoomRolloffFactor = roomfactor;
 }
 
-void ALSource::setDopplerFactor(ALfloat factor)
+void SourceImpl::setDopplerFactor(ALfloat factor)
 {
     if(!(factor >= 0.0f && factor <= 1.0f))
         throw std::runtime_error("Doppler factor out of range");
@@ -1041,7 +1041,7 @@ void ALSource::setDopplerFactor(ALfloat factor)
     mDopplerFactor = factor;
 }
 
-void ALSource::setAirAbsorptionFactor(ALfloat factor)
+void SourceImpl::setAirAbsorptionFactor(ALfloat factor)
 {
     if(!(factor >= 0.0f && factor <= 10.0f))
         throw std::runtime_error("Absorption factor out of range");
@@ -1051,7 +1051,7 @@ void ALSource::setAirAbsorptionFactor(ALfloat factor)
     mAirAbsorptionFactor = factor;
 }
 
-void ALSource::setRadius(ALfloat radius)
+void SourceImpl::setRadius(ALfloat radius)
 {
     if(!(mRadius >= 0.0f))
         throw std::runtime_error("Radius out of range");
@@ -1061,7 +1061,7 @@ void ALSource::setRadius(ALfloat radius)
     mRadius = radius;
 }
 
-void ALSource::setStereoAngles(ALfloat leftAngle, ALfloat rightAngle)
+void SourceImpl::setStereoAngles(ALfloat leftAngle, ALfloat rightAngle)
 {
     CheckContext(mContext);
     if(mId != 0 && mContext->hasExtension(EXT_STEREO_ANGLES))
@@ -1073,7 +1073,7 @@ void ALSource::setStereoAngles(ALfloat leftAngle, ALfloat rightAngle)
     mStereoAngles[1] = rightAngle;
 }
 
-void ALSource::set3DSpatialize(Spatialize spatialize)
+void SourceImpl::set3DSpatialize(Spatialize spatialize)
 {
     CheckContext(mContext);
     if(mId != 0 && mContext->hasExtension(SOFT_source_spatialize))
@@ -1081,7 +1081,7 @@ void ALSource::set3DSpatialize(Spatialize spatialize)
     mSpatialize = spatialize;
 }
 
-void ALSource::setResamplerIndex(ALsizei index)
+void SourceImpl::setResamplerIndex(ALsizei index)
 {
     if(index < 0)
         throw std::runtime_error("Resampler index out of range");
@@ -1091,7 +1091,7 @@ void ALSource::setResamplerIndex(ALsizei index)
     mResampler = index;
 }
 
-void ALSource::setRelative(bool relative)
+void SourceImpl::setRelative(bool relative)
 {
     CheckContext(mContext);
     if(mId != 0)
@@ -1099,7 +1099,7 @@ void ALSource::setRelative(bool relative)
     mRelative = relative;
 }
 
-void ALSource::setGainAuto(bool directhf, bool send, bool sendhf)
+void SourceImpl::setGainAuto(bool directhf, bool send, bool sendhf)
 {
     CheckContext(mContext);
     if(mId != 0 && mContext->hasExtension(EXT_EFX))
@@ -1114,7 +1114,7 @@ void ALSource::setGainAuto(bool directhf, bool send, bool sendhf)
 }
 
 
-void ALSource::setFilterParams(ALuint &filterid, const FilterParams &params)
+void SourceImpl::setFilterParams(ALuint &filterid, const FilterParams &params)
 {
     if(!mContext->hasExtension(EXT_EFX))
         return;
@@ -1168,7 +1168,7 @@ void ALSource::setFilterParams(ALuint &filterid, const FilterParams &params)
 }
 
 
-void ALSource::setDirectFilter(const FilterParams &filter)
+void SourceImpl::setDirectFilter(const FilterParams &filter)
 {
     if(!(filter.mGain >= 0.0f && filter.mGainHF >= 0.0f && filter.mGainLF >= 0.0f))
         throw std::runtime_error("Gain value out of range");
@@ -1179,7 +1179,7 @@ void ALSource::setDirectFilter(const FilterParams &filter)
         alSourcei(mId, AL_DIRECT_FILTER, mDirectFilter);
 }
 
-void ALSource::setSendFilter(ALuint send, const FilterParams &filter)
+void SourceImpl::setSendFilter(ALuint send, const FilterParams &filter)
 {
     if(!(filter.mGain >= 0.0f && filter.mGainHF >= 0.0f && filter.mGainLF >= 0.0f))
         throw std::runtime_error("Gain value out of range");
@@ -1205,9 +1205,9 @@ void ALSource::setSendFilter(ALuint send, const FilterParams &filter)
     }
 }
 
-void ALSource::setAuxiliarySend(AuxiliaryEffectSlot auxslot, ALuint send)
+void SourceImpl::setAuxiliarySend(AuxiliaryEffectSlot auxslot, ALuint send)
 {
-    ALAuxiliaryEffectSlot *slot = auxslot.getHandle();
+    AuxiliaryEffectSlotImpl *slot = auxslot.getHandle();
     if(slot) CheckContext(slot->getContext());
     CheckContext(mContext);
 
@@ -1233,11 +1233,11 @@ void ALSource::setAuxiliarySend(AuxiliaryEffectSlot auxslot, ALuint send)
     }
 }
 
-void ALSource::setAuxiliarySendFilter(AuxiliaryEffectSlot auxslot, ALuint send, const FilterParams &filter)
+void SourceImpl::setAuxiliarySendFilter(AuxiliaryEffectSlot auxslot, ALuint send, const FilterParams &filter)
 {
     if(!(filter.mGain >= 0.0f && filter.mGainHF >= 0.0f && filter.mGainLF >= 0.0f))
         throw std::runtime_error("Gain value out of range");
-    ALAuxiliaryEffectSlot *slot = auxslot.getHandle();
+    AuxiliaryEffectSlotImpl *slot = auxslot.getHandle();
     if(slot) CheckContext(slot->getContext());
     CheckContext(mContext);
 
@@ -1273,7 +1273,7 @@ void ALSource::setAuxiliarySendFilter(AuxiliaryEffectSlot auxslot, ALuint send, 
 }
 
 
-void ALSource::release()
+void SourceImpl::release()
 {
     CheckContext(mContext);
 

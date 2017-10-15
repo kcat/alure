@@ -14,7 +14,7 @@ template<typename T>
 static inline T clamp(const T& val, const T& min, const T& max)
 { return std::min<T>(std::max<T>(val, min), max); }
 
-void ALEffect::setReverbProperties(const EFXEAXREVERBPROPERTIES &props)
+void EffectImpl::setReverbProperties(const EFXEAXREVERBPROPERTIES &props)
 {
     CheckContext(mContext);
 
@@ -81,7 +81,7 @@ void ALEffect::setReverbProperties(const EFXEAXREVERBPROPERTIES &props)
     }
 }
 
-void ALEffect::destroy()
+void EffectImpl::destroy()
 {
     CheckContext(mContext);
 

@@ -323,9 +323,9 @@ template<typename T>
 static inline void LoadALFunc(T **func, const char *name)
 { *func = reinterpret_cast<T*>(alGetProcAddress(name)); }
 
-static void LoadNothing(ALContext*) { }
+static void LoadNothing(ContextImpl*) { }
 
-static void LoadEFX(ALContext *ctx)
+static void LoadEFX(ContextImpl *ctx)
 {
     LoadALFunc(&ctx->alGenEffects,    "alGenEffects");
     LoadALFunc(&ctx->alDeleteEffects, "alDeleteEffects");
@@ -364,12 +364,12 @@ static void LoadEFX(ALContext *ctx)
     LoadALFunc(&ctx->alGetAuxiliaryEffectSlotfv,   "alGetAuxiliaryEffectSlotfv");
 }
 
-static void LoadSourceResampler(ALContext *ctx)
+static void LoadSourceResampler(ContextImpl *ctx)
 {
     LoadALFunc(&ctx->alGetStringiSOFT, "alGetStringiSOFT");
 }
 
-static void LoadSourceLatency(ALContext *ctx)
+static void LoadSourceLatency(ContextImpl *ctx)
 {
     LoadALFunc(&ctx->alGetSourcei64vSOFT, "alGetSourcei64vSOFT");
     LoadALFunc(&ctx->alGetSourcedvSOFT, "alGetSourcedvSOFT");
@@ -378,7 +378,7 @@ static void LoadSourceLatency(ALContext *ctx)
 static const struct {
     enum ALExtension extension;
     const char name[32];
-    void (&loader)(ALContext*);
+    void (&loader)(ContextImpl*);
 } ALExtensionList[] = {
     { EXT_EFX, "ALC_EXT_EFX", LoadEFX },
 
@@ -402,10 +402,10 @@ static const struct {
 };
 
 
-ALContext *ALContext::sCurrentCtx = nullptr;
-thread_local ALContext *ALContext::sThreadCurrentCtx = nullptr;
+ContextImpl *ContextImpl::sCurrentCtx = nullptr;
+thread_local ContextImpl *ContextImpl::sThreadCurrentCtx = nullptr;
 
-void ALContext::MakeCurrent(ALContext *context)
+void ContextImpl::MakeCurrent(ContextImpl *context)
 {
     std::unique_lock<std::mutex> lock1, lock2;
     if(sCurrentCtx)
@@ -418,7 +418,7 @@ void ALContext::MakeCurrent(ALContext *context)
     if(context)
     {
         context->addRef();
-        std::call_once(context->mSetExts, std::mem_fn(&ALContext::setupExts), context);
+        std::call_once(context->mSetExts, std::mem_fn(&ContextImpl::setupExts), context);
     }
     std::swap(sCurrentCtx, context);
     if(context) context->decRef();
@@ -434,23 +434,23 @@ void ALContext::MakeCurrent(ALContext *context)
     }
 }
 
-void ALContext::MakeThreadCurrent(ALContext *context)
+void ContextImpl::MakeThreadCurrent(ContextImpl *context)
 {
-    if(!ALDeviceManager::SetThreadContext)
+    if(!DeviceManagerImpl::SetThreadContext)
         throw std::runtime_error("Thread-local contexts unsupported");
-    if(ALDeviceManager::SetThreadContext(context ? context->getContext() : nullptr) == ALC_FALSE)
+    if(DeviceManagerImpl::SetThreadContext(context ? context->getContext() : nullptr) == ALC_FALSE)
         throw std::runtime_error("Call to alcSetThreadContext failed");
     if(context)
     {
         context->addRef();
-        std::call_once(context->mSetExts, std::mem_fn(&ALContext::setupExts), context);
+        std::call_once(context->mSetExts, std::mem_fn(&ContextImpl::setupExts), context);
     }
     if(sThreadCurrentCtx)
         sThreadCurrentCtx->decRef();
     sThreadCurrentCtx = context;
 }
 
-void ALContext::setupExts()
+void ContextImpl::setupExts()
 {
     ALCdevice *device = mDevice->getDevice();
     std::fill(std::begin(mHasExt), std::end(mHasExt), false);
@@ -464,10 +464,10 @@ void ALContext::setupExts()
 }
 
 
-void ALContext::backgroundProc()
+void ContextImpl::backgroundProc()
 {
-    if(ALDeviceManager::SetThreadContext && mDevice->hasExtension(EXT_thread_local_context))
-        ALDeviceManager::SetThreadContext(getContext());
+    if(DeviceManagerImpl::SetThreadContext && mDevice->hasExtension(EXT_thread_local_context))
+        DeviceManagerImpl::SetThreadContext(getContext());
 
     std::chrono::steady_clock::time_point basetime = std::chrono::steady_clock::now();
     std::chrono::milliseconds waketime(0);
@@ -527,12 +527,12 @@ void ALContext::backgroundProc()
     }
     ctxlock.unlock();
 
-    if(ALDeviceManager::SetThreadContext)
-        ALDeviceManager::SetThreadContext(nullptr);
+    if(DeviceManagerImpl::SetThreadContext)
+        DeviceManagerImpl::SetThreadContext(nullptr);
 }
 
 
-ALContext::ALContext(ALCcontext *context, ALDevice *device)
+ContextImpl::ContextImpl(ALCcontext *context, DeviceImpl *device)
   : mListener(this), mContext(context), mDevice(device), mRefs(0),
     mHasExt{false}, mPendingBuffers(16, sizeof(PendingBuffer)),
     mWakeInterval(std::chrono::milliseconds::zero()), mQuitThread(false),
@@ -550,7 +550,7 @@ ALContext::ALContext(ALCcontext *context, ALDevice *device)
 {
 }
 
-ALContext::~ALContext()
+ContextImpl::~ContextImpl()
 {
     auto ringdata = mPendingBuffers.get_read_vector();
     if(ringdata[0].len > 0)
@@ -567,7 +567,7 @@ ALContext::~ALContext()
 }
 
 
-void ALContext::destroy()
+void ContextImpl::destroy()
 {
     if(mRefs.load() != 0)
         throw std::runtime_error("Context is in use");
@@ -590,20 +590,20 @@ void ALContext::destroy()
 }
 
 
-void ALContext::startBatch()
+void ContextImpl::startBatch()
 {
     alcSuspendContext(mContext);
     mIsBatching = true;
 }
 
-void ALContext::endBatch()
+void ContextImpl::endBatch()
 {
     alcProcessContext(mContext);
     mIsBatching = false;
 }
 
 
-SharedPtr<MessageHandler> ALContext::setMessageHandler(SharedPtr<MessageHandler> handler)
+SharedPtr<MessageHandler> ContextImpl::setMessageHandler(SharedPtr<MessageHandler> handler)
 {
     std::lock_guard<std::mutex> lock(mContextMutex);
     mMessage.swap(handler);
@@ -611,7 +611,7 @@ SharedPtr<MessageHandler> ALContext::setMessageHandler(SharedPtr<MessageHandler>
 }
 
 
-void ALContext::setAsyncWakeInterval(std::chrono::milliseconds msec)
+void ContextImpl::setAsyncWakeInterval(std::chrono::milliseconds msec)
 {
     if(msec.count() < 0 || msec > std::chrono::milliseconds(1000))
         throw std::runtime_error("Async wake interval out of range");
@@ -621,7 +621,7 @@ void ALContext::setAsyncWakeInterval(std::chrono::milliseconds msec)
 }
 
 
-SharedPtr<Decoder> ALContext::createDecoder(const String &name)
+SharedPtr<Decoder> ContextImpl::createDecoder(const String &name)
 {
     CheckContext(this);
     auto file = FileIOFactory::get().openFile(name);
@@ -642,14 +642,14 @@ SharedPtr<Decoder> ALContext::createDecoder(const String &name)
 }
 
 
-bool ALContext::isSupported(ChannelConfig channels, SampleType type) const
+bool ContextImpl::isSupported(ChannelConfig channels, SampleType type) const
 {
     CheckContext(this);
     return GetFormat(channels, type) != AL_NONE;
 }
 
 
-ArrayView<String> ALContext::getAvailableResamplers()
+ArrayView<String> ContextImpl::getAvailableResamplers()
 {
     CheckContext(this);
     if(mResamplers.empty() && hasExtension(SOFT_source_resampler))
@@ -664,7 +664,7 @@ ArrayView<String> ALContext::getAvailableResamplers()
     return mResamplers;
 }
 
-ALsizei ALContext::getDefaultResamplerIndex() const
+ALsizei ContextImpl::getDefaultResamplerIndex() const
 {
     CheckContext(this);
     if(!hasExtension(SOFT_source_resampler))
@@ -673,7 +673,7 @@ ALsizei ALContext::getDefaultResamplerIndex() const
 }
 
 
-BufferOrExceptT ALContext::doCreateBuffer(const String &name, Vector<UniquePtr<ALBuffer>>::iterator iter, SharedPtr<Decoder> decoder)
+BufferOrExceptT ContextImpl::doCreateBuffer(const String &name, Vector<UniquePtr<BufferImpl>>::iterator iter, SharedPtr<Decoder> decoder)
 {
     BufferOrExceptT retval;
     ALuint srate = decoder->getFrequency();
@@ -724,11 +724,11 @@ BufferOrExceptT ALContext::doCreateBuffer(const String &name, Vector<UniquePtr<A
     }
 
     return (retval = mBuffers.insert(iter,
-        MakeUnique<ALBuffer>(this, bid, srate, chans, type, true, name)
+        MakeUnique<BufferImpl>(this, bid, srate, chans, type, true, name)
     )->get());
 }
 
-BufferOrExceptT ALContext::doCreateBufferAsync(const String &name, Vector<UniquePtr<ALBuffer>>::iterator iter, SharedPtr<Decoder> decoder)
+BufferOrExceptT ContextImpl::doCreateBufferAsync(const String &name, Vector<UniquePtr<BufferImpl>>::iterator iter, SharedPtr<Decoder> decoder)
 {
     BufferOrExceptT retval;
     ALuint srate = decoder->getFrequency();
@@ -751,10 +751,10 @@ BufferOrExceptT ALContext::doCreateBufferAsync(const String &name, Vector<Unique
     if(alGetError() != AL_NO_ERROR)
         return (retval = std::runtime_error("Failed to create buffer"));
 
-    auto buffer = MakeUnique<ALBuffer>(this, bid, srate, chans, type, false, name);
+    auto buffer = MakeUnique<BufferImpl>(this, bid, srate, chans, type, false, name);
 
     if(mThread.get_id() == std::thread::id())
-        mThread = std::thread(std::mem_fn(&ALContext::backgroundProc), this);
+        mThread = std::thread(std::mem_fn(&ContextImpl::backgroundProc), this);
 
     while(mPendingBuffers.write_space() == 0)
     {
@@ -769,20 +769,20 @@ BufferOrExceptT ALContext::doCreateBufferAsync(const String &name, Vector<Unique
     return (retval = mBuffers.insert(iter, std::move(buffer))->get());
 }
 
-Buffer ALContext::getBuffer(const String &name)
+Buffer ContextImpl::getBuffer(const String &name)
 {
     CheckContext(this);
 
     auto hasher = std::hash<String>();
     auto iter = std::lower_bound(mBuffers.begin(), mBuffers.end(), hasher(name),
-        [hasher](const UniquePtr<ALBuffer> &lhs, size_t rhs) -> bool
+        [hasher](const UniquePtr<BufferImpl> &lhs, size_t rhs) -> bool
         { return hasher(lhs->getName()) < rhs; }
     );
     if(iter != mBuffers.end() && (*iter)->getName() == name)
     {
         // Ensure the buffer is loaded before returning. getBuffer guarantees
         // the returned buffer is loaded.
-        ALBuffer *buffer = iter->get();
+        BufferImpl *buffer = iter->get();
         while(buffer->getLoadStatus() == BufferLoadStatus::Pending)
             std::this_thread::yield();
         return Buffer(buffer);
@@ -795,13 +795,13 @@ Buffer ALContext::getBuffer(const String &name)
     return *buffer;
 }
 
-Buffer ALContext::getBufferAsync(const String &name)
+Buffer ContextImpl::getBufferAsync(const String &name)
 {
     CheckContext(this);
 
     auto hasher = std::hash<String>();
     auto iter = std::lower_bound(mBuffers.begin(), mBuffers.end(), hasher(name),
-        [hasher](const UniquePtr<ALBuffer> &lhs, size_t rhs) -> bool
+        [hasher](const UniquePtr<BufferImpl> &lhs, size_t rhs) -> bool
         { return hasher(lhs->getName()) < rhs; }
     );
     if(iter != mBuffers.end() && (*iter)->getName() == name)
@@ -816,7 +816,7 @@ Buffer ALContext::getBufferAsync(const String &name)
     return *buffer;
 }
 
-void ALContext::precacheBuffersAsync(ArrayView<String> names)
+void ContextImpl::precacheBuffersAsync(ArrayView<String> names)
 {
     CheckContext(this);
 
@@ -824,7 +824,7 @@ void ALContext::precacheBuffersAsync(ArrayView<String> names)
     for(const String &name : names)
     {
         auto iter = std::lower_bound(mBuffers.begin(), mBuffers.end(), hasher(name),
-            [hasher](const UniquePtr<ALBuffer> &lhs, size_t rhs) -> bool
+            [hasher](const UniquePtr<BufferImpl> &lhs, size_t rhs) -> bool
             { return hasher(lhs->getName()) < rhs; }
         );
         if(iter != mBuffers.end() && (*iter)->getName() == name)
@@ -836,13 +836,13 @@ void ALContext::precacheBuffersAsync(ArrayView<String> names)
     mWakeThread.notify_all();
 }
 
-Buffer ALContext::createBufferFrom(const String &name, SharedPtr<Decoder> decoder)
+Buffer ContextImpl::createBufferFrom(const String &name, SharedPtr<Decoder> decoder)
 {
     CheckContext(this);
 
     auto hasher = std::hash<String>();
     auto iter = std::lower_bound(mBuffers.begin(), mBuffers.end(), hasher(name),
-        [hasher](const UniquePtr<ALBuffer> &lhs, size_t rhs) -> bool
+        [hasher](const UniquePtr<BufferImpl> &lhs, size_t rhs) -> bool
         { return hasher(lhs->getName()) < rhs; }
     );
     if(iter != mBuffers.end() && (*iter)->getName() == name)
@@ -855,13 +855,13 @@ Buffer ALContext::createBufferFrom(const String &name, SharedPtr<Decoder> decode
     return *buffer;
 }
 
-Buffer ALContext::createBufferAsyncFrom(const String &name, SharedPtr<Decoder> decoder)
+Buffer ContextImpl::createBufferAsyncFrom(const String &name, SharedPtr<Decoder> decoder)
 {
     CheckContext(this);
 
     auto hasher = std::hash<String>();
     auto iter = std::lower_bound(mBuffers.begin(), mBuffers.end(), hasher(name),
-        [hasher](const UniquePtr<ALBuffer> &lhs, size_t rhs) -> bool
+        [hasher](const UniquePtr<BufferImpl> &lhs, size_t rhs) -> bool
         { return hasher(lhs->getName()) < rhs; }
     );
     if(iter != mBuffers.end() && (*iter)->getName() == name)
@@ -877,12 +877,12 @@ Buffer ALContext::createBufferAsyncFrom(const String &name, SharedPtr<Decoder> d
 }
 
 
-void ALContext::removeBuffer(const String &name)
+void ContextImpl::removeBuffer(const String &name)
 {
     CheckContext(this);
     auto hasher = std::hash<String>();
     auto iter = std::lower_bound(mBuffers.begin(), mBuffers.end(), hasher(name),
-        [hasher](const UniquePtr<ALBuffer> &lhs, size_t rhs) -> bool
+        [hasher](const UniquePtr<BufferImpl> &lhs, size_t rhs) -> bool
         { return hasher(lhs->getName()) < rhs; }
     );
     if(iter != mBuffers.end() && (*iter)->getName() == name)
@@ -893,7 +893,7 @@ void ALContext::removeBuffer(const String &name)
 }
 
 
-ALuint ALContext::getSourceId(ALuint maxprio)
+ALuint ContextImpl::getSourceId(ALuint maxprio)
 {
     ALuint id = 0;
     if(mSourceIds.empty())
@@ -903,8 +903,8 @@ ALuint ALContext::getSourceId(ALuint maxprio)
         if(alGetError() == AL_NO_ERROR)
             return id;
 
-        ALSource *lowest = nullptr;
-        for(ALSource *src : mUsedSources)
+        SourceImpl *lowest = nullptr;
+        for(SourceImpl *src : mUsedSources)
         {
             if(src->getId() != 0 && (!lowest || src->getPriority() < lowest->getPriority()))
                 lowest = src;
@@ -925,11 +925,11 @@ ALuint ALContext::getSourceId(ALuint maxprio)
 }
 
 
-Source ALContext::createSource()
+Source ContextImpl::createSource()
 {
     CheckContext(this);
 
-    ALSource *source;
+    SourceImpl *source;
     if(!mFreeSources.empty())
     {
         source = mFreeSources.front();
@@ -946,7 +946,7 @@ Source ALContext::createSource()
     return Source(source);
 }
 
-void ALContext::freeSource(ALSource *source)
+void ContextImpl::freeSource(SourceImpl *source)
 {
     auto iter = std::lower_bound(mUsedSources.begin(), mUsedSources.end(), source);
     if(iter != mUsedSources.end() && *iter == source) mUsedSources.erase(iter);
@@ -954,17 +954,17 @@ void ALContext::freeSource(ALSource *source)
 }
 
 
-void ALContext::addStream(ALSource *source)
+void ContextImpl::addStream(SourceImpl *source)
 {
     std::lock_guard<std::mutex> lock(mSourceStreamMutex);
     if(mThread.get_id() == std::thread::id())
-        mThread = std::thread(std::mem_fn(&ALContext::backgroundProc), this);
+        mThread = std::thread(std::mem_fn(&ContextImpl::backgroundProc), this);
     auto iter = std::lower_bound(mStreamingSources.begin(), mStreamingSources.end(), source);
     if(iter == mStreamingSources.end() || *iter != source)
         mStreamingSources.insert(iter, source);
 }
 
-void ALContext::removeStream(ALSource *source)
+void ContextImpl::removeStream(SourceImpl *source)
 {
     std::lock_guard<std::mutex> lock(mSourceStreamMutex);
     auto iter = std::lower_bound(mStreamingSources.begin(), mStreamingSources.end(), source);
@@ -972,7 +972,7 @@ void ALContext::removeStream(ALSource *source)
         mStreamingSources.erase(iter);
 }
 
-void ALContext::removeStreamNoLock(ALSource *source)
+void ContextImpl::removeStreamNoLock(SourceImpl *source)
 {
     auto iter = std::lower_bound(mStreamingSources.begin(), mStreamingSources.end(), source);
     if(iter != mStreamingSources.end() && *iter == source)
@@ -980,7 +980,7 @@ void ALContext::removeStreamNoLock(ALSource *source)
 }
 
 
-AuxiliaryEffectSlot ALContext::createAuxiliaryEffectSlot()
+AuxiliaryEffectSlot ContextImpl::createAuxiliaryEffectSlot()
 {
     if(!hasExtension(EXT_EFX) || !alGenAuxiliaryEffectSlots)
         throw std::runtime_error("AuxiliaryEffectSlots not supported");
@@ -992,7 +992,7 @@ AuxiliaryEffectSlot ALContext::createAuxiliaryEffectSlot()
     if(alGetError() != AL_NO_ERROR)
         throw std::runtime_error("Failed to create AuxiliaryEffectSlot");
     try {
-        return AuxiliaryEffectSlot(new ALAuxiliaryEffectSlot(this, id));
+        return AuxiliaryEffectSlot(new AuxiliaryEffectSlotImpl(this, id));
     }
     catch(...) {
         alDeleteAuxiliaryEffectSlots(1, &id);
@@ -1001,7 +1001,7 @@ AuxiliaryEffectSlot ALContext::createAuxiliaryEffectSlot()
 }
 
 
-Effect ALContext::createEffect()
+Effect ContextImpl::createEffect()
 {
     if(!hasExtension(EXT_EFX))
         throw std::runtime_error("Effects not supported");
@@ -1013,7 +1013,7 @@ Effect ALContext::createEffect()
     if(alGetError() != AL_NO_ERROR)
         throw std::runtime_error("Failed to create Effect");
     try {
-        return Effect(new ALEffect(this, id));
+        return Effect(new EffectImpl(this, id));
     }
     catch(...) {
         alDeleteEffects(1, &id);
@@ -1022,22 +1022,22 @@ Effect ALContext::createEffect()
 }
 
 
-SourceGroup ALContext::createSourceGroup(String name)
+SourceGroup ContextImpl::createSourceGroup(String name)
 {
     auto iter = std::lower_bound(mSourceGroups.begin(), mSourceGroups.end(), name,
-        [](const UniquePtr<ALSourceGroup> &lhs, const String &rhs) -> bool
+        [](const UniquePtr<SourceGroupImpl> &lhs, const String &rhs) -> bool
         { return lhs->getName() < rhs; }
     );
     if(iter != mSourceGroups.end() && (*iter)->getName() == name)
         throw std::runtime_error("Duplicate source group name");
-    iter = mSourceGroups.insert(iter, MakeUnique<ALSourceGroup>(this, std::move(name)));
+    iter = mSourceGroups.insert(iter, MakeUnique<SourceGroupImpl>(this, std::move(name)));
     return SourceGroup(iter->get());
 }
 
-SourceGroup ALContext::getSourceGroup(const String &name)
+SourceGroup ContextImpl::getSourceGroup(const String &name)
 {
     auto iter = std::lower_bound(mSourceGroups.begin(), mSourceGroups.end(), name,
-        [](const UniquePtr<ALSourceGroup> &lhs, const String &rhs) -> bool
+        [](const UniquePtr<SourceGroupImpl> &lhs, const String &rhs) -> bool
         { return lhs->getName() < rhs; }
     );
     if(iter == mSourceGroups.end() || (*iter)->getName() != name)
@@ -1045,10 +1045,10 @@ SourceGroup ALContext::getSourceGroup(const String &name)
     return SourceGroup(iter->get());
 }
 
-void ALContext::freeSourceGroup(ALSourceGroup *group)
+void ContextImpl::freeSourceGroup(SourceGroupImpl *group)
 {
     auto iter = std::lower_bound(mSourceGroups.begin(), mSourceGroups.end(), group->getName(),
-        [](const UniquePtr<ALSourceGroup> &lhs, const String &rhs) -> bool
+        [](const UniquePtr<SourceGroupImpl> &lhs, const String &rhs) -> bool
         { return lhs->getName() < rhs; }
     );
     if(iter != mSourceGroups.end() && iter->get() == group)
@@ -1056,7 +1056,7 @@ void ALContext::freeSourceGroup(ALSourceGroup *group)
 }
 
 
-void ALContext::setDopplerFactor(ALfloat factor)
+void ContextImpl::setDopplerFactor(ALfloat factor)
 {
     if(!(factor >= 0.0f))
         throw std::runtime_error("Doppler factor out of range");
@@ -1065,7 +1065,7 @@ void ALContext::setDopplerFactor(ALfloat factor)
 }
 
 
-void ALContext::setSpeedOfSound(ALfloat speed)
+void ContextImpl::setSpeedOfSound(ALfloat speed)
 {
     if(!(speed > 0.0f))
         throw std::runtime_error("Speed of sound out of range");
@@ -1074,17 +1074,17 @@ void ALContext::setSpeedOfSound(ALfloat speed)
 }
 
 
-void ALContext::setDistanceModel(DistanceModel model)
+void ContextImpl::setDistanceModel(DistanceModel model)
 {
     CheckContext(this);
     alDistanceModel((ALenum)model);
 }
 
 
-void ALContext::update()
+void ContextImpl::update()
 {
     CheckContext(this);
-    std::for_each(mUsedSources.begin(), mUsedSources.end(), std::mem_fn(&ALSource::updateNoCtxCheck));
+    std::for_each(mUsedSources.begin(), mUsedSources.end(), std::mem_fn(&SourceImpl::updateNoCtxCheck));
     if(!mWakeInterval.load(std::memory_order_relaxed).count())
     {
         // For performance reasons, don't wait for the thread's mutex. This
@@ -1138,19 +1138,21 @@ DECL_THUNK0(void, Context, update,)
 
 
 void Context::MakeCurrent(Context context)
-{ ALContext::MakeCurrent(context.pImpl); }
+{ 
+    ContextImpl::MakeCurrent(context.pImpl); }
 
 Context Context::GetCurrent()
-{ return Context(ALContext::GetCurrent()); }
+{ return Context(ContextImpl::GetCurrent()); }
 
 void Context::MakeThreadCurrent(Context context)
-{ ALContext::MakeThreadCurrent(context.pImpl); }
+{ 
+    ContextImpl::MakeThreadCurrent(context.pImpl); }
 
 Context Context::GetThreadCurrent()
-{ return Context(ALContext::GetThreadCurrent()); }
+{ return Context(ContextImpl::GetThreadCurrent()); }
 
 
-void ALListener::setGain(ALfloat gain)
+void ListenerImpl::setGain(ALfloat gain)
 {
     if(!(gain >= 0.0f))
         throw std::runtime_error("Gain out of range");
@@ -1159,7 +1161,7 @@ void ALListener::setGain(ALfloat gain)
 }
 
 
-void ALListener::set3DParameters(const Vector3 &position, const Vector3 &velocity, std::pair<Vector3,Vector3> orientation)
+void ListenerImpl::set3DParameters(const Vector3 &position, const Vector3 &velocity, std::pair<Vector3,Vector3> orientation)
 {
     static_assert(sizeof(orientation) == sizeof(ALfloat[6]), "Invalid Vector3 pair size");
     CheckContext(mContext);
@@ -1169,51 +1171,51 @@ void ALListener::set3DParameters(const Vector3 &position, const Vector3 &velocit
     alListenerfv(AL_ORIENTATION, orientation.first.getPtr());
 }
 
-void ALListener::setPosition(ALfloat x, ALfloat y, ALfloat z)
+void ListenerImpl::setPosition(ALfloat x, ALfloat y, ALfloat z)
 {
     CheckContext(mContext);
     alListener3f(AL_POSITION, x, y, z);
 }
 
-void ALListener::setPosition(const ALfloat *pos)
+void ListenerImpl::setPosition(const ALfloat *pos)
 {
     CheckContext(mContext);
     alListenerfv(AL_POSITION, pos);
 }
 
-void ALListener::setVelocity(ALfloat x, ALfloat y, ALfloat z)
+void ListenerImpl::setVelocity(ALfloat x, ALfloat y, ALfloat z)
 {
     CheckContext(mContext);
     alListener3f(AL_VELOCITY, x, y, z);
 }
 
-void ALListener::setVelocity(const ALfloat *vel)
+void ListenerImpl::setVelocity(const ALfloat *vel)
 {
     CheckContext(mContext);
     alListenerfv(AL_VELOCITY, vel);
 }
 
-void ALListener::setOrientation(ALfloat x1, ALfloat y1, ALfloat z1, ALfloat x2, ALfloat y2, ALfloat z2)
+void ListenerImpl::setOrientation(ALfloat x1, ALfloat y1, ALfloat z1, ALfloat x2, ALfloat y2, ALfloat z2)
 {
     CheckContext(mContext);
     ALfloat ori[6] = { x1, y1, z1, x2, y2, z2 };
     alListenerfv(AL_ORIENTATION, ori);
 }
 
-void ALListener::setOrientation(const ALfloat *at, const ALfloat *up)
+void ListenerImpl::setOrientation(const ALfloat *at, const ALfloat *up)
 {
     CheckContext(mContext);
     ALfloat ori[6] = { at[0], at[1], at[2], up[0], up[1], up[2] };
     alListenerfv(AL_ORIENTATION, ori);
 }
 
-void ALListener::setOrientation(const ALfloat *ori)
+void ListenerImpl::setOrientation(const ALfloat *ori)
 {
     CheckContext(mContext);
     alListenerfv(AL_ORIENTATION, ori);
 }
 
-void ALListener::setMetersPerUnit(ALfloat m_u)
+void ListenerImpl::setMetersPerUnit(ALfloat m_u)
 {
     if(!(m_u > 0.0f))
         throw std::runtime_error("Invalid meters per unit");

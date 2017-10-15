@@ -24,24 +24,24 @@ static inline void LoadALCFunc(ALCdevice *device, T **func, const char *name)
 { *func = reinterpret_cast<T*>(alcGetProcAddress(device, name)); }
 
 
-static void LoadPauseDevice(ALDevice *device)
+static void LoadPauseDevice(DeviceImpl *device)
 {
     LoadALCFunc(device->getDevice(), &device->alcDevicePauseSOFT, "alcDevicePauseSOFT");
     LoadALCFunc(device->getDevice(), &device->alcDeviceResumeSOFT, "alcDeviceResumeSOFT");
 }
 
-static void LoadHrtf(ALDevice *device)
+static void LoadHrtf(DeviceImpl *device)
 {
     LoadALCFunc(device->getDevice(), &device->alcGetStringiSOFT, "alcGetStringiSOFT");
     LoadALCFunc(device->getDevice(), &device->alcResetDeviceSOFT, "alcResetDeviceSOFT");
 }
 
-static void LoadNothing(ALDevice*) { }
+static void LoadNothing(DeviceImpl*) { }
 
 static const struct {
     enum ALCExtension extension;
     const char name[32];
-    void (&loader)(ALDevice*);
+    void (&loader)(DeviceImpl*);
 } ALCExtensionList[] = {
     { EXT_thread_local_context, "ALC_EXT_thread_local_context", LoadNothing },
     { SOFT_device_pause, "ALC_SOFT_pause_device", LoadPauseDevice },
@@ -49,7 +49,7 @@ static const struct {
 };
 
 
-void ALDevice::setupExts()
+void DeviceImpl::setupExts()
 {
     std::fill(std::begin(mHasExt), std::end(mHasExt), false);
     for(const auto &entry : ALCExtensionList)
@@ -60,28 +60,28 @@ void ALDevice::setupExts()
 }
 
 
-ALDevice::ALDevice(ALCdevice* device)
+DeviceImpl::DeviceImpl(ALCdevice* device)
   : mDevice(device), alcDevicePauseSOFT(nullptr), alcDeviceResumeSOFT(nullptr)
 {
     setupExts();
 }
 
-ALDevice::~ALDevice()
+DeviceImpl::~DeviceImpl()
 {
 }
 
 
-void ALDevice::removeContext(ALContext *ctx)
+void DeviceImpl::removeContext(ContextImpl *ctx)
 {
     auto iter = std::find_if(mContexts.begin(), mContexts.end(),
-        [ctx](const UniquePtr<ALContext> &entry) -> bool
+        [ctx](const UniquePtr<ContextImpl> &entry) -> bool
         { return entry.get() == ctx; }
     );
     if(iter != mContexts.end()) mContexts.erase(iter);
 }
 
 
-String ALDevice::getName(PlaybackName type) const
+String DeviceImpl::getName(PlaybackName type) const
 {
     if(type == PlaybackName::Full && !alcIsExtensionPresent(mDevice, "ALC_ENUMERATE_ALL_EXT"))
         type = PlaybackName::Basic;
@@ -92,12 +92,12 @@ String ALDevice::getName(PlaybackName type) const
     return name ? String(name) : String();
 }
 
-bool ALDevice::queryExtension(const String &name) const
+bool DeviceImpl::queryExtension(const String &name) const
 {
     return alcIsExtensionPresent(mDevice, name.c_str());
 }
 
-Version ALDevice::getALCVersion() const
+Version DeviceImpl::getALCVersion() const
 {
     ALCint major=-1, minor=-1;
     alcGetIntegerv(mDevice, ALC_MAJOR_VERSION, 1, &major);
@@ -107,7 +107,7 @@ Version ALDevice::getALCVersion() const
     return Version{ (ALCuint)major, (ALCuint)minor };
 }
 
-Version ALDevice::getEFXVersion() const
+Version DeviceImpl::getEFXVersion() const
 {
     if(!alcIsExtensionPresent(mDevice, "ALC_EXT_EFX"))
         return Version{ 0u, 0u };
@@ -120,7 +120,7 @@ Version ALDevice::getEFXVersion() const
     return Version{ (ALCuint)major, (ALCuint)minor };
 }
 
-ALCuint ALDevice::getFrequency() const
+ALCuint DeviceImpl::getFrequency() const
 {
     ALCint freq = -1;
     alcGetIntegerv(mDevice, ALC_FREQUENCY, 1, &freq);
@@ -129,7 +129,7 @@ ALCuint ALDevice::getFrequency() const
     return freq;
 }
 
-ALCuint ALDevice::getMaxAuxiliarySends() const
+ALCuint DeviceImpl::getMaxAuxiliarySends() const
 {
     if(!alcIsExtensionPresent(mDevice, "ALC_EXT_EFX"))
         return 0;
@@ -142,7 +142,7 @@ ALCuint ALDevice::getMaxAuxiliarySends() const
 }
 
 
-Vector<String> ALDevice::enumerateHRTFNames() const
+Vector<String> DeviceImpl::enumerateHRTFNames() const
 {
     if(!hasExtension(SOFT_HRTF))
         throw std::runtime_error("ALC_SOFT_HRTF not supported");
@@ -159,7 +159,7 @@ Vector<String> ALDevice::enumerateHRTFNames() const
     return hrtfs;
 }
 
-bool ALDevice::isHRTFEnabled() const
+bool DeviceImpl::isHRTFEnabled() const
 {
     if(!hasExtension(SOFT_HRTF))
         throw std::runtime_error("ALC_SOFT_HRTF not supported");
@@ -171,14 +171,14 @@ bool ALDevice::isHRTFEnabled() const
     return hrtf_state != ALC_FALSE;
 }
 
-String ALDevice::getCurrentHRTF() const
+String DeviceImpl::getCurrentHRTF() const
 {
     if(!hasExtension(SOFT_HRTF))
         throw std::runtime_error("ALC_SOFT_HRTF not supported");
     return String(alcGetString(mDevice, ALC_HRTF_SPECIFIER_SOFT));
 }
 
-void ALDevice::reset(ArrayView<AttributePair> attributes)
+void DeviceImpl::reset(ArrayView<AttributePair> attributes)
 {
     if(!hasExtension(SOFT_HRTF))
         throw std::runtime_error("ALC_SOFT_HRTF not supported");
@@ -211,7 +211,7 @@ void ALDevice::reset(ArrayView<AttributePair> attributes)
 }
 
 
-Context ALDevice::createContext(ArrayView<AttributePair> attributes)
+Context DeviceImpl::createContext(ArrayView<AttributePair> attributes)
 {
     ALCcontext *ctx = [this, &attributes]() -> ALCcontext*
     {
@@ -239,26 +239,26 @@ Context ALDevice::createContext(ArrayView<AttributePair> attributes)
     }();
     if(!ctx) throw std::runtime_error("Failed to create context");
 
-    mContexts.emplace_back(MakeUnique<ALContext>(ctx, this));
+    mContexts.emplace_back(MakeUnique<ContextImpl>(ctx, this));
     return Context(mContexts.back().get());
 }
 
 
-void ALDevice::pauseDSP()
+void DeviceImpl::pauseDSP()
 {
     if(!hasExtension(SOFT_device_pause))
        throw std::runtime_error("ALC_SOFT_pause_device not supported");
     alcDevicePauseSOFT(mDevice);
 }
 
-void ALDevice::resumeDSP()
+void DeviceImpl::resumeDSP()
 {
     if(hasExtension(SOFT_device_pause))
         alcDeviceResumeSOFT(mDevice);
 }
 
 
-void ALDevice::close()
+void DeviceImpl::close()
 {
     if(!mContexts.empty())
         throw std::runtime_error("Trying to close device with contexts");
@@ -267,7 +267,7 @@ void ALDevice::close()
         throw std::runtime_error("Failed to close device");
     mDevice = 0;
 
-    ALDeviceManager::get().removeDevice(this);
+    DeviceManagerImpl::get().removeDevice(this);
 }
 
 
