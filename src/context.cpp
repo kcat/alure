@@ -216,29 +216,33 @@ static std::map<String,UniquePtr<DecoderFactory>> sDecoders;
 
 
 template<typename T>
-static SharedPtr<Decoder> GetDecoder(const String &name, UniquePtr<std::istream> &file, T start, T end)
+static DecoderOrExceptT GetDecoder(const String &name, UniquePtr<std::istream> &file, T start, T end)
 {
+    DecoderOrExceptT ret;
     while(start != end)
     {
         DecoderFactory *factory = start->second.get();
         auto decoder = factory->createDecoder(file);
-        if(decoder) return decoder;
+        if(decoder) return (ret = std::move(decoder));
 
         if(!file || !(file->clear(),file->seekg(0)))
-            throw std::runtime_error("Failed to rewind "+name+" for the next decoder factory");
+            return (ret = std::runtime_error("Failed to rewind "+name+" for the next decoder factory"));
 
         ++start;
     }
 
-    return nullptr;
+    return (ret = nullptr);
 }
 
-static SharedPtr<Decoder> GetDecoder(const String &name, UniquePtr<std::istream> file)
+static DecoderOrExceptT GetDecoder(const String &name, UniquePtr<std::istream> file)
 {
     auto decoder = GetDecoder(name, file, sDecoders.begin(), sDecoders.end());
-    if(!decoder) decoder = GetDecoder(name, file, std::begin(sDefaultDecoders), std::end(sDefaultDecoders));
-    if(!decoder) throw std::runtime_error("No decoder for "+name);
-    return decoder;
+    if(std::holds_alternative<std::runtime_error>(decoder)) return decoder;
+    if(std::get<SharedPtr<Decoder>>(decoder)) return decoder;
+    decoder = GetDecoder(name, file, std::begin(sDefaultDecoders), std::end(sDefaultDecoders));
+    if(std::holds_alternative<std::runtime_error>(decoder)) return decoder;
+    if(std::get<SharedPtr<Decoder>>(decoder)) return decoder;
+    return (decoder = std::runtime_error("No decoder for "+name));
 }
 
 void RegisterDecoder(const String &name, UniquePtr<DecoderFactory> factory)
@@ -619,24 +623,35 @@ void ContextImpl::setAsyncWakeInterval(std::chrono::milliseconds msec)
 }
 
 
-SharedPtr<Decoder> ContextImpl::createDecoder(const String &name)
+DecoderOrExceptT ContextImpl::findDecoder(const String &name)
 {
+    DecoderOrExceptT ret;
+
     CheckContext(this);
     auto file = FileIOFactory::get().openFile(name);
-    if(file) return GetDecoder(name, std::move(file));
+    if(file) return (ret = GetDecoder(name, std::move(file)));
 
     // Resource not found. Try to find a substitute.
-    if(!mMessage.get()) throw std::runtime_error("Failed to open "+name);
+    if(!mMessage.get()) return (ret = std::runtime_error("Failed to open "+name));
     String oldname = name;
     do {
         String newname(mMessage->resourceNotFound(oldname));
         if(newname.empty())
-            throw std::runtime_error("Failed to open "+oldname);
+            return (ret = std::runtime_error("Failed to open "+oldname));
         file = FileIOFactory::get().openFile(newname);
         oldname = std::move(newname);
     } while(!file);
 
-    return GetDecoder(oldname, std::move(file));
+    return (ret = GetDecoder(oldname, std::move(file)));
+}
+
+SharedPtr<Decoder> ContextImpl::createDecoder(const String &name)
+{
+    CheckContext(this);
+    DecoderOrExceptT dec = findDecoder(name);
+    if(SharedPtr<Decoder> *decoder = std::get_if<SharedPtr<Decoder>>(&dec))
+        return *decoder;
+    throw std::get<std::runtime_error>(dec);
 }
 
 
@@ -828,7 +843,9 @@ void ContextImpl::precacheBuffersAsync(ArrayView<String> names)
         if(iter != mBuffers.end() && (*iter)->getName() == name)
             continue;
 
-        doCreateBufferAsync(name, iter, createDecoder(name));
+        DecoderOrExceptT dec = findDecoder(name);
+        if(SharedPtr<Decoder> *decoder = std::get_if<SharedPtr<Decoder>>(&dec))
+            doCreateBufferAsync(name, iter, *decoder);
     }
     mWakeMutex.lock(); mWakeMutex.unlock();
     mWakeThread.notify_all();

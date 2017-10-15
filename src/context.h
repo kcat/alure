@@ -32,6 +32,7 @@ namespace std {
 using mpark::variant;
 using mpark::get;
 using mpark::get_if;
+using mpark::holds_alternative;
 } // namespace std
 #endif
 
@@ -109,6 +110,7 @@ public:
 };
 
 
+using DecoderOrExceptT = std::variant<SharedPtr<Decoder>,std::runtime_error>;
 using BufferOrExceptT = std::variant<Buffer,std::runtime_error>;
 
 class ContextImpl {
@@ -170,6 +172,7 @@ private:
     std::once_flag mSetExts;
     void setupExts();
 
+    DecoderOrExceptT findDecoder(const String &name);
     BufferOrExceptT doCreateBuffer(const String &name, Vector<UniquePtr<BufferImpl>>::iterator iter, SharedPtr<Decoder> decoder);
     BufferOrExceptT doCreateBufferAsync(const String &name, Vector<UniquePtr<BufferImpl>>::iterator iter, SharedPtr<Decoder> decoder);
 
