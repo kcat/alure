@@ -1138,15 +1138,13 @@ DECL_THUNK0(void, Context, update,)
 
 
 void Context::MakeCurrent(Context context)
-{ 
-    ContextImpl::MakeCurrent(context.pImpl); }
+{ ContextImpl::MakeCurrent(context.pImpl); }
 
 Context Context::GetCurrent()
 { return Context(ContextImpl::GetCurrent()); }
 
 void Context::MakeThreadCurrent(Context context)
-{ 
-    ContextImpl::MakeThreadCurrent(context.pImpl); }
+{ ContextImpl::MakeThreadCurrent(context.pImpl); }
 
 Context Context::GetThreadCurrent()
 { return Context(ContextImpl::GetThreadCurrent()); }
