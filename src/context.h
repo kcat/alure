@@ -128,22 +128,23 @@ private:
     std::stack<ALuint> mSourceIds;
 
     DeviceImpl *const mDevice;
+    Vector<UniquePtr<BufferImpl>> mBuffers;
+    Vector<UniquePtr<SourceGroupImpl>> mSourceGroups;
     std::deque<SourceImpl> mAllSources;
     std::queue<SourceImpl*> mFreeSources;
     Vector<SourceBufferUpdateEntry> mPlaySources;
     Vector<SourceStreamUpdateEntry> mStreamSources;
 
-    Vector<UniquePtr<BufferImpl>> mBuffers;
+    Vector<SourceImpl*> mStreamingSources;
+    std::mutex mSourceStreamMutex;
 
-    Vector<UniquePtr<SourceGroupImpl>> mSourceGroups;
-
-    RefCount mRefs;
-
-    Vector<String> mResamplers;
+    std::atomic<std::chrono::milliseconds> mWakeInterval;
+    std::mutex mWakeMutex;
+    std::condition_variable mWakeThread;
 
     SharedPtr<MessageHandler> mMessage;
 
-    bool mHasExt[AL_EXTENSION_MAX];
+    std::mutex mContextMutex;
 
     struct PendingBuffer {
         String mName;
@@ -156,18 +157,15 @@ private:
     };
     RingBuffer mPendingBuffers;
 
-    Vector<SourceImpl*> mStreamingSources;
-    std::mutex mSourceStreamMutex;
-
-    std::atomic<std::chrono::milliseconds> mWakeInterval;
-    std::mutex mWakeMutex;
-    std::condition_variable mWakeThread;
-
-    std::mutex mContextMutex;
-
     std::atomic<bool> mQuitThread;
     std::thread mThread;
     void backgroundProc();
+
+    RefCount mRefs;
+
+    Vector<String> mResamplers;
+
+    bool mHasExt[AL_EXTENSION_MAX];
 
     std::once_flag mSetExts;
     void setupExts();
@@ -231,8 +229,8 @@ public:
     ALuint getSourceId(ALuint maxprio);
     void insertSourceId(ALuint id) { mSourceIds.push(id); }
 
-    void addPlayingSource(SourceBufferUpdateEntry&& entry);
-    void addPlayingSource(SourceStreamUpdateEntry&& entry);
+    void addPlayingSource(SourceImpl *source, ALuint id);
+    void addPlayingSource(SourceImpl *source);
     void removePlayingSource(SourceImpl *source);
 
     void addStream(SourceImpl *source);

@@ -87,7 +87,7 @@ public:
     ALuint getId() const { return mId; }
 
     bool playUpdate(ALuint id);
-    bool playUpdate(std::atomic<bool> *isAsync);
+    bool playUpdate();
     bool updateAsync();
 
     void setGroup(SourceGroupImpl *group);
@@ -207,7 +207,6 @@ struct SourceBufferUpdateEntry {
 };
 struct SourceStreamUpdateEntry {
     SourceImpl *mSource;
-    std::atomic<bool> *mIsAsync;
 };
 
 } // namespace alure

@@ -363,7 +363,7 @@ void SourceImpl::play(Buffer buffer)
     alSourcei(mId, AL_BUFFER, mBuffer->getId());
     alSourcePlay(mId);
     mPaused.store(false, std::memory_order_release);
-    mContext->addPlayingSource({this, mId});
+    mContext->addPlayingSource(this, mId);
 }
 
 void SourceImpl::play(SharedPtr<Decoder> decoder, ALuint updatelen, ALuint queuesize)
@@ -415,7 +415,7 @@ void SourceImpl::play(SharedPtr<Decoder> decoder, ALuint updatelen, ALuint queue
 
     mContext->addStream(this);
     mIsAsync.store(true, std::memory_order_release);
-    mContext->addPlayingSource({this, &mIsAsync});
+    mContext->addPlayingSource(this);
 }
 
 
@@ -544,9 +544,9 @@ bool SourceImpl::playUpdate(ALuint id)
     return false;
 }
 
-bool SourceImpl::playUpdate(std::atomic<bool> *isAsync)
+bool SourceImpl::playUpdate()
 {
-    if(EXPECT(isAsync->load(std::memory_order_acquire), true))
+    if(EXPECT(mIsAsync.load(std::memory_order_acquire), true))
         return true;
 
     makeStopped();

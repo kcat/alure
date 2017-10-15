@@ -531,10 +531,10 @@ void ContextImpl::backgroundProc()
 
 
 ContextImpl::ContextImpl(ALCcontext *context, DeviceImpl *device)
-  : mListener(this), mContext(context), mDevice(device), mRefs(0),
-    mHasExt{false}, mPendingBuffers(16, sizeof(PendingBuffer)),
-    mWakeInterval(std::chrono::milliseconds::zero()), mQuitThread(false),
-    mIsConnected(true), mIsBatching(false),
+  : mListener(this), mContext(context), mDevice(device),
+    mWakeInterval(std::chrono::milliseconds::zero()),
+    mPendingBuffers(16, sizeof(PendingBuffer)), mQuitThread(false),
+    mRefs(0), mHasExt{false}, mIsConnected(true), mIsBatching(false),
     alGetSourcei64vSOFT(0), alGetSourcedvSOFT(0),
     alGenEffects(0), alDeleteEffects(0), alIsEffect(0),
     alEffecti(0), alEffectiv(0), alEffectf(0), alEffectfv(0),
@@ -947,24 +947,24 @@ Source ContextImpl::createSource()
 }
 
 
-void ContextImpl::addPlayingSource(SourceBufferUpdateEntry&& entry)
+void ContextImpl::addPlayingSource(SourceImpl *source, ALuint id)
 {
-    auto iter = std::lower_bound(mPlaySources.begin(), mPlaySources.end(), entry,
-        [](const SourceBufferUpdateEntry &lhs, const SourceBufferUpdateEntry &rhs) -> bool
-        { return lhs.mSource < rhs.mSource; }
+    auto iter = std::lower_bound(mPlaySources.begin(), mPlaySources.end(), source,
+        [](const SourceBufferUpdateEntry &lhs, SourceImpl *rhs) -> bool
+        { return lhs.mSource < rhs; }
     );
-    if(iter == mPlaySources.end() || iter->mSource != entry.mSource)
-        mPlaySources.insert(iter, std::move(entry));
+    if(iter == mPlaySources.end() || iter->mSource != source)
+        mPlaySources.insert(iter, {source,id});
 }
 
-void ContextImpl::addPlayingSource(SourceStreamUpdateEntry&& entry)
+void ContextImpl::addPlayingSource(SourceImpl *source)
 {
-    auto iter = std::lower_bound(mStreamSources.begin(), mStreamSources.end(), entry,
-        [](const SourceStreamUpdateEntry &lhs, const SourceStreamUpdateEntry &rhs) -> bool
-        { return lhs.mSource < rhs.mSource; }
+    auto iter = std::lower_bound(mStreamSources.begin(), mStreamSources.end(), source,
+        [](const SourceStreamUpdateEntry &lhs, SourceImpl *rhs) -> bool
+        { return lhs.mSource < rhs; }
     );
-    if(iter == mStreamSources.end() || iter->mSource != entry.mSource)
-        mStreamSources.insert(iter, std::move(entry));
+    if(iter == mStreamSources.end() || iter->mSource != source)
+        mStreamSources.insert(iter, {source});
 }
 
 void ContextImpl::removePlayingSource(SourceImpl *source)
@@ -1126,7 +1126,7 @@ void ContextImpl::update()
     mStreamSources.erase(
         std::remove_if(mStreamSources.begin(), mStreamSources.end(),
             [](const SourceStreamUpdateEntry &entry) -> bool
-            { return !entry.mSource->playUpdate(entry.mIsAsync); }
+            { return !entry.mSource->playUpdate(); }
         ), mStreamSources.end()
     );
     if(!mWakeInterval.load(std::memory_order_relaxed).count())
