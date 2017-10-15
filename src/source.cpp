@@ -642,15 +642,14 @@ void SourceImpl::setOffset(uint64_t offset)
 
 std::pair<uint64_t,std::chrono::nanoseconds> SourceImpl::getSampleOffsetLatency() const
 {
+    std::pair<uint64_t,std::chrono::nanoseconds> ret{0, std::chrono::nanoseconds::zero()};
     CheckContext(mContext);
-    if(mId == 0)
-        return { 0, std::chrono::nanoseconds::zero() };
+    if(mId == 0) return ret;
 
     if(mStream)
     {
         std::lock_guard<std::mutex> lock(mMutex);
         ALint queued = 0, state = -1, srcpos = 0;
-        std::chrono::nanoseconds latency(0);
 
         alGetSourcei(mId, AL_BUFFERS_QUEUED, &queued);
         if(mContext->hasExtension(SOFT_source_latency))
@@ -658,7 +657,7 @@ std::pair<uint64_t,std::chrono::nanoseconds> SourceImpl::getSampleOffsetLatency(
             ALint64SOFT val[2];
             mContext->alGetSourcei64vSOFT(mId, AL_SAMPLE_OFFSET_LATENCY_SOFT, val);
             srcpos = val[0]>>32;
-            latency = std::chrono::nanoseconds(val[1]);
+            ret.second = std::chrono::nanoseconds(val[1]);
         }
         else
             alGetSourcei(mId, AL_SAMPLE_OFFSET, &srcpos);
@@ -684,35 +683,35 @@ std::pair<uint64_t,std::chrono::nanoseconds> SourceImpl::getSampleOffsetLatency(
             }
         }
 
-        return { streampos, latency };
+        ret.first = streampos;
+        return ret;
     }
 
-    std::chrono::nanoseconds latency(0);
     ALint srcpos = 0;
     if(mContext->hasExtension(SOFT_source_latency))
     {
         ALint64SOFT val[2];
         mContext->alGetSourcei64vSOFT(mId, AL_SAMPLE_OFFSET_LATENCY_SOFT, val);
         srcpos = val[0]>>32;
-        latency = std::chrono::nanoseconds(val[1]);
+        ret.second = std::chrono::nanoseconds(val[1]);
     }
     else
         alGetSourcei(mId, AL_SAMPLE_OFFSET, &srcpos);
-    return { srcpos, latency };
+    ret.first = srcpos;
+    return ret;
 }
 
 std::pair<Seconds,Seconds> SourceImpl::getSecOffsetLatency() const
 {
+    std::pair<Seconds,Seconds> ret{Seconds::zero(), Seconds::zero()};
     CheckContext(mContext);
-    if(mId == 0)
-        return { Seconds::zero(), Seconds::zero() };
+    if(mId == 0) return ret;
 
     if(mStream)
     {
         std::lock_guard<std::mutex> lock(mMutex);
         ALint queued = 0, state = -1;
         ALdouble srcpos = 0;
-        Seconds latency(0.0);
 
         alGetSourcei(mId, AL_BUFFERS_QUEUED, &queued);
         if(mContext->hasExtension(SOFT_source_latency))
@@ -720,7 +719,7 @@ std::pair<Seconds,Seconds> SourceImpl::getSecOffsetLatency() const
             ALdouble val[2];
             mContext->alGetSourcedvSOFT(mId, AL_SEC_OFFSET_LATENCY_SOFT, val);
             srcpos = val[0];
-            latency = Seconds(val[1]);
+            ret.second = Seconds(val[1]);
         }
         else
         {
@@ -754,17 +753,17 @@ std::pair<Seconds,Seconds> SourceImpl::getSecOffsetLatency() const
             }
         }
 
-        return { Seconds((streampos+frac) / mStream->getFrequency()), latency };
+        ret.first = Seconds((streampos+frac) / mStream->getFrequency());
+        return ret;
     }
 
     ALdouble srcpos = 0.0;
-    Seconds latency(0.0);
     if(mContext->hasExtension(SOFT_source_latency))
     {
         ALdouble val[2];
         mContext->alGetSourcedvSOFT(mId, AL_SEC_OFFSET_LATENCY_SOFT, val);
         srcpos = val[0];
-        latency = Seconds(val[1]);
+        ret.second = Seconds(val[1]);
     }
     else
     {
@@ -772,7 +771,8 @@ std::pair<Seconds,Seconds> SourceImpl::getSecOffsetLatency() const
         alGetSourcef(mId, AL_SEC_OFFSET, &f);
         srcpos = f;
     }
-    return { Seconds(srcpos), latency };
+    ret.first = Seconds(srcpos);
+    return ret;
 }
 
 
