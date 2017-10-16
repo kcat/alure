@@ -50,7 +50,7 @@ public:
     void removeContext(ContextImpl *ctx);
 
     String getName(PlaybackName type) const;
-    bool queryExtension(const String &name) const;
+    bool queryExtension(StringView name) const;
 
     Version getALCVersion() const;
     Version getEFXVersion() const;

@@ -92,9 +92,9 @@ String DeviceImpl::getName(PlaybackName type) const
     return name ? String(name) : String();
 }
 
-bool DeviceImpl::queryExtension(const String &name) const
+bool DeviceImpl::queryExtension(StringView name) const
 {
-    return alcIsExtensionPresent(mDevice, name.c_str());
+    return alcIsExtensionPresent(mDevice, String(name).c_str());
 }
 
 Version DeviceImpl::getALCVersion() const
@@ -272,7 +272,7 @@ void DeviceImpl::close()
 
 
 DECL_THUNK1(String, Device, getName, const, PlaybackName)
-DECL_THUNK1(bool, Device, queryExtension, const, const String&)
+DECL_THUNK1(bool, Device, queryExtension, const, StringView)
 DECL_THUNK0(Version, Device, getALCVersion, const)
 DECL_THUNK0(Version, Device, getEFXVersion, const)
 DECL_THUNK0(ALCuint, Device, getFrequency, const)

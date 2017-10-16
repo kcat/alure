@@ -4,6 +4,7 @@
 #include <vector>
 #include <string>
 #include <memory>
+#include <cstring>
 #include <utility>
 #include <limits>
 #include <chrono>
@@ -81,6 +82,12 @@ class DecoderFactory;
 class MessageHandler;
 
 
+template<typename T>
+using RemoveRefT = typename std::remove_reference<T>::type;
+template<bool B>
+using EnableIfB = typename std::enable_if<B>::type;
+
+
 // Duration in seconds, using double precision
 using Seconds = std::chrono::duration<double>;
 
@@ -120,75 +127,137 @@ using Array = std::array<T, N>;
 
 // A String implementation, default's to C++'s std::string. If this is changed,
 // you must recompile the library.
-using String = std::string;
+template<typename T>
+using BasicString = std::basic_string<T>;
+using String = BasicString<std::string::value_type>;
+
+// Tag specific containers that guarantee contiguous storage. The standard
+// provides no such mechanism, so we have to manually specify which are
+// acceptable.
+template<typename T>
+struct IsContiguousTag : std::false_type {};
+template<typename T, size_t N>
+struct IsContiguousTag<Array<T,N>> : std::true_type {};
+template<typename T>
+struct IsContiguousTag<Vector<T>> : std::true_type {};
+template<typename T>
+struct IsContiguousTag<BasicString<T>> : std::true_type {};
 
 // A rather simple ArrayView container. This allows accepting various array
 // types (Array, Vector, a static-sized array, a dynamic array + size) without
 // copying its elements.
 template<typename T>
 class ArrayView {
-    const T *mElems;
+public:
+    using value_type = T;
+    using iterator = const value_type*;
+    using const_iterator = const value_type*;
+
+private:
+    const value_type *mElems;
     size_t mNumElems;
 
 public:
-    typedef const T *iterator;
-    typedef const T *const_iterator;
-
-    ArrayView() : mElems(nullptr), mNumElems(0) { }
-    ArrayView(const ArrayView &rhs) : mElems(rhs.data()), mNumElems(rhs.size()) { }
-    ArrayView(ArrayView&& rhs) : mElems(rhs.data()), mNumElems(rhs.size()) { }
-    ArrayView(const T *elems, size_t num_elems) : mElems(elems), mNumElems(num_elems) { }
-    template<typename OtherT>
-    ArrayView(OtherT &arr) : mElems(arr.data()), mNumElems(arr.size()) { }
+    ArrayView() noexcept : mElems(nullptr), mNumElems(0) { }
+    ArrayView(const ArrayView&) noexcept = default;
+    ArrayView(ArrayView&&) noexcept = default;
+    ArrayView(const value_type *elems, size_t num_elems) noexcept
+      : mElems(elems), mNumElems(num_elems) { }
+    template<typename OtherT> ArrayView(RemoveRefT<OtherT>&&) = delete;
+    template<typename OtherT,
+             typename = EnableIfB<IsContiguousTag<RemoveRefT<OtherT>>::value>>
+    ArrayView(const OtherT &rhs) noexcept : mElems(rhs.data()), mNumElems(rhs.size()) { }
     template<size_t N>
-    ArrayView(const T (&elems)[N]) : mElems(elems), mNumElems(N) { }
+    ArrayView(const value_type (&elems)[N]) noexcept : mElems(elems), mNumElems(N) { }
 
-    ArrayView& operator=(const ArrayView &rhs)
-    {
-        mElems = rhs.data();
-        mNumElems = rhs.size();
-    }
-    ArrayView& operator=(ArrayView&& rhs)
-    {
-        mElems = rhs.data();
-        mNumElems = rhs.size();
-    }
-    template<typename OtherT>
-    ArrayView& operator=(OtherT &arr)
-    {
-        mElems = arr.data();
-        mNumElems = arr.size();
-    }
-    template<size_t N>
-    ArrayView& operator=(const T (&elems)[N])
-    {
-        mElems = elems;
-        mNumElems = N;
-    }
+    ArrayView& operator=(const ArrayView&) noexcept = default;
 
-    const T *data() const { return mElems; }
+    const value_type *data() const noexcept { return mElems; }
 
-    size_t size() const { return mNumElems; }
-    bool empty() const { return mNumElems == 0; }
+    size_t size() const noexcept { return mNumElems; }
+    bool empty() const noexcept { return mNumElems == 0; }
 
-    const T& operator[](size_t i) const { return mElems[i]; }
+    const value_type& operator[](size_t i) const { return mElems[i]; }
 
-    const T& front() const { return mElems[0]; }
-    const T& back() const { return mElems[mNumElems-1]; }
+    const value_type& front() const { return mElems[0]; }
+    const value_type& back() const { return mElems[mNumElems-1]; }
 
-    const T& at(size_t i) const
+    const value_type& at(size_t i) const
     {
         if(i >= mNumElems)
             throw std::out_of_range("alure::ArrayView::at: element out of range");
         return mElems[i];
     }
 
-    const_iterator begin() const { return mElems; }
-    const_iterator cbegin() const { return mElems; }
+    const_iterator begin() const noexcept { return mElems; }
+    const_iterator cbegin() const noexcept { return mElems; }
 
-    const_iterator end() const { return mElems + mNumElems; }
-    const_iterator cend() const { return mElems + mNumElems; }
+    const_iterator end() const noexcept { return mElems + mNumElems; }
+    const_iterator cend() const noexcept { return mElems + mNumElems; }
 };
+
+template<typename T>
+class BasicStringView : public ArrayView<T> {
+    using BaseT = ArrayView<T>;
+    using StringT = BasicString<T>;
+
+public:
+    using typename BaseT::value_type;
+
+    BasicStringView() noexcept = default;
+    BasicStringView(const BasicStringView&) noexcept = default;
+    BasicStringView(const value_type *elems, size_t num_elems) noexcept
+      : ArrayView<T>(elems, num_elems) { }
+    BasicStringView(const value_type *elems) : ArrayView<T>(elems, std::strlen(elems)) { }
+    BasicStringView(StringT&&) = delete;
+    BasicStringView(const StringT &rhs) noexcept : ArrayView<T>(rhs) { }
+
+    BasicStringView& operator=(const BasicStringView&) noexcept = default;
+
+    size_t length() const { return BaseT::size(); }
+
+    explicit operator StringT() const { return StringT(BaseT::data(), length()); }
+#if __cplusplus >= 201703L
+    operator std::basic_string_view<T>() const
+    { return std::basic_string_view<T>(BaseT::data(), length()); }
+#endif
+
+    StringT operator+(const StringT &rhs) const
+    {
+        StringT ret = StringT(*this);
+        ret += rhs;
+        return ret;
+    }
+    StringT operator+(const typename StringT::value_type *rhs) const
+    {
+        StringT ret = StringT(*this);
+        ret += rhs;
+        return ret;
+    }
+};
+using StringView = BasicStringView<String::value_type>;
+
+// Inline operators to concat String and C-style strings with StringViews.
+template<typename T>
+inline BasicString<T> operator+(const BasicString<T> &lhs, const BasicStringView<T> &rhs)
+{ return BasicString<T>(lhs).append(rhs.data(), rhs.size()); }
+template<typename T>
+inline BasicString<T> operator+(BasicString<T>&& lhs, const BasicStringView<T> &rhs)
+{ return std::move(lhs.append(rhs.data(), rhs.size())); }
+template<typename T>
+inline BasicString<T> operator+(const typename BasicString<T>::value_type *lhs, const BasicStringView<T> &rhs)
+{ return lhs + BasicString<T>(rhs); }
+template<typename T>
+inline BasicString<T>& operator+=(BasicString<T> &lhs, const BasicStringView<T> &rhs)
+{ return lhs.append(rhs.data(), rhs.size()); }
+// Inline operator to write out a StringView to an ostream
+template<typename T>
+inline std::basic_ostream<T>& operator<<(std::basic_ostream<T> &lhs, const BasicStringView<T> &rhs)
+{
+    for(auto ch : rhs)
+        lhs << ch;
+    return lhs;
+}
 
 
 /**
@@ -401,7 +470,7 @@ public:
     static DeviceManager get();
 
     /** Queries the existence of a non-device-specific ALC extension. */
-    bool queryExtension(const String &name) const;
+    bool queryExtension(StringView name) const;
 
     /** Enumerates available device names of the given type. */
     Vector<String> enumerate(DeviceEnumeration type) const;
@@ -412,13 +481,13 @@ public:
      * Opens the playback device given by name, or the default if blank. Throws
      * an exception on error.
      */
-    Device openPlayback(const String &name=String());
+    Device openPlayback(StringView name=StringView());
 
     /**
      * Opens the playback device given by name, or the default if blank.
      * Returns an empty Device on error.
      */
-    Device openPlayback(const String &name, const std::nothrow_t&);
+    Device openPlayback(StringView name, const std::nothrow_t&);
 
     /** Opens the default playback device. Returns an empty Device on error. */
     Device openPlayback(const std::nothrow_t&);
@@ -437,7 +506,7 @@ public:
     /** Retrieves the device name as given by type. */
     String getName(PlaybackName type=PlaybackName::Full) const;
     /** Queries the existence of an ALC extension on this device. */
-    bool queryExtension(const String &name) const;
+    bool queryExtension(StringView name) const;
 
     /** Retrieves the ALC version supported by this device. */
     Version getALCVersion() const;

@@ -20,13 +20,13 @@ public:
 
     void removeDevice(DeviceImpl *dev);
 
-    bool queryExtension(const String &name) const;
+    bool queryExtension(StringView name) const;
 
     Vector<String> enumerate(DeviceEnumeration type) const;
     String defaultDeviceName(DefaultDeviceType type) const;
 
-    Device openPlayback(const String &name);
-    Device openPlayback(const String &name, const std::nothrow_t&);
+    Device openPlayback(StringView name);
+    Device openPlayback(StringView name, const std::nothrow_t&);
 };
 
 } // namespace alure
