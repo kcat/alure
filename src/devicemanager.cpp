@@ -40,9 +40,9 @@ DeviceManagerImpl::~DeviceManagerImpl()
 }
 
 
-bool DeviceManagerImpl::queryExtension(StringView name) const
+bool DeviceManagerImpl::queryExtension(const char *name) const
 {
-    return alcIsExtensionPresent(nullptr, String(name).c_str());
+    return alcIsExtensionPresent(nullptr, name);
 }
 
 Vector<String> DeviceManagerImpl::enumerate(DeviceEnumeration type) const
@@ -68,22 +68,22 @@ String DeviceManagerImpl::defaultDeviceName(DefaultDeviceType type) const
 }
 
 
-Device DeviceManagerImpl::openPlayback(StringView name)
+Device DeviceManagerImpl::openPlayback(const char *name)
 {
-    ALCdevice *dev = alcOpenDevice(String(name).c_str());
+    ALCdevice *dev = alcOpenDevice(name);
     if(!dev)
     {
-        if(name.empty())
+        if(!name || !name[0])
             throw std::runtime_error("Failed to open default device");
-        throw std::runtime_error("Failed to open device \""+name+"\"");
+        throw std::runtime_error(StringView("Failed to open device \"")+name+"\"");
     }
     mDevices.emplace_back(MakeUnique<DeviceImpl>(dev));
     return Device(mDevices.back().get());
 }
 
-Device DeviceManagerImpl::openPlayback(StringView name, const std::nothrow_t&)
+Device DeviceManagerImpl::openPlayback(const char *name, const std::nothrow_t&)
 {
-    ALCdevice *dev = alcOpenDevice(String(name).c_str());
+    ALCdevice *dev = alcOpenDevice(name);
     if(!dev) return Device();
     mDevices.emplace_back(MakeUnique<DeviceImpl>(dev));
     return Device(mDevices.back().get());
@@ -101,12 +101,18 @@ void DeviceManagerImpl::removeDevice(DeviceImpl *dev)
 
 DeviceManager DeviceManager::get()
 { return DeviceManager(&DeviceManagerImpl::get()); }
-DECL_THUNK1(bool, DeviceManager, queryExtension, const, StringView)
+DECL_THUNK1(bool, DeviceManager, queryExtension, const, const char*)
+bool DeviceManager::queryExtension(StringView name) const
+{ return pImpl->queryExtension(String(name).c_str()); }
 DECL_THUNK1(Vector<String>, DeviceManager, enumerate, const, DeviceEnumeration)
 DECL_THUNK1(String, DeviceManager, defaultDeviceName, const, DefaultDeviceType)
-DECL_THUNK1(Device, DeviceManager, openPlayback,, StringView)
-DECL_THUNK2(Device, DeviceManager, openPlayback,, StringView, const std::nothrow_t&)
+DECL_THUNK1(Device, DeviceManager, openPlayback,, const char*)
+Device DeviceManager::openPlayback(StringView name)
+{ return pImpl->openPlayback(String(name).c_str()); }
+DECL_THUNK2(Device, DeviceManager, openPlayback,, const char*, const std::nothrow_t&)
+Device DeviceManager::openPlayback(StringView name, const std::nothrow_t &nt)
+{ return pImpl->openPlayback(String(name).c_str(), nt); }
 Device DeviceManager::openPlayback(const std::nothrow_t&)
-{ return openPlayback(StringView(), std::nothrow); }
+{ return pImpl->openPlayback(nullptr, std::nothrow); }
 
 }
