@@ -211,6 +211,10 @@ public:
     BasicStringView(const value_type *elems) : ArrayView<T>(elems, std::strlen(elems)) { }
     BasicStringView(StringT&&) = delete;
     BasicStringView(const StringT &rhs) noexcept : ArrayView<T>(rhs) { }
+#if __cplusplus >= 201703L
+    BasicStringView(const std::basic_string_view<T> &rhs) noexcept
+      : ArrayView<T>(rhs.data(), rhs.length()) { }
+#endif
 
     BasicStringView& operator=(const BasicStringView&) noexcept = default;
 
