@@ -1479,7 +1479,7 @@ public:
      * \param samplerate Sample rate of the given audio data.
      * \param data The audio data that is about to be fed to the OpenAL buffer.
      */
-    virtual void bufferLoading(const String &name, ChannelConfig channels, SampleType type, ALuint samplerate, const ArrayView<ALbyte> data);
+    virtual void bufferLoading(StringView name, ChannelConfig channels, SampleType type, ALuint samplerate, ArrayView<ALbyte> data);
 
     /**
      * Called when a resource isn't found, allowing the app to substitute in a
@@ -1494,7 +1494,7 @@ public:
      * \return The replacement resource name to use instead. Returning an empty
      *         string means to stop trying.
      */
-    virtual String resourceNotFound(const String &name);
+    virtual String resourceNotFound(StringView name);
 };
 
 #undef MAKE_PIMPL

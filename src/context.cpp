@@ -316,11 +316,11 @@ void MessageHandler::sourceForceStopped(Source)
 {
 }
 
-void MessageHandler::bufferLoading(const String&, ChannelConfig, SampleType, ALuint, const ArrayView<ALbyte>)
+void MessageHandler::bufferLoading(StringView, ChannelConfig, SampleType, ALuint, ArrayView<ALbyte>)
 {
 }
 
-String MessageHandler::resourceNotFound(const String&)
+String MessageHandler::resourceNotFound(StringView)
 {
     return String();
 }
