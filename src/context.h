@@ -146,8 +146,6 @@ private:
 
     SharedPtr<MessageHandler> mMessage;
 
-    std::mutex mContextMutex;
-
     struct PendingBuffer {
         String mName;
         BufferImpl *mBuffer;

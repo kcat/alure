@@ -49,6 +49,9 @@
 namespace
 {
 
+// Global mutex to protect global context changes
+std::mutex mGlobalCtxMutex;
+
 #ifdef _WIN32
 // Windows' std::ifstream fails with non-ANSI paths since the standard only
 // specifies names using const char* (or std::string). MSVC has a non-standard
@@ -411,13 +414,9 @@ thread_local ContextImpl *ContextImpl::sThreadCurrentCtx = nullptr;
 
 void ContextImpl::MakeCurrent(ContextImpl *context)
 {
-    std::unique_lock<std::mutex> lock1, lock2;
-    if(sCurrentCtx)
-        lock1 = std::unique_lock<std::mutex>(sCurrentCtx->mContextMutex);
-    if(context && context != sCurrentCtx)
-        lock2 = std::unique_lock<std::mutex>(context->mContextMutex);
+    std::unique_lock<std::mutex> ctxlock(mGlobalCtxMutex);
 
-    if(alcMakeContextCurrent(context ? context->getContext() : 0) == ALC_FALSE)
+    if(alcMakeContextCurrent(context ? context->getContext() : nullptr) == ALC_FALSE)
         throw std::runtime_error("Call to alcMakeContextCurrent failed");
     if(context)
     {
@@ -431,10 +430,10 @@ void ContextImpl::MakeCurrent(ContextImpl *context)
         sThreadCurrentCtx->decRef();
     sThreadCurrentCtx = 0;
 
-    if(sCurrentCtx && sCurrentCtx != context)
+    if((context = sCurrentCtx) != nullptr)
     {
-        lock2.unlock();
-        sCurrentCtx->mWakeThread.notify_all();
+        ctxlock.unlock();
+        context->mWakeThread.notify_all();
     }
 }
 
@@ -475,7 +474,7 @@ void ContextImpl::backgroundProc()
 
     std::chrono::steady_clock::time_point basetime = std::chrono::steady_clock::now();
     std::chrono::milliseconds waketime(0);
-    std::unique_lock<std::mutex> ctxlock(mContextMutex);
+    std::unique_lock<std::mutex> ctxlock(mGlobalCtxMutex);
     while(!mQuitThread.load(std::memory_order_acquire))
     {
         {
@@ -607,7 +606,7 @@ void ContextImpl::endBatch()
 
 SharedPtr<MessageHandler> ContextImpl::setMessageHandler(SharedPtr<MessageHandler> handler)
 {
-    std::lock_guard<std::mutex> lock(mContextMutex);
+    std::lock_guard<std::mutex> lock(mGlobalCtxMutex);
     mMessage.swap(handler);
     return handler;
 }
