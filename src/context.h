@@ -267,7 +267,7 @@ public:
     SharedPtr<MessageHandler> setMessageHandler(SharedPtr<MessageHandler> handler);
     SharedPtr<MessageHandler> getMessageHandler() const { return mMessage; }
 
-    void setAsyncWakeInterval(std::chrono::milliseconds msec);
+    void setAsyncWakeInterval(std::chrono::milliseconds interval);
     std::chrono::milliseconds getAsyncWakeInterval() const { return mWakeInterval.load(); }
 
     SharedPtr<Decoder> createDecoder(const String &name);

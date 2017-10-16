@@ -557,7 +557,7 @@ public:
 
     /**
      * Retrieves a Listener instance for this context. Each context will only
-     * have one listener.
+     * have one listener, which is automatically destroyed with the context.
      */
     Listener getListener();
 
@@ -577,7 +577,7 @@ public:
      * of 0 means the background thread will only be woken up manually with
      * calls to update. The default is 0.
      */
-    void setAsyncWakeInterval(std::chrono::milliseconds msec);
+    void setAsyncWakeInterval(std::chrono::milliseconds interval);
 
     /**
      * Retrieves the current interval used for waking up the background thread.
@@ -683,7 +683,8 @@ public:
 
     /**
      * Creates a new Source. There is no practical limit to the number of
-     * sources you may create.
+     * sources you may create. You must call Source::release when the source is
+     * no longer needed.
      */
     Source createSource();
 
@@ -698,7 +699,7 @@ public:
     void setDopplerFactor(ALfloat factor);
 
     /**
-     * Sets the speed of sound propogation, in units per second, to calculate
+     * Sets the speed of sound propagation, in units per second, to calculate
      * the doppler effect along with other distance-related time effects. The
      * default is 343.3 units per second (a realistic speed assuming 1 meter
      * per unit). If this is adjusted for a different unit scale,
@@ -750,7 +751,7 @@ public:
      * on the distance in meters (including air absorption and initial reverb
      * decay). If this is changed, it's strongly recommended to also set the
      * speed of sound (e.g. context.setSpeedOfSound(343.3 / m_u) to maintain a
-     * realistic 343.3m/s for sound propgation).
+     * realistic 343.3m/s for sound propagation).
      */
     void setMetersPerUnit(ALfloat m_u);
 };
@@ -1188,7 +1189,7 @@ public:
     void setGain(ALfloat gain);
     /**
      * If set to true, the reverb effect will automatically apply adjustments
-     * to the source's send slot based on the effect properties.
+     * to the source's send slot gains based on the effect properties.
      *
      * Has no effect when using non-reverb effects. Default is true.
      */

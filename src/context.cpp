@@ -612,11 +612,11 @@ SharedPtr<MessageHandler> ContextImpl::setMessageHandler(SharedPtr<MessageHandle
 }
 
 
-void ContextImpl::setAsyncWakeInterval(std::chrono::milliseconds msec)
+void ContextImpl::setAsyncWakeInterval(std::chrono::milliseconds interval)
 {
-    if(msec.count() < 0 || msec > std::chrono::milliseconds(1000))
+    if(interval.count() < 0 || interval > std::chrono::seconds(1))
         throw std::runtime_error("Async wake interval out of range");
-    mWakeInterval.store(msec);
+    mWakeInterval.store(interval);
     mWakeMutex.lock(); mWakeMutex.unlock();
     mWakeThread.notify_all();
 }
