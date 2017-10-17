@@ -57,7 +57,7 @@ int main()
         HAVE_STATIC_GCCRT_SWITCHES
     )
     if(HAVE_STATIC_GCCRT_SWITCHES)
-        set(LINKER_OPTS -static-libgcc -static-libstdc++)
+        set(LINKER_OPTS ${LINKER_OPTS} -static-libgcc -static-libstdc++)
     endif()
     set(CMAKE_REQUIRED_LIBRARIES ${OLD_REQUIRED_LIBRARIES})
     unset(OLD_REQUIRED_LIBRARIES)
@@ -152,23 +152,23 @@ target_link_libraries(alure2_s PUBLIC ${alure_libs})
 
 add_executable(alure-enum examples/alure-enum.cpp)
 target_compile_options(alure-enum PRIVATE ${CXX_FLAGS})
-target_link_libraries(alure-enum PRIVATE alure2)
+target_link_libraries(alure-enum PRIVATE alure2 ${LINKER_OPTS})
 
 add_executable(alure-play examples/alure-play.cpp)
 target_compile_options(alure-play PRIVATE ${CXX_FLAGS})
-target_link_libraries(alure-play PRIVATE alure2)
+target_link_libraries(alure-play PRIVATE alure2 ${LINKER_OPTS})
 
 add_executable(alure-stream examples/alure-stream.cpp)
 target_compile_options(alure-stream PRIVATE ${CXX_FLAGS})
-target_link_libraries(alure-stream PRIVATE alure2)
+target_link_libraries(alure-stream PRIVATE alure2 ${LINKER_OPTS})
 
 add_executable(alure-reverb examples/alure-reverb.cpp)
 target_compile_options(alure-reverb PRIVATE ${CXX_FLAGS})
-target_link_libraries(alure-reverb PRIVATE alure2)
+target_link_libraries(alure-reverb PRIVATE alure2 ${LINKER_OPTS})
 
 add_executable(alure-hrtf examples/alure-hrtf.cpp)
 target_compile_options(alure-hrtf PRIVATE ${CXX_FLAGS})
-target_link_libraries(alure-hrtf PRIVATE alure2)
+target_link_libraries(alure-hrtf PRIVATE alure2 ${LINKER_OPTS})
 
 find_package(PhysFS)
 if(PHYSFS_FOUND)
