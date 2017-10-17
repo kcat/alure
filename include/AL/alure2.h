@@ -408,10 +408,7 @@ class Version {
     ALuint mMinor : 16;
 
 public:
-    Version(ALuint _maj, ALuint _min)
-      : mMajor(std::min<ALuint>(_maj, std::numeric_limits<ALushort>::max()))
-      , mMinor(std::min<ALuint>(_min, std::numeric_limits<ALushort>::max()))
-    { }
+    constexpr Version(ALuint _maj, ALuint _min) : mMajor(_maj), mMinor(_min) { }
 
     constexpr ALuint getMajor() const noexcept { return mMajor; }
     constexpr ALuint getMinor() const noexcept { return mMinor; }
