@@ -187,44 +187,36 @@ public:
 };
 #endif
 
-}
-
-namespace alure
-{
-
-Decoder::~Decoder() { }
-DecoderFactory::~DecoderFactory() { }
-
-static const std::pair<String,UniquePtr<DecoderFactory>> sDefaultDecoders[] = {
-    { "_alure_int_wave", MakeUnique<WaveDecoderFactory>() },
+const std::pair<alure::String,alure::UniquePtr<alure::DecoderFactory>> sDefaultDecoders[] = {
+    { "_alure_int_wave", alure::MakeUnique<alure::WaveDecoderFactory>() },
 
 #ifdef HAVE_VORBISFILE
-    { "_alure_int_vorbis", MakeUnique<VorbisFileDecoderFactory>() },
+    { "_alure_int_vorbis", alure::MakeUnique<alure::VorbisFileDecoderFactory>() },
 #endif
 #ifdef HAVE_LIBFLAC
-    { "_alure_int_flac", MakeUnique<FlacDecoderFactory>() },
+    { "_alure_int_flac", alure::MakeUnique<alure::FlacDecoderFactory>() },
 #endif
 #ifdef HAVE_OPUSFILE
-    { "_alure_int_opus", MakeUnique<OpusFileDecoderFactory>() },
+    { "_alure_int_opus", alure::MakeUnique<alure::OpusFileDecoderFactory>() },
 #endif
 #ifdef HAVE_LIBSNDFILE
-    { "_alure_int_sndfile", MakeUnique<SndFileDecoderFactory>() },
+    { "_alure_int_sndfile", alure::MakeUnique<alure::SndFileDecoderFactory>() },
 #endif
 #ifdef HAVE_MPG123
-    { "_alure_int_mpg123", MakeUnique<Mpg123DecoderFactory>() },
+    { "_alure_int_mpg123", alure::MakeUnique<alure::Mpg123DecoderFactory>() },
 #endif
 };
-
-static std::map<String,UniquePtr<DecoderFactory>> sDecoders;
+std::map<alure::String,alure::UniquePtr<alure::DecoderFactory>> sDecoders;
 
 
 template<typename T>
-static DecoderOrExceptT GetDecoder(const String &name, UniquePtr<std::istream> &file, T start, T end)
+alure::DecoderOrExceptT GetDecoder(const alure::String &name, alure::UniquePtr<std::istream> &file,
+                                   T start, T end)
 {
-    DecoderOrExceptT ret;
+    alure::DecoderOrExceptT ret;
     while(start != end)
     {
-        DecoderFactory *factory = start->second.get();
+        alure::DecoderFactory *factory = start->second.get();
         auto decoder = factory->createDecoder(file);
         if(decoder) return (ret = std::move(decoder));
 
@@ -237,16 +229,40 @@ static DecoderOrExceptT GetDecoder(const String &name, UniquePtr<std::istream> &
     return (ret = nullptr);
 }
 
-static DecoderOrExceptT GetDecoder(const String &name, UniquePtr<std::istream> file)
+static alure::DecoderOrExceptT GetDecoder(const alure::String &name, alure::UniquePtr<std::istream> file)
 {
     auto decoder = GetDecoder(name, file, sDecoders.begin(), sDecoders.end());
     if(std::holds_alternative<std::runtime_error>(decoder)) return decoder;
-    if(std::get<SharedPtr<Decoder>>(decoder)) return decoder;
+    if(std::get<alure::SharedPtr<alure::Decoder>>(decoder)) return decoder;
     decoder = GetDecoder(name, file, std::begin(sDefaultDecoders), std::end(sDefaultDecoders));
     if(std::holds_alternative<std::runtime_error>(decoder)) return decoder;
-    if(std::get<SharedPtr<Decoder>>(decoder)) return decoder;
+    if(std::get<alure::SharedPtr<alure::Decoder>>(decoder)) return decoder;
     return (decoder = std::runtime_error("No decoder for "+name));
 }
+
+class DefaultFileIOFactory : public alure::FileIOFactory {
+    alure::UniquePtr<std::istream> openFile(const alure::String &name) override final
+    {
+#ifdef _WIN32
+        auto file = alure::MakeUnique<Stream>(name.c_str());
+#else
+        auto file = alure::MakeUnique<std::ifstream>(name.c_str(), std::ios::binary);
+#endif
+        if(!file->is_open()) file = nullptr;
+        return std::move(file);
+    }
+};
+DefaultFileIOFactory sDefaultFileFactory;
+
+alure::UniquePtr<alure::FileIOFactory> sFileFactory;
+
+}
+
+namespace alure
+{
+
+Decoder::~Decoder() { }
+DecoderFactory::~DecoderFactory() { }
 
 void RegisterDecoder(const String &name, UniquePtr<DecoderFactory> factory)
 {
@@ -270,21 +286,6 @@ UniquePtr<DecoderFactory> UnregisterDecoder(const String &name)
 
 FileIOFactory::~FileIOFactory() { }
 
-class DefaultFileIOFactory : public FileIOFactory {
-    UniquePtr<std::istream> openFile(const String &name) override final
-    {
-#ifdef _WIN32
-        auto file = MakeUnique<Stream>(name.c_str());
-#else
-        auto file = MakeUnique<std::ifstream>(name.c_str(), std::ios::binary);
-#endif
-        if(!file->is_open()) file = nullptr;
-        return std::move(file);
-    }
-};
-static DefaultFileIOFactory sDefaultFileFactory;
-
-static UniquePtr<FileIOFactory> sFileFactory;
 UniquePtr<FileIOFactory> FileIOFactory::set(UniquePtr<FileIOFactory> factory)
 {
     std::swap(sFileFactory, factory);
