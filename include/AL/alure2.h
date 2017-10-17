@@ -85,7 +85,7 @@ class MessageHandler;
 template<typename T>
 using RemoveRefT = typename std::remove_reference<T>::type;
 template<bool B>
-using EnableIfB = typename std::enable_if<B>::type;
+using EnableIfT = typename std::enable_if<B>::type;
 
 
 // Duration in seconds, using double precision
@@ -165,7 +165,7 @@ public:
       : mElems(elems), mNumElems(num_elems) { }
     template<typename OtherT> ArrayView(RemoveRefT<OtherT>&&) = delete;
     template<typename OtherT,
-             typename = EnableIfB<IsContiguousTag<RemoveRefT<OtherT>>::value>>
+             typename = EnableIfT<IsContiguousTag<RemoveRefT<OtherT>>::value>>
     ArrayView(const OtherT &rhs) noexcept : mElems(rhs.data()), mNumElems(rhs.size()) { }
     template<size_t N>
     ArrayView(const value_type (&elems)[N]) noexcept : mElems(elems), mNumElems(N) { }
