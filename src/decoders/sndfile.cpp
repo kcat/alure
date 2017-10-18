@@ -57,7 +57,7 @@ static sf_count_t tell(void *user_data)
 }
 
 
-class SndFileDecoder : public Decoder {
+class SndFileDecoder final : public Decoder {
     UniquePtr<std::istream> mFile;
 
     SNDFILE *mSndFile;
@@ -71,18 +71,18 @@ public:
       : mFile(std::move(file)), mSndFile(sndfile), mSndInfo(sndinfo)
       , mChannelConfig(sconfig), mSampleType(stype)
     { }
-    ~SndFileDecoder() override final;
+    ~SndFileDecoder() override;
 
-    ALuint getFrequency() const override final;
-    ChannelConfig getChannelConfig() const override final;
-    SampleType getSampleType() const override final;
+    ALuint getFrequency() const override;
+    ChannelConfig getChannelConfig() const override;
+    SampleType getSampleType() const override;
 
-    uint64_t getLength() const override final;
-    bool seek(uint64_t pos) override final;
+    uint64_t getLength() const override;
+    bool seek(uint64_t pos) override;
 
-    std::pair<uint64_t,uint64_t> getLoopPoints() const override final;
+    std::pair<uint64_t,uint64_t> getLoopPoints() const override;
 
-    ALuint read(ALvoid *ptr, ALuint count) override final;
+    ALuint read(ALvoid *ptr, ALuint count) override;
 };
 
 SndFileDecoder::~SndFileDecoder()

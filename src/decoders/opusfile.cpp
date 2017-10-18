@@ -63,7 +63,7 @@ struct OggTypeInfo<float>
     { return op_read_float(std::forward<Args>(args)...); }
 };
 
-class OpusFileDecoder : public Decoder {
+class OpusFileDecoder final : public Decoder {
     UniquePtr<std::istream> mFile;
 
     OggOpusFile *mOggFile;
@@ -141,18 +141,18 @@ public:
     OpusFileDecoder(UniquePtr<std::istream> file, OggOpusFile *oggfile, ChannelConfig sconfig, SampleType stype)
       : mFile(std::move(file)), mOggFile(oggfile), mOggBitstream(0), mChannelConfig(sconfig), mSampleType(stype)
     { }
-    ~OpusFileDecoder() override final;
+    ~OpusFileDecoder() override;
 
-    ALuint getFrequency() const override final;
-    ChannelConfig getChannelConfig() const override final;
-    SampleType getSampleType() const override final;
+    ALuint getFrequency() const override;
+    ChannelConfig getChannelConfig() const override;
+    SampleType getSampleType() const override;
 
-    uint64_t getLength() const override final;
-    bool seek(uint64_t pos) override final;
+    uint64_t getLength() const override;
+    bool seek(uint64_t pos) override;
 
-    std::pair<uint64_t,uint64_t> getLoopPoints() const override final;
+    std::pair<uint64_t,uint64_t> getLoopPoints() const override;
 
-    ALuint read(ALvoid *ptr, ALuint count) override final;
+    ALuint read(ALvoid *ptr, ALuint count) override;
 };
 
 OpusFileDecoder::~OpusFileDecoder()

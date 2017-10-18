@@ -58,11 +58,11 @@ std::mutex mGlobalCtxMutex;
 // extension using const wchar_t* (or std::wstring?) to handle Unicode paths,
 // but not all Windows compilers support it. So we have to make our own istream
 // that accepts UTF-8 paths and forwards to Unicode-aware I/O functions.
-class StreamBuf : public std::streambuf {
+class StreamBuf final : public std::streambuf {
     alure::Array<traits_type::char_type,4096> mBuffer;
     HANDLE mFile;
 
-    int_type underflow() override final
+    int_type underflow() override
     {
         if(mFile != INVALID_HANDLE_VALUE && gptr() == egptr())
         {
@@ -77,7 +77,7 @@ class StreamBuf : public std::streambuf {
         return traits_type::to_int_type(*gptr());
     }
 
-    pos_type seekoff(off_type offset, std::ios_base::seekdir whence, std::ios_base::openmode mode) override final
+    pos_type seekoff(off_type offset, std::ios_base::seekdir whence, std::ios_base::openmode mode) override
     {
         if(mFile == INVALID_HANDLE_VALUE || (mode&std::ios_base::out) || !(mode&std::ios_base::in))
             return traits_type::eof();
@@ -126,7 +126,7 @@ class StreamBuf : public std::streambuf {
         return fpos.QuadPart;
     }
 
-    pos_type seekpos(pos_type pos, std::ios_base::openmode mode) override final
+    pos_type seekpos(pos_type pos, std::ios_base::openmode mode) override
     {
         // Simplified version of seekoff
         if(mFile == INVALID_HANDLE_VALUE || (mode&std::ios_base::out) || !(mode&std::ios_base::in))
@@ -163,7 +163,7 @@ public:
 
     StreamBuf() : mFile(INVALID_HANDLE_VALUE)
     { }
-    ~StreamBuf() override final
+    ~StreamBuf() override
     {
         if(mFile != INVALID_HANDLE_VALUE)
             CloseHandle(mFile);
@@ -172,7 +172,7 @@ public:
 };
 
 // Inherit from std::istream to use our custom streambuf
-class Stream : public std::istream {
+class Stream final : public std::istream {
 public:
     Stream(const char *filename) : std::istream(new StreamBuf())
     {
@@ -180,7 +180,7 @@ public:
         if(!(static_cast<StreamBuf*>(rdbuf())->open(filename)))
             clear(failbit);
     }
-    ~Stream() override final
+    ~Stream() override
     { delete rdbuf(); }
 
     bool is_open() const { return static_cast<StreamBuf*>(rdbuf())->is_open(); }
@@ -240,8 +240,8 @@ static alure::DecoderOrExceptT GetDecoder(const alure::String &name, alure::Uniq
     return (decoder = std::runtime_error("No decoder for "+name));
 }
 
-class DefaultFileIOFactory : public alure::FileIOFactory {
-    alure::UniquePtr<std::istream> openFile(const alure::String &name) override final
+class DefaultFileIOFactory final : public alure::FileIOFactory {
+    alure::UniquePtr<std::istream> openFile(const alure::String &name) override
     {
 #ifdef _WIN32
         auto file = alure::MakeUnique<Stream>(name.c_str());

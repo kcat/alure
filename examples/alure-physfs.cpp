@@ -20,12 +20,12 @@ namespace
 {
 
 // Inherit from std::streambuf to handle custom I/O (PhysFS for this example)
-class StreamBuf : public std::streambuf {
+class StreamBuf final : public std::streambuf {
     using BufferArrayT = alure::Array<traits_type::char_type,4096>;
     BufferArrayT mBuffer;
     PHYSFS_File *mFile;
 
-    int_type underflow() override final
+    int_type underflow() override
     {
         if(mFile && gptr() == egptr())
         {
@@ -41,7 +41,7 @@ class StreamBuf : public std::streambuf {
         return traits_type::to_int_type(*gptr());
     }
 
-    pos_type seekoff(off_type offset, std::ios_base::seekdir whence, std::ios_base::openmode mode) override final
+    pos_type seekoff(off_type offset, std::ios_base::seekdir whence, std::ios_base::openmode mode) override
     {
         if(!mFile || (mode&std::ios_base::out) || !(mode&std::ios_base::in))
             return traits_type::eof();
@@ -84,7 +84,7 @@ class StreamBuf : public std::streambuf {
         return offset;
     }
 
-    pos_type seekpos(pos_type pos, std::ios_base::openmode mode) override final
+    pos_type seekpos(pos_type pos, std::ios_base::openmode mode) override
     {
         // Simplified version of seekoff
         if(!mFile || (mode&std::ios_base::out) || !(mode&std::ios_base::in))
@@ -108,7 +108,7 @@ public:
 
     StreamBuf() : mFile(nullptr)
     { }
-    ~StreamBuf() override final
+    ~StreamBuf() override
     {
         PHYSFS_close(mFile);
         mFile = nullptr;
@@ -116,7 +116,7 @@ public:
 };
 
 // Inherit from std::istream to use our custom streambuf
-class Stream : public std::istream {
+class Stream final : public std::istream {
 public:
     Stream(const char *filename) : std::istream(new StreamBuf())
     {
@@ -124,12 +124,12 @@ public:
         if(!(static_cast<StreamBuf*>(rdbuf())->open(filename)))
             clear(failbit);
     }
-    ~Stream() override final
+    ~Stream() override
     { delete rdbuf(); }
 };
 
 // Inherit from alure::FileIOFactory to use our custom istream
-class FileFactory : public alure::FileIOFactory {
+class FileFactory final : public alure::FileIOFactory {
 public:
     FileFactory(const char *argv0)
     {
@@ -146,12 +146,12 @@ public:
             std::cout<< "  "<<(*i)->extension<<": "<<(*i)->description <<std::endl;
         std::cout<<std::endl;
     }
-    ~FileFactory() override final
+    ~FileFactory() override
     {
         PHYSFS_deinit();
     }
 
-    alure::UniquePtr<std::istream> openFile(const alure::String &name) override final
+    alure::UniquePtr<std::istream> openFile(const alure::String &name) override
     {
         auto stream = alure::MakeUnique<Stream>(name.c_str());
         if(stream->fail()) stream = nullptr;

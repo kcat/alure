@@ -56,7 +56,7 @@ static ALushort read_le16(std::istream &stream)
 }
 
 
-class WaveDecoder : public Decoder {
+class WaveDecoder final : public Decoder {
     UniquePtr<std::istream> mFile;
 
     ChannelConfig mChannelConfig;
@@ -76,18 +76,18 @@ public:
       : mFile(std::move(file)), mChannelConfig(channels), mSampleType(type), mFrequency(frequency)
       , mFrameSize(framesize), mLoopPts{loopstart,loopend}, mStart(start), mEnd(end)
     { }
-    ~WaveDecoder() override final;
+    ~WaveDecoder() override;
 
-    ALuint getFrequency() const override final;
-    ChannelConfig getChannelConfig() const override final;
-    SampleType getSampleType() const override final;
+    ALuint getFrequency() const override;
+    ChannelConfig getChannelConfig() const override;
+    SampleType getSampleType() const override;
 
-    uint64_t getLength() const override final;
-    bool seek(uint64_t pos) override final;
+    uint64_t getLength() const override;
+    bool seek(uint64_t pos) override;
 
-    std::pair<uint64_t,uint64_t> getLoopPoints() const override final;
+    std::pair<uint64_t,uint64_t> getLoopPoints() const override;
 
-    ALuint read(ALvoid *ptr, ALuint count) override final;
+    ALuint read(ALvoid *ptr, ALuint count) override;
 };
 
 WaveDecoder::~WaveDecoder()

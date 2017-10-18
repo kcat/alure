@@ -75,7 +75,7 @@ static long cb_get_size(void *user_data)
 
 
 // Inherit from alure::Decoder to make a custom decoder (DUMB for this example)
-class DumbDecoder : public alure::Decoder {
+class DumbDecoder final : public alure::Decoder {
     alure::UniquePtr<std::istream> mFile;
 
     alure::UniquePtr<DUMBFILE_SYSTEM> mDfs;
@@ -95,7 +95,7 @@ public:
       : mFile(std::move(file)), mDfs(std::move(dfs)), mDumbfile(dfile), mDuh(duh)
       , mRenderer(renderer), mSampleType(stype), mFrequency(srate)
     { }
-    ~DumbDecoder() override final
+    ~DumbDecoder() override
     {
         duh_end_sigrenderer(mRenderer);
         mRenderer = nullptr;
@@ -107,40 +107,40 @@ public:
         mDumbfile = nullptr;
     }
 
-    ALuint getFrequency() const override final
+    ALuint getFrequency() const override
     { return mFrequency; }
-    alure::ChannelConfig getChannelConfig() const override final
+    alure::ChannelConfig getChannelConfig() const override
     {
         // We always have DUMB render to stereo
         return alure::ChannelConfig::Stereo;
     }
-    alure::SampleType getSampleType() const override final
+    alure::SampleType getSampleType() const override
     {
         // DUMB renders to 8.24 normalized fixed point, which we convert to
         // 32-bit float or signed 16-bit samples
         return mSampleType;
     }
 
-    uint64_t getLength() const override final
+    uint64_t getLength() const override
     {
         // Modules have no explicit length, they just keep playing as long as
         // more samples get generated.
         return 0;
     }
 
-    bool seek(uint64_t) override final
+    bool seek(uint64_t) override
     {
         // Cannot seek
         return false;
     }
 
-    std::pair<uint64_t,uint64_t> getLoopPoints() const override final
+    std::pair<uint64_t,uint64_t> getLoopPoints() const override
     {
         // No loop points
         return std::make_pair(0, 0);
     }
 
-    ALuint read(ALvoid *ptr, ALuint count) override final
+    ALuint read(ALvoid *ptr, ALuint count) override
     {
         ALuint ret = 0;
 
@@ -173,8 +173,8 @@ public:
 };
 
 // Inherit from alure::DecoderFactory to use our custom decoder
-class DumbFactory : public alure::DecoderFactory {
-    alure::SharedPtr<alure::Decoder> createDecoder(alure::UniquePtr<std::istream> &file) override final
+class DumbFactory final : public alure::DecoderFactory {
+    alure::SharedPtr<alure::Decoder> createDecoder(alure::UniquePtr<std::istream> &file) override
     {
         static const alure::Array<DUH*(*)(DUMBFILE*),3> init_funcs{{
             dumb_read_it, dumb_read_xm, dumb_read_s3m

@@ -5,8 +5,8 @@
 
 namespace alure {
 
-class OpusFileDecoderFactory : public DecoderFactory {
-    SharedPtr<Decoder> createDecoder(UniquePtr<std::istream> &file) override final;
+class OpusFileDecoderFactory final : public DecoderFactory {
+    SharedPtr<Decoder> createDecoder(UniquePtr<std::istream> &file) override;
 };
 
 } // namespace alure

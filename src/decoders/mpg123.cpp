@@ -29,7 +29,7 @@ static off_t r_lseek(void *user_data, off_t offset, int whence)
 }
 
 
-class Mpg123Decoder : public Decoder {
+class Mpg123Decoder final : public Decoder {
     UniquePtr<std::istream> mFile;
 
     mpg123_handle *mMpg123;
@@ -40,18 +40,18 @@ public:
     Mpg123Decoder(UniquePtr<std::istream> file, mpg123_handle *mpg123, int chans, long srate)
       : mFile(std::move(file)), mMpg123(mpg123), mChannels(chans), mSampleRate(srate)
     { }
-    ~Mpg123Decoder() override final;
+    ~Mpg123Decoder() override;
 
-    ALuint getFrequency() const override final;
-    ChannelConfig getChannelConfig() const override final;
-    SampleType getSampleType() const override final;
+    ALuint getFrequency() const override;
+    ChannelConfig getChannelConfig() const override;
+    SampleType getSampleType() const override;
 
-    uint64_t getLength() const override final;
-    bool seek(uint64_t pos) override final;
+    uint64_t getLength() const override;
+    bool seek(uint64_t pos) override;
 
-    std::pair<uint64_t,uint64_t> getLoopPoints() const override final;
+    std::pair<uint64_t,uint64_t> getLoopPoints() const override;
 
-    ALuint read(ALvoid *ptr, ALuint count) override final;
+    ALuint read(ALvoid *ptr, ALuint count) override;
 };
 
 Mpg123Decoder::~Mpg123Decoder()

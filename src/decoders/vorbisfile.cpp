@@ -49,7 +49,7 @@ static int close(void*)
 }
 
 
-class VorbisFileDecoder : public Decoder {
+class VorbisFileDecoder final : public Decoder {
     UniquePtr<std::istream> mFile;
 
     UniquePtr<OggVorbis_File> mOggFile;
@@ -63,18 +63,18 @@ public:
       : mFile(std::move(file)), mOggFile(std::move(oggfile)), mVorbisInfo(vorbisinfo)
       , mOggBitstream(0), mChannelConfig(sconfig)
     { }
-    ~VorbisFileDecoder() override final;
+    ~VorbisFileDecoder() override;
 
-    ALuint getFrequency() const override final;
-    ChannelConfig getChannelConfig() const override final;
-    SampleType getSampleType() const override final;
+    ALuint getFrequency() const override;
+    ChannelConfig getChannelConfig() const override;
+    SampleType getSampleType() const override;
 
-    uint64_t getLength() const override final;
-    bool seek(uint64_t pos) override final;
+    uint64_t getLength() const override;
+    bool seek(uint64_t pos) override;
 
-    std::pair<uint64_t,uint64_t> getLoopPoints() const override final;
+    std::pair<uint64_t,uint64_t> getLoopPoints() const override;
 
-    ALuint read(ALvoid *ptr, ALuint count) override final;
+    ALuint read(ALvoid *ptr, ALuint count) override;
 };
 
 VorbisFileDecoder::~VorbisFileDecoder()

@@ -11,7 +11,7 @@
 namespace alure
 {
 
-class FlacDecoder : public Decoder {
+class FlacDecoder final : public Decoder {
     UniquePtr<std::istream> mFile;
 
     FLAC__StreamDecoder *mFlacFile;
@@ -194,20 +194,20 @@ public:
       : mFlacFile(nullptr), mChannelConfig(ChannelConfig::Mono), mSampleType(SampleType::Int16)
       , mFrequency(0), mFrameSize(0), mOutBytes(nullptr), mOutMax(0), mOutLen(0)
     { }
-    ~FlacDecoder() override final;
+    ~FlacDecoder() override;
 
     bool open(UniquePtr<std::istream> &file);
 
-    ALuint getFrequency() const override final;
-    ChannelConfig getChannelConfig() const override final;
-    SampleType getSampleType() const override final;
+    ALuint getFrequency() const override;
+    ChannelConfig getChannelConfig() const override;
+    SampleType getSampleType() const override;
 
-    uint64_t getLength() const override final;
-    bool seek(uint64_t pos) override final;
+    uint64_t getLength() const override;
+    bool seek(uint64_t pos) override;
 
-    std::pair<uint64_t,uint64_t> getLoopPoints() const override final;
+    std::pair<uint64_t,uint64_t> getLoopPoints() const override;
 
-    ALuint read(ALvoid *ptr, ALuint count) override final;
+    ALuint read(ALvoid *ptr, ALuint count) override;
 };
 
 FlacDecoder::~FlacDecoder()

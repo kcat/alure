@@ -5,14 +5,14 @@
 
 namespace alure {
 
-class Mpg123DecoderFactory : public DecoderFactory {
+class Mpg123DecoderFactory final : public DecoderFactory {
     bool mIsInited;
 
 public:
     Mpg123DecoderFactory();
-    ~Mpg123DecoderFactory() override final;
+    ~Mpg123DecoderFactory() override;
 
-    SharedPtr<Decoder> createDecoder(UniquePtr<std::istream> &file) override final;
+    SharedPtr<Decoder> createDecoder(UniquePtr<std::istream> &file) override;
 };
 
 } // namespace alure
