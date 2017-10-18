@@ -14,19 +14,17 @@
 #include "alc.h"
 #include "al.h"
 
-#ifdef _WIN32
-#if defined(ALURE_BUILD_STATIC) || defined(ALURE_STATIC_LIB)
-#define ALURE_API
-#elif defined(ALURE_BUILD_DLL)
-#define ALURE_API __declspec(dllexport)
-#else
-#define ALURE_API __declspec(dllimport)
-#endif
-
-#else
-
-#define ALURE_API
-#endif
+#ifndef ALURE_API
+ #if defined(ALURE_STATIC_LIB)
+  #define ALURE_API
+ #elif defined(_WIN32)
+  #define ALURE_API __declspec(dllimport)
+ #elif defined(__GNUC__) || (defined(__has_attribute) && __has_attribute(visibility))
+  #define ALURE_API __attribute__((visibility("default")))
+ #else
+  #define ALURE_API
+ #endif
+#endif /* ALURE_API */
 
 #ifndef EFXEAXREVERBPROPERTIES_DEFINED
 #define EFXEAXREVERBPROPERTIES_DEFINED

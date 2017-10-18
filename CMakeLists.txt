@@ -43,6 +43,32 @@ else()
     endif()
 endif()
 
+unset(EXPORT_DECL)
+set(VISIBILITY_FLAGS )
+if(WIN32)
+    set(EXPORT_DECL "__declspec(dllexport)")
+else()
+    set(OLD_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS}")
+    # Yes GCC, really don't accept visibility modes you don't support
+    set(CMAKE_REQUIRED_FLAGS "${OLD_REQUIRED_FLAGS} -Wattributes -Werror")
+
+    check_cxx_source_compiles("int foo() __attribute__((visibility(\"default\")));
+                                int main() {return 0;}" HAVE_GCC_DEFAULT_VISIBILITY)
+    if(HAVE_GCC_DEFAULT_VISIBILITY)
+        set(EXPORT_DECL "__attribute__((visibility(\"default\")))")
+    endif()
+
+    if(HAVE_GCC_DEFAULT_VISIBILITY)
+        check_cxx_compiler_flag(-fvisibility=hidden HAVE_VISIBILITY_HIDDEN_SWITCH)
+        if(HAVE_VISIBILITY_HIDDEN_SWITCH)
+            set(VISIBILITY_FLAGS ${VISIBILITY_FLAGS} -fvisibility=hidden)
+        endif()
+    endif()
+
+    set(CMAKE_REQUIRED_FLAGS "${OLD_REQUIRED_FLAGS}")
+endif()
+
+
 set(LINKER_OPTS )
 if(ALURE_STATIC_GCCRT)
     set(OLD_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES})
@@ -130,23 +156,25 @@ CONFIGURE_FILE(
 
 
 add_library(alure2 SHARED ${alure_srcs})
-target_compile_definitions(alure2 PRIVATE ALURE_BUILD_DLL)
+if(EXPORT_DECL)
+    target_compile_definitions(alure2 PRIVATE ALURE_API=${EXPORT_DECL})
+endif()
 target_include_directories(alure2
     PUBLIC ${alure_SOURCE_DIR}/include/AL ${OPENAL_INCLUDE_DIR}
     PRIVATE ${alure_SOURCE_DIR}/include ${alure_SOURCE_DIR}/src ${alure_BINARY_DIR}
             ${decoder_incls}
 )
-target_compile_options(alure2 PRIVATE ${CXX_FLAGS})
+target_compile_options(alure2 PRIVATE ${CXX_FLAGS} ${VISIBILITY_FLAGS})
 target_link_libraries(alure2 PUBLIC ${alure_libs} PRIVATE ${LINKER_OPTS})
 
 add_library(alure2_s STATIC ${alure_srcs})
-target_compile_definitions(alure2_s PUBLIC ALURE_STATIC_LIB PRIVATE ALURE_BUILD_STATIC)
+target_compile_definitions(alure2_s PUBLIC ALURE_STATIC_LIB)
 target_include_directories(alure2_s
     PUBLIC ${alure_SOURCE_DIR}/include/AL ${OPENAL_INCLUDE_DIR}
     PRIVATE ${alure_SOURCE_DIR}/include ${alure_SOURCE_DIR}/src ${alure_BINARY_DIR}
             ${decoder_incls}
 )
-target_compile_options(alure2_s PRIVATE ${CXX_FLAGS})
+target_compile_options(alure2_s PRIVATE ${CXX_FLAGS} ${VISIBILITY_FLAGS})
 target_link_libraries(alure2_s PUBLIC ${alure_libs})
 
 
