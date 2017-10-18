@@ -289,7 +289,7 @@ struct FilterParams {
 };
 
 
-class ALURE_API Vector3 {
+class Vector3 {
     Array<ALfloat,3> mValue;
 
 public:
