@@ -838,7 +838,12 @@ SharedFuture<Buffer> ContextImpl::getBufferAsync(const String &name)
         // Check if the future that's being created already exists
         auto iter = mFutureBuffers.find(name);
         if(iter != mFutureBuffers.end())
+        {
             future = iter->second;
+            if(future.wait_for(std::chrono::milliseconds::zero()) == std::future_status::ready)
+                iter = mFutureBuffers.erase(iter);
+            return future;
+        }
 
         // Clear out any fulfilled futures.
         iter = mFutureBuffers.begin();
@@ -849,9 +854,6 @@ SharedFuture<Buffer> ContextImpl::getBufferAsync(const String &name)
             else
                 ++iter;
         }
-
-        // Return the future instance if we have one
-        if(future.valid()) return future;
     }
 
     auto hasher = std::hash<String>();
@@ -905,9 +907,6 @@ void ContextImpl::precacheBuffersAsync(ArrayView<String> names)
     for(const String &name : names)
     {
         // Check if the buffer that's being created already exists
-        if(mFutureBuffers.find(name) != mFutureBuffers.end())
-            continue;
-
         auto iter = std::lower_bound(mBuffers.begin(), mBuffers.end(), hasher(name),
             [hasher](const UniquePtr<BufferImpl> &lhs, size_t rhs) -> bool
             { return hasher(lhs->getName()) < rhs; }
