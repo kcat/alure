@@ -787,23 +787,26 @@ Buffer ContextImpl::getBuffer(const String &name)
 {
     CheckContext(this);
 
+    auto hasher = std::hash<String>();
     if(EXPECT(!mFutureBuffers.empty(), false))
     {
         Buffer buffer;
 
         // If the buffer is already pending for the future, wait for it
-        auto iter = mFutureBuffers.find(name);
-        if(iter != mFutureBuffers.end())
+        auto iter = std::lower_bound(mFutureBuffers.begin(), mFutureBuffers.end(), hasher(name),
+            [hasher](const PendingFuture &lhs, size_t rhs) -> bool
+            { return hasher(lhs.mBuffer->getName()) < rhs; }
+        );
+        if(iter != mFutureBuffers.end() && iter->mBuffer->getName() == name)
         {
-            buffer = iter->second.get();
+            buffer = iter->mFuture.get();
             mFutureBuffers.erase(iter);
         }
 
         // Clear out any completed futures.
-        iter = mFutureBuffers.begin();
-        while(iter != mFutureBuffers.end())
+        for(iter = mFutureBuffers.begin();iter != mFutureBuffers.end();)
         {
-            if(iter->second.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready)
+            if(iter->mFuture.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready)
                 iter = mFutureBuffers.erase(iter);
             else
                 ++iter;
@@ -813,7 +816,6 @@ Buffer ContextImpl::getBuffer(const String &name)
         if(buffer) return buffer;
     }
 
-    auto hasher = std::hash<String>();
     auto iter = std::lower_bound(mBuffers.begin(), mBuffers.end(), hasher(name),
         [hasher](const UniquePtr<BufferImpl> &lhs, size_t rhs) -> bool
         { return hasher(lhs->getName()) < rhs; }
@@ -833,30 +835,32 @@ SharedFuture<Buffer> ContextImpl::getBufferAsync(const String &name)
     SharedFuture<Buffer> future;
     CheckContext(this);
 
+    auto hasher = std::hash<String>();
     if(EXPECT(!mFutureBuffers.empty(), false))
     {
         // Check if the future that's being created already exists
-        auto iter = mFutureBuffers.find(name);
-        if(iter != mFutureBuffers.end())
+        auto iter = std::lower_bound(mFutureBuffers.begin(), mFutureBuffers.end(), hasher(name),
+            [hasher](const PendingFuture &lhs, size_t rhs) -> bool
+            { return hasher(lhs.mBuffer->getName()) < rhs; }
+        );
+        if(iter != mFutureBuffers.end() && iter->mBuffer->getName() == name)
         {
-            future = iter->second;
+            future = iter->mFuture;
             if(future.wait_for(std::chrono::milliseconds::zero()) == std::future_status::ready)
-                iter = mFutureBuffers.erase(iter);
+                mFutureBuffers.erase(iter);
             return future;
         }
 
         // Clear out any fulfilled futures.
-        iter = mFutureBuffers.begin();
-        while(iter != mFutureBuffers.end())
+        for(iter = mFutureBuffers.begin();iter != mFutureBuffers.end();)
         {
-            if(iter->second.wait_for(std::chrono::milliseconds::zero()) == std::future_status::ready)
+            if(iter->mFuture.wait_for(std::chrono::milliseconds::zero()) == std::future_status::ready)
                 iter = mFutureBuffers.erase(iter);
             else
                 ++iter;
         }
     }
 
-    auto hasher = std::hash<String>();
     auto iter = std::lower_bound(mBuffers.begin(), mBuffers.end(), hasher(name),
         [hasher](const UniquePtr<BufferImpl> &lhs, size_t rhs) -> bool
         { return hasher(lhs->getName()) < rhs; }
@@ -881,7 +885,12 @@ SharedFuture<Buffer> ContextImpl::getBufferAsync(const String &name)
     mWakeMutex.lock(); mWakeMutex.unlock();
     mWakeThread.notify_all();
 
-    mFutureBuffers.emplace(std::make_pair(name, future));
+    mFutureBuffers.insert(
+        std::lower_bound(mFutureBuffers.begin(), mFutureBuffers.end(), hasher(name),
+            [hasher](const PendingFuture &lhs, size_t rhs) -> bool
+            { return hasher(lhs.mBuffer->getName()) < rhs; }
+        ), { buffer->getHandle(), future }
+    );
 
     return future;
 }
@@ -893,10 +902,9 @@ void ContextImpl::precacheBuffersAsync(ArrayView<String> names)
     if(EXPECT(!mFutureBuffers.empty(), false))
     {
         // Clear out any fulfilled futures.
-        auto iter = mFutureBuffers.begin();
-        while(iter != mFutureBuffers.end())
+        for(auto iter = mFutureBuffers.begin();iter != mFutureBuffers.end();)
         {
-            if(iter->second.wait_for(std::chrono::milliseconds::zero()) == std::future_status::ready)
+            if(iter->mFuture.wait_for(std::chrono::milliseconds::zero()) == std::future_status::ready)
                 iter = mFutureBuffers.erase(iter);
             else
                 ++iter;
@@ -923,9 +931,15 @@ void ContextImpl::precacheBuffersAsync(ArrayView<String> names)
 
         BufferOrExceptT buf = doCreateBufferAsync(name, iter, std::move(*decoder),
                                                   std::move(promise));
-        if(!std::holds_alternative<Buffer>(buf)) continue;
+        Buffer *buffer = std::get_if<Buffer>(&buf);
+        if(EXPECT(!buffer, false)) continue;
 
-        mFutureBuffers.emplace(std::make_pair(name, std::move(future)));
+        mFutureBuffers.insert(
+            std::lower_bound(mFutureBuffers.begin(), mFutureBuffers.end(), hasher(name),
+                [hasher](const PendingFuture &lhs, size_t rhs) -> bool
+                { return hasher(lhs.mBuffer->getName()) < rhs; }
+            ), { buffer->getHandle(), future }
+        );
     }
     mWakeMutex.lock(); mWakeMutex.unlock();
     mWakeThread.notify_all();
@@ -958,10 +972,9 @@ SharedFuture<Buffer> ContextImpl::createBufferAsyncFrom(const String &name, Shar
     if(EXPECT(!mFutureBuffers.empty(), false))
     {
         // Clear out any fulfilled futures.
-        auto iter = mFutureBuffers.begin();
-        while(iter != mFutureBuffers.end())
+        for(auto iter = mFutureBuffers.begin();iter != mFutureBuffers.end();)
         {
-            if(iter->second.wait_for(std::chrono::milliseconds::zero()) == std::future_status::ready)
+            if(iter->mFuture.wait_for(std::chrono::milliseconds::zero()) == std::future_status::ready)
                 iter = mFutureBuffers.erase(iter);
             else
                 ++iter;
@@ -986,7 +999,12 @@ SharedFuture<Buffer> ContextImpl::createBufferAsyncFrom(const String &name, Shar
     mWakeMutex.lock(); mWakeMutex.unlock();
     mWakeThread.notify_all();
 
-    mFutureBuffers.emplace(std::make_pair(name, future));
+    mFutureBuffers.insert(
+        std::lower_bound(mFutureBuffers.begin(), mFutureBuffers.end(), hasher(name),
+            [hasher](const PendingFuture &lhs, size_t rhs) -> bool
+            { return hasher(lhs.mBuffer->getName()) < rhs; }
+        ), { buffer->getHandle(), future }
+    );
 
     return future;
 }
@@ -996,29 +1014,31 @@ void ContextImpl::removeBuffer(const String &name)
 {
     CheckContext(this);
 
+    auto hasher = std::hash<String>();
     if(EXPECT(!mFutureBuffers.empty(), false))
     {
         // If the buffer is already pending for the future, wait for it to
         // finish before continuing.
-        auto iter = mFutureBuffers.find(name);
-        if(iter != mFutureBuffers.end())
+        auto iter = std::lower_bound(mFutureBuffers.begin(), mFutureBuffers.end(), hasher(name),
+            [hasher](const PendingFuture &lhs, size_t rhs) -> bool
+            { return hasher(lhs.mBuffer->getName()) < rhs; }
+        );
+        if(iter != mFutureBuffers.end() && iter->mBuffer->getName() == name)
         {
-            iter->second.wait();
+            iter->mFuture.wait();
             mFutureBuffers.erase(iter);
         }
 
         // Clear out any completed futures.
-        iter = mFutureBuffers.begin();
-        while(iter != mFutureBuffers.end())
+        for(iter = mFutureBuffers.begin();iter != mFutureBuffers.end();)
         {
-            if(iter->second.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready)
+            if(iter->mFuture.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready)
                 iter = mFutureBuffers.erase(iter);
             else
                 ++iter;
         }
     }
 
-    auto hasher = std::hash<String>();
     auto iter = std::lower_bound(mBuffers.begin(), mBuffers.end(), hasher(name),
         [hasher](const UniquePtr<BufferImpl> &lhs, size_t rhs) -> bool
         { return hasher(lhs->getName()) < rhs; }

@@ -129,8 +129,10 @@ private:
     ALCcontext *mContext;
     std::stack<ALuint> mSourceIds;
 
+    struct PendingFuture { BufferImpl *mBuffer;  SharedFuture<Buffer> mFuture; };
+
     DeviceImpl *const mDevice;
-    std::unordered_map<String,SharedFuture<Buffer>> mFutureBuffers;
+    Vector<PendingFuture> mFutureBuffers;
     Vector<UniquePtr<BufferImpl>> mBuffers;
     Vector<UniquePtr<SourceGroupImpl>> mSourceGroups;
     std::deque<SourceImpl> mAllSources;
