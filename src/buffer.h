@@ -23,18 +23,14 @@ class BufferImpl {
     ChannelConfig mChannelConfig;
     SampleType mSampleType;
 
-    BufferLoadStatus mLoadStatus;
-    std::atomic<bool> mIsLoaded;
-
     Vector<Source> mSources;
 
     const String mName;
 
 public:
-    BufferImpl(ContextImpl *context, ALuint id, ALuint freq, ChannelConfig config, SampleType type, bool preloaded, const String &name)
-      : mContext(context), mId(id), mFrequency(freq), mChannelConfig(config), mSampleType(type),
-        mLoadStatus(preloaded ? BufferLoadStatus::Ready : BufferLoadStatus::Pending),
-        mIsLoaded(preloaded), mName(name)
+    BufferImpl(ContextImpl *context, ALuint id, ALuint freq, ChannelConfig config, SampleType type, const String &name)
+      : mContext(context), mId(id), mFrequency(freq), mChannelConfig(config), mSampleType(type)
+      , mName(name)
     { }
 
     void cleanup();
@@ -51,8 +47,6 @@ public:
 
     void load(ALuint frames, ALenum format, SharedPtr<Decoder> decoder, const String &name, ContextImpl *ctx);
 
-    bool isReady() const { return mLoadStatus == BufferLoadStatus::Ready; }
-
     ALuint getLength() const;
 
     ALuint getFrequency() const { return mFrequency; }
@@ -65,8 +59,6 @@ public:
     std::pair<ALuint,ALuint> getLoopPoints() const;
 
     Vector<Source> getSources() const { return mSources; }
-
-    BufferLoadStatus getLoadStatus();
 
     const String &getName() const { return mName; }
 

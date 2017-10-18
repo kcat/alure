@@ -6,7 +6,7 @@
 #include <memory>
 #include <cstring>
 #include <utility>
-#include <limits>
+#include <future>
 #include <chrono>
 #include <array>
 #include <cmath>
@@ -695,22 +695,25 @@ public:
     Buffer getBuffer(const String &name);
 
     /**
-     * Creates and caches a Buffer for the given audio file or resource name.
-     * Multiple calls with the same name will return the same Buffer object.
-     * Cached buffers must be freed using removeBuffer before destroying the
-     * context. If the buffer can't be created it will throw an exception, and
-     * if it fails to load will be silent.
+     * Asynchronously prepares a cached Buffer for the given audio file or
+     * resource name. Multiple calls with the same name will return multiple
+     * shared futures for the same Buffer object. Once called, the buffer must
+     * be freed using removeBuffer before destroying the context, even if you
+     * never get the Buffer from the shared_future.
      *
-     * The returned Buffer object will be scheduled for loading asynchronously,
-     * and must be checked with a call to Buffer::getLoadStatus prior to being
-     * played.
+     * The Buffer will be loaded asynchronously, and the caller gets back a
+     * shared_future immediately that can be checked later (or waited on) to
+     * get the actual Buffer when it's ready. The application must take care to
+     * handle exceptions from the shared_future in case of an unrecoverable
+     * error during the load.
      */
-    Buffer getBufferAsync(const String &name);
+    std::shared_future<Buffer> getBufferAsync(const String &name);
 
     /**
-     * Creates and caches Buffers for the given audio file or resource names.
-     * Duplicate names and buffers already cached are ignored. Cached buffers
-     * must be freed using removeBuffer before destroying the context.
+     * Asynchronously prepares cached Buffers for the given audio file or
+     * resource names. Duplicate names and buffers already cached are ignored.
+     * Cached buffers must be freed using removeBuffer before destroying the
+     * context.
      *
      * The Buffer objects will be scheduled for loading asynchronously, and
      * should be retrieved later when needed using getBufferAsync or getBuffer.
@@ -733,16 +736,20 @@ public:
     Buffer createBufferFrom(const String &name, SharedPtr<Decoder> decoder);
 
     /**
-     * Creates and caches a Buffer using the given name. The name may alias an
-     * audio file, but it must not currently exist in the buffer cache.
+     * Asynchronously prepares a cached Buffer using the given name. The name
+     * may alias an audio file, but it must not currently exist in the buffer
+     * cache. Once called, the buffer must be freed using removeBuffer before
+     * destroying the context, even if you never get the Buffer from the
+     * shared_future.
      *
-     * The returned Buffer object will be scheduled for loading asynchronously,
-     * and must be checked with a call to Buffer::getLoadStatus prior to being
-     * played. The given decoder will be held on to and used asynchronously to
-     * load the buffer. The decoder must not have its read or seek methods
-     * called while the buffer load status is pending.
+     * The Buffer will be loaded asynchronously using the given decoder, and
+     * the caller gets back a shared_future immediately that can be checked
+     * later (or waited on) to get the actual Buffer when it's ready. The
+     * application must take care to handle exceptions from the shared_future
+     * in case of an unrecoverable error during the load. The decoder must not
+     * have its read or seek methods called while the buffer is not ready.
      */
-    Buffer createBufferAsyncFrom(const String &name, SharedPtr<Decoder> decoder);
+    std::shared_future<Buffer> createBufferAsyncFrom(const String &name, SharedPtr<Decoder> decoder);
 
     /**
      * Deletes the cached Buffer object for the given audio file or
@@ -831,19 +838,11 @@ public:
 };
 
 
-enum class BufferLoadStatus {
-    Pending,
-    Ready
-};
-
 class ALURE_API Buffer {
     MAKE_PIMPL(Buffer, BufferImpl)
 
 public:
-    /**
-     * Retrieves the length of the buffer in sample frames. The buffer must be
-     * fully loaded before this method is called.
-     */
+    /** Retrieves the length of the buffer in sample frames. */
     ALuint getLength() const;
 
     /** Retrieves the buffer's frequency in hz. */
@@ -855,10 +854,7 @@ public:
     /** Retrieves the buffer's sample type. */
     SampleType getSampleType() const;
 
-    /**
-     * Retrieves the storage size used by the buffer, in bytes. The buffer must
-     * be fully loaded before this method is called.
-     */
+    /** Retrieves the storage size used by the buffer, in bytes. */
     ALuint getSize() const;
 
     /**
@@ -867,18 +863,14 @@ public:
      * end must be 0 and getLength() respectively. Otherwise, start must be
      * less than end, and end must be less than or equal to getLength().
      *
-     * The buffer must not be in use when this method is called, and the buffer
-     * must be fully loaded.
+     * The buffer must not be in use when this method is called.
      *
      * \param start The starting point, in sample frames (inclusive).
      * \param end The ending point, in sample frames (exclusive).
      */
     void setLoopPoints(ALuint start, ALuint end);
 
-    /**
-     * Retrieves the current loop points as a [start,end) pair. The buffer must
-     * be fully loaded before this method is called.
-     */
+    /** Retrieves the current loop points as a [start,end) pair. */
     std::pair<ALuint,ALuint> getLoopPoints() const;
 
     /**
@@ -886,14 +878,6 @@ public:
      * returned sources will allow the buffer to be removed from the context.
      */
     Vector<Source> getSources() const;
-
-    /**
-     * Queries the buffer's load status. A return of BufferLoadStatus::Pending
-     * indicates the buffer is not finished loading and can't be used with a
-     * call to Source::play. Buffers created with Context::getBuffer will
-     * always return BufferLoadStatus::Ready.
-     */
-    BufferLoadStatus getLoadStatus();
 
     /** Retrieves the name the buffer was created with. */
     const String &getName() const;

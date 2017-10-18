@@ -332,9 +332,6 @@ void SourceImpl::play(Buffer buffer)
     CheckContext(mContext);
     CheckContext(albuf->getContext());
 
-    if(!albuf->isReady())
-        throw std::runtime_error("Buffer is not ready");
-
     if(mStream)
         mContext->removeStream(this);
     mIsAsync.store(false, std::memory_order_release);

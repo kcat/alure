@@ -17,8 +17,6 @@ namespace alure
 
 void BufferImpl::cleanup()
 {
-    while(!mIsLoaded.load(std::memory_order_acquire))
-        std::this_thread::yield();
     if(isInUse())
         throw std::runtime_error("Buffer is in use");
 
@@ -67,16 +65,12 @@ void BufferImpl::load(ALuint frames, ALenum format, SharedPtr<Decoder> decoder, 
         ALint pts[2]{(ALint)loop_pts.first, (ALint)loop_pts.second};
         alBufferiv(mId, AL_LOOP_POINTS_SOFT, pts);
     }
-
-    mIsLoaded.store(true, std::memory_order_release);
 }
 
 
 ALuint BufferImpl::getLength() const
 {
     CheckContext(mContext);
-    if(mLoadStatus != BufferLoadStatus::Ready)
-        throw std::runtime_error("Buffer not loaded");
 
     ALint size=-1, bits=-1, chans=-1;
     alGetBufferi(mId, AL_SIZE, &size);
@@ -90,8 +84,6 @@ ALuint BufferImpl::getLength() const
 ALuint BufferImpl::getSize() const
 {
     CheckContext(mContext);
-    if(mLoadStatus != BufferLoadStatus::Ready)
-        throw std::runtime_error("Buffer not loaded");
 
     ALint size = -1;
     alGetBufferi(mId, AL_SIZE, &size);
@@ -127,8 +119,6 @@ void BufferImpl::setLoopPoints(ALuint start, ALuint end)
 std::pair<ALuint,ALuint> BufferImpl::getLoopPoints() const
 {
     CheckContext(mContext);
-    if(mLoadStatus != BufferLoadStatus::Ready)
-        throw std::runtime_error("Buffer not loaded");
 
     if(!mContext->hasExtension(SOFT_loop_points))
         return std::make_pair(0, getLength());
@@ -142,19 +132,6 @@ std::pair<ALuint,ALuint> BufferImpl::getLoopPoints() const
 }
 
 
-BufferLoadStatus BufferImpl::getLoadStatus()
-{
-    /* NOTE: LoadStatus is separate from IsLoaded to force the app to receive
-     * acknowledgement that the buffer is ready before using it. Otherwise, if
-     * the app decides to simply use it after a short wait there's no guarantee
-     * it'll be ready in a consistent manner. It may work some times and fail
-     * others.
-     */
-    if(mLoadStatus == BufferLoadStatus::Pending && mIsLoaded.load(std::memory_order_acquire))
-        mLoadStatus = BufferLoadStatus::Ready;
-    return mLoadStatus;
-}
-
 using ALuintPair = std::pair<ALuint,ALuint>;
 DECL_THUNK0(ALuint, Buffer, getLength, const)
 DECL_THUNK0(ALuint, Buffer, getFrequency, const)
@@ -164,7 +141,6 @@ DECL_THUNK0(ALuint, Buffer, getSize, const)
 DECL_THUNK2(void, Buffer, setLoopPoints,, ALuint, ALuint)
 DECL_THUNK0(ALuintPair, Buffer, getLoopPoints, const)
 DECL_THUNK0(Vector<Source>, Buffer, getSources, const)
-DECL_THUNK0(BufferLoadStatus, Buffer, getLoadStatus,)
 DECL_THUNK0(const String&, Buffer, getName, const)
 DECL_THUNK0(bool, Buffer, isInUse, const)
 

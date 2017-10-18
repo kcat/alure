@@ -496,6 +496,7 @@ void ContextImpl::backgroundProc()
         {
             PendingBuffer *pb = reinterpret_cast<PendingBuffer*>(ringdata.buf);
             pb->mBuffer->load(pb->mFrames, pb->mFormat, pb->mDecoder, pb->mName, this);
+            pb->mPromise.set_value(Buffer(pb->mBuffer));
             pb->~PendingBuffer();
             mPendingBuffers.read_advance(1);
             continue;
@@ -737,11 +738,11 @@ BufferOrExceptT ContextImpl::doCreateBuffer(const String &name, Vector<UniquePtr
     }
 
     return (retval = mBuffers.insert(iter,
-        MakeUnique<BufferImpl>(this, bid, srate, chans, type, true, name)
+        MakeUnique<BufferImpl>(this, bid, srate, chans, type, name)
     )->get());
 }
 
-BufferOrExceptT ContextImpl::doCreateBufferAsync(const String &name, Vector<UniquePtr<BufferImpl>>::iterator iter, SharedPtr<Decoder> decoder)
+BufferOrExceptT ContextImpl::doCreateBufferAsync(const String &name, Vector<UniquePtr<BufferImpl>>::iterator iter, SharedPtr<Decoder> decoder, std::promise<Buffer> promise)
 {
     BufferOrExceptT retval;
     ALuint srate = decoder->getFrequency();
@@ -764,7 +765,7 @@ BufferOrExceptT ContextImpl::doCreateBufferAsync(const String &name, Vector<Uniq
     if(alGetError() != AL_NO_ERROR)
         return (retval = std::runtime_error("Failed to create buffer"));
 
-    auto buffer = MakeUnique<BufferImpl>(this, bid, srate, chans, type, false, name);
+    auto buffer = MakeUnique<BufferImpl>(this, bid, srate, chans, type, name);
 
     if(mThread.get_id() == std::thread::id())
         mThread = std::thread(std::mem_fn(&ContextImpl::backgroundProc), this);
@@ -776,7 +777,7 @@ BufferOrExceptT ContextImpl::doCreateBufferAsync(const String &name, Vector<Uniq
     }
 
     RingBuffer::Data ringdata = mPendingBuffers.get_write_vector()[0];
-    new(ringdata.buf) PendingBuffer{name, buffer.get(), decoder, format, frames};
+    new(ringdata.buf) PendingBuffer{name, buffer.get(), decoder, format, frames, std::move(promise)};
     mPendingBuffers.write_advance(1);
 
     return (retval = mBuffers.insert(iter, std::move(buffer))->get());
@@ -786,31 +787,32 @@ Buffer ContextImpl::getBuffer(const String &name)
 {
     CheckContext(this);
 
-    auto hasher = std::hash<String>();
-    auto iter = std::lower_bound(mBuffers.begin(), mBuffers.end(), hasher(name),
-        [hasher](const UniquePtr<BufferImpl> &lhs, size_t rhs) -> bool
-        { return hasher(lhs->getName()) < rhs; }
-    );
-    if(iter != mBuffers.end() && (*iter)->getName() == name)
+    if(EXPECT(!mFutureBuffers.empty(), false))
     {
-        // Ensure the buffer is loaded before returning. getBuffer guarantees
-        // the returned buffer is loaded.
-        BufferImpl *buffer = iter->get();
-        while(buffer->getLoadStatus() == BufferLoadStatus::Pending)
-            std::this_thread::yield();
-        return Buffer(buffer);
+        Buffer buffer;
+
+        // If the buffer is already pending for the future, wait for it
+        auto iter = mFutureBuffers.find(name);
+        if(iter != mFutureBuffers.end())
+        {
+            buffer = iter->second.get();
+            mFutureBuffers.erase(iter);
+        }
+
+        // Clear out any completed futures.
+        iter = mFutureBuffers.begin();
+        while(iter != mFutureBuffers.end())
+        {
+            std::shared_future<Buffer> future = iter->second;
+            if(future.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready)
+                iter = mFutureBuffers.erase(iter);
+            else
+                ++iter;
+        }
+
+        // If we got the buffer, return it. Otherwise, go load it normally.
+        if(buffer) return buffer;
     }
-
-    BufferOrExceptT ret = doCreateBuffer(name, iter, createDecoder(name));
-    Buffer *buffer = std::get_if<Buffer>(&ret);
-    if(EXPECT(!buffer, false))
-        throw std::get<std::runtime_error>(ret);
-    return *buffer;
-}
-
-Buffer ContextImpl::getBufferAsync(const String &name)
-{
-    CheckContext(this);
 
     auto hasher = std::hash<String>();
     auto iter = std::lower_bound(mBuffers.begin(), mBuffers.end(), hasher(name),
@@ -820,22 +822,95 @@ Buffer ContextImpl::getBufferAsync(const String &name)
     if(iter != mBuffers.end() && (*iter)->getName() == name)
         return Buffer(iter->get());
 
-    BufferOrExceptT ret = doCreateBufferAsync(name, iter, createDecoder(name));
+    BufferOrExceptT ret = doCreateBuffer(name, iter, createDecoder(name));
+    Buffer *buffer = std::get_if<Buffer>(&ret);
+    if(EXPECT(!buffer, false))
+        throw std::get<std::runtime_error>(ret);
+    return *buffer;
+}
+
+std::shared_future<Buffer> ContextImpl::getBufferAsync(const String &name)
+{
+    std::shared_future<Buffer> future;
+    CheckContext(this);
+
+    if(EXPECT(!mFutureBuffers.empty(), false))
+    {
+        // Check if the future that's being created already exists
+        auto iter = mFutureBuffers.find(name);
+        if(iter != mFutureBuffers.end())
+            future = iter->second;
+
+        // Clear out any fulfilled futures.
+        iter = mFutureBuffers.begin();
+        while(iter != mFutureBuffers.end())
+        {
+            std::shared_future<Buffer> future = iter->second;
+            if(future.wait_for(std::chrono::milliseconds::zero()) == std::future_status::ready)
+                iter = mFutureBuffers.erase(iter);
+            else
+                ++iter;
+        }
+
+        // Return the future instance if we have one
+        if(future.valid()) return future;
+    }
+
+    auto hasher = std::hash<String>();
+    auto iter = std::lower_bound(mBuffers.begin(), mBuffers.end(), hasher(name),
+        [hasher](const UniquePtr<BufferImpl> &lhs, size_t rhs) -> bool
+        { return hasher(lhs->getName()) < rhs; }
+    );
+    if(iter != mBuffers.end() && (*iter)->getName() == name)
+    {
+        // User asked to create a future buffer that's already loaded. Just
+        // construct a promise, fulfill the promise immediately, then return a
+        // shared future that's already set.
+        std::promise<Buffer> promise;
+        promise.set_value(Buffer(iter->get()));
+        return promise.get_future().share();
+    }
+
+    std::promise<Buffer> promise;
+    future = promise.get_future().share();
+
+    BufferOrExceptT ret = doCreateBufferAsync(name, iter, createDecoder(name), std::move(promise));
     Buffer *buffer = std::get_if<Buffer>(&ret);
     if(EXPECT(!buffer, false))
         throw std::get<std::runtime_error>(ret);
     mWakeMutex.lock(); mWakeMutex.unlock();
     mWakeThread.notify_all();
-    return *buffer;
+
+    mFutureBuffers.emplace(std::make_pair(name, future));
+
+    return future;
 }
 
 void ContextImpl::precacheBuffersAsync(ArrayView<String> names)
 {
     CheckContext(this);
 
+    if(EXPECT(!mFutureBuffers.empty(), false))
+    {
+        // Clear out any fulfilled futures.
+        auto iter = mFutureBuffers.begin();
+        while(iter != mFutureBuffers.end())
+        {
+            std::shared_future<Buffer> future = iter->second;
+            if(future.wait_for(std::chrono::milliseconds::zero()) == std::future_status::ready)
+                iter = mFutureBuffers.erase(iter);
+            else
+                ++iter;
+        }
+    }
+
     auto hasher = std::hash<String>();
     for(const String &name : names)
     {
+        // Check if the buffer that's being created already exists
+        if(mFutureBuffers.find(name) != mFutureBuffers.end())
+            continue;
+
         auto iter = std::lower_bound(mBuffers.begin(), mBuffers.end(), hasher(name),
             [hasher](const UniquePtr<BufferImpl> &lhs, size_t rhs) -> bool
             { return hasher(lhs->getName()) < rhs; }
@@ -844,8 +919,17 @@ void ContextImpl::precacheBuffersAsync(ArrayView<String> names)
             continue;
 
         DecoderOrExceptT dec = findDecoder(name);
-        if(SharedPtr<Decoder> *decoder = std::get_if<SharedPtr<Decoder>>(&dec))
-            doCreateBufferAsync(name, iter, *decoder);
+        SharedPtr<Decoder> *decoder = std::get_if<SharedPtr<Decoder>>(&dec);
+        if(!decoder) continue;
+
+        std::promise<Buffer> promise;
+        std::shared_future<Buffer> future = promise.get_future().share();
+
+        BufferOrExceptT buf = doCreateBufferAsync(name, iter, std::move(*decoder),
+                                                  std::move(promise));
+        if(!std::holds_alternative<Buffer>(buf)) continue;
+
+        mFutureBuffers.emplace(std::make_pair(name, std::move(future)));
     }
     mWakeMutex.lock(); mWakeMutex.unlock();
     mWakeThread.notify_all();
@@ -870,9 +954,24 @@ Buffer ContextImpl::createBufferFrom(const String &name, SharedPtr<Decoder> deco
     return *buffer;
 }
 
-Buffer ContextImpl::createBufferAsyncFrom(const String &name, SharedPtr<Decoder> decoder)
+std::shared_future<Buffer> ContextImpl::createBufferAsyncFrom(const String &name, SharedPtr<Decoder> decoder)
 {
+    std::shared_future<Buffer> future;
     CheckContext(this);
+
+    if(EXPECT(!mFutureBuffers.empty(), false))
+    {
+        // Clear out any fulfilled futures.
+        auto iter = mFutureBuffers.begin();
+        while(iter != mFutureBuffers.end())
+        {
+            std::shared_future<Buffer> future = iter->second;
+            if(future.wait_for(std::chrono::milliseconds::zero()) == std::future_status::ready)
+                iter = mFutureBuffers.erase(iter);
+            else
+                ++iter;
+        }
+    }
 
     auto hasher = std::hash<String>();
     auto iter = std::lower_bound(mBuffers.begin(), mBuffers.end(), hasher(name),
@@ -882,19 +981,49 @@ Buffer ContextImpl::createBufferAsyncFrom(const String &name, SharedPtr<Decoder>
     if(iter != mBuffers.end() && (*iter)->getName() == name)
         throw std::runtime_error("Buffer \""+name+"\" already exists");
 
-    BufferOrExceptT ret = doCreateBufferAsync(name, iter, std::move(decoder));
+    std::promise<Buffer> promise;
+    future = promise.get_future().share();
+
+    BufferOrExceptT ret = doCreateBufferAsync(name, iter, std::move(decoder), std::move(promise));
     Buffer *buffer = std::get_if<Buffer>(&ret);
     if(EXPECT(!buffer, false))
         throw std::get<std::runtime_error>(ret);
     mWakeMutex.lock(); mWakeMutex.unlock();
     mWakeThread.notify_all();
-    return *buffer;
+
+    mFutureBuffers.emplace(std::make_pair(name, future));
+
+    return future;
 }
 
 
 void ContextImpl::removeBuffer(const String &name)
 {
     CheckContext(this);
+
+    if(EXPECT(!mFutureBuffers.empty(), false))
+    {
+        // If the buffer is already pending for the future, wait for it to
+        // finish before continuing.
+        auto iter = mFutureBuffers.find(name);
+        if(iter != mFutureBuffers.end())
+        {
+            iter->second.wait();
+            mFutureBuffers.erase(iter);
+        }
+
+        // Clear out any completed futures.
+        iter = mFutureBuffers.begin();
+        while(iter != mFutureBuffers.end())
+        {
+            std::shared_future<Buffer> future = iter->second;
+            if(future.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready)
+                iter = mFutureBuffers.erase(iter);
+            else
+                ++iter;
+        }
+    }
+
     auto hasher = std::hash<String>();
     auto iter = std::lower_bound(mBuffers.begin(), mBuffers.end(), hasher(name),
         [hasher](const UniquePtr<BufferImpl> &lhs, size_t rhs) -> bool
@@ -1181,10 +1310,10 @@ DECL_THUNK2(bool, Context, isSupported, const, ChannelConfig, SampleType)
 DECL_THUNK0(ArrayView<String>, Context, getAvailableResamplers,)
 DECL_THUNK0(ALsizei, Context, getDefaultResamplerIndex, const)
 DECL_THUNK1(Buffer, Context, getBuffer,, const String&)
-DECL_THUNK1(Buffer, Context, getBufferAsync,, const String&)
+DECL_THUNK1(std::shared_future<Buffer>, Context, getBufferAsync,, const String&)
 DECL_THUNK1(void, Context, precacheBuffersAsync,, ArrayView<String>)
 DECL_THUNK2(Buffer, Context, createBufferFrom,, const String&, SharedPtr<Decoder>)
-DECL_THUNK2(Buffer, Context, createBufferAsyncFrom,, const String&, SharedPtr<Decoder>)
+DECL_THUNK2(std::shared_future<Buffer>, Context, createBufferAsyncFrom,, const String&, SharedPtr<Decoder>)
 DECL_THUNK1(void, Context, removeBuffer,, const String&)
 DECL_THUNK1(void, Context, removeBuffer,, Buffer)
 DECL_THUNK0(Source, Context, createSource,)

@@ -130,6 +130,7 @@ private:
     std::stack<ALuint> mSourceIds;
 
     DeviceImpl *const mDevice;
+    std::unordered_map<String,std::shared_future<Buffer>> mFutureBuffers;
     Vector<UniquePtr<BufferImpl>> mBuffers;
     Vector<UniquePtr<SourceGroupImpl>> mSourceGroups;
     std::deque<SourceImpl> mAllSources;
@@ -152,6 +153,7 @@ private:
         SharedPtr<Decoder> mDecoder;
         ALenum mFormat;
         ALuint mFrames;
+        std::promise<Buffer> mPromise;
 
         ~PendingBuffer() { }
     };
@@ -172,7 +174,7 @@ private:
 
     DecoderOrExceptT findDecoder(const String &name);
     BufferOrExceptT doCreateBuffer(const String &name, Vector<UniquePtr<BufferImpl>>::iterator iter, SharedPtr<Decoder> decoder);
-    BufferOrExceptT doCreateBufferAsync(const String &name, Vector<UniquePtr<BufferImpl>>::iterator iter, SharedPtr<Decoder> decoder);
+    BufferOrExceptT doCreateBufferAsync(const String &name, Vector<UniquePtr<BufferImpl>>::iterator iter, SharedPtr<Decoder> decoder, std::promise<Buffer> promise);
 
     bool mIsConnected : 1;
     bool mIsBatching : 1;
@@ -278,10 +280,10 @@ public:
     ALsizei getDefaultResamplerIndex() const;
 
     Buffer getBuffer(const String &name);
-    Buffer getBufferAsync(const String &name);
+    std::shared_future<Buffer> getBufferAsync(const String &name);
     void precacheBuffersAsync(ArrayView<String> names);
     Buffer createBufferFrom(const String &name, SharedPtr<Decoder> decoder);
-    Buffer createBufferAsyncFrom(const String &name, SharedPtr<Decoder> decoder);
+    std::shared_future<Buffer> createBufferAsyncFrom(const String &name, SharedPtr<Decoder> decoder);
     void removeBuffer(const String &name);
     void removeBuffer(Buffer buffer) { removeBuffer(buffer.getName()); }
 
