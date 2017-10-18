@@ -742,7 +742,7 @@ BufferOrExceptT ContextImpl::doCreateBuffer(const String &name, Vector<UniquePtr
     )->get());
 }
 
-BufferOrExceptT ContextImpl::doCreateBufferAsync(const String &name, Vector<UniquePtr<BufferImpl>>::iterator iter, SharedPtr<Decoder> decoder, std::promise<Buffer> promise)
+BufferOrExceptT ContextImpl::doCreateBufferAsync(const String &name, Vector<UniquePtr<BufferImpl>>::iterator iter, SharedPtr<Decoder> decoder, Promise<Buffer> promise)
 {
     BufferOrExceptT retval;
     ALuint srate = decoder->getFrequency();
@@ -803,8 +803,7 @@ Buffer ContextImpl::getBuffer(const String &name)
         iter = mFutureBuffers.begin();
         while(iter != mFutureBuffers.end())
         {
-            std::shared_future<Buffer> future = iter->second;
-            if(future.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready)
+            if(iter->second.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready)
                 iter = mFutureBuffers.erase(iter);
             else
                 ++iter;
@@ -829,9 +828,9 @@ Buffer ContextImpl::getBuffer(const String &name)
     return *buffer;
 }
 
-std::shared_future<Buffer> ContextImpl::getBufferAsync(const String &name)
+SharedFuture<Buffer> ContextImpl::getBufferAsync(const String &name)
 {
-    std::shared_future<Buffer> future;
+    SharedFuture<Buffer> future;
     CheckContext(this);
 
     if(EXPECT(!mFutureBuffers.empty(), false))
@@ -845,8 +844,7 @@ std::shared_future<Buffer> ContextImpl::getBufferAsync(const String &name)
         iter = mFutureBuffers.begin();
         while(iter != mFutureBuffers.end())
         {
-            std::shared_future<Buffer> future = iter->second;
-            if(future.wait_for(std::chrono::milliseconds::zero()) == std::future_status::ready)
+            if(iter->second.wait_for(std::chrono::milliseconds::zero()) == std::future_status::ready)
                 iter = mFutureBuffers.erase(iter);
             else
                 ++iter;
@@ -866,12 +864,12 @@ std::shared_future<Buffer> ContextImpl::getBufferAsync(const String &name)
         // User asked to create a future buffer that's already loaded. Just
         // construct a promise, fulfill the promise immediately, then return a
         // shared future that's already set.
-        std::promise<Buffer> promise;
+        Promise<Buffer> promise;
         promise.set_value(Buffer(iter->get()));
         return promise.get_future().share();
     }
 
-    std::promise<Buffer> promise;
+    Promise<Buffer> promise;
     future = promise.get_future().share();
 
     BufferOrExceptT ret = doCreateBufferAsync(name, iter, createDecoder(name), std::move(promise));
@@ -896,8 +894,7 @@ void ContextImpl::precacheBuffersAsync(ArrayView<String> names)
         auto iter = mFutureBuffers.begin();
         while(iter != mFutureBuffers.end())
         {
-            std::shared_future<Buffer> future = iter->second;
-            if(future.wait_for(std::chrono::milliseconds::zero()) == std::future_status::ready)
+            if(iter->second.wait_for(std::chrono::milliseconds::zero()) == std::future_status::ready)
                 iter = mFutureBuffers.erase(iter);
             else
                 ++iter;
@@ -922,8 +919,8 @@ void ContextImpl::precacheBuffersAsync(ArrayView<String> names)
         SharedPtr<Decoder> *decoder = std::get_if<SharedPtr<Decoder>>(&dec);
         if(!decoder) continue;
 
-        std::promise<Buffer> promise;
-        std::shared_future<Buffer> future = promise.get_future().share();
+        Promise<Buffer> promise;
+        SharedFuture<Buffer> future = promise.get_future().share();
 
         BufferOrExceptT buf = doCreateBufferAsync(name, iter, std::move(*decoder),
                                                   std::move(promise));
@@ -954,9 +951,9 @@ Buffer ContextImpl::createBufferFrom(const String &name, SharedPtr<Decoder> deco
     return *buffer;
 }
 
-std::shared_future<Buffer> ContextImpl::createBufferAsyncFrom(const String &name, SharedPtr<Decoder> decoder)
+SharedFuture<Buffer> ContextImpl::createBufferAsyncFrom(const String &name, SharedPtr<Decoder> decoder)
 {
-    std::shared_future<Buffer> future;
+    SharedFuture<Buffer> future;
     CheckContext(this);
 
     if(EXPECT(!mFutureBuffers.empty(), false))
@@ -965,8 +962,7 @@ std::shared_future<Buffer> ContextImpl::createBufferAsyncFrom(const String &name
         auto iter = mFutureBuffers.begin();
         while(iter != mFutureBuffers.end())
         {
-            std::shared_future<Buffer> future = iter->second;
-            if(future.wait_for(std::chrono::milliseconds::zero()) == std::future_status::ready)
+            if(iter->second.wait_for(std::chrono::milliseconds::zero()) == std::future_status::ready)
                 iter = mFutureBuffers.erase(iter);
             else
                 ++iter;
@@ -981,7 +977,7 @@ std::shared_future<Buffer> ContextImpl::createBufferAsyncFrom(const String &name
     if(iter != mBuffers.end() && (*iter)->getName() == name)
         throw std::runtime_error("Buffer \""+name+"\" already exists");
 
-    std::promise<Buffer> promise;
+    Promise<Buffer> promise;
     future = promise.get_future().share();
 
     BufferOrExceptT ret = doCreateBufferAsync(name, iter, std::move(decoder), std::move(promise));
@@ -1016,8 +1012,7 @@ void ContextImpl::removeBuffer(const String &name)
         iter = mFutureBuffers.begin();
         while(iter != mFutureBuffers.end())
         {
-            std::shared_future<Buffer> future = iter->second;
-            if(future.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready)
+            if(iter->second.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready)
                 iter = mFutureBuffers.erase(iter);
             else
                 ++iter;
@@ -1310,10 +1305,10 @@ DECL_THUNK2(bool, Context, isSupported, const, ChannelConfig, SampleType)
 DECL_THUNK0(ArrayView<String>, Context, getAvailableResamplers,)
 DECL_THUNK0(ALsizei, Context, getDefaultResamplerIndex, const)
 DECL_THUNK1(Buffer, Context, getBuffer,, const String&)
-DECL_THUNK1(std::shared_future<Buffer>, Context, getBufferAsync,, const String&)
+DECL_THUNK1(SharedFuture<Buffer>, Context, getBufferAsync,, const String&)
 DECL_THUNK1(void, Context, precacheBuffersAsync,, ArrayView<String>)
 DECL_THUNK2(Buffer, Context, createBufferFrom,, const String&, SharedPtr<Decoder>)
-DECL_THUNK2(std::shared_future<Buffer>, Context, createBufferAsyncFrom,, const String&, SharedPtr<Decoder>)
+DECL_THUNK2(SharedFuture<Buffer>, Context, createBufferAsyncFrom,, const String&, SharedPtr<Decoder>)
 DECL_THUNK1(void, Context, removeBuffer,, const String&)
 DECL_THUNK1(void, Context, removeBuffer,, Buffer)
 DECL_THUNK0(Source, Context, createSource,)

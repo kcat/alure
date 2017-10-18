@@ -115,6 +115,16 @@ constexpr inline UniquePtr<T> MakeUnique(Args&&... args)
 #endif
 }
 
+// A Promise/Future (+SharedFuture) implementation, defaults to C++11's
+// std::promise, std::future, and std::shared_future. If this is changed, you
+// must recompile the library.
+template<typename T>
+using Promise = std::promise<T>;
+template<typename T>
+using Future = std::future<T>;
+template<typename T>
+using SharedFuture = std::shared_future<T>;
+
 // A Vector implementation, defaults to C++'s std::vector. If this is changed,
 // you must recompile the library.
 template<typename T>
@@ -697,17 +707,17 @@ public:
     /**
      * Asynchronously prepares a cached Buffer for the given audio file or
      * resource name. Multiple calls with the same name will return multiple
-     * shared futures for the same Buffer object. Once called, the buffer must
+     * SharedFutures for the same Buffer object. Once called, the buffer must
      * be freed using removeBuffer before destroying the context, even if you
-     * never get the Buffer from the shared_future.
+     * never get the Buffer from the SharedFuture.
      *
-     * The Buffer will be loaded asynchronously, and the caller gets back a
-     * shared_future immediately that can be checked later (or waited on) to
-     * get the actual Buffer when it's ready. The application must take care to
-     * handle exceptions from the shared_future in case of an unrecoverable
-     * error during the load.
+     * The Buffer will be scheduled to load asynchronously, and the caller gets
+     * back a SharedFuture that can be checked later (or waited on) to get the
+     * actual Buffer when it's ready. The application must take care to handle
+     * exceptions from the SharedFuture in case an unrecoverable error ocurred
+     * during the load.
      */
-    std::shared_future<Buffer> getBufferAsync(const String &name);
+    SharedFuture<Buffer> getBufferAsync(const String &name);
 
     /**
      * Asynchronously prepares cached Buffers for the given audio file or
@@ -740,20 +750,20 @@ public:
      * may alias an audio file, but it must not currently exist in the buffer
      * cache. Once called, the buffer must be freed using removeBuffer before
      * destroying the context, even if you never get the Buffer from the
-     * shared_future.
+     * SharedFuture.
      *
-     * The Buffer will be loaded asynchronously using the given decoder, and
-     * the caller gets back a shared_future immediately that can be checked
-     * later (or waited on) to get the actual Buffer when it's ready. The
-     * application must take care to handle exceptions from the shared_future
-     * in case of an unrecoverable error during the load. The decoder must not
-     * have its read or seek methods called while the buffer is not ready.
+     * The Buffer will be scheduled to load asynchronously, and the caller gets
+     * back a SharedFuture that can be checked later (or waited on) to get the
+     * actual Buffer when it's ready. The application must take care to handle
+     * exceptions from the SharedFuture in case an unrecoverable error ocurred
+     * during the load. The decoder must not have its read or seek methods
+     * called while the buffer is not ready.
      */
-    std::shared_future<Buffer> createBufferAsyncFrom(const String &name, SharedPtr<Decoder> decoder);
+    SharedFuture<Buffer> createBufferAsyncFrom(const String &name, SharedPtr<Decoder> decoder);
 
     /**
-     * Deletes the cached Buffer object for the given audio file or
-     * resource name. The buffer must not be in use by a Source.
+     * Deletes the cached Buffer object for the given audio file or resource
+     * name. The buffer must not be in use by a Source.
      */
     void removeBuffer(const String &name);
     /**
