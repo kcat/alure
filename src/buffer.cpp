@@ -28,7 +28,7 @@ void BufferImpl::cleanup()
 }
 
 
-void BufferImpl::load(ALuint frames, ALenum format, SharedPtr<Decoder> decoder, const String &name, ContextImpl *ctx)
+void BufferImpl::load(ALuint frames, ALenum format, SharedPtr<Decoder> decoder, ContextImpl *ctx)
 {
     Vector<ALbyte> data(FramesToBytes(frames, mChannelConfig, mSampleType));
 
@@ -56,7 +56,7 @@ void BufferImpl::load(ALuint frames, ALenum format, SharedPtr<Decoder> decoder, 
     }
 
     ctx->send(&MessageHandler::bufferLoading,
-        name, mChannelConfig, mSampleType, mFrequency, data
+        mName, mChannelConfig, mSampleType, mFrequency, data
     );
 
     alBufferData(mId, format, data.data(), data.size(), mFrequency);

@@ -150,7 +150,6 @@ private:
     SharedPtr<MessageHandler> mMessage;
 
     struct PendingBuffer {
-        String mName;
         BufferImpl *mBuffer;
         SharedPtr<Decoder> mDecoder;
         ALenum mFormat;
@@ -174,9 +173,9 @@ private:
     std::once_flag mSetExts;
     void setupExts();
 
-    DecoderOrExceptT findDecoder(const String &name);
-    BufferOrExceptT doCreateBuffer(const String &name, Vector<UniquePtr<BufferImpl>>::iterator iter, SharedPtr<Decoder> decoder);
-    BufferOrExceptT doCreateBufferAsync(const String &name, Vector<UniquePtr<BufferImpl>>::iterator iter, SharedPtr<Decoder> decoder, Promise<Buffer> promise);
+    DecoderOrExceptT findDecoder(StringView name);
+    BufferOrExceptT doCreateBuffer(StringView name, Vector<UniquePtr<BufferImpl>>::iterator iter, SharedPtr<Decoder> decoder);
+    BufferOrExceptT doCreateBufferAsync(StringView name, Vector<UniquePtr<BufferImpl>>::iterator iter, SharedPtr<Decoder> decoder, Promise<Buffer> promise);
 
     bool mIsConnected : 1;
     bool mIsBatching : 1;
@@ -274,19 +273,19 @@ public:
     void setAsyncWakeInterval(std::chrono::milliseconds interval);
     std::chrono::milliseconds getAsyncWakeInterval() const { return mWakeInterval.load(); }
 
-    SharedPtr<Decoder> createDecoder(const String &name);
+    SharedPtr<Decoder> createDecoder(StringView name);
 
     bool isSupported(ChannelConfig channels, SampleType type) const;
 
     ArrayView<String> getAvailableResamplers();
     ALsizei getDefaultResamplerIndex() const;
 
-    Buffer getBuffer(const String &name);
-    SharedFuture<Buffer> getBufferAsync(const String &name);
-    void precacheBuffersAsync(ArrayView<String> names);
-    Buffer createBufferFrom(const String &name, SharedPtr<Decoder> decoder);
-    SharedFuture<Buffer> createBufferAsyncFrom(const String &name, SharedPtr<Decoder> decoder);
-    void removeBuffer(const String &name);
+    Buffer getBuffer(StringView name);
+    SharedFuture<Buffer> getBufferAsync(StringView name);
+    void precacheBuffersAsync(ArrayView<StringView> names);
+    Buffer createBufferFrom(StringView name, SharedPtr<Decoder> decoder);
+    SharedFuture<Buffer> createBufferAsyncFrom(StringView name, SharedPtr<Decoder> decoder);
+    void removeBuffer(StringView name);
     void removeBuffer(Buffer buffer) { removeBuffer(buffer.getName()); }
 
     Source createSource();

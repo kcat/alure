@@ -204,13 +204,14 @@ public:
     const_iterator cend() const noexcept { return mElems + mNumElems; }
 };
 
-template<typename T>
+template<typename T, typename Tr=std::char_traits<T>>
 class BasicStringView : public ArrayView<T> {
     using BaseT = ArrayView<T>;
     using StringT = BasicString<T>;
 
 public:
     using typename BaseT::value_type;
+    using traits_type = Tr;
 
     BasicStringView() noexcept = default;
     BasicStringView(const BasicStringView&) noexcept = default;
@@ -230,7 +231,7 @@ public:
 
     explicit operator StringT() const { return StringT(BaseT::data(), length()); }
 #if __cplusplus >= 201703L
-    operator std::basic_string_view<T>() const
+    operator std::basic_string_view<T>() const noexcept
     { return std::basic_string_view<T>(BaseT::data(), length()); }
 #endif
 
@@ -246,25 +247,52 @@ public:
         ret += rhs;
         return ret;
     }
+
+    int compare(BasicStringView other) const noexcept
+    {
+        int ret = traits_type::compare(
+            BaseT::data(), other.data(), std::min<size_t>(length(), other.length())
+        );
+        if(ret == 0)
+        {
+            if(length() > other.length())
+                return 1;
+            if(length() < other.length())
+                return -1;
+            return 0;
+        }
+        return ret;
+    }
+    bool operator==(BasicStringView rhs) const noexcept
+    { return compare(rhs) == 0; }
 };
 using StringView = BasicStringView<String::value_type>;
 
 // Inline operators to concat String and C-style strings with StringViews.
 template<typename T>
-inline BasicString<T> operator+(const BasicString<T> &lhs, const BasicStringView<T> &rhs)
+inline BasicString<T> operator+(const BasicString<T> &lhs, BasicStringView<T> rhs)
 { return BasicString<T>(lhs).append(rhs.data(), rhs.size()); }
 template<typename T>
-inline BasicString<T> operator+(BasicString<T>&& lhs, const BasicStringView<T> &rhs)
+inline BasicString<T> operator+(BasicString<T>&& lhs, BasicStringView<T> rhs)
 { return std::move(lhs.append(rhs.data(), rhs.size())); }
 template<typename T>
-inline BasicString<T> operator+(const typename BasicString<T>::value_type *lhs, const BasicStringView<T> &rhs)
+inline BasicString<T> operator+(const typename BasicString<T>::value_type *lhs, BasicStringView<T> rhs)
 { return lhs + BasicString<T>(rhs); }
 template<typename T>
-inline BasicString<T>& operator+=(BasicString<T> &lhs, const BasicStringView<T> &rhs)
+inline BasicString<T>& operator+=(BasicString<T> &lhs, BasicStringView<T> rhs)
 { return lhs.append(rhs.data(), rhs.size()); }
+
+// Inline operators to compare String and C-style strings with StringViews.
+template<typename T>
+inline bool operator==(const BasicString<T> &lhs, BasicStringView<T> rhs)
+{ return StringView(lhs) == rhs; }
+template<typename T>
+inline bool operator==(const typename BasicString<T>::value_type *lhs, BasicStringView<T> rhs)
+{ return StringView(lhs) == rhs; }
+
 // Inline operator to write out a StringView to an ostream
 template<typename T>
-inline std::basic_ostream<T>& operator<<(std::basic_ostream<T> &lhs, const BasicStringView<T> &rhs)
+inline std::basic_ostream<T>& operator<<(std::basic_ostream<T> &lhs, BasicStringView<T> rhs)
 {
     for(auto ch : rhs)
         lhs << ch;
@@ -671,7 +699,7 @@ public:
     /**
      * Creates a Decoder instance for the given audio file or resource name.
      */
-    SharedPtr<Decoder> createDecoder(const String &name);
+    SharedPtr<Decoder> createDecoder(StringView name);
 
     /**
      * Queries if the channel configuration and sample type are supported by
@@ -700,7 +728,7 @@ public:
      * Cached buffers must be freed using removeBuffer before destroying the
      * context. If the buffer can't be loaded it will throw an exception.
      */
-    Buffer getBuffer(const String &name);
+    Buffer getBuffer(StringView name);
 
     /**
      * Asynchronously prepares a cached Buffer for the given audio file or
@@ -715,7 +743,7 @@ public:
      * exceptions from the SharedFuture in case an unrecoverable error ocurred
      * during the load.
      */
-    SharedFuture<Buffer> getBufferAsync(const String &name);
+    SharedFuture<Buffer> getBufferAsync(StringView name);
 
     /**
      * Asynchronously prepares cached Buffers for the given audio file or
@@ -735,13 +763,13 @@ public:
      * add more will cause the call to stall until the background thread
      * completes some loads for more to be filled in.
      */
-    void precacheBuffersAsync(ArrayView<String> names);
+    void precacheBuffersAsync(ArrayView<StringView> names);
 
     /**
      * Creates and caches a Buffer using the given name. The name may alias an
      * audio file, but it must not currently exist in the buffer cache.
      */
-    Buffer createBufferFrom(const String &name, SharedPtr<Decoder> decoder);
+    Buffer createBufferFrom(StringView name, SharedPtr<Decoder> decoder);
 
     /**
      * Asynchronously prepares a cached Buffer using the given name. The name
@@ -757,13 +785,13 @@ public:
      * during the load. The decoder must not have its read or seek methods
      * called while the buffer is not ready.
      */
-    SharedFuture<Buffer> createBufferAsyncFrom(const String &name, SharedPtr<Decoder> decoder);
+    SharedFuture<Buffer> createBufferAsyncFrom(StringView name, SharedPtr<Decoder> decoder);
 
     /**
      * Deletes the cached Buffer object for the given audio file or resource
      * name. The buffer must not be in use by a Source.
      */
-    void removeBuffer(const String &name);
+    void removeBuffer(StringView name);
     /**
      * Deletes the given cached buffer. The buffer must not be in use by a
      * Source.

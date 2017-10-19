@@ -28,9 +28,9 @@ class BufferImpl {
     const String mName;
 
 public:
-    BufferImpl(ContextImpl *context, ALuint id, ALuint freq, ChannelConfig config, SampleType type, const String &name)
+    BufferImpl(ContextImpl *context, ALuint id, ALuint freq, ChannelConfig config, SampleType type, StringView name)
       : mContext(context), mId(id), mFrequency(freq), mChannelConfig(config), mSampleType(type)
-      , mName(name)
+      , mName(String(name))
     { }
 
     void cleanup();
@@ -45,7 +45,7 @@ public:
         if(iter != mSources.cend()) mSources.erase(iter);
     }
 
-    void load(ALuint frames, ALenum format, SharedPtr<Decoder> decoder, const String &name, ContextImpl *ctx);
+    void load(ALuint frames, ALenum format, SharedPtr<Decoder> decoder, ContextImpl *ctx);
 
     ALuint getLength() const;
 

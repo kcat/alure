@@ -46,6 +46,44 @@
 #include <windows.h>
 #endif
 
+namespace std
+{
+
+// Implements a FNV-1a hash for StringView. NOTE: This is *NOT* guaranteed
+// compatible with std::hash<String>! The standard does not give any specific
+// hash implementation, nor a way for applications to access the same hash
+// function as std::string (short of copying into a string and hashing that).
+// So if you need Strings and StringViews to result in the same hash for the
+// same set of characters, hash StringViews created from the Strings.
+template<>
+struct hash<alure::StringView> {
+    size_t operator()(const alure::StringView &str) const noexcept
+    {
+        if /*constexpr*/ (sizeof(size_t) == 8)
+        {
+            static constexpr size_t hash_offset = 0xcbf29ce484222325;
+            static constexpr size_t hash_prime = 0x100000001b3;
+
+            size_t val = hash_offset;
+            for(auto ch : str)
+                val = (val^static_cast<unsigned char>(ch)) * hash_prime;
+            return val;
+        }
+        else
+        {
+            static constexpr size_t hash_offset = 0x811c9dc5;
+            static constexpr size_t hash_prime = 0x1000193;
+
+            size_t val = hash_offset;
+            for(auto ch : str)
+                val = (val^static_cast<unsigned char>(ch)) * hash_prime;
+            return val;
+        }
+    }
+};
+
+}
+
 namespace
 {
 
@@ -210,7 +248,7 @@ std::map<alure::String,alure::UniquePtr<alure::DecoderFactory>> sDecoders;
 
 
 template<typename T>
-alure::DecoderOrExceptT GetDecoder(const alure::String &name, alure::UniquePtr<std::istream> &file,
+alure::DecoderOrExceptT GetDecoder(alure::StringView name, alure::UniquePtr<std::istream> &file,
                                    T start, T end)
 {
     alure::DecoderOrExceptT ret;
@@ -229,7 +267,7 @@ alure::DecoderOrExceptT GetDecoder(const alure::String &name, alure::UniquePtr<s
     return (ret = nullptr);
 }
 
-static alure::DecoderOrExceptT GetDecoder(const alure::String &name, alure::UniquePtr<std::istream> file)
+static alure::DecoderOrExceptT GetDecoder(alure::StringView name, alure::UniquePtr<std::istream> file)
 {
     auto decoder = GetDecoder(name, file, sDecoders.begin(), sDecoders.end());
     if(std::holds_alternative<std::runtime_error>(decoder)) return decoder;
@@ -495,7 +533,7 @@ void ContextImpl::backgroundProc()
         if(ringdata.len > 0)
         {
             PendingBuffer *pb = reinterpret_cast<PendingBuffer*>(ringdata.buf);
-            pb->mBuffer->load(pb->mFrames, pb->mFormat, pb->mDecoder, pb->mName, this);
+            pb->mBuffer->load(pb->mFrames, pb->mFormat, pb->mDecoder, this);
             pb->mPromise.set_value(Buffer(pb->mBuffer));
             pb->~PendingBuffer();
             mPendingBuffers.read_advance(1);
@@ -624,17 +662,16 @@ void ContextImpl::setAsyncWakeInterval(std::chrono::milliseconds interval)
 }
 
 
-DecoderOrExceptT ContextImpl::findDecoder(const String &name)
+DecoderOrExceptT ContextImpl::findDecoder(StringView name)
 {
     DecoderOrExceptT ret;
 
-    CheckContext(this);
-    auto file = FileIOFactory::get().openFile(name);
+    String oldname = String(name);
+    auto file = FileIOFactory::get().openFile(oldname);
     if(file) return (ret = GetDecoder(name, std::move(file)));
 
     // Resource not found. Try to find a substitute.
-    if(!mMessage.get()) return (ret = std::runtime_error("Failed to open "+name));
-    String oldname = name;
+    if(!mMessage.get()) return (ret = std::runtime_error("Failed to open "+oldname));
     do {
         String newname(mMessage->resourceNotFound(oldname));
         if(newname.empty())
@@ -646,7 +683,7 @@ DecoderOrExceptT ContextImpl::findDecoder(const String &name)
     return (ret = GetDecoder(oldname, std::move(file)));
 }
 
-SharedPtr<Decoder> ContextImpl::createDecoder(const String &name)
+SharedPtr<Decoder> ContextImpl::createDecoder(StringView name)
 {
     CheckContext(this);
     DecoderOrExceptT dec = findDecoder(name);
@@ -687,7 +724,7 @@ ALsizei ContextImpl::getDefaultResamplerIndex() const
 }
 
 
-BufferOrExceptT ContextImpl::doCreateBuffer(const String &name, Vector<UniquePtr<BufferImpl>>::iterator iter, SharedPtr<Decoder> decoder)
+BufferOrExceptT ContextImpl::doCreateBuffer(StringView name, Vector<UniquePtr<BufferImpl>>::iterator iter, SharedPtr<Decoder> decoder)
 {
     BufferOrExceptT retval;
     ALuint srate = decoder->getFrequency();
@@ -742,7 +779,7 @@ BufferOrExceptT ContextImpl::doCreateBuffer(const String &name, Vector<UniquePtr
     )->get());
 }
 
-BufferOrExceptT ContextImpl::doCreateBufferAsync(const String &name, Vector<UniquePtr<BufferImpl>>::iterator iter, SharedPtr<Decoder> decoder, Promise<Buffer> promise)
+BufferOrExceptT ContextImpl::doCreateBufferAsync(StringView name, Vector<UniquePtr<BufferImpl>>::iterator iter, SharedPtr<Decoder> decoder, Promise<Buffer> promise)
 {
     BufferOrExceptT retval;
     ALuint srate = decoder->getFrequency();
@@ -777,17 +814,17 @@ BufferOrExceptT ContextImpl::doCreateBufferAsync(const String &name, Vector<Uniq
     }
 
     RingBuffer::Data ringdata = mPendingBuffers.get_write_vector()[0];
-    new(ringdata.buf) PendingBuffer{name, buffer.get(), decoder, format, frames, std::move(promise)};
+    new(ringdata.buf) PendingBuffer{buffer.get(), decoder, format, frames, std::move(promise)};
     mPendingBuffers.write_advance(1);
 
     return (retval = mBuffers.insert(iter, std::move(buffer))->get());
 }
 
-Buffer ContextImpl::getBuffer(const String &name)
+Buffer ContextImpl::getBuffer(StringView name)
 {
     CheckContext(this);
 
-    auto hasher = std::hash<String>();
+    auto hasher = std::hash<StringView>();
     if(EXPECT(!mFutureBuffers.empty(), false))
     {
         Buffer buffer;
@@ -830,12 +867,12 @@ Buffer ContextImpl::getBuffer(const String &name)
     return *buffer;
 }
 
-SharedFuture<Buffer> ContextImpl::getBufferAsync(const String &name)
+SharedFuture<Buffer> ContextImpl::getBufferAsync(StringView name)
 {
     SharedFuture<Buffer> future;
     CheckContext(this);
 
-    auto hasher = std::hash<String>();
+    auto hasher = std::hash<StringView>();
     if(EXPECT(!mFutureBuffers.empty(), false))
     {
         // Check if the future that's being created already exists
@@ -895,7 +932,7 @@ SharedFuture<Buffer> ContextImpl::getBufferAsync(const String &name)
     return future;
 }
 
-void ContextImpl::precacheBuffersAsync(ArrayView<String> names)
+void ContextImpl::precacheBuffersAsync(ArrayView<StringView> names)
 {
     CheckContext(this);
 
@@ -911,8 +948,8 @@ void ContextImpl::precacheBuffersAsync(ArrayView<String> names)
         }
     }
 
-    auto hasher = std::hash<String>();
-    for(const String &name : names)
+    auto hasher = std::hash<StringView>();
+    for(const StringView name : names)
     {
         // Check if the buffer that's being created already exists
         auto iter = std::lower_bound(mBuffers.begin(), mBuffers.end(), hasher(name),
@@ -945,11 +982,11 @@ void ContextImpl::precacheBuffersAsync(ArrayView<String> names)
     mWakeThread.notify_all();
 }
 
-Buffer ContextImpl::createBufferFrom(const String &name, SharedPtr<Decoder> decoder)
+Buffer ContextImpl::createBufferFrom(StringView name, SharedPtr<Decoder> decoder)
 {
     CheckContext(this);
 
-    auto hasher = std::hash<String>();
+    auto hasher = std::hash<StringView>();
     auto iter = std::lower_bound(mBuffers.begin(), mBuffers.end(), hasher(name),
         [hasher](const UniquePtr<BufferImpl> &lhs, size_t rhs) -> bool
         { return hasher(lhs->getName()) < rhs; }
@@ -964,7 +1001,7 @@ Buffer ContextImpl::createBufferFrom(const String &name, SharedPtr<Decoder> deco
     return *buffer;
 }
 
-SharedFuture<Buffer> ContextImpl::createBufferAsyncFrom(const String &name, SharedPtr<Decoder> decoder)
+SharedFuture<Buffer> ContextImpl::createBufferAsyncFrom(StringView name, SharedPtr<Decoder> decoder)
 {
     SharedFuture<Buffer> future;
     CheckContext(this);
@@ -981,7 +1018,7 @@ SharedFuture<Buffer> ContextImpl::createBufferAsyncFrom(const String &name, Shar
         }
     }
 
-    auto hasher = std::hash<String>();
+    auto hasher = std::hash<StringView>();
     auto iter = std::lower_bound(mBuffers.begin(), mBuffers.end(), hasher(name),
         [hasher](const UniquePtr<BufferImpl> &lhs, size_t rhs) -> bool
         { return hasher(lhs->getName()) < rhs; }
@@ -1010,11 +1047,11 @@ SharedFuture<Buffer> ContextImpl::createBufferAsyncFrom(const String &name, Shar
 }
 
 
-void ContextImpl::removeBuffer(const String &name)
+void ContextImpl::removeBuffer(StringView name)
 {
     CheckContext(this);
 
-    auto hasher = std::hash<String>();
+    auto hasher = std::hash<StringView>();
     if(EXPECT(!mFutureBuffers.empty(), false))
     {
         // If the buffer is already pending for the future, wait for it to
@@ -1319,16 +1356,16 @@ DECL_THUNK1(SharedPtr<MessageHandler>, Context, setMessageHandler,, SharedPtr<Me
 DECL_THUNK0(SharedPtr<MessageHandler>, Context, getMessageHandler, const)
 DECL_THUNK1(void, Context, setAsyncWakeInterval,, std::chrono::milliseconds)
 DECL_THUNK0(std::chrono::milliseconds, Context, getAsyncWakeInterval, const)
-DECL_THUNK1(SharedPtr<Decoder>, Context, createDecoder,, const String&)
+DECL_THUNK1(SharedPtr<Decoder>, Context, createDecoder,, StringView)
 DECL_THUNK2(bool, Context, isSupported, const, ChannelConfig, SampleType)
 DECL_THUNK0(ArrayView<String>, Context, getAvailableResamplers,)
 DECL_THUNK0(ALsizei, Context, getDefaultResamplerIndex, const)
-DECL_THUNK1(Buffer, Context, getBuffer,, const String&)
-DECL_THUNK1(SharedFuture<Buffer>, Context, getBufferAsync,, const String&)
-DECL_THUNK1(void, Context, precacheBuffersAsync,, ArrayView<String>)
-DECL_THUNK2(Buffer, Context, createBufferFrom,, const String&, SharedPtr<Decoder>)
-DECL_THUNK2(SharedFuture<Buffer>, Context, createBufferAsyncFrom,, const String&, SharedPtr<Decoder>)
-DECL_THUNK1(void, Context, removeBuffer,, const String&)
+DECL_THUNK1(Buffer, Context, getBuffer,, StringView)
+DECL_THUNK1(SharedFuture<Buffer>, Context, getBufferAsync,, StringView)
+DECL_THUNK1(void, Context, precacheBuffersAsync,, ArrayView<StringView>)
+DECL_THUNK2(Buffer, Context, createBufferFrom,, StringView, SharedPtr<Decoder>)
+DECL_THUNK2(SharedFuture<Buffer>, Context, createBufferAsyncFrom,, StringView, SharedPtr<Decoder>)
+DECL_THUNK1(void, Context, removeBuffer,, StringView)
 DECL_THUNK1(void, Context, removeBuffer,, Buffer)
 DECL_THUNK0(Source, Context, createSource,)
 DECL_THUNK0(AuxiliaryEffectSlot, Context, createAuxiliaryEffectSlot,)
