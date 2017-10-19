@@ -97,7 +97,7 @@ std::mutex mGlobalCtxMutex;
 // but not all Windows compilers support it. So we have to make our own istream
 // that accepts UTF-8 paths and forwards to Unicode-aware I/O functions.
 class StreamBuf final : public std::streambuf {
-    alure::Array<traits_type::char_type,4096> mBuffer;
+    alure::Array<char_type,4096> mBuffer;
     HANDLE mFile;
 
     int_type underflow() override

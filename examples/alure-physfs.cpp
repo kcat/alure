@@ -21,7 +21,7 @@ namespace
 
 // Inherit from std::streambuf to handle custom I/O (PhysFS for this example)
 class StreamBuf final : public std::streambuf {
-    using BufferArrayT = alure::Array<traits_type::char_type,4096>;
+    using BufferArrayT = alure::Array<char_type,4096>;
     BufferArrayT mBuffer;
     PHYSFS_File *mFile;
 
@@ -32,7 +32,7 @@ class StreamBuf final : public std::streambuf {
             // Read in the next chunk of data, and set the read pointers on
             // success
             PHYSFS_sint64 got = PHYSFS_read(mFile,
-                mBuffer.data(), sizeof(BufferArrayT::value_type), mBuffer.size()
+                mBuffer.data(), sizeof(char_type), mBuffer.size()
             );
             if(got != -1) setg(mBuffer.data(), mBuffer.data(), mBuffer.data()+got);
         }
