@@ -841,13 +841,12 @@ Buffer ContextImpl::getBuffer(StringView name)
         }
 
         // Clear out any completed futures.
-        for(iter = mFutureBuffers.begin();iter != mFutureBuffers.end();)
-        {
-            if(iter->mFuture.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready)
-                iter = mFutureBuffers.erase(iter);
-            else
-                ++iter;
-        }
+        mFutureBuffers.erase(
+            std::remove_if(mFutureBuffers.begin(), mFutureBuffers.end(),
+                [](const PendingFuture &entry) -> bool
+                { return entry.mFuture.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready; }
+            ), mFutureBuffers.end()
+        );
 
         // If we got the buffer, return it. Otherwise, go load it normally.
         if(buffer) return buffer;
@@ -889,13 +888,12 @@ SharedFuture<Buffer> ContextImpl::getBufferAsync(StringView name)
         }
 
         // Clear out any fulfilled futures.
-        for(iter = mFutureBuffers.begin();iter != mFutureBuffers.end();)
-        {
-            if(iter->mFuture.wait_for(std::chrono::milliseconds::zero()) == std::future_status::ready)
-                iter = mFutureBuffers.erase(iter);
-            else
-                ++iter;
-        }
+        mFutureBuffers.erase(
+            std::remove_if(mFutureBuffers.begin(), mFutureBuffers.end(),
+                [](const PendingFuture &entry) -> bool
+                { return entry.mFuture.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready; }
+            ), mFutureBuffers.end()
+        );
     }
 
     auto iter = std::lower_bound(mBuffers.begin(), mBuffers.end(), hasher(name),
@@ -939,13 +937,12 @@ void ContextImpl::precacheBuffersAsync(ArrayView<StringView> names)
     if(EXPECT(!mFutureBuffers.empty(), false))
     {
         // Clear out any fulfilled futures.
-        for(auto iter = mFutureBuffers.begin();iter != mFutureBuffers.end();)
-        {
-            if(iter->mFuture.wait_for(std::chrono::milliseconds::zero()) == std::future_status::ready)
-                iter = mFutureBuffers.erase(iter);
-            else
-                ++iter;
-        }
+        mFutureBuffers.erase(
+            std::remove_if(mFutureBuffers.begin(), mFutureBuffers.end(),
+                [](const PendingFuture &entry) -> bool
+                { return entry.mFuture.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready; }
+            ), mFutureBuffers.end()
+        );
     }
 
     auto hasher = std::hash<StringView>();
@@ -1009,13 +1006,12 @@ SharedFuture<Buffer> ContextImpl::createBufferAsyncFrom(StringView name, SharedP
     if(EXPECT(!mFutureBuffers.empty(), false))
     {
         // Clear out any fulfilled futures.
-        for(auto iter = mFutureBuffers.begin();iter != mFutureBuffers.end();)
-        {
-            if(iter->mFuture.wait_for(std::chrono::milliseconds::zero()) == std::future_status::ready)
-                iter = mFutureBuffers.erase(iter);
-            else
-                ++iter;
-        }
+        mFutureBuffers.erase(
+            std::remove_if(mFutureBuffers.begin(), mFutureBuffers.end(),
+                [](const PendingFuture &entry) -> bool
+                { return entry.mFuture.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready; }
+            ), mFutureBuffers.end()
+        );
     }
 
     auto hasher = std::hash<StringView>();
@@ -1067,13 +1063,12 @@ void ContextImpl::removeBuffer(StringView name)
         }
 
         // Clear out any completed futures.
-        for(iter = mFutureBuffers.begin();iter != mFutureBuffers.end();)
-        {
-            if(iter->mFuture.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready)
-                iter = mFutureBuffers.erase(iter);
-            else
-                ++iter;
-        }
+        mFutureBuffers.erase(
+            std::remove_if(mFutureBuffers.begin(), mFutureBuffers.end(),
+                [](const PendingFuture &entry) -> bool
+                { return entry.mFuture.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready; }
+            ), mFutureBuffers.end()
+        );
     }
 
     auto iter = std::lower_bound(mBuffers.begin(), mBuffers.end(), hasher(name),

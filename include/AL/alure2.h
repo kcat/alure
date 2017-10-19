@@ -931,9 +931,7 @@ public:
      * use.
      */
     void play(SharedPtr<Decoder> decoder, ALuint updatelen, ALuint queuesize);
-    /**
-     * Stops playback, releasing the buffer or decoder reference.
-     */
+    /** Stops playback, releasing the buffer or decoder reference. */
     void stop();
 
     /** Pauses the source if it is playing. */
@@ -1139,8 +1137,9 @@ public:
     /**
      * Specifies if the source always has 3D spatialization features (On),
      * never has 3D spatialization features (Off), or if spatialization is
-     * enabled based on playing a mono sound or not (Auto, default). Has no
-     * effect without the AL_SOFT_source_spatialize extension.
+     * enabled based on playing a mono sound or not (Auto, default).
+     *
+     * Has no effect without the AL_SOFT_source_spatialize extension.
      */
     void set3DSpatialize(Spatialize spatialize);
     Spatialize get3DSpatialize() const;
