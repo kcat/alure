@@ -79,11 +79,9 @@ class Decoder;
 class DecoderFactory;
 class MessageHandler;
 
-
-template<typename T>
-using RemoveRefT = typename std::remove_reference<T>::type;
-template<bool B>
-using EnableIfT = typename std::enable_if<B>::type;
+// Convenience aliases
+template<typename T> using RemoveRefT = typename std::remove_reference<T>::type;
+template<bool B> using EnableIfT = typename std::enable_if<B>::type;
 
 
 // Duration in seconds, using double precision
@@ -91,8 +89,7 @@ using Seconds = std::chrono::duration<double>;
 
 // A SharedPtr implementation, defaults to C++11's std::shared_ptr. If this is
 // changed, you must recompile the library.
-template<typename T>
-using SharedPtr = std::shared_ptr<T>;
+template<typename... Args> using SharedPtr = std::shared_ptr<Args...>;
 template<typename T, typename... Args>
 constexpr inline SharedPtr<T> MakeShared(Args&&... args)
 {
@@ -101,8 +98,7 @@ constexpr inline SharedPtr<T> MakeShared(Args&&... args)
 
 // A UniquePtr implementation, defaults to C++11's std::unique_ptr. If this is
 // changed, you must recompile the library.
-template<typename T, typename D = std::default_delete<T>>
-using UniquePtr = std::unique_ptr<T, D>;
+template<typename... Args> using UniquePtr = std::unique_ptr<Args...>;
 template<typename T, typename... Args>
 constexpr inline UniquePtr<T> MakeUnique(Args&&... args)
 {
@@ -116,40 +112,30 @@ constexpr inline UniquePtr<T> MakeUnique(Args&&... args)
 // A Promise/Future (+SharedFuture) implementation, defaults to C++11's
 // std::promise, std::future, and std::shared_future. If this is changed, you
 // must recompile the library.
-template<typename T>
-using Promise = std::promise<T>;
-template<typename T>
-using Future = std::future<T>;
-template<typename T>
-using SharedFuture = std::shared_future<T>;
+template<typename... Args> using Promise = std::promise<Args...>;
+template<typename... Args> using Future = std::future<Args...>;
+template<typename... Args> using SharedFuture = std::shared_future<Args...>;
 
 // A Vector implementation, defaults to C++'s std::vector. If this is changed,
 // you must recompile the library.
-template<typename T>
-using Vector = std::vector<T>;
+template<typename... Args> using Vector = std::vector<Args...>;
 
 // A static-sized Array implementation, defaults to C++11's std::array. If this
 // is changed, you must recompile the library.
-template<typename T, std::size_t N>
-using Array = std::array<T, N>;
+template<typename T, std::size_t N> using Array = std::array<T, N>;
 
 // A String implementation, default's to C++'s std::string. If this is changed,
 // you must recompile the library.
-template<typename T>
-using BasicString = std::basic_string<T>;
+template<typename... Args> using BasicString = std::basic_string<Args...>;
 using String = BasicString<std::string::value_type>;
 
 // Tag specific containers that guarantee contiguous storage. The standard
 // provides no such mechanism, so we have to manually specify which are
 // acceptable.
-template<typename T>
-struct IsContiguousTag : std::false_type {};
-template<typename T, size_t N>
-struct IsContiguousTag<Array<T,N>> : std::true_type {};
-template<typename T>
-struct IsContiguousTag<Vector<T>> : std::true_type {};
-template<typename T>
-struct IsContiguousTag<BasicString<T>> : std::true_type {};
+template<typename T> struct IsContiguousTag : std::false_type {};
+template<typename T, size_t N> struct IsContiguousTag<Array<T,N>> : std::true_type {};
+template<typename T> struct IsContiguousTag<Vector<T>> : std::true_type {};
+template<typename T> struct IsContiguousTag<BasicString<T>> : std::true_type {};
 
 // A rather simple ArrayView container. This allows accepting various array
 // types (Array, Vector, a static-sized array, a dynamic array + size) without
@@ -207,7 +193,7 @@ public:
 template<typename T, typename Tr=std::char_traits<T>>
 class BasicStringView : public ArrayView<T> {
     using BaseT = ArrayView<T>;
-    using StringT = BasicString<T>;
+    using StringT = BasicString<T,Tr>;
 
 public:
     using typename BaseT::value_type;
@@ -231,8 +217,8 @@ public:
 
     explicit operator StringT() const { return StringT(BaseT::data(), length()); }
 #if __cplusplus >= 201703L
-    operator std::basic_string_view<T>() const noexcept
-    { return std::basic_string_view<T>(BaseT::data(), length()); }
+    operator std::basic_string_view<T,Tr>() const noexcept
+    { return std::basic_string_view<T,Tr>(BaseT::data(), length()); }
 #endif
 
     StringT operator+(const StringT &rhs) const
@@ -269,30 +255,30 @@ public:
 using StringView = BasicStringView<String::value_type>;
 
 // Inline operators to concat String and C-style strings with StringViews.
-template<typename T>
-inline BasicString<T> operator+(const BasicString<T> &lhs, BasicStringView<T> rhs)
-{ return BasicString<T>(lhs).append(rhs.data(), rhs.size()); }
-template<typename T>
-inline BasicString<T> operator+(BasicString<T>&& lhs, BasicStringView<T> rhs)
+template<typename T, typename Tr>
+inline BasicString<T,Tr> operator+(const BasicString<T,Tr> &lhs, BasicStringView<T,Tr> rhs)
+{ return BasicString<T,Tr>(lhs).append(rhs.data(), rhs.size()); }
+template<typename T, typename Tr>
+inline BasicString<T,Tr> operator+(BasicString<T,Tr> lhs, BasicStringView<T,Tr> rhs)
 { return std::move(lhs.append(rhs.data(), rhs.size())); }
-template<typename T>
-inline BasicString<T> operator+(const typename BasicString<T>::value_type *lhs, BasicStringView<T> rhs)
-{ return lhs + BasicString<T>(rhs); }
-template<typename T>
-inline BasicString<T>& operator+=(BasicString<T> &lhs, BasicStringView<T> rhs)
+template<typename T, typename Tr>
+inline BasicString<T,Tr> operator+(const typename BasicString<T,Tr>::value_type *lhs, BasicStringView<T,Tr> rhs)
+{ return lhs + BasicString<T,Tr>(rhs); }
+template<typename T, typename Tr>
+inline BasicString<T,Tr>& operator+=(BasicString<T,Tr> &lhs, BasicStringView<T,Tr> rhs)
 { return lhs.append(rhs.data(), rhs.size()); }
 
 // Inline operators to compare String and C-style strings with StringViews.
-template<typename T>
-inline bool operator==(const BasicString<T> &lhs, BasicStringView<T> rhs)
-{ return StringView(lhs) == rhs; }
-template<typename T>
-inline bool operator==(const typename BasicString<T>::value_type *lhs, BasicStringView<T> rhs)
-{ return StringView(lhs) == rhs; }
+template<typename T, typename Tr>
+inline bool operator==(const BasicString<T,Tr> &lhs, BasicStringView<T,Tr> rhs)
+{ return BasicStringView<T,Tr>(lhs) == rhs; }
+template<typename T, typename Tr>
+inline bool operator==(const typename BasicString<T,Tr>::value_type *lhs, BasicStringView<T,Tr> rhs)
+{ return BasicStringView<T,Tr>(lhs) == rhs; }
 
 // Inline operator to write out a StringView to an ostream
-template<typename T>
-inline std::basic_ostream<T>& operator<<(std::basic_ostream<T> &lhs, BasicStringView<T> rhs)
+template<typename T, typename Tr>
+inline std::basic_ostream<T>& operator<<(std::basic_ostream<T,Tr> &lhs, BasicStringView<T,Tr> rhs)
 {
     for(auto ch : rhs)
         lhs << ch;
