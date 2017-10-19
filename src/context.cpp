@@ -1247,23 +1247,25 @@ Effect ContextImpl::createEffect()
 }
 
 
-SourceGroup ContextImpl::createSourceGroup(String name)
+SourceGroup ContextImpl::createSourceGroup(StringView name)
 {
-    auto iter = std::lower_bound(mSourceGroups.begin(), mSourceGroups.end(), name,
-        [](const UniquePtr<SourceGroupImpl> &lhs, const String &rhs) -> bool
-        { return lhs->getName() < rhs; }
+    auto hasher = std::hash<StringView>();
+    auto iter = std::lower_bound(mSourceGroups.begin(), mSourceGroups.end(), hasher(name),
+        [hasher](const UniquePtr<SourceGroupImpl> &lhs, size_t rhs) -> bool
+        { return hasher(lhs->getName()) < rhs; }
     );
     if(iter != mSourceGroups.end() && (*iter)->getName() == name)
         throw std::runtime_error("Duplicate source group name");
-    iter = mSourceGroups.insert(iter, MakeUnique<SourceGroupImpl>(this, std::move(name)));
+    iter = mSourceGroups.insert(iter, MakeUnique<SourceGroupImpl>(this, String(name)));
     return SourceGroup(iter->get());
 }
 
-SourceGroup ContextImpl::getSourceGroup(const String &name)
+SourceGroup ContextImpl::getSourceGroup(StringView name)
 {
-    auto iter = std::lower_bound(mSourceGroups.begin(), mSourceGroups.end(), name,
-        [](const UniquePtr<SourceGroupImpl> &lhs, const String &rhs) -> bool
-        { return lhs->getName() < rhs; }
+    auto hasher = std::hash<StringView>();
+    auto iter = std::lower_bound(mSourceGroups.begin(), mSourceGroups.end(), hasher(name),
+        [hasher](const UniquePtr<SourceGroupImpl> &lhs, size_t rhs) -> bool
+        { return hasher(lhs->getName()) < rhs; }
     );
     if(iter == mSourceGroups.end() || (*iter)->getName() != name)
         throw std::runtime_error("Source group not found");
@@ -1365,8 +1367,8 @@ DECL_THUNK1(void, Context, removeBuffer,, Buffer)
 DECL_THUNK0(Source, Context, createSource,)
 DECL_THUNK0(AuxiliaryEffectSlot, Context, createAuxiliaryEffectSlot,)
 DECL_THUNK0(Effect, Context, createEffect,)
-DECL_THUNK1(SourceGroup, Context, createSourceGroup,, String)
-DECL_THUNK1(SourceGroup, Context, getSourceGroup,, const String&)
+DECL_THUNK1(SourceGroup, Context, createSourceGroup,, StringView)
+DECL_THUNK1(SourceGroup, Context, getSourceGroup,, StringView)
 DECL_THUNK1(void, Context, setDopplerFactor,, ALfloat)
 DECL_THUNK1(void, Context, setSpeedOfSound,, ALfloat)
 DECL_THUNK1(void, Context, setDistanceModel,, DistanceModel)

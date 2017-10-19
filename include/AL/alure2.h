@@ -251,6 +251,8 @@ public:
     }
     bool operator==(BasicStringView rhs) const noexcept
     { return compare(rhs) == 0; }
+    bool operator!=(BasicStringView rhs) const noexcept
+    { return compare(rhs) != 0; }
 };
 using StringView = BasicStringView<String::value_type>;
 
@@ -273,8 +275,14 @@ template<typename T, typename Tr>
 inline bool operator==(const BasicString<T,Tr> &lhs, BasicStringView<T,Tr> rhs)
 { return BasicStringView<T,Tr>(lhs) == rhs; }
 template<typename T, typename Tr>
+inline bool operator!=(const BasicString<T,Tr> &lhs, BasicStringView<T,Tr> rhs)
+{ return BasicStringView<T,Tr>(lhs) != rhs; }
+template<typename T, typename Tr>
 inline bool operator==(const typename BasicString<T,Tr>::value_type *lhs, BasicStringView<T,Tr> rhs)
 { return BasicStringView<T,Tr>(lhs) == rhs; }
+template<typename T, typename Tr>
+inline bool operator!=(const typename BasicString<T,Tr>::value_type *lhs, BasicStringView<T,Tr> rhs)
+{ return BasicStringView<T,Tr>(lhs) != rhs; }
 
 // Inline operator to write out a StringView to an ostream
 template<typename T, typename Tr>
@@ -795,8 +803,8 @@ public:
 
     Effect createEffect();
 
-    SourceGroup createSourceGroup(String name);
-    SourceGroup getSourceGroup(const String &name);
+    SourceGroup createSourceGroup(StringView name);
+    SourceGroup getSourceGroup(StringView name);
 
     /** Sets the doppler factor to apply to all source calculations. */
     void setDopplerFactor(ALfloat factor);

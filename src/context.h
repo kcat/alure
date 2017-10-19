@@ -294,8 +294,8 @@ public:
 
     Effect createEffect();
 
-    SourceGroup createSourceGroup(String name);
-    SourceGroup getSourceGroup(const String &name);
+    SourceGroup createSourceGroup(StringView name);
+    SourceGroup getSourceGroup(StringView name);
 
     void setDopplerFactor(ALfloat factor);
 
