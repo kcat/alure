@@ -322,6 +322,7 @@ inline std::basic_ostream<T>& operator<<(std::basic_ostream<T,Tr> &lhs, BasicStr
  */
 using AttributePair = std::pair<ALCint,ALCint>;
 static_assert(sizeof(AttributePair) == sizeof(ALCint[2]), "Bad AttributePair size");
+constexpr AttributePair AttributesEnd{0, 0};
 
 
 struct FilterParams {

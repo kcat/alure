@@ -58,7 +58,7 @@ int main(int argc, char *argv[])
         else
             attrs.push_back({ALC_HRTF_ID_SOFT, std::distance(hrtf_names.begin(), iter)});
     }
-    attrs.push_back({0,0});
+    attrs.push_back(alure::AttributesEnd);
     alure::Context ctx = dev.createContext(attrs);
     alure::Context::MakeCurrent(ctx);
 
@@ -77,7 +77,7 @@ int main(int argc, char *argv[])
                 alure::Array<alure::AttributePair,3> attrs{{
                     {ALC_HRTF_SOFT, ALC_TRUE},
                     {ALC_HRTF_ID_SOFT, std::distance(hrtf_names.begin(), iter)},
-                    {0, 0}
+                    alure::AttributesEnd
                 }};
                 dev.reset(attrs);
                 std::cout<< "Using HRTF \""<<dev.getCurrentHRTF()<<"\"" <<std::endl;

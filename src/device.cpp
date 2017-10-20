@@ -201,7 +201,7 @@ void DeviceImpl::reset(ArrayView<AttributePair> attributes)
             Vector<AttributePair> attrs;
             attrs.reserve(attributes.size() + 1);
             std::copy(attributes.begin(), attributes.end(), std::back_inserter(attrs));
-            attrs.push_back({0, 0});
+            attrs.push_back(AttributesEnd);
             return alcResetDeviceSOFT(mDevice, &std::get<0>(attrs.front()));
         }
         return alcResetDeviceSOFT(mDevice, &std::get<0>(attributes.front()));
@@ -232,7 +232,7 @@ Context DeviceImpl::createContext(ArrayView<AttributePair> attributes)
             Vector<AttributePair> attrs;
             attrs.reserve(attributes.size() + 1);
             std::copy(attributes.begin(), attributes.end(), std::back_inserter(attrs));
-            attrs.push_back({0, 0});
+            attrs.push_back(AttributesEnd);
             return alcCreateContext(mDevice, &std::get<0>(attrs.front()));
         }
         return alcCreateContext(mDevice, &std::get<0>(attributes.front()));
