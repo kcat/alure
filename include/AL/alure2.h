@@ -249,10 +249,12 @@ public:
         }
         return ret;
     }
-    bool operator==(BasicStringView rhs) const noexcept
-    { return compare(rhs) == 0; }
-    bool operator!=(BasicStringView rhs) const noexcept
-    { return compare(rhs) != 0; }
+    bool operator==(BasicStringView rhs) const noexcept { return compare(rhs) == 0; }
+    bool operator!=(BasicStringView rhs) const noexcept { return compare(rhs) != 0; }
+    bool operator<=(BasicStringView rhs) const noexcept { return compare(rhs) <= 0; }
+    bool operator>=(BasicStringView rhs) const noexcept { return compare(rhs) >= 0; }
+    bool operator<(BasicStringView rhs) const noexcept { return compare(rhs) < 0; }
+    bool operator>(BasicStringView rhs) const noexcept { return compare(rhs) > 0; }
 };
 using StringView = BasicStringView<String::value_type>;
 
@@ -271,18 +273,21 @@ inline BasicString<T,Tr>& operator+=(BasicString<T,Tr> &lhs, BasicStringView<T,T
 { return lhs.append(rhs.data(), rhs.size()); }
 
 // Inline operators to compare String and C-style strings with StringViews.
-template<typename T, typename Tr>
-inline bool operator==(const BasicString<T,Tr> &lhs, BasicStringView<T,Tr> rhs)
-{ return BasicStringView<T,Tr>(lhs) == rhs; }
-template<typename T, typename Tr>
-inline bool operator!=(const BasicString<T,Tr> &lhs, BasicStringView<T,Tr> rhs)
-{ return BasicStringView<T,Tr>(lhs) != rhs; }
-template<typename T, typename Tr>
-inline bool operator==(const typename BasicString<T,Tr>::value_type *lhs, BasicStringView<T,Tr> rhs)
-{ return BasicStringView<T,Tr>(lhs) == rhs; }
-template<typename T, typename Tr>
-inline bool operator!=(const typename BasicString<T,Tr>::value_type *lhs, BasicStringView<T,Tr> rhs)
-{ return BasicStringView<T,Tr>(lhs) != rhs; }
+#define ALURE_DECL_STROP(op)                                                     \
+template<typename T, typename Tr>                                                \
+inline bool operator op(const BasicString<T,Tr> &lhs, BasicStringView<T,Tr> rhs) \
+{ return BasicStringView<T,Tr>(lhs) op rhs; }                                    \
+template<typename T, typename Tr>                                                \
+inline bool operator op(const typename BasicString<T,Tr>::value_type *lhs,       \
+                        BasicStringView<T,Tr> rhs)                               \
+{ return BasicStringView<T,Tr>(lhs) op rhs; }
+ALURE_DECL_STROP(==)
+ALURE_DECL_STROP(!=)
+ALURE_DECL_STROP(<=)
+ALURE_DECL_STROP(>=)
+ALURE_DECL_STROP(<)
+ALURE_DECL_STROP(>)
+#undef ALURE_DECL_STROP
 
 // Inline operator to write out a StringView to an ostream
 template<typename T, typename Tr>
@@ -1394,7 +1399,7 @@ public:
  * \param name A unique name identifying this decoder factory.
  * \param factory A DecoderFactory instance used to create Decoder instances.
  */
-ALURE_API void RegisterDecoder(const String &name, UniquePtr<DecoderFactory> factory);
+ALURE_API void RegisterDecoder(StringView name, UniquePtr<DecoderFactory> factory);
 
 /**
  * Unregisters a decoder factory by name. Alure returns the instance back to
@@ -1406,7 +1411,7 @@ ALURE_API void RegisterDecoder(const String &name, UniquePtr<DecoderFactory> fac
  * \return The unregistered decoder factory instance, or 0 (nullptr) if a
  * decoder factory with the given name doesn't exist.
  */
-ALURE_API UniquePtr<DecoderFactory> UnregisterDecoder(const String &name);
+ALURE_API UniquePtr<DecoderFactory> UnregisterDecoder(StringView name);
 
 
 /**

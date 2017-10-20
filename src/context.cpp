@@ -303,21 +303,21 @@ namespace alure
 Decoder::~Decoder() { }
 DecoderFactory::~DecoderFactory() { }
 
-void RegisterDecoder(const String &name, UniquePtr<DecoderFactory> factory)
+void RegisterDecoder(StringView name, UniquePtr<DecoderFactory> factory)
 {
     auto iter = std::lower_bound(sDecoders.begin(), sDecoders.end(), name,
-        [](const DecoderEntryPair &entry, const String &rhs) -> bool
+        [](const DecoderEntryPair &entry, StringView rhs) -> bool
         { return entry.first < rhs; }
     );
     if(iter != sDecoders.end())
         throw std::runtime_error("Decoder factory \""+name+"\" already registered");
-    sDecoders.insert(iter, std::make_pair(name, std::move(factory)));
+    sDecoders.insert(iter, std::make_pair(String(name), std::move(factory)));
 }
 
-UniquePtr<DecoderFactory> UnregisterDecoder(const String &name)
+UniquePtr<DecoderFactory> UnregisterDecoder(StringView name)
 {
     auto iter = std::lower_bound(sDecoders.begin(), sDecoders.end(), name,
-        [](const DecoderEntryPair &entry, const String &rhs) -> bool
+        [](const DecoderEntryPair &entry, StringView rhs) -> bool
         { return entry.first < rhs; }
     );
     if(iter != sDecoders.end())
