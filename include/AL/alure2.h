@@ -616,8 +616,15 @@ public:
 
     /**
      * Creates a new Context on this device, using the specified attributes.
+     * Throws an exception if context creation fails.
      */
     Context createContext(ArrayView<AttributePair> attributes=ArrayView<AttributePair>());
+    /**
+     * Creates a new Context on this device, using the specified attributes.
+     * Returns an empty Context if context creation fails.
+     */
+    Context createContext(ArrayView<AttributePair> attributes, const std::nothrow_t&);
+    Context createContext(const std::nothrow_t&);
 
     /**
      * Pauses device processing, stopping updates for its contexts. Multiple

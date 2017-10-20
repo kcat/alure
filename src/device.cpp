@@ -211,7 +211,7 @@ void DeviceImpl::reset(ArrayView<AttributePair> attributes)
 }
 
 
-Context DeviceImpl::createContext(ArrayView<AttributePair> attributes)
+Context DeviceImpl::createContext(ArrayView<AttributePair> attributes, bool dothrow)
 {
     ALCcontext *ctx = [this, &attributes]() -> ALCcontext*
     {
@@ -237,7 +237,12 @@ Context DeviceImpl::createContext(ArrayView<AttributePair> attributes)
         }
         return alcCreateContext(mDevice, &std::get<0>(attributes.front()));
     }();
-    if(!ctx) throw std::runtime_error("Failed to create context");
+    if(!ctx)
+    {
+        if(dothrow)
+            throw std::runtime_error("Failed to create context");
+        return Context();
+    }
 
     mContexts.emplace_back(MakeUnique<ContextImpl>(ctx, this));
     return Context(mContexts.back().get());
@@ -283,7 +288,12 @@ DECL_THUNK0(Vector<String>, Device, enumerateHRTFNames, const)
 DECL_THUNK0(bool, Device, isHRTFEnabled, const)
 DECL_THUNK0(String, Device, getCurrentHRTF, const)
 DECL_THUNK1(void, Device, reset,, ArrayView<AttributePair>)
-DECL_THUNK1(Context, Device, createContext,, ArrayView<AttributePair>)
+Context Device::createContext(ArrayView<AttributePair> attrs)
+{ return pImpl->createContext(attrs, true); }
+Context Device::createContext(ArrayView<AttributePair> attrs, const std::nothrow_t&)
+{ return pImpl->createContext(attrs, false); }
+Context Device::createContext(const std::nothrow_t&)
+{ return pImpl->createContext(ArrayView<AttributePair>(), false); }
 DECL_THUNK0(void, Device, pauseDSP,)
 DECL_THUNK0(void, Device, resumeDSP,)
 void Device::close()
