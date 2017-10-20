@@ -5,13 +5,7 @@
 
 #include <algorithm>
 
-#include "al.h"
-
-#include "refcount.h"
-
 namespace alure {
-
-class ContextImpl;
 
 ALenum GetFormat(ChannelConfig chans, SampleType type);
 

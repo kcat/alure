@@ -5,8 +5,6 @@
 
 namespace alure {
 
-class DeviceImpl;
-
 class DeviceManagerImpl {
     Vector<UniquePtr<DeviceImpl>> mDevices;
 

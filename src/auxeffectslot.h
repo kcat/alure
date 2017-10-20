@@ -1,17 +1,11 @@
 #ifndef AUXEFFECTSLOT_H
 #define AUXEFFECTSLOT_H
 
-#include <algorithm>
-
 #include "main.h"
 
-#include "al.h"
-
-#include "refcount.h"
+#include <algorithm>
 
 namespace alure {
-
-class ContextImpl;
 
 inline bool operator==(const SourceSend &lhs, const SourceSend &rhs)
 { return lhs.mSource == rhs.mSource && lhs.mSend == rhs.mSend; }

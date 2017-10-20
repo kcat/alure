@@ -11,9 +11,6 @@
 
 namespace alure {
 
-class ContextImpl;
-class BufferImpl;
-
 
 enum ALCExtension {
     EXT_thread_local_context,

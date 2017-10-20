@@ -5,8 +5,6 @@
 
 namespace alure {
 
-class ContextImpl;
-
 class EffectImpl {
     ContextImpl *const mContext;
     ALuint mId;

@@ -38,10 +38,6 @@ using mpark::holds_alternative;
 
 namespace alure {
 
-class DeviceImpl;
-class BufferImpl;
-class SourceGroupImpl;
-
 enum ALExtension {
     EXT_EFX,
 

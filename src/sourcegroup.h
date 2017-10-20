@@ -7,9 +7,6 @@
 namespace alure
 {
 
-class ContextImpl;
-class SourceImpl;
-
 struct SourceGroupProps {
     ALfloat mGain;
     ALfloat mPitch;

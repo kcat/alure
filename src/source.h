@@ -12,11 +12,7 @@
 
 namespace alure {
 
-class ContextImpl;
-class BufferImpl;
 class ALBufferStream;
-class AuxiliaryEffectSlotImpl;
-class SourceGroupImpl;
 
 struct SendProps {
     AuxiliaryEffectSlotImpl *mSlot;
