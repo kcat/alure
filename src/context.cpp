@@ -225,7 +225,8 @@ public:
 };
 #endif
 
-const std::pair<alure::String,alure::UniquePtr<alure::DecoderFactory>> sDefaultDecoders[] = {
+using DecoderEntryPair = std::pair<alure::String,alure::UniquePtr<alure::DecoderFactory>>;
+const DecoderEntryPair sDefaultDecoders[] = {
     { "_alure_int_wave", alure::MakeUnique<alure::WaveDecoderFactory>() },
 
 #ifdef HAVE_VORBISFILE
@@ -244,7 +245,7 @@ const std::pair<alure::String,alure::UniquePtr<alure::DecoderFactory>> sDefaultD
     { "_alure_int_mpg123", alure::MakeUnique<alure::Mpg123DecoderFactory>() },
 #endif
 };
-std::map<alure::String,alure::UniquePtr<alure::DecoderFactory>> sDecoders;
+alure::Vector<DecoderEntryPair> sDecoders;
 
 
 template<typename T>
@@ -304,14 +305,21 @@ DecoderFactory::~DecoderFactory() { }
 
 void RegisterDecoder(const String &name, UniquePtr<DecoderFactory> factory)
 {
-    while(sDecoders.find(name) != sDecoders.end())
+    auto iter = std::lower_bound(sDecoders.begin(), sDecoders.end(), name,
+        [](const DecoderEntryPair &entry, const String &rhs) -> bool
+        { return entry.first < rhs; }
+    );
+    if(iter != sDecoders.end())
         throw std::runtime_error("Decoder factory \""+name+"\" already registered");
-    sDecoders.insert(std::make_pair(name, std::move(factory)));
+    sDecoders.insert(iter, std::make_pair(name, std::move(factory)));
 }
 
 UniquePtr<DecoderFactory> UnregisterDecoder(const String &name)
 {
-    auto iter = sDecoders.find(name);
+    auto iter = std::lower_bound(sDecoders.begin(), sDecoders.end(), name,
+        [](const DecoderEntryPair &entry, const String &rhs) -> bool
+        { return entry.first < rhs; }
+    );
     if(iter != sDecoders.end())
     {
         UniquePtr<DecoderFactory> factory = std::move(iter->second);
