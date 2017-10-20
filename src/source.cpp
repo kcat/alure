@@ -220,7 +220,7 @@ void SourceImpl::resetProperties()
     for(auto &i : mEffectSlots)
     {
         if(i.second.mSlot)
-            i.second.mSlot->removeSourceSend(Source(this), i.first);
+            i.second.mSlot->removeSourceSend({Source(this), i.first});
         if(i.second.mFilter)
             mContext->alDeleteFilters(1, &i.second.mFilter);
     }
@@ -1207,14 +1207,14 @@ void SourceImpl::setAuxiliarySend(AuxiliaryEffectSlot auxslot, ALuint send)
     if(siter == mEffectSlots.end())
     {
         if(!slot) return;
-        slot->addSourceSend(Source(this), send);
+        slot->addSourceSend({Source(this), send});
         siter = mEffectSlots.insert(std::make_pair(send, SendProps(slot))).first;
     }
     else if(siter->second.mSlot != slot)
     {
-        if(slot) slot->addSourceSend(Source(this), send);
+        if(slot) slot->addSourceSend({Source(this), send});
         if(siter->second.mSlot)
-            siter->second.mSlot->removeSourceSend(Source(this), send);
+            siter->second.mSlot->removeSourceSend({Source(this), send});
         siter->second.mSlot = slot;
     }
 
@@ -1242,16 +1242,16 @@ void SourceImpl::setAuxiliarySendFilter(AuxiliaryEffectSlot auxslot, ALuint send
         if(!filterid && !slot)
             return;
 
-        if(slot) slot->addSourceSend(Source(this), send);
+        if(slot) slot->addSourceSend({Source(this), send});
         siter = mEffectSlots.insert(std::make_pair(send, SendProps(slot, filterid))).first;
     }
     else
     {
         if(siter->second.mSlot != slot)
         {
-            if(slot) slot->addSourceSend(Source(this), send);
+            if(slot) slot->addSourceSend({Source(this), send});
             if(siter->second.mSlot)
-                siter->second.mSlot->removeSourceSend(Source(this), send);
+                siter->second.mSlot->removeSourceSend({Source(this), send});
             siter->second.mSlot = slot;
         }
         setFilterParams(siter->second.mFilter, filter);
@@ -1268,19 +1268,6 @@ void SourceImpl::setAuxiliarySendFilter(AuxiliaryEffectSlot auxslot, ALuint send
 void SourceImpl::release()
 {
     stop();
-
-    if(mDirectFilter)
-        mContext->alDeleteFilters(1, &mDirectFilter);
-    mDirectFilter = AL_FILTER_NULL;
-
-    for(auto &i : mEffectSlots)
-    {
-        if(i.second.mSlot)
-            i.second.mSlot->removeSourceSend(Source(this), i.first);
-        if(i.second.mFilter)
-            mContext->alDeleteFilters(1, &i.second.mFilter);
-    }
-    mEffectSlots.clear();
 
     resetProperties();
     mContext->freeSource(this);

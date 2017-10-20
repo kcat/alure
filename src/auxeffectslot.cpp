@@ -14,6 +14,28 @@
 namespace alure
 {
 
+static inline bool operator<(const SourceSend &lhs, const SourceSend &rhs)
+{ return lhs.mSource < rhs.mSource || (lhs.mSource == rhs.mSource && lhs.mSend < rhs.mSend); }
+static inline bool operator==(const SourceSend &lhs, const SourceSend &rhs)
+{ return lhs.mSource == rhs.mSource && lhs.mSend == rhs.mSend; }
+static inline bool operator!=(const SourceSend &lhs, const SourceSend &rhs)
+{ return !(lhs == rhs); }
+
+void AuxiliaryEffectSlotImpl::addSourceSend(SourceSend source_send)
+{
+    auto iter = std::lower_bound(mSourceSends.begin(), mSourceSends.end(), source_send);
+    if(iter == mSourceSends.end() || *iter != source_send)
+        mSourceSends.insert(iter, source_send);
+}
+
+void AuxiliaryEffectSlotImpl::removeSourceSend(SourceSend source_send)
+{
+    auto iter = std::lower_bound(mSourceSends.begin(), mSourceSends.end(), source_send);
+    if(iter != mSourceSends.end() && *iter == source_send)
+        mSourceSends.erase(iter);
+}
+
+
 void AuxiliaryEffectSlotImpl::setGain(ALfloat gain)
 {
     if(!(gain >= 0.0f && gain <= 1.0f))

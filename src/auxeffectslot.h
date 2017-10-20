@@ -7,9 +7,6 @@
 
 namespace alure {
 
-inline bool operator==(const SourceSend &lhs, const SourceSend &rhs)
-{ return lhs.mSource == rhs.mSource && lhs.mSend == rhs.mSend; }
-
 class AuxiliaryEffectSlotImpl {
     ContextImpl *const mContext;
     ALuint mId;
@@ -21,13 +18,8 @@ public:
       : mContext(context), mId(id)
     { }
 
-    void addSourceSend(Source source, ALuint send)
-    { mSourceSends.emplace_back((SourceSend){source, send}); }
-    void removeSourceSend(Source source, ALuint send)
-    {
-        auto iter = std::find(mSourceSends.cbegin(), mSourceSends.cend(), SourceSend{source, send});
-        if(iter != mSourceSends.cend()) mSourceSends.erase(iter);
-    }
+    void addSourceSend(SourceSend source_send);
+    void removeSourceSend(SourceSend source_send);
 
     ContextImpl *getContext() { return mContext; }
     const ALuint &getId() const { return mId; }
