@@ -144,8 +144,13 @@ template<typename T>
 class ArrayView {
 public:
     using value_type = T;
+
     using iterator = const value_type*;
     using const_iterator = const value_type*;
+
+    using size_type = size_t;
+
+    static constexpr size_type npos = static_cast<size_type>(-1);
 
 private:
     const value_type *mElems;
@@ -155,7 +160,7 @@ public:
     ArrayView() noexcept : mElems(nullptr), mNumElems(0) { }
     ArrayView(const ArrayView&) noexcept = default;
     ArrayView(ArrayView&&) noexcept = default;
-    ArrayView(const value_type *elems, size_t num_elems) noexcept
+    ArrayView(const value_type *elems, size_type num_elems) noexcept
       : mElems(elems), mNumElems(num_elems) { }
     template<typename OtherT> ArrayView(RemoveRefT<OtherT>&&) = delete;
     template<typename OtherT,
@@ -168,7 +173,7 @@ public:
 
     const value_type *data() const noexcept { return mElems; }
 
-    size_t size() const noexcept { return mNumElems; }
+    size_type size() const noexcept { return mNumElems; }
     bool empty() const noexcept { return mNumElems == 0; }
 
     const value_type& operator[](size_t i) const { return mElems[i]; }
@@ -188,6 +193,15 @@ public:
 
     const_iterator end() const noexcept { return mElems + mNumElems; }
     const_iterator cend() const noexcept { return mElems + mNumElems; }
+
+    ArrayView slice(size_type pos, size_type len = npos) const noexcept
+    {
+        if(pos >= size())
+            return ArrayView(data()+size(), 0);
+        if(len == npos || size()-pos >= len)
+            return ArrayView(data()+pos, size()-pos);
+        return ArrayView(data()+pos, len);
+    }
 };
 
 template<typename T, typename Tr=std::char_traits<T>>
@@ -197,11 +211,13 @@ class BasicStringView : public ArrayView<T> {
 
 public:
     using typename BaseT::value_type;
+    using typename BaseT::size_type;
+    using BaseT::npos;
     using traits_type = Tr;
 
     BasicStringView() noexcept = default;
     BasicStringView(const BasicStringView&) noexcept = default;
-    BasicStringView(const value_type *elems, size_t num_elems) noexcept
+    BasicStringView(const value_type *elems, size_type num_elems) noexcept
       : ArrayView<T>(elems, num_elems) { }
     BasicStringView(const value_type *elems) : ArrayView<T>(elems, std::strlen(elems)) { }
     BasicStringView(StringT&&) = delete;
@@ -213,7 +229,7 @@ public:
 
     BasicStringView& operator=(const BasicStringView&) noexcept = default;
 
-    size_t length() const { return BaseT::size(); }
+    size_type length() const { return BaseT::size(); }
 
     explicit operator StringT() const { return StringT(BaseT::data(), length()); }
 #if __cplusplus >= 201703L
@@ -241,10 +257,8 @@ public:
         );
         if(ret == 0)
         {
-            if(length() > other.length())
-                return 1;
-            if(length() < other.length())
-                return -1;
+            if(length() > other.length()) return 1;
+            if(length() < other.length()) return -1;
             return 0;
         }
         return ret;
@@ -255,6 +269,9 @@ public:
     bool operator>=(BasicStringView rhs) const noexcept { return compare(rhs) >= 0; }
     bool operator<(BasicStringView rhs) const noexcept { return compare(rhs) < 0; }
     bool operator>(BasicStringView rhs) const noexcept { return compare(rhs) > 0; }
+
+    BasicStringView substr(size_type pos, size_type len = npos) const noexcept
+    { return BaseT::slice(pos, len); }
 };
 using StringView = BasicStringView<String::value_type>;
 
