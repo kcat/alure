@@ -177,44 +177,6 @@ target_include_directories(alure2_s
 target_compile_options(alure2_s PRIVATE ${CXX_FLAGS} ${VISIBILITY_FLAGS})
 target_link_libraries(alure2_s PUBLIC ${alure_libs})
 
-
-add_executable(alure-enum examples/alure-enum.cpp)
-target_compile_options(alure-enum PRIVATE ${CXX_FLAGS})
-target_link_libraries(alure-enum PRIVATE alure2 ${LINKER_OPTS})
-
-add_executable(alure-play examples/alure-play.cpp)
-target_compile_options(alure-play PRIVATE ${CXX_FLAGS})
-target_link_libraries(alure-play PRIVATE alure2 ${LINKER_OPTS})
-
-add_executable(alure-stream examples/alure-stream.cpp)
-target_compile_options(alure-stream PRIVATE ${CXX_FLAGS})
-target_link_libraries(alure-stream PRIVATE alure2 ${LINKER_OPTS})
-
-add_executable(alure-reverb examples/alure-reverb.cpp)
-target_compile_options(alure-reverb PRIVATE ${CXX_FLAGS})
-target_link_libraries(alure-reverb PRIVATE alure2 ${LINKER_OPTS})
-
-add_executable(alure-hrtf examples/alure-hrtf.cpp)
-target_compile_options(alure-hrtf PRIVATE ${CXX_FLAGS})
-target_link_libraries(alure-hrtf PRIVATE alure2 ${LINKER_OPTS})
-
-find_package(PhysFS)
-if(PHYSFS_FOUND)
-    add_executable(alure-physfs examples/alure-physfs.cpp)
-    target_include_directories(alure-physfs PRIVATE ${PHYSFS_INCLUDE_DIR})
-    target_compile_options(alure-physfs PRIVATE ${CXX_FLAGS})
-    target_link_libraries(alure-physfs PRIVATE alure2 ${PHYSFS_LIBRARY} ${LINKER_OPTS})
-endif()
-
-find_package(DUMB)
-if(DUMB_FOUND)
-    add_executable(alure-dumb examples/alure-dumb.cpp)
-    target_include_directories(alure-dumb PRIVATE ${DUMB_INCLUDE_DIRS})
-    target_compile_options(alure-dumb PRIVATE ${CXX_FLAGS})
-    target_link_libraries(alure-dumb PRIVATE alure2 ${DUMB_LIBRARIES} ${LINKER_OPTS})
-endif()
-
-
 if(NOT DEFINED LIB_SUFFIX)
     set(LIB_SUFFIX "")
 endif()
@@ -224,3 +186,43 @@ install(TARGETS alure2 alure2_s
         LIBRARY DESTINATION "lib${LIB_SUFFIX}"
         ARCHIVE DESTINATION "lib${LIB_SUFFIX}"
 )
+
+
+option(ALURE_BUILD_EXAMPLES "Build example programs" ON)
+if(ALURE_BUILD_EXAMPLES)
+    add_executable(alure-enum examples/alure-enum.cpp)
+    target_compile_options(alure-enum PRIVATE ${CXX_FLAGS})
+    target_link_libraries(alure-enum PRIVATE alure2 ${LINKER_OPTS})
+
+    add_executable(alure-play examples/alure-play.cpp)
+    target_compile_options(alure-play PRIVATE ${CXX_FLAGS})
+    target_link_libraries(alure-play PRIVATE alure2 ${LINKER_OPTS})
+
+    add_executable(alure-stream examples/alure-stream.cpp)
+    target_compile_options(alure-stream PRIVATE ${CXX_FLAGS})
+    target_link_libraries(alure-stream PRIVATE alure2 ${LINKER_OPTS})
+
+    add_executable(alure-reverb examples/alure-reverb.cpp)
+    target_compile_options(alure-reverb PRIVATE ${CXX_FLAGS})
+    target_link_libraries(alure-reverb PRIVATE alure2 ${LINKER_OPTS})
+
+    add_executable(alure-hrtf examples/alure-hrtf.cpp)
+    target_compile_options(alure-hrtf PRIVATE ${CXX_FLAGS})
+    target_link_libraries(alure-hrtf PRIVATE alure2 ${LINKER_OPTS})
+
+    find_package(PhysFS)
+    if(PHYSFS_FOUND)
+        add_executable(alure-physfs examples/alure-physfs.cpp)
+        target_include_directories(alure-physfs PRIVATE ${PHYSFS_INCLUDE_DIR})
+        target_compile_options(alure-physfs PRIVATE ${CXX_FLAGS})
+        target_link_libraries(alure-physfs PRIVATE alure2 ${PHYSFS_LIBRARY} ${LINKER_OPTS})
+    endif()
+
+    find_package(DUMB)
+    if(DUMB_FOUND)
+        add_executable(alure-dumb examples/alure-dumb.cpp)
+        target_include_directories(alure-dumb PRIVATE ${DUMB_INCLUDE_DIRS})
+        target_compile_options(alure-dumb PRIVATE ${CXX_FLAGS})
+        target_link_libraries(alure-dumb PRIVATE alure2 ${DUMB_LIBRARIES} ${LINKER_OPTS})
+    endif()
+endif()
