@@ -102,16 +102,16 @@ void DeviceManagerImpl::removeDevice(DeviceImpl *dev)
 DeviceManager DeviceManager::get()
 { return DeviceManager(&DeviceManagerImpl::get()); }
 DECL_THUNK1(bool, DeviceManager, queryExtension, const, const char*)
-bool DeviceManager::queryExtension(StringView name) const
-{ return pImpl->queryExtension(String(name).c_str()); }
+bool DeviceManager::queryExtension(const String &name) const
+{ return pImpl->queryExtension(name.c_str()); }
 DECL_THUNK1(Vector<String>, DeviceManager, enumerate, const, DeviceEnumeration)
 DECL_THUNK1(String, DeviceManager, defaultDeviceName, const, DefaultDeviceType)
 DECL_THUNK1(Device, DeviceManager, openPlayback,, const char*)
-Device DeviceManager::openPlayback(StringView name)
-{ return pImpl->openPlayback(String(name).c_str()); }
+Device DeviceManager::openPlayback(const String &name)
+{ return pImpl->openPlayback(name.c_str()); }
 DECL_THUNK2(Device, DeviceManager, openPlayback,, const char*, const std::nothrow_t&)
-Device DeviceManager::openPlayback(StringView name, const std::nothrow_t &nt)
-{ return pImpl->openPlayback(String(name).c_str(), nt); }
+Device DeviceManager::openPlayback(const String &name, const std::nothrow_t &nt)
+{ return pImpl->openPlayback(name.c_str(), nt); }
 Device DeviceManager::openPlayback(const std::nothrow_t&)
 { return pImpl->openPlayback(nullptr, std::nothrow); }
 

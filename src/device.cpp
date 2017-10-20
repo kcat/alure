@@ -273,8 +273,8 @@ void DeviceImpl::close()
 
 DECL_THUNK1(String, Device, getName, const, PlaybackName)
 DECL_THUNK1(bool, Device, queryExtension, const, const char*)
-bool Device::queryExtension(StringView name) const
-{ return pImpl->queryExtension(String(name).c_str()); }
+bool Device::queryExtension(const String &name) const
+{ return pImpl->queryExtension(name.c_str()); }
 DECL_THUNK0(Version, Device, getALCVersion, const)
 DECL_THUNK0(Version, Device, getEFXVersion, const)
 DECL_THUNK0(ALCuint, Device, getFrequency, const)

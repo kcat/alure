@@ -501,7 +501,7 @@ public:
     static DeviceManager get();
 
     /** Queries the existence of a non-device-specific ALC extension. */
-    bool queryExtension(StringView name) const;
+    bool queryExtension(const String &name) const;
     bool queryExtension(const char *name) const;
 
     /** Enumerates available device names of the given type. */
@@ -513,14 +513,14 @@ public:
      * Opens the playback device given by name, or the default if blank. Throws
      * an exception on error.
      */
-    Device openPlayback(StringView name=StringView());
+    Device openPlayback(const String &name=String());
     Device openPlayback(const char *name);
 
     /**
      * Opens the playback device given by name, or the default if blank.
      * Returns an empty Device on error.
      */
-    Device openPlayback(StringView name, const std::nothrow_t&);
+    Device openPlayback(const String &name, const std::nothrow_t&);
     Device openPlayback(const char *name, const std::nothrow_t&);
 
     /** Opens the default playback device. Returns an empty Device on error. */
@@ -540,7 +540,7 @@ public:
     /** Retrieves the device name as given by type. */
     String getName(PlaybackName type=PlaybackName::Full) const;
     /** Queries the existence of an ALC extension on this device. */
-    bool queryExtension(StringView name) const;
+    bool queryExtension(const String &name) const;
     bool queryExtension(const char *name) const;
 
     /** Retrieves the ALC version supported by this device. */
