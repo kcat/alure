@@ -1135,8 +1135,8 @@ Source ContextImpl::createSource()
     SourceImpl *source;
     if(!mFreeSources.empty())
     {
-        source = mFreeSources.front();
-        mFreeSources.pop();
+        source = mFreeSources.back();
+        mFreeSources.pop_back();
     }
     else
     {

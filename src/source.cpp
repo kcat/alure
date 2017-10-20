@@ -1283,6 +1283,7 @@ void SourceImpl::release()
     mEffectSlots.clear();
 
     resetProperties();
+    mContext->freeSource(this);
 }
 
 

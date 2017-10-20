@@ -136,7 +136,7 @@ private:
     Vector<UniquePtr<BufferImpl>> mBuffers;
     Vector<UniquePtr<SourceGroupImpl>> mSourceGroups;
     std::deque<SourceImpl> mAllSources;
-    std::queue<SourceImpl*> mFreeSources;
+    Vector<SourceImpl*> mFreeSources;
     Vector<SourceBufferUpdateEntry> mPlaySources;
     Vector<SourceStreamUpdateEntry> mStreamSources;
 
@@ -241,6 +241,7 @@ public:
     void removeStream(SourceImpl *source);
     void removeStreamNoLock(SourceImpl *source);
 
+    void freeSource(SourceImpl *source) { mFreeSources.push_back(source); }
     void freeSourceGroup(SourceGroupImpl *group);
 
     Batcher getBatcher()
