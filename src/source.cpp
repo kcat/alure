@@ -181,6 +181,8 @@ void SourceImpl::resetProperties()
     if(mGroup)
         mGroup->removeSource(Source(this));
     mGroup = nullptr;
+    mGroupPitch = 1.0f;
+    mGroupGain = 1.0f;
 
     mPaused.store(false, std::memory_order_release);
     mOffset = 0;
@@ -233,16 +235,8 @@ void SourceImpl::applyProperties(bool looping, ALuint offset) const
 {
     alSourcei(mId, AL_LOOPING, looping ? AL_TRUE : AL_FALSE);
     alSourcei(mId, AL_SAMPLE_OFFSET, offset);
-    if(mGroup)
-    {
-        alSourcef(mId, AL_PITCH, mPitch * mGroup->getAppliedPitch());
-        alSourcef(mId, AL_GAIN, mGain * mGroup->getAppliedGain());
-    }
-    else
-    {
-        alSourcef(mId, AL_PITCH, mPitch);
-        alSourcef(mId, AL_GAIN, mGain);
-    }
+    alSourcef(mId, AL_PITCH, mPitch * mGroupPitch);
+    alSourcef(mId, AL_GAIN, mGain * mGroupGain);
     alSourcef(mId, AL_MIN_GAIN, mMinGain);
     alSourcef(mId, AL_MAX_GAIN, mMaxGain);
     alSourcef(mId, AL_REFERENCE_DISTANCE, mRefDist);
@@ -289,29 +283,24 @@ void SourceImpl::setGroup(SourceGroupImpl *group)
     if(mGroup)
         mGroup->removeSource(Source(this));
     mGroup = group;
-    groupUpdate();
+    mGroupPitch = mGroup->getAppliedPitch();
+    mGroupGain = mGroup->getAppliedGain();
+    if(mId)
+    {
+        alSourcef(mId, AL_PITCH, mPitch * mGroupPitch);
+        alSourcef(mId, AL_GAIN, mGain * mGroupGain);
+    }
 }
 
 void SourceImpl::unsetGroup()
 {
     mGroup = nullptr;
-    groupUpdate();
-}
-
-void SourceImpl::groupUpdate()
-{
+    mGroupPitch = 1.0f;
+    mGroupGain = 1.0f;
     if(mId)
     {
-        if(mGroup)
-        {
-            alSourcef(mId, AL_PITCH, mPitch * mGroup->getAppliedPitch());
-            alSourcef(mId, AL_GAIN, mGain * mGroup->getAppliedGain());
-        }
-        else
-        {
-            alSourcef(mId, AL_PITCH, mPitch);
-            alSourcef(mId, AL_GAIN, mGain);
-        }
+        alSourcef(mId, AL_PITCH, mPitch * mGroupPitch);
+        alSourcef(mId, AL_GAIN, mGain * mGroupGain);
     }
 }
 
@@ -322,6 +311,8 @@ void SourceImpl::groupPropUpdate(ALfloat gain, ALfloat pitch)
         alSourcef(mId, AL_PITCH, mPitch * pitch);
         alSourcef(mId, AL_GAIN, mGain * gain);
     }
+    mGroupPitch = pitch;
+    mGroupGain = gain;
 }
 
 
@@ -784,7 +775,7 @@ void SourceImpl::setPitch(ALfloat pitch)
         throw std::runtime_error("Pitch out of range");
     CheckContext(mContext);
     if(mId != 0)
-        alSourcef(mId, AL_PITCH, pitch * (mGroup ? mGroup->getAppliedPitch() : 1.0f));
+        alSourcef(mId, AL_PITCH, pitch * mGroupPitch);
     mPitch = pitch;
 }
 
@@ -795,7 +786,7 @@ void SourceImpl::setGain(ALfloat gain)
         throw std::runtime_error("Gain out of range");
     CheckContext(mContext);
     if(mId != 0)
-        alSourcef(mId, AL_GAIN, gain * (mGroup ? mGroup->getAppliedGain() : 1.0f));
+        alSourcef(mId, AL_GAIN, gain * mGroupGain);
     mGain = gain;
 }
 

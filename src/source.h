@@ -35,6 +35,8 @@ class SourceImpl {
     UniquePtr<ALBufferStream> mStream;
 
     SourceGroupImpl *mGroup;
+    ALfloat mGroupPitch;
+    ALfloat mGroupGain;
 
     mutable std::mutex mMutex;
     std::atomic<bool> mIsAsync;
@@ -88,8 +90,6 @@ public:
 
     void setGroup(SourceGroupImpl *group);
     void unsetGroup();
-
-    void groupUpdate();
     void groupPropUpdate(ALfloat gain, ALfloat pitch);
 
     void checkPaused();
