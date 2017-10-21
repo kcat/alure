@@ -972,6 +972,18 @@ public:
     /** Stops playback, releasing the buffer or decoder reference. */
     void stop();
 
+    /**
+     * Fades the source to the specified gain over the given duration, at which
+     * point playback will stop. This gain is in addition to the base gain, and
+     * must be greater than 0 and less than 1. The duration must also be
+     * greater than 0.
+     *
+     * Fading is updated during calls to \c Context::update, which should be
+     * called regularly (30 to 50 times per second) for the fading to be
+     * smooth.
+     */
+    void fadeOutToStop(ALfloat gain, std::chrono::milliseconds duration);
+
     /** Pauses the source if it is playing. */
     void pause();
 

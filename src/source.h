@@ -38,6 +38,11 @@ class SourceImpl {
     ALfloat mGroupPitch;
     ALfloat mGroupGain;
 
+    std::chrono::steady_clock::time_point mLastFadeTime;
+    std::chrono::steady_clock::time_point mFadeTimeTarget;
+    ALfloat mFadeGainTarget;
+    ALfloat mFadeGain;
+
     mutable std::mutex mMutex;
     std::atomic<bool> mIsAsync;
 
@@ -84,6 +89,7 @@ public:
 
     ALuint getId() const { return mId; }
 
+    bool fadeUpdate(std::chrono::steady_clock::time_point cur_fade_time);
     bool playUpdate(ALuint id);
     bool playUpdate();
     bool updateAsync();
@@ -99,6 +105,7 @@ public:
     void play(Buffer buffer);
     void play(SharedPtr<Decoder> decoder, ALuint updatelen, ALuint queuesize);
     void stop();
+    void fadeOutToStop(ALfloat gain, std::chrono::milliseconds duration);
     void pause();
     void resume();
 

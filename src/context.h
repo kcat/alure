@@ -135,6 +135,7 @@ private:
     Vector<SourceImpl*> mFreeSources;
     Vector<SourceBufferUpdateEntry> mPlaySources;
     Vector<SourceStreamUpdateEntry> mStreamSources;
+    Vector<SourceImpl*> mFadingSources;
 
     Vector<SourceImpl*> mStreamingSources;
     std::mutex mSourceStreamMutex;
@@ -229,6 +230,7 @@ public:
     ALuint getSourceId(ALuint maxprio);
     void insertSourceId(ALuint id) { mSourceIds.push(id); }
 
+    void addFadingSource(SourceImpl *source);
     void addPlayingSource(SourceImpl *source, ALuint id);
     void addPlayingSource(SourceImpl *source);
     void removePlayingSource(SourceImpl *source);

@@ -184,6 +184,9 @@ void SourceImpl::resetProperties()
     mGroupPitch = 1.0f;
     mGroupGain = 1.0f;
 
+    mFadeGainTarget = 1.0f;
+    mFadeGain = 1.0f;
+
     mPaused.store(false, std::memory_order_release);
     mOffset = 0;
     mPitch = 1.0f;
@@ -236,7 +239,7 @@ void SourceImpl::applyProperties(bool looping, ALuint offset) const
     alSourcei(mId, AL_LOOPING, looping ? AL_TRUE : AL_FALSE);
     alSourcei(mId, AL_SAMPLE_OFFSET, offset);
     alSourcef(mId, AL_PITCH, mPitch * mGroupPitch);
-    alSourcef(mId, AL_GAIN, mGain * mGroupGain);
+    alSourcef(mId, AL_GAIN, mGain * mGroupGain * mFadeGain);
     alSourcef(mId, AL_MIN_GAIN, mMinGain);
     alSourcef(mId, AL_MAX_GAIN, mMaxGain);
     alSourcef(mId, AL_REFERENCE_DISTANCE, mRefDist);
@@ -300,7 +303,7 @@ void SourceImpl::unsetGroup()
     if(mId)
     {
         alSourcef(mId, AL_PITCH, mPitch * mGroupPitch);
-        alSourcef(mId, AL_GAIN, mGain * mGroupGain);
+        alSourcef(mId, AL_GAIN, mGain * mGroupGain * mFadeGain);
     }
 }
 
@@ -309,7 +312,7 @@ void SourceImpl::groupPropUpdate(ALfloat gain, ALfloat pitch)
     if(mId)
     {
         alSourcef(mId, AL_PITCH, mPitch * pitch);
-        alSourcef(mId, AL_GAIN, mGain * gain);
+        alSourcef(mId, AL_GAIN, mGain * gain * mFadeGain);
     }
     mGroupPitch = pitch;
     mGroupGain = gain;
@@ -326,6 +329,9 @@ void SourceImpl::play(Buffer buffer)
     if(mStream)
         mContext->removeStream(this);
     mIsAsync.store(false, std::memory_order_release);
+
+    mFadeGainTarget = mFadeGain = 1.0f;
+    mFadeTimeTarget = mLastFadeTime = std::chrono::steady_clock::now();
 
     if(mId == 0)
     {
@@ -368,6 +374,9 @@ void SourceImpl::play(SharedPtr<Decoder> decoder, ALuint updatelen, ALuint queue
     if(mStream)
         mContext->removeStream(this);
     mIsAsync.store(false, std::memory_order_release);
+
+    mFadeGainTarget = mFadeGain = 1.0f;
+    mFadeTimeTarget = mLastFadeTime = std::chrono::steady_clock::now();
 
     if(mId == 0)
     {
@@ -448,6 +457,22 @@ void SourceImpl::stop()
 }
 
 
+void SourceImpl::fadeOutToStop(ALfloat gain, std::chrono::milliseconds duration)
+{
+    if(!(gain < 1.0f && gain >= 0.0f))
+        throw std::runtime_error("Fade gain target out of range");
+    if(duration.count() <= 0)
+        throw std::runtime_error("Fade duration out of range");
+    CheckContext(mContext);
+
+    mFadeGainTarget = std::max<ALfloat>(gain, 0.0001f);
+    mLastFadeTime = std::chrono::steady_clock::now();
+    mFadeTimeTarget = mLastFadeTime + duration;
+
+    mContext->addFadingSource(this);
+}
+
+
 void SourceImpl::checkPaused()
 {
     if(mPaused.load(std::memory_order_acquire) || mId == 0)
@@ -519,6 +544,41 @@ bool SourceImpl::isPaused() const
     return state == AL_PAUSED || mPaused.load(std::memory_order_acquire);
 }
 
+
+bool SourceImpl::fadeUpdate(std::chrono::steady_clock::time_point cur_fade_time)
+{
+    if((cur_fade_time - mFadeTimeTarget).count() >= 0)
+    {
+        mLastFadeTime = mFadeTimeTarget;
+        mFadeGain = 1.0f;
+        if(mFadeGainTarget >= 1.0f)
+        {
+            alSourcef(mId, AL_GAIN, mGain * mGroupGain);
+            return false;
+        }
+        makeStopped(true);
+        return false;
+    }
+
+    float mult = std::pow(mFadeGainTarget/mFadeGain,
+        float(1.0/Seconds(mFadeTimeTarget-mLastFadeTime).count())
+    );
+
+    std::chrono::steady_clock::duration duration = cur_fade_time - mLastFadeTime;
+    mLastFadeTime = cur_fade_time;
+
+    float gain = mFadeGain * std::pow(mult, (float)Seconds(duration).count());
+    if(EXPECT(gain == mFadeGain, false))
+    {
+        // Ensure the gain keeps moving toward its target, in case precision
+        // loss results in no change with small steps.
+        gain = std::nextafter(gain, mFadeGainTarget);
+    }
+    mFadeGain = gain;
+
+    alSourcef(mId, AL_GAIN, mGain * mGroupGain * mFadeGain);
+    return true;
+}
 
 bool SourceImpl::playUpdate(ALuint id)
 {
@@ -786,7 +846,7 @@ void SourceImpl::setGain(ALfloat gain)
         throw std::runtime_error("Gain out of range");
     CheckContext(mContext);
     if(mId != 0)
-        alSourcef(mId, AL_GAIN, gain * mGroupGain);
+        alSourcef(mId, AL_GAIN, gain * mGroupGain * mFadeGain);
     mGain = gain;
 }
 
@@ -1275,6 +1335,7 @@ using BoolTriple = std::tuple<bool,bool,bool>;
 DECL_THUNK1(void, Source, play,, Buffer)
 DECL_THUNK3(void, Source, play,, SharedPtr<Decoder>, ALuint, ALuint)
 DECL_THUNK0(void, Source, stop,)
+DECL_THUNK2(void, Source, fadeOutToStop,, ALfloat, std::chrono::milliseconds)
 DECL_THUNK0(void, Source, pause,)
 DECL_THUNK0(void, Source, resume,)
 DECL_THUNK0(bool, Source, isPlaying, const)

@@ -1147,6 +1147,16 @@ Source ContextImpl::createSource()
 }
 
 
+void ContextImpl::addFadingSource(SourceImpl *source)
+{
+    auto iter = std::lower_bound(mFadingSources.begin(), mFadingSources.end(), source,
+        [](SourceImpl *lhs, SourceImpl *rhs) -> bool
+        { return lhs < rhs; }
+    );
+    if(iter == mFadingSources.end() || *iter != source)
+        mFadingSources.insert(iter, source);
+}
+
 void ContextImpl::addPlayingSource(SourceImpl *source, ALuint id)
 {
     auto iter = std::lower_bound(mPlaySources.begin(), mPlaySources.end(), source,
@@ -1169,6 +1179,13 @@ void ContextImpl::addPlayingSource(SourceImpl *source)
 
 void ContextImpl::removePlayingSource(SourceImpl *source)
 {
+    auto iter = std::lower_bound(mFadingSources.begin(), mFadingSources.end(), source,
+        [](SourceImpl *lhs, SourceImpl *rhs) -> bool
+        { return lhs < rhs; }
+    );
+    if(iter != mFadingSources.end() && *iter == source)
+        mFadingSources.erase(iter);
+
     auto iter0 = std::lower_bound(mPlaySources.begin(), mPlaySources.end(), source,
         [](const SourceBufferUpdateEntry &lhs, SourceImpl *rhs) -> bool
         { return lhs.mSource < rhs; }
@@ -1319,6 +1336,16 @@ void ContextImpl::setDistanceModel(DistanceModel model)
 void ContextImpl::update()
 {
     CheckContext(this);
+    if(!mFadingSources.empty())
+    {
+        auto cur_time = std::chrono::steady_clock::now();
+        mFadingSources.erase(
+            std::remove_if(mFadingSources.begin(), mFadingSources.end(),
+                [cur_time](SourceImpl *source) -> bool
+                { return !source->fadeUpdate(cur_time); }
+            ), mFadingSources.end()
+        );
+    }
     mPlaySources.erase(
         std::remove_if(mPlaySources.begin(), mPlaySources.end(),
             [](const SourceBufferUpdateEntry &entry) -> bool
@@ -1331,6 +1358,7 @@ void ContextImpl::update()
             { return !entry.mSource->playUpdate(); }
         ), mStreamSources.end()
     );
+
     if(!mWakeInterval.load(std::memory_order_relaxed).count())
     {
         // For performance reasons, don't wait for the thread's mutex. This
