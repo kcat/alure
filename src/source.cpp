@@ -568,7 +568,7 @@ bool SourceImpl::fadeUpdate(std::chrono::steady_clock::time_point cur_fade_time)
     mLastFadeTime = cur_fade_time;
 
     float gain = mFadeGain * std::pow(mult, (float)Seconds(duration).count());
-    if(EXPECT(gain == mFadeGain, false))
+    if(Expect<false>(gain == mFadeGain))
     {
         // Ensure the gain keeps moving toward its target, in case precision
         // loss results in no change with small steps.
@@ -584,7 +584,7 @@ bool SourceImpl::playUpdate(ALuint id)
 {
     ALint state = -1;
     alGetSourcei(id, AL_SOURCE_STATE, &state);
-    if(EXPECT((state == AL_PLAYING || state == AL_PAUSED), true))
+    if(Expect<true>(state == AL_PLAYING || state == AL_PAUSED))
         return true;
 
     makeStopped();
@@ -594,7 +594,7 @@ bool SourceImpl::playUpdate(ALuint id)
 
 bool SourceImpl::playUpdate()
 {
-    if(EXPECT(mIsAsync.load(std::memory_order_acquire), true))
+    if(Expect<true>(mIsAsync.load(std::memory_order_acquire)))
         return true;
 
     makeStopped();

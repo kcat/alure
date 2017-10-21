@@ -308,7 +308,7 @@ public:
 
 inline void CheckContext(const ContextImpl *ctx)
 {
-    if(EXPECT(ctx != ContextImpl::GetCurrent(), false))
+    if(Expect<false>(ctx != ContextImpl::GetCurrent()))
         throw std::runtime_error("Called context is not current");
 }
 

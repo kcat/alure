@@ -4,6 +4,8 @@
 #include "alure2.h"
 
 
+namespace alure {
+
 #define DECL_THUNK0(ret, C, Name, cv) \
 ret C::Name() cv { return pImpl->Name(); }
 #define DECL_THUNK1(ret, C, Name, cv, T1)                                     \
@@ -35,10 +37,16 @@ ret C::Name(T1 a, T2 b, T3 c, T4 d, T5 e, T6 f) cv                            \
                        std::forward<_t5&&>(e), std::forward<_t6&&>(f));       \
 }
 
+template<bool V, typename T, typename=EnableIfT<std::is_same<bool,RemoveRefT<T>>::value>>
+inline T Expect(T&& arg)
+{
 #ifdef __GNUC__
-#define EXPECT(x, y) __builtin_expect((x), (y))
+    return __builtin_expect(std::forward<T&&>(arg), V);
 #else
-#define EXPECT(x, y) (x)
+    return std::forward<T&&>(arg);
 #endif
+}
+
+} // namespace alure
 
 #endif /* ALURE_MAIN_H */

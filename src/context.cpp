@@ -833,7 +833,7 @@ Buffer ContextImpl::getBuffer(StringView name)
     CheckContext(this);
 
     auto hasher = std::hash<StringView>();
-    if(EXPECT(!mFutureBuffers.empty(), false))
+    if(Expect<false>(!mFutureBuffers.empty()))
     {
         Buffer buffer;
 
@@ -869,7 +869,7 @@ Buffer ContextImpl::getBuffer(StringView name)
 
     BufferOrExceptT ret = doCreateBuffer(name, iter, createDecoder(name));
     Buffer *buffer = std::get_if<Buffer>(&ret);
-    if(EXPECT(!buffer, false))
+    if(Expect<false>(!buffer))
         throw std::get<std::runtime_error>(ret);
     return *buffer;
 }
@@ -880,7 +880,7 @@ SharedFuture<Buffer> ContextImpl::getBufferAsync(StringView name)
     CheckContext(this);
 
     auto hasher = std::hash<StringView>();
-    if(EXPECT(!mFutureBuffers.empty(), false))
+    if(Expect<false>(!mFutureBuffers.empty()))
     {
         // Check if the future that's being created already exists
         auto iter = std::lower_bound(mFutureBuffers.begin(), mFutureBuffers.end(), hasher(name),
@@ -923,7 +923,7 @@ SharedFuture<Buffer> ContextImpl::getBufferAsync(StringView name)
 
     BufferOrExceptT ret = doCreateBufferAsync(name, iter, createDecoder(name), std::move(promise));
     Buffer *buffer = std::get_if<Buffer>(&ret);
-    if(EXPECT(!buffer, false))
+    if(Expect<false>(!buffer))
         throw std::get<std::runtime_error>(ret);
     mWakeMutex.lock(); mWakeMutex.unlock();
     mWakeThread.notify_all();
@@ -942,7 +942,7 @@ void ContextImpl::precacheBuffersAsync(ArrayView<StringView> names)
 {
     CheckContext(this);
 
-    if(EXPECT(!mFutureBuffers.empty(), false))
+    if(Expect<false>(!mFutureBuffers.empty()))
     {
         // Clear out any fulfilled futures.
         mFutureBuffers.erase(
@@ -974,7 +974,7 @@ void ContextImpl::precacheBuffersAsync(ArrayView<StringView> names)
         BufferOrExceptT buf = doCreateBufferAsync(name, iter, std::move(*decoder),
                                                   std::move(promise));
         Buffer *buffer = std::get_if<Buffer>(&buf);
-        if(EXPECT(!buffer, false)) continue;
+        if(Expect<false>(!buffer)) continue;
 
         mFutureBuffers.insert(
             std::lower_bound(mFutureBuffers.begin(), mFutureBuffers.end(), hasher(name),
@@ -1001,7 +1001,7 @@ Buffer ContextImpl::createBufferFrom(StringView name, SharedPtr<Decoder> decoder
 
     BufferOrExceptT ret = doCreateBuffer(name, iter, std::move(decoder));
     Buffer *buffer = std::get_if<Buffer>(&ret);
-    if(EXPECT(!buffer, false))
+    if(Expect<false>(!buffer))
         throw std::get<std::runtime_error>(ret);
     return *buffer;
 }
@@ -1011,7 +1011,7 @@ SharedFuture<Buffer> ContextImpl::createBufferAsyncFrom(StringView name, SharedP
     SharedFuture<Buffer> future;
     CheckContext(this);
 
-    if(EXPECT(!mFutureBuffers.empty(), false))
+    if(Expect<false>(!mFutureBuffers.empty()))
     {
         // Clear out any fulfilled futures.
         mFutureBuffers.erase(
@@ -1035,7 +1035,7 @@ SharedFuture<Buffer> ContextImpl::createBufferAsyncFrom(StringView name, SharedP
 
     BufferOrExceptT ret = doCreateBufferAsync(name, iter, std::move(decoder), std::move(promise));
     Buffer *buffer = std::get_if<Buffer>(&ret);
-    if(EXPECT(!buffer, false))
+    if(Expect<false>(!buffer))
         throw std::get<std::runtime_error>(ret);
     mWakeMutex.lock(); mWakeMutex.unlock();
     mWakeThread.notify_all();
@@ -1056,7 +1056,7 @@ void ContextImpl::removeBuffer(StringView name)
     CheckContext(this);
 
     auto hasher = std::hash<StringView>();
-    if(EXPECT(!mFutureBuffers.empty(), false))
+    if(Expect<false>(!mFutureBuffers.empty()))
     {
         // If the buffer is already pending for the future, wait for it to
         // finish before continuing.
