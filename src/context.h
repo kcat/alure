@@ -147,15 +147,24 @@ private:
     SharedPtr<MessageHandler> mMessage;
 
     struct PendingBuffer {
-        BufferImpl *mBuffer;
+        BufferImpl *mBuffer{nullptr};
         SharedPtr<Decoder> mDecoder;
-        ALenum mFormat;
-        ALuint mFrames;
+        ALenum mFormat{0};
+        ALuint mFrames{0};
         Promise<Buffer> mPromise;
 
-        ~PendingBuffer() { }
+        std::atomic<PendingBuffer*> mNext{nullptr};
+
+        PendingBuffer() = default;
+        PendingBuffer(BufferImpl *buffer, SharedPtr<Decoder> decoder, ALenum format, ALuint frames,
+                      Promise<Buffer> promise)
+          : mBuffer(buffer), mDecoder(std::move(decoder)), mFormat(format), mFrames(frames)
+          , mPromise(std::move(promise)), mNext(nullptr)
+        { }
     };
-    RingBuffer mPendingBuffers;
+    std::atomic<PendingBuffer*> mPendingCurrent;
+    PendingBuffer *mPendingTail;
+    PendingBuffer *mPendingHead;
 
     std::atomic<bool> mQuitThread;
     std::thread mThread;

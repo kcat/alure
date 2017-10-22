@@ -792,12 +792,6 @@ public:
      * Buffers that cannot be loaded, for example due to an unsupported format,
      * will be ignored and a later call to getBuffer or getBufferAsync will
      * throw an exception.
-     *
-     * Note that you should avoid trying to asynchronously cache more than 16
-     * buffers at a time. The internal ringbuffer used to communicate with the
-     * background thread can only hold 16 async load requests, and trying to
-     * add more will cause the call to stall until the background thread
-     * completes some loads for more to be filled in.
      */
     void precacheBuffersAsync(ArrayView<StringView> names);
 

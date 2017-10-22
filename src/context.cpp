@@ -537,19 +537,18 @@ void ContextImpl::backgroundProc()
         // Only do one pending buffer at a time. In case there's several large
         // buffers to load, we still need to process streaming sources so they
         // don't underrun.
-        RingBuffer::Data ringdata = mPendingBuffers.get_read_vector()[0];
-        if(ringdata.len > 0)
+        PendingBuffer *lastpb = mPendingCurrent.load(std::memory_order_acquire);
+        if(PendingBuffer *pb = lastpb->mNext.load(std::memory_order_relaxed))
         {
-            PendingBuffer *pb = reinterpret_cast<PendingBuffer*>(ringdata.buf);
-            pb->mBuffer->load(pb->mFrames, pb->mFormat, pb->mDecoder, this);
+            pb->mBuffer->load(pb->mFrames, pb->mFormat, std::move(pb->mDecoder), this);
             pb->mPromise.set_value(Buffer(pb->mBuffer));
-            pb->~PendingBuffer();
-            mPendingBuffers.read_advance(1);
+            Promise<Buffer>().swap(pb->mPromise);
+            mPendingCurrent.store(pb, std::memory_order_release);
             continue;
         }
 
         std::unique_lock<std::mutex> wakelock(mWakeMutex);
-        if(!mQuitThread.load(std::memory_order_acquire) && mPendingBuffers.read_space() == 0)
+        if(!mQuitThread.load(std::memory_order_acquire) && lastpb->mNext.load(std::memory_order_acquire) == nullptr)
         {
             ctxlock.unlock();
 
@@ -583,8 +582,7 @@ void ContextImpl::backgroundProc()
 
 ContextImpl::ContextImpl(ALCcontext *context, DeviceImpl *device)
   : mListener(this), mContext(context), mDevice(device),
-    mWakeInterval(std::chrono::milliseconds::zero()),
-    mPendingBuffers(16, sizeof(PendingBuffer)), mQuitThread(false),
+    mWakeInterval(std::chrono::milliseconds::zero()), mQuitThread(false),
     mRefs(0), mHasExt{false}, mIsConnected(true), mIsBatching(false),
     alGetSourcei64vSOFT(0), alGetSourcedvSOFT(0),
     alGenEffects(0), alDeleteEffects(0), alIsEffect(0),
@@ -597,22 +595,23 @@ ContextImpl::ContextImpl(ALCcontext *context, DeviceImpl *device)
     alAuxiliaryEffectSloti(0), alAuxiliaryEffectSlotiv(0), alAuxiliaryEffectSlotf(0), alAuxiliaryEffectSlotfv(0),
     alGetAuxiliaryEffectSloti(0), alGetAuxiliaryEffectSlotiv(0), alGetAuxiliaryEffectSlotf(0), alGetAuxiliaryEffectSlotfv(0)
 {
+    mPendingHead = new PendingBuffer;
+    mPendingCurrent.store(mPendingHead, std::memory_order_relaxed);
+    mPendingTail = mPendingHead;
 }
 
 ContextImpl::~ContextImpl()
 {
-    auto ringdata = mPendingBuffers.get_read_vector();
-    if(ringdata[0].len > 0)
+    PendingBuffer *pb = mPendingTail;
+    while(pb)
     {
-        PendingBuffer *pb = reinterpret_cast<PendingBuffer*>(ringdata[0].buf);
-        for(size_t i = 0;i < ringdata[0].len;i++)
-            pb[i].~PendingBuffer();
-        pb = reinterpret_cast<PendingBuffer*>(ringdata[1].buf);
-        for(size_t i = 0;i < ringdata[1].len;i++)
-            pb[i].~PendingBuffer();
-
-        mPendingBuffers.read_advance(ringdata[0].len + ringdata[1].len);
+        PendingBuffer *next = pb->mNext.load(std::memory_order_relaxed);
+        delete pb;
+        pb = next;
     }
+    mPendingCurrent.store(nullptr, std::memory_order_relaxed);
+    mPendingHead = nullptr;
+    mPendingTail = nullptr;
 }
 
 
@@ -815,15 +814,22 @@ BufferOrExceptT ContextImpl::doCreateBufferAsync(StringView name, Vector<UniqueP
     if(mThread.get_id() == std::thread::id())
         mThread = std::thread(std::mem_fn(&ContextImpl::backgroundProc), this);
 
-    while(mPendingBuffers.write_space() == 0)
+    PendingBuffer *pb = nullptr;
+    if(mPendingTail == mPendingCurrent.load(std::memory_order_acquire))
+        pb = new PendingBuffer{buffer.get(), decoder, format, frames, std::move(promise)};
+    else
     {
-        mWakeThread.notify_all();
-        std::this_thread::yield();
+        pb = mPendingTail;
+        pb->mBuffer = buffer.get();
+        pb->mDecoder = decoder;
+        pb->mFormat = format;
+        pb->mFrames = frames;
+        pb->mPromise = std::move(promise);
+        mPendingTail = pb->mNext.exchange(nullptr, std::memory_order_relaxed);
     }
 
-    RingBuffer::Data ringdata = mPendingBuffers.get_write_vector()[0];
-    new(ringdata.buf) PendingBuffer{buffer.get(), decoder, format, frames, std::move(promise)};
-    mPendingBuffers.write_advance(1);
+    mPendingHead->mNext.store(pb, std::memory_order_release);
+    mPendingHead = pb;
 
     return (retval = mBuffers.insert(iter, std::move(buffer))->get());
 }
