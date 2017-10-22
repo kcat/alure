@@ -800,21 +800,19 @@ std::pair<Seconds,Seconds> SourceImpl::getSecOffsetLatency() const
         return ret;
     }
 
-    ALdouble srcpos = 0.0;
     if(mContext->hasExtension(SOFT_source_latency))
     {
         ALdouble val[2];
         mContext->alGetSourcedvSOFT(mId, AL_SEC_OFFSET_LATENCY_SOFT, val);
-        srcpos = val[0];
+        ret.first = Seconds(val[0]);
         ret.second = Seconds(val[1]);
     }
     else
     {
         ALfloat f;
         alGetSourcef(mId, AL_SEC_OFFSET, &f);
-        srcpos = f;
+        ret.first = Seconds(f);
     }
-    ret.first = Seconds(srcpos);
     return ret;
 }
 
