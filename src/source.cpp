@@ -559,6 +559,9 @@ bool SourceImpl::fadeUpdate(std::chrono::steady_clock::time_point cur_fade_time)
             alSourcef(mId, AL_GAIN, mGain * mGroupGain);
             return false;
         }
+        // Remove the source from the list of playing sources so the playUpdate
+        // method doesn't detect being stopped, triggering the stop callback.
+        mContext->removePlayingSource(this);
         makeStopped(true);
         return false;
     }
