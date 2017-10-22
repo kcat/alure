@@ -21,7 +21,6 @@
 #include "alext.h"
 
 #include "refcount.h"
-#include "ringbuf.h"
 #include "device.h"
 #include "source.h"
 

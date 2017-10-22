@@ -98,7 +98,6 @@ set(alure_srcs src/devicemanager.cpp
                src/sourcegroup.cpp
                src/auxeffectslot.cpp
                src/effect.cpp
-               src/ringbuf.cpp
                src/decoders/wave.cpp
 )
 set(alure_libs ${OPENAL_LIBRARY})
