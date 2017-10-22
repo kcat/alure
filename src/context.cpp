@@ -1163,6 +1163,16 @@ void ContextImpl::addFadingSource(SourceImpl *source)
         mFadingSources.insert(iter, source);
 }
 
+void ContextImpl::removeFadingSource(SourceImpl *source)
+{
+    auto iter = std::lower_bound(mFadingSources.begin(), mFadingSources.end(), source,
+        [](SourceImpl *lhs, SourceImpl *rhs) -> bool
+        { return lhs < rhs; }
+    );
+    if(iter != mFadingSources.end() && *iter == source)
+        mFadingSources.erase(iter);
+}
+
 void ContextImpl::addPlayingSource(SourceImpl *source, ALuint id)
 {
     auto iter = std::lower_bound(mPlaySources.begin(), mPlaySources.end(), source,
@@ -1185,13 +1195,6 @@ void ContextImpl::addPlayingSource(SourceImpl *source)
 
 void ContextImpl::removePlayingSource(SourceImpl *source)
 {
-    auto iter = std::lower_bound(mFadingSources.begin(), mFadingSources.end(), source,
-        [](SourceImpl *lhs, SourceImpl *rhs) -> bool
-        { return lhs < rhs; }
-    );
-    if(iter != mFadingSources.end() && *iter == source)
-        mFadingSources.erase(iter);
-
     auto iter0 = std::lower_bound(mPlaySources.begin(), mPlaySources.end(), source,
         [](const SourceBufferUpdateEntry &lhs, SourceImpl *rhs) -> bool
         { return lhs.mSource < rhs; }

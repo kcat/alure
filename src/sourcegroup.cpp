@@ -292,6 +292,7 @@ void SourceGroupImpl::updateStoppedStatus() const
 {
     for(SourceImpl *alsrc : mSources)
     {
+        mContext->removeFadingSource(alsrc);
         mContext->removePlayingSource(alsrc);
         alsrc->makeStopped(false);
         mContext->send(&MessageHandler::sourceForceStopped, alsrc);

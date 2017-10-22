@@ -239,6 +239,7 @@ public:
     void insertSourceId(ALuint id) { mSourceIds.push(id); }
 
     void addFadingSource(SourceImpl *source);
+    void removeFadingSource(SourceImpl *source);
     void addPlayingSource(SourceImpl *source, ALuint id);
     void addPlayingSource(SourceImpl *source);
     void removePlayingSource(SourceImpl *source);

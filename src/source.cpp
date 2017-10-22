@@ -340,6 +340,7 @@ void SourceImpl::play(Buffer buffer)
     }
     else
     {
+        mContext->removeFadingSource(this);
         mContext->removePlayingSource(this);
         alSourceRewind(mId);
         alSourcei(mId, AL_BUFFER, 0);
@@ -385,6 +386,7 @@ void SourceImpl::play(SharedPtr<Decoder> decoder, ALuint updatelen, ALuint queue
     }
     else
     {
+        mContext->removeFadingSource(this);
         mContext->removePlayingSource(this);
         alSourceRewind(mId);
         alSourcei(mId, AL_BUFFER, 0);
@@ -452,6 +454,7 @@ void SourceImpl::makeStopped(bool dolock)
 void SourceImpl::stop()
 {
     CheckContext(mContext);
+    mContext->removeFadingSource(this);
     mContext->removePlayingSource(this);
     makeStopped();
 }
