@@ -975,6 +975,20 @@ public:
      * use.
      */
     void play(SharedPtr<Decoder> decoder, ALuint updatelen, ALuint queuesize);
+
+    /**
+     * Prepares to play a source using the future buffer. The method will
+     * return right away, and the source will begin playing once the future
+     * buffer becomes ready. If the future buffer is already ready, it begins
+     * playing immediately.
+     *
+     * The future buffer is checked during calls to \c Context::update and the
+     * source will start playing once the future buffer reports it's ready. Use
+     * the isPending method to check if the source is still waiting for the
+     * future buffer.
+     */
+    void play(SharedFuture<Buffer> future_buffer);
+
     /** Stops playback, releasing the buffer or decoder reference. */
     void stop();
 
@@ -995,6 +1009,9 @@ public:
 
     /** Resumes the source if it is paused. */
     void resume();
+
+    /** Specifies if the source is waiting to play a future buffer. */
+    bool isPending() const;
 
     /** Specifies if the source is currently playing. */
     bool isPlaying() const;

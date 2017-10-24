@@ -125,6 +125,7 @@ private:
     std::stack<ALuint> mSourceIds;
 
     struct PendingFuture { BufferImpl *mBuffer;  SharedFuture<Buffer> mFuture; };
+    struct PendingSource { SourceImpl *mSource;  SharedFuture<Buffer> mFuture; };
 
     DeviceImpl *const mDevice;
     Vector<PendingFuture> mFutureBuffers;
@@ -132,9 +133,11 @@ private:
     Vector<UniquePtr<SourceGroupImpl>> mSourceGroups;
     std::deque<SourceImpl> mAllSources;
     Vector<SourceImpl*> mFreeSources;
+
+    Vector<PendingSource> mPendingSources;
+    Vector<SourceImpl*> mFadingSources;
     Vector<SourceBufferUpdateEntry> mPlaySources;
     Vector<SourceStreamUpdateEntry> mStreamSources;
-    Vector<SourceImpl*> mFadingSources;
 
     Vector<SourceImpl*> mStreamingSources;
     std::mutex mSourceStreamMutex;
@@ -238,6 +241,9 @@ public:
     ALuint getSourceId(ALuint maxprio);
     void insertSourceId(ALuint id) { mSourceIds.push(id); }
 
+    void addPendingSource(SourceImpl *source, SharedFuture<Buffer> future);
+    void removePendingSource(SourceImpl *source);
+    bool isPendingSource(const SourceImpl *source) const;
     void addFadingSource(SourceImpl *source);
     void removeFadingSource(SourceImpl *source);
     void addPlayingSource(SourceImpl *source, ALuint id);

@@ -89,6 +89,7 @@ public:
 
     ALuint getId() const { return mId; }
 
+    bool checkPending(SharedFuture<Buffer> &future);
     bool fadeUpdate(std::chrono::steady_clock::time_point cur_fade_time);
     bool playUpdate(ALuint id);
     bool playUpdate();
@@ -104,11 +105,13 @@ public:
 
     void play(Buffer buffer);
     void play(SharedPtr<Decoder> decoder, ALuint updatelen, ALuint queuesize);
+    void play(SharedFuture<Buffer> future_buffer);
     void stop();
     void fadeOutToStop(ALfloat gain, std::chrono::milliseconds duration);
     void pause();
     void resume();
 
+    bool isPending() const;
     bool isPlaying() const;
     bool isPaused() const;
 

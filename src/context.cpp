@@ -1091,6 +1091,16 @@ void ContextImpl::removeBuffer(StringView name)
     );
     if(iter != mBuffers.end() && (*iter)->getName() == name)
     {
+        // Remove pending sources whose future was waiting for this buffer.
+        mPendingSources.erase(
+            std::remove_if(mPendingSources.begin(), mPendingSources.end(),
+                [iter](PendingSource &entry) -> bool
+                {
+                    return (entry.mFuture.wait_for(std::chrono::milliseconds::zero()) == std::future_status::ready &&
+                            entry.mFuture.get().getHandle() == iter->get());
+                }
+            ), mPendingSources.end()
+        );
         (*iter)->cleanup();
         mBuffers.erase(iter);
     }
@@ -1152,6 +1162,35 @@ Source ContextImpl::createSource()
     return Source(source);
 }
 
+
+void ContextImpl::addPendingSource(SourceImpl *source, SharedFuture<Buffer> future)
+{
+    auto iter = std::lower_bound(mPendingSources.begin(), mPendingSources.end(), source,
+        [](const PendingSource &lhs, SourceImpl *rhs) -> bool
+        { return lhs.mSource < rhs; }
+    );
+    if(iter == mPendingSources.end() || iter->mSource != source)
+        mPendingSources.insert(iter, {source, std::move(future)});
+}
+
+void ContextImpl::removePendingSource(SourceImpl *source)
+{
+    auto iter = std::lower_bound(mPendingSources.begin(), mPendingSources.end(), source,
+        [](const PendingSource &lhs, SourceImpl *rhs) -> bool
+        { return lhs.mSource < rhs; }
+    );
+    if(iter != mPendingSources.end() && iter->mSource == source)
+        mPendingSources.erase(iter);
+}
+
+bool ContextImpl::isPendingSource(const SourceImpl *source) const
+{
+    auto iter = std::lower_bound(mPendingSources.begin(), mPendingSources.end(), source,
+        [](const PendingSource &lhs, const SourceImpl *rhs) -> bool
+        { return lhs.mSource < rhs; }
+    );
+    return (iter != mPendingSources.end() && iter->mSource == source);
+}
 
 void ContextImpl::addFadingSource(SourceImpl *source)
 {
@@ -1345,6 +1384,12 @@ void ContextImpl::setDistanceModel(DistanceModel model)
 void ContextImpl::update()
 {
     CheckContext(this);
+    mPendingSources.erase(
+        std::remove_if(mPendingSources.begin(), mPendingSources.end(),
+            [](PendingSource &entry) -> bool
+            { return !entry.mSource->checkPending(entry.mFuture); }
+        ), mPendingSources.end()
+    );
     if(!mFadingSources.empty())
     {
         auto cur_time = std::chrono::steady_clock::now();

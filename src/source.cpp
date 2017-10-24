@@ -358,6 +358,7 @@ void SourceImpl::play(Buffer buffer)
     alSourcei(mId, AL_BUFFER, mBuffer->getId());
     alSourcePlay(mId);
     mPaused.store(false, std::memory_order_release);
+    mContext->removePendingSource(this);
     mContext->addPlayingSource(this, mId);
 }
 
@@ -414,7 +415,30 @@ void SourceImpl::play(SharedPtr<Decoder> decoder, ALuint updatelen, ALuint queue
 
     mContext->addStream(this);
     mIsAsync.store(true, std::memory_order_release);
+    mContext->removePendingSource(this);
     mContext->addPlayingSource(this);
+}
+
+void SourceImpl::play(SharedFuture<Buffer> future_buffer)
+{
+    if(!future_buffer.valid())
+        throw std::runtime_error("Invalid future buffer");
+    if(future_buffer.wait_for(std::chrono::milliseconds::zero()) == std::future_status::ready)
+    {
+        play(future_buffer.get());
+        return;
+    }
+
+    CheckContext(mContext);
+
+    mContext->removeFadingSource(this);
+    mContext->removePlayingSource(this);
+    makeStopped(true);
+
+    mFadeGainTarget = mFadeGain = 1.0f;
+    mFadeTimeTarget = mLastFadeTime = std::chrono::steady_clock::now();
+
+    mContext->addPendingSource(this, std::move(future_buffer));
 }
 
 
@@ -454,6 +478,7 @@ void SourceImpl::makeStopped(bool dolock)
 void SourceImpl::stop()
 {
     CheckContext(mContext);
+    mContext->removePendingSource(this);
     mContext->removeFadingSource(this);
     mContext->removePlayingSource(this);
     makeStopped();
@@ -520,6 +545,12 @@ void SourceImpl::resume()
 }
 
 
+bool SourceImpl::isPending() const
+{
+    CheckContext(mContext);
+    return mContext->isPendingSource(this);
+}
+
 bool SourceImpl::isPlaying() const
 {
     CheckContext(mContext);
@@ -548,6 +579,39 @@ bool SourceImpl::isPaused() const
 }
 
 
+bool SourceImpl::checkPending(SharedFuture<Buffer> &future)
+{
+    if(future.wait_for(std::chrono::milliseconds::zero()) != std::future_status::ready)
+        return true;
+
+    BufferImpl *buffer = future.get().getHandle();
+    if(Expect<false>(buffer->getContext() != mContext))
+        return false;
+
+    if(mId == 0)
+    {
+        mId = mContext->getSourceId(mPriority);
+        applyProperties(mLooping, (ALuint)std::min<uint64_t>(mOffset, std::numeric_limits<ALint>::max()));
+    }
+    else
+    {
+        alSourceRewind(mId);
+        alSourcei(mId, AL_BUFFER, 0);
+        alSourcei(mId, AL_LOOPING, mLooping ? AL_TRUE : AL_FALSE);
+        alSourcei(mId, AL_SAMPLE_OFFSET, (ALuint)std::min<uint64_t>(mOffset, std::numeric_limits<ALint>::max()));
+    }
+    mOffset = 0;
+
+    mBuffer = buffer;
+    mBuffer->addSource(Source(this));
+
+    alSourcei(mId, AL_BUFFER, mBuffer->getId());
+    alSourcePlay(mId);
+    mPaused.store(false, std::memory_order_release);
+    mContext->addPlayingSource(this, mId);
+    return false;
+}
+
 bool SourceImpl::fadeUpdate(std::chrono::steady_clock::time_point cur_fade_time)
 {
     if((cur_fade_time - mFadeTimeTarget).count() >= 0)
@@ -556,11 +620,11 @@ bool SourceImpl::fadeUpdate(std::chrono::steady_clock::time_point cur_fade_time)
         mFadeGain = 1.0f;
         if(mFadeGainTarget >= 1.0f)
         {
-            alSourcef(mId, AL_GAIN, mGain * mGroupGain);
+            if(mId != 0)
+                alSourcef(mId, AL_GAIN, mGain * mGroupGain);
             return false;
         }
-        // Remove the source from the list of playing sources so the playUpdate
-        // method doesn't detect being stopped, triggering the stop callback.
+        mContext->removePendingSource(this);
         mContext->removePlayingSource(this);
         makeStopped(true);
         return false;
@@ -582,7 +646,8 @@ bool SourceImpl::fadeUpdate(std::chrono::steady_clock::time_point cur_fade_time)
     }
     mFadeGain = gain;
 
-    alSourcef(mId, AL_GAIN, mGain * mGroupGain * mFadeGain);
+    if(mId != 0)
+        alSourcef(mId, AL_GAIN, mGain * mGroupGain * mFadeGain);
     return true;
 }
 
@@ -1338,10 +1403,12 @@ using BoolTriple = std::tuple<bool,bool,bool>;
 
 DECL_THUNK1(void, Source, play,, Buffer)
 DECL_THUNK3(void, Source, play,, SharedPtr<Decoder>, ALuint, ALuint)
+DECL_THUNK1(void, Source, play,, SharedFuture<Buffer>)
 DECL_THUNK0(void, Source, stop,)
 DECL_THUNK2(void, Source, fadeOutToStop,, ALfloat, std::chrono::milliseconds)
 DECL_THUNK0(void, Source, pause,)
 DECL_THUNK0(void, Source, resume,)
+DECL_THUNK0(bool, Source, isPending, const)
 DECL_THUNK0(bool, Source, isPlaying, const)
 DECL_THUNK0(bool, Source, isPaused, const)
 DECL_THUNK1(void, Source, setPriority,, ALuint)
