@@ -104,7 +104,7 @@ public:
     void makeStopped(bool dolock=true);
 
     void play(Buffer buffer);
-    void play(SharedPtr<Decoder> decoder, ALuint updatelen, ALuint queuesize);
+    void play(SharedPtr<Decoder> decoder, ALuint chunk_len, ALuint queue_size);
     void play(SharedFuture<Buffer> future_buffer);
     void stop();
     void fadeOutToStop(ALfloat gain, std::chrono::milliseconds duration);

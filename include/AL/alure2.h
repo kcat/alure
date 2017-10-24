@@ -964,32 +964,42 @@ class ALURE_API Source {
 
 public:
     /**
-     * Plays the source using buffer. The same buffer may be played from
+     * Plays the source using a buffer. The same buffer may be played from
      * multiple sources simultaneously.
      */
     void play(Buffer buffer);
     /**
-     * Plays the source by streaming audio from decoder. This will use
-     * queuesize buffers, each with updatelen sample frames. The given decoder
+     * Plays the source by streaming audio from a decoder. The given decoder
      * must *NOT* have its read or seek methods called from elsewhere while in
      * use.
+     *
+     * \param decoder The decoder object to play audio from.
+     * \param chunk_len The number of sample frames to read for each chunk
+     *        update. Smaller values will require more frequent updates and
+     *        larger values will handle more data with each chunk.
+     * \param queue_size The number of chunks to keep queued during playback.
+     *        Smaller values use less memory while larger values improve
+     *        protection against underruns.
      */
-    void play(SharedPtr<Decoder> decoder, ALuint updatelen, ALuint queuesize);
+    void play(SharedPtr<Decoder> decoder, ALuint chunk_len, ALuint queue_size);
 
     /**
-     * Prepares to play a source using the future buffer. The method will
-     * return right away, and the source will begin playing once the future
-     * buffer becomes ready. If the future buffer is already ready, it begins
-     * playing immediately.
+     * Prepares to play a source using a future buffer. The method will return
+     * right away and the source will begin playing once the future buffer
+     * becomes ready. If the future buffer is already ready, it begins playing
+     * immediately as if you called play(future_buffer.get()).
      *
      * The future buffer is checked during calls to \c Context::update and the
-     * source will start playing once the future buffer reports it's ready. Use
-     * the isPending method to check if the source is still waiting for the
+     * source will start playback once the future buffer reports it's ready.
+     * Use the isPending method to check if the source is still waiting for the
      * future buffer.
      */
     void play(SharedFuture<Buffer> future_buffer);
 
-    /** Stops playback, releasing the buffer or decoder reference. */
+    /**
+     * Stops playback, releasing the buffer or decoder reference. Any pending
+     * playback from a future buffer is canceled.
+     */
     void stop();
 
     /**
@@ -997,6 +1007,11 @@ public:
      * point playback will stop. This gain is in addition to the base gain, and
      * must be greater than 0 and less than 1. The duration must also be
      * greater than 0.
+     *
+     * Pending playback from a future buffer is not immediately canceled, but
+     * the fading starts with this call. If the future buffer then becomes
+     * ready, it will start mid-fade. Pending playback will be canceled if the
+     * fade out completes before the future buffer becomes ready.
      *
      * Fading is updated during calls to \c Context::update, which should be
      * called regularly (30 to 50 times per second) for the fading to be
@@ -1217,6 +1232,13 @@ public:
     void set3DSpatialize(Spatialize spatialize);
     Spatialize get3DSpatialize() const;
 
+    /**
+     * Specifies the index of the resampler to for this source. The index
+     * is from the resamplers returned by \c Context::getAvailableResamplers,
+     * and must be 0 or greater.
+     *
+     * Has no effect without the AL_SOFT_source_resampler extension.
+     */
     void setResamplerIndex(ALsizei index);
     ALsizei getResamplerIndex() const;
 
@@ -1269,12 +1291,12 @@ public:
     const String &getName() const;
 
     /**
-     * Adds source to the source group. A source may only be part of one group
-     * at a time, and will automatically be removed from its current group as
-     * needed.
+     * Adds a source to the source group. A source may only be part of one
+     * group at a time, and will automatically be removed from its current
+     * group as needed.
      */
     void addSource(Source source);
-    /** Removes source from the source group. */
+    /** Removes a source from the source group. */
     void removeSource(Source source);
 
     /** Adds a list of sources to the group at once. */
@@ -1283,9 +1305,9 @@ public:
     void removeSources(ArrayView<Source> sources);
 
     /**
-     * Adds group as a subgroup of the source group. This method will throw an
-     * exception if group is being added to a group it has as a sub-group (i.e.
-     * it would create a circular sub-group chain).
+     * Adds a group as a subgroup of this source group. This method will throw
+     * an exception if group is being added to a group it has as a sub-group
+     * (i.e. it would create a circular sub-group chain).
      */
     void addSubGroup(SourceGroup group);
     /** Removes group from the source group. */
@@ -1297,12 +1319,18 @@ public:
     /** Returns the list of subgroups currently in the group. */
     Vector<SourceGroup> getSubGroups() const;
 
-    /** Sets the source group gain, which accumulates with its sources. */
+    /**
+     * Sets the source group gain, which accumulates with its sources' and
+     * sub-groups' gain.
+     */
     void setGain(ALfloat gain);
     /** Gets the source group gain. */
     ALfloat getGain() const;
 
-    /** Sets the source group pitch, which accumulates with its sources. */
+    /**
+     * Sets the source group pitch, which accumulates with its sources' and
+     * sub-groups' pitch.
+     */
     void setPitch(ALfloat pitch);
     /** Gets the source group pitch. */
     ALfloat getPitch() const;

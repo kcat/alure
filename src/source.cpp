@@ -362,15 +362,15 @@ void SourceImpl::play(Buffer buffer)
     mContext->addPlayingSource(this, mId);
 }
 
-void SourceImpl::play(SharedPtr<Decoder> decoder, ALuint updatelen, ALuint queuesize)
+void SourceImpl::play(SharedPtr<Decoder> decoder, ALuint chunk_len, ALuint queue_size)
 {
-    if(updatelen < 64)
+    if(chunk_len < 64)
         throw std::runtime_error("Update length out of range");
-    if(queuesize < 2)
+    if(queue_size < 2)
         throw std::runtime_error("Queue size out of range");
     CheckContext(mContext);
 
-    auto stream = MakeUnique<ALBufferStream>(decoder, updatelen, queuesize);
+    auto stream = MakeUnique<ALBufferStream>(decoder, chunk_len, queue_size);
     stream->prepare();
 
     if(mStream)
