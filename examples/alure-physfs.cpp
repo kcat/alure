@@ -225,7 +225,7 @@ int main(int argc, char *argv[])
 
     for(int i = fileidx;i < argc;i++)
     {
-        if(strcasecmp(argv[i], "-add") == 0 && argc-i > 1)
+        if(alure::StringView("-add") == argv[i] && argc-i > 1)
         {
             FileFactory::Mount(argv[++i]);
             std::cout<<"Available files:\n";

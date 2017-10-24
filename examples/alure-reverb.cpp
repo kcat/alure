@@ -13,9 +13,24 @@
 
 #include "efx-presets.h"
 
-template<typename T, size_t N>
-static inline size_t countof(const T(&)[N])
-{ return N; }
+// Not UTF-8 aware!
+int ci_compare(alure::StringView lhs, alure::StringView rhs)
+{
+    using traits = alure::StringView::traits_type;
+
+    auto left = lhs.begin();
+    auto right = rhs.begin();
+    for(;left != lhs.end() && right != rhs.end();++left,++right)
+    {
+        int diff = std::tolower(traits::to_int_type(*left)) -
+                   std::tolower(traits::to_int_type(*right));
+        if(diff != 0) return (diff < 0) ? -1 : 1;
+    }
+    if(right != rhs.end()) return -1;
+    if(left != lhs.end()) return 1;
+    return 0;
+}
+
 
 #define DECL(x) { #x, EFX_REVERB_PRESET_##x }
 static const struct ReverbEntry {
@@ -175,14 +190,14 @@ int main(int argc, char *argv[])
     bool gotreverb = false;
     alure::Effect effect = ctx.createEffect();
 
-    if(argc-fileidx >= 2 && strcasecmp(argv[fileidx], "-preset") == 0)
+    if(argc-fileidx >= 2 && alure::StringView("-preset") == argv[fileidx])
     {
         const char *reverb_name = argv[fileidx+1];
         fileidx += 2;
 
         auto iter = std::find_if(std::begin(reverblist), std::end(reverblist),
             [reverb_name](const ReverbEntry &entry) -> bool
-            { return strcasecmp(reverb_name, entry.name) == 0; }
+            { return ci_compare(reverb_name, entry.name) == 0; }
         );
         if(iter != std::end(reverblist))
         {

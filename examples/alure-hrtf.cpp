@@ -46,7 +46,7 @@ int main(int argc, char *argv[])
 
     alure::Vector<alure::AttributePair> attrs;
     attrs.push_back({ALC_HRTF_SOFT, ALC_TRUE});
-    if(argc-fileidx > 1 && strcasecmp(argv[fileidx], "-hrtf") == 0)
+    if(argc-fileidx > 1 && alure::StringView("-hrtf") == argv[fileidx])
     {
         // Find the given HRTF and add it to the attributes list
         const char *hrtf_name = argv[fileidx+1];
@@ -66,7 +66,7 @@ int main(int argc, char *argv[])
 
     for(int i = fileidx;i < argc;i++)
     {
-        if(argc-i > 1 && strcasecmp(argv[i], "-hrtf") == 0)
+        if(argc-i > 1 && alure::StringView("-hrtf") == argv[i])
         {
             // Find the given HRTF and reset the device using it
             auto iter = std::find(hrtf_names.begin(), hrtf_names.end(), argv[i+1]);
