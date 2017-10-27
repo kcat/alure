@@ -1233,7 +1233,7 @@ public:
     Spatialize get3DSpatialize() const;
 
     /**
-     * Specifies the index of the resampler to for this source. The index
+     * Specifies the index of the resampler to use for this source. The index
      * is from the resamplers returned by \c Context::getAvailableResamplers,
      * and must be 0 or greater.
      *
