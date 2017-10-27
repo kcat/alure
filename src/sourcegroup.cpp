@@ -336,7 +336,7 @@ void SourceGroupImpl::release()
 }
 
 
-DECL_THUNK0(const String&, SourceGroup, getName, const)
+DECL_THUNK0(StringView, SourceGroup, getName, const)
 DECL_THUNK1(void, SourceGroup, addSource,, Source)
 DECL_THUNK1(void, SourceGroup, removeSource,, Source)
 DECL_THUNK1(void, SourceGroup, addSources,, ArrayView<Source>)

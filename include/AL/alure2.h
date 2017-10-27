@@ -946,7 +946,7 @@ public:
     Vector<Source> getSources() const;
 
     /** Retrieves the name the buffer was created with. */
-    const String &getName() const;
+    StringView getName() const;
 
     /** Queries if the buffer is in use and can't be removed. */
     bool isInUse() const;
@@ -969,9 +969,9 @@ public:
      */
     void play(Buffer buffer);
     /**
-     * Plays the source by streaming audio from a decoder. The given decoder
-     * must *NOT* have its read or seek methods called from elsewhere while in
-     * use.
+     * Plays the source by asynchronously streaming audio from a decoder. The
+     * given decoder must *NOT* have its read or seek methods called from
+     * elsewhere while in use.
      *
      * \param decoder The decoder object to play audio from.
      * \param chunk_len The number of sample frames to read for each chunk
@@ -1288,7 +1288,7 @@ class ALURE_API SourceGroup {
 
 public:
     /** Retrieves the associated name of the source group. */
-    const String &getName() const;
+    StringView getName() const;
 
     /**
      * Adds a source to the source group. A source may only be part of one

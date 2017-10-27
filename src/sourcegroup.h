@@ -83,7 +83,7 @@ public:
 
     void stopAll() const;
 
-    const String &getName() const { return mName; }
+    StringView getName() const { return mName; }
 
     void release();
 };

@@ -54,7 +54,7 @@ public:
 
     Vector<Source> getSources() const { return mSources; }
 
-    const String &getName() const { return mName; }
+    StringView getName() const { return mName; }
 
     bool isInUse() const { return (mSources.size() > 0); }
 };

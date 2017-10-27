@@ -1347,9 +1347,10 @@ SourceGroup ContextImpl::getSourceGroup(StringView name)
 
 void ContextImpl::freeSourceGroup(SourceGroupImpl *group)
 {
-    auto iter = std::lower_bound(mSourceGroups.begin(), mSourceGroups.end(), group->getName(),
-        [](const UniquePtr<SourceGroupImpl> &lhs, const String &rhs) -> bool
-        { return lhs->getName() < rhs; }
+    auto hasher = std::hash<StringView>();
+    auto iter = std::lower_bound(mSourceGroups.begin(), mSourceGroups.end(), hasher(group->getName()),
+        [hasher](const UniquePtr<SourceGroupImpl> &lhs, size_t rhs) -> bool
+        { return hasher(lhs->getName()) < rhs; }
     );
     if(iter != mSourceGroups.end() && iter->get() == group)
         mSourceGroups.erase(iter);
