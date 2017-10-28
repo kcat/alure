@@ -564,8 +564,8 @@ void ContextImpl::backgroundProc()
                 {
                     auto mult = (now-waketime + interval-std::chrono::milliseconds(1)) / interval;
                     waketime += interval * mult;
-                    mWakeThread.wait_until(wakelock, waketime + basetime);
                 }
+                mWakeThread.wait_until(wakelock, waketime + basetime);
             }
             wakelock.unlock();
 
