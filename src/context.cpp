@@ -59,6 +59,8 @@ template<>
 struct hash<alure::StringView> {
     size_t operator()(const alure::StringView &str) const noexcept
     {
+        using traits_type = alure::StringView::traits_type;
+
         if /*constexpr*/ (sizeof(size_t) == 8)
         {
             static constexpr size_t hash_offset = 0xcbf29ce484222325;
@@ -66,7 +68,7 @@ struct hash<alure::StringView> {
 
             size_t val = hash_offset;
             for(auto ch : str)
-                val = (val^static_cast<unsigned char>(ch)) * hash_prime;
+                val = (val^traits_type::to_int_type(ch)) * hash_prime;
             return val;
         }
         else
@@ -76,7 +78,7 @@ struct hash<alure::StringView> {
 
             size_t val = hash_offset;
             for(auto ch : str)
-                val = (val^static_cast<unsigned char>(ch)) * hash_prime;
+                val = (val^traits_type::to_int_type(ch)) * hash_prime;
             return val;
         }
     }
