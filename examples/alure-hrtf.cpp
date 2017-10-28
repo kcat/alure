@@ -98,7 +98,7 @@ int main(int argc, char *argv[])
         float invfreq = 1.0f / decoder->getFrequency();
         while(source.isPlaying())
         {
-            std::cout<< "\r "<<std::setiosflags(std::ios::fixed)<<std::setprecision(2)<<
+            std::cout<< "\r "<<std::fixed<<std::setprecision(2)<<
                         source.getSecOffset().count()<<" / "<<(decoder->getLength()*invfreq);
             std::cout.flush();
             std::this_thread::sleep_for(std::chrono::milliseconds(25));
