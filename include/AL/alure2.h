@@ -920,7 +920,12 @@ public:
     /** Retrieves the buffer's sample type. */
     SampleType getSampleType() const;
 
-    /** Retrieves the storage size used by the buffer, in bytes. */
+    /**
+     * Retrieves the storage size used by the buffer, in bytes. Note that the
+     * size in bytes may not be what you expect from the length, as it may take
+     * more space internally than the ChannelConfig and SampleType suggest to
+     * be more efficient.
+     */
     ALuint getSize() const;
 
     /**
