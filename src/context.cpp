@@ -1427,7 +1427,7 @@ void ContextImpl::update()
     if(hasExtension(EXT_disconnect) && mIsConnected)
     {
         ALCint connected;
-        alcGetIntegerv(alcGetContextsDevice(mContext), ALC_CONNECTED, 1, &connected);
+        alcGetIntegerv(mDevice->getDevice(), ALC_CONNECTED, 1, &connected);
         mIsConnected = connected;
         if(!connected && mMessage.get()) mMessage->deviceDisconnected(Device(mDevice));
     }
