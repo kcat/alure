@@ -191,7 +191,7 @@ public:
     ContextImpl(ALCcontext *context, DeviceImpl *device);
     ~ContextImpl();
 
-    ALCcontext *getContext() const { return mContext; }
+    ALCcontext *getALCcontext() const { return mContext; }
     long addRef() { return ++mRefs; }
     long decRef() { return --mRefs; }
 

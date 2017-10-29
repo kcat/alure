@@ -26,14 +26,14 @@ static inline void LoadALCFunc(ALCdevice *device, T **func, const char *name)
 
 static void LoadPauseDevice(DeviceImpl *device)
 {
-    LoadALCFunc(device->getDevice(), &device->alcDevicePauseSOFT, "alcDevicePauseSOFT");
-    LoadALCFunc(device->getDevice(), &device->alcDeviceResumeSOFT, "alcDeviceResumeSOFT");
+    LoadALCFunc(device->getALCdevice(), &device->alcDevicePauseSOFT, "alcDevicePauseSOFT");
+    LoadALCFunc(device->getALCdevice(), &device->alcDeviceResumeSOFT, "alcDeviceResumeSOFT");
 }
 
 static void LoadHrtf(DeviceImpl *device)
 {
-    LoadALCFunc(device->getDevice(), &device->alcGetStringiSOFT, "alcGetStringiSOFT");
-    LoadALCFunc(device->getDevice(), &device->alcResetDeviceSOFT, "alcResetDeviceSOFT");
+    LoadALCFunc(device->getALCdevice(), &device->alcGetStringiSOFT, "alcGetStringiSOFT");
+    LoadALCFunc(device->getALCdevice(), &device->alcResetDeviceSOFT, "alcResetDeviceSOFT");
 }
 
 static void LoadNothing(DeviceImpl*) { }

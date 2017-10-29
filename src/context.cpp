@@ -465,7 +465,7 @@ void ContextImpl::MakeCurrent(ContextImpl *context)
 {
     std::unique_lock<std::mutex> ctxlock(mGlobalCtxMutex);
 
-    if(alcMakeContextCurrent(context ? context->getContext() : nullptr) == ALC_FALSE)
+    if(alcMakeContextCurrent(context ? context->getALCcontext() : nullptr) == ALC_FALSE)
         throw std::runtime_error("Call to alcMakeContextCurrent failed");
     if(context)
     {
@@ -490,7 +490,7 @@ void ContextImpl::MakeThreadCurrent(ContextImpl *context)
 {
     if(!DeviceManagerImpl::SetThreadContext)
         throw std::runtime_error("Thread-local contexts unsupported");
-    if(DeviceManagerImpl::SetThreadContext(context ? context->getContext() : nullptr) == ALC_FALSE)
+    if(DeviceManagerImpl::SetThreadContext(context ? context->getALCcontext() : nullptr) == ALC_FALSE)
         throw std::runtime_error("Call to alcSetThreadContext failed");
     if(context)
     {
@@ -504,7 +504,7 @@ void ContextImpl::MakeThreadCurrent(ContextImpl *context)
 
 void ContextImpl::setupExts()
 {
-    ALCdevice *device = mDevice->getDevice();
+    ALCdevice *device = mDevice->getALCdevice();
     std::fill(std::begin(mHasExt), std::end(mHasExt), false);
     for(const auto &entry : ALExtensionList)
     {
@@ -519,7 +519,7 @@ void ContextImpl::setupExts()
 void ContextImpl::backgroundProc()
 {
     if(DeviceManagerImpl::SetThreadContext && mDevice->hasExtension(EXT_thread_local_context))
-        DeviceManagerImpl::SetThreadContext(getContext());
+        DeviceManagerImpl::SetThreadContext(getALCcontext());
 
     std::chrono::steady_clock::time_point basetime = std::chrono::steady_clock::now();
     std::chrono::milliseconds waketime(0);
@@ -571,7 +571,7 @@ void ContextImpl::backgroundProc()
 
             ctxlock.lock();
             while(!mQuitThread.load(std::memory_order_acquire) &&
-                  alcGetCurrentContext() != getContext())
+                  alcGetCurrentContext() != getALCcontext())
                 mWakeThread.wait(ctxlock);
         }
     }
@@ -1427,7 +1427,7 @@ void ContextImpl::update()
     if(hasExtension(EXT_disconnect) && mIsConnected)
     {
         ALCint connected;
-        alcGetIntegerv(mDevice->getDevice(), ALC_CONNECTED, 1, &connected);
+        alcGetIntegerv(mDevice->getALCdevice(), ALC_CONNECTED, 1, &connected);
         mIsConnected = connected;
         if(!connected && mMessage.get()) mMessage->deviceDisconnected(Device(mDevice));
     }

@@ -34,7 +34,7 @@ public:
     DeviceImpl(ALCdevice *device);
     ~DeviceImpl();
 
-    ALCdevice *getDevice() const { return mDevice; }
+    ALCdevice *getALCdevice() const { return mDevice; }
 
     bool hasExtension(ALCExtension ext) const { return mHasExt[ext]; }
 
