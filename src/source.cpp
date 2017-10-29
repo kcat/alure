@@ -508,9 +508,8 @@ void SourceImpl::checkPaused()
 
     ALint state = -1;
     alGetSourcei(mId, AL_SOURCE_STATE, &state);
-    // Streaming sources may be in a stopped state if underrun
-    mPaused.store((state == AL_PAUSED) ||
-                  (state == AL_STOPPED && mStream && mStream->hasMoreData()),
+    // Streaming sources may be in a stopped or initial state if underrun
+    mPaused.store(state == AL_PAUSED || (mStream && mStream->hasMoreData()),
                   std::memory_order_release);
 }
 
@@ -526,9 +525,8 @@ void SourceImpl::pause()
         alSourcePause(mId);
         ALint state = -1;
         alGetSourcei(mId, AL_SOURCE_STATE, &state);
-        // Streaming sources may be in a stopped state if underrun
-        mPaused.store((state == AL_PAUSED) ||
-                      (state == AL_STOPPED && mStream && mStream->hasMoreData()),
+        // Streaming sources may be in a stopped or initial state if underrun
+        mPaused.store(state == AL_PAUSED || (mStream && mStream->hasMoreData()),
                       std::memory_order_release);
     }
 }
@@ -706,12 +704,21 @@ bool SourceImpl::updateAsync()
         mIsAsync.store(false, std::memory_order_release);
         return false;
     }
+
+    ALint state = -1;
+    alGetSourcei(mId, AL_SOURCE_STATE, &state);
     if(!mPaused.load(std::memory_order_acquire))
     {
-        ALint state = -1;
-        alGetSourcei(mId, AL_SOURCE_STATE, &state);
+        // Make sure the source is still playing if it's not paused.
         if(state != AL_PLAYING)
             alSourcePlay(mId);
+    }
+    else
+    {
+        // Rewind the source to an initial state if it underrun as it was
+        // paused.
+        if(state == AL_STOPPED)
+            alSourceRewind(mId);
     }
     return true;
 }
@@ -749,7 +756,7 @@ void SourceImpl::setOffset(uint64_t offset)
         alSourceRewind(mId);
         alSourcei(mId, AL_BUFFER, 0);
         ALint queued = refillBufferStream();
-        if(queued > 0 && !mPaused)
+        if(queued > 0 && !mPaused.load(std::memory_order_acquire))
             alSourcePlay(mId);
     }
 }
