@@ -566,14 +566,7 @@ bool SourceImpl::isPlaying() const
 bool SourceImpl::isPaused() const
 {
     CheckContext(mContext);
-    if(mId == 0) return false;
-
-    ALint state = -1;
-    alGetSourcei(mId, AL_SOURCE_STATE, &state);
-    if(state == -1)
-        throw std::runtime_error("Source state error");
-
-    return state == AL_PAUSED || mPaused.load(std::memory_order_acquire);
+    return mId != 0 && mPaused.load(std::memory_order_acquire);
 }
 
 

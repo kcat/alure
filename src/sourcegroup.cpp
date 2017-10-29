@@ -209,8 +209,8 @@ void SourceGroupImpl::collectPlayingSourceIds(Vector<ALuint> &sourceids) const
 {
     for(SourceImpl *alsrc : mSources)
     {
-        if(alsrc->isPlaying())
-            sourceids.push_back(alsrc->getId());
+        if(ALuint id = alsrc->getId())
+            sourceids.push_back(id);
     }
     for(SourceGroupImpl *group : mSubGroups)
         group->collectPlayingSourceIds(sourceids);
