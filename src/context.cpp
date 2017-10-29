@@ -619,7 +619,7 @@ ContextImpl::~ContextImpl()
 
 void ContextImpl::destroy()
 {
-    if(mRefs.load() != 0)
+    if(mRefs != 0)
         throw std::runtime_error("Context is in use");
     if(!mBuffers.empty())
         throw std::runtime_error("Trying to destroy a context with buffers");

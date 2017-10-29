@@ -20,7 +20,6 @@
 #include "alc.h"
 #include "alext.h"
 
-#include "refcount.h"
 #include "device.h"
 #include "source.h"
 
@@ -172,7 +171,7 @@ private:
     std::thread mThread;
     void backgroundProc();
 
-    RefCount mRefs;
+    size_t mRefs;
 
     Vector<String> mResamplers;
 
