@@ -432,29 +432,29 @@ static void LoadSourceLatency(ContextImpl *ctx)
 }
 
 static const struct {
-    enum ALExtension extension;
+    enum AL extension;
     const char name[32];
     void (&loader)(ContextImpl*);
 } ALExtensionList[] = {
-    { EXT_EFX, "ALC_EXT_EFX", LoadEFX },
+    { AL::EXT_EFX, "ALC_EXT_EFX", LoadEFX },
 
-    { EXT_FLOAT32,   "AL_EXT_FLOAT32",   LoadNothing },
-    { EXT_MCFORMATS, "AL_EXT_MCFORMATS", LoadNothing },
-    { EXT_BFORMAT,   "AL_EXT_BFORMAT",   LoadNothing },
+    { AL::EXT_FLOAT32,   "AL_EXT_FLOAT32",   LoadNothing },
+    { AL::EXT_MCFORMATS, "AL_EXT_MCFORMATS", LoadNothing },
+    { AL::EXT_BFORMAT,   "AL_EXT_BFORMAT",   LoadNothing },
 
-    { EXT_MULAW,           "AL_EXT_MULAW",           LoadNothing },
-    { EXT_MULAW_MCFORMATS, "AL_EXT_MULAW_MCFORMATS", LoadNothing },
-    { EXT_MULAW_BFORMAT,   "AL_EXT_MULAW_BFORMAT",   LoadNothing },
+    { AL::EXT_MULAW,           "AL_EXT_MULAW",           LoadNothing },
+    { AL::EXT_MULAW_MCFORMATS, "AL_EXT_MULAW_MCFORMATS", LoadNothing },
+    { AL::EXT_MULAW_BFORMAT,   "AL_EXT_MULAW_BFORMAT",   LoadNothing },
 
-    { SOFT_loop_points,       "AL_SOFT_loop_points",       LoadNothing },
-    { SOFT_source_latency,    "AL_SOFT_source_latency",    LoadSourceLatency },
-    { SOFT_source_resampler,  "AL_SOFT_source_resampler",  LoadSourceResampler },
-    { SOFT_source_spatialize, "AL_SOFT_source_spatialize", LoadNothing },
+    { AL::SOFT_loop_points,       "AL_SOFT_loop_points",       LoadNothing },
+    { AL::SOFT_source_latency,    "AL_SOFT_source_latency",    LoadSourceLatency },
+    { AL::SOFT_source_resampler,  "AL_SOFT_source_resampler",  LoadSourceResampler },
+    { AL::SOFT_source_spatialize, "AL_SOFT_source_spatialize", LoadNothing },
 
-    { EXT_disconnect, "ALC_EXT_disconnect", LoadNothing },
+    { AL::EXT_disconnect, "ALC_EXT_disconnect", LoadNothing },
 
-    { EXT_SOURCE_RADIUS, "AL_EXT_SOURCE_RADIUS", LoadNothing },
-    { EXT_STEREO_ANGLES, "AL_EXT_STEREO_ANGLES", LoadNothing },
+    { AL::EXT_SOURCE_RADIUS, "AL_EXT_SOURCE_RADIUS", LoadNothing },
+    { AL::EXT_STEREO_ANGLES, "AL_EXT_STEREO_ANGLES", LoadNothing },
 };
 
 
@@ -505,20 +505,22 @@ void ContextImpl::MakeThreadCurrent(ContextImpl *context)
 void ContextImpl::setupExts()
 {
     ALCdevice *device = mDevice->getALCdevice();
-    std::fill(std::begin(mHasExt), std::end(mHasExt), false);
+    mHasExt.clear();
     for(const auto &entry : ALExtensionList)
     {
-        mHasExt[entry.extension] = (strncmp(entry.name, "ALC", 3) == 0) ?
-                                   alcIsExtensionPresent(device, entry.name) :
-                                   alIsExtensionPresent(entry.name);
-        if(mHasExt[entry.extension]) entry.loader(this);
+        if((strncmp(entry.name, "ALC", 3) == 0) ? alcIsExtensionPresent(device, entry.name) :
+                                                  alIsExtensionPresent(entry.name))
+        {
+            mHasExt.set(static_cast<size_t>(entry.extension));
+            entry.loader(this);
+        }
     }
 }
 
 
 void ContextImpl::backgroundProc()
 {
-    if(DeviceManagerImpl::SetThreadContext && mDevice->hasExtension(EXT_thread_local_context))
+    if(DeviceManagerImpl::SetThreadContext && mDevice->hasExtension(ALC::EXT_thread_local_context))
         DeviceManagerImpl::SetThreadContext(getALCcontext());
 
     std::chrono::steady_clock::time_point basetime = std::chrono::steady_clock::now();
@@ -585,7 +587,7 @@ void ContextImpl::backgroundProc()
 ContextImpl::ContextImpl(ALCcontext *context, DeviceImpl *device)
   : mListener(this), mContext(context), mDevice(device),
     mWakeInterval(std::chrono::milliseconds::zero()), mQuitThread(false),
-    mRefs(0), mHasExt{false}, mIsConnected(true), mIsBatching(false),
+    mRefs(0), mIsConnected(true), mIsBatching(false),
     alGetSourcei64vSOFT(0), alGetSourcedvSOFT(0),
     alGenEffects(0), alDeleteEffects(0), alIsEffect(0),
     alEffecti(0), alEffectiv(0), alEffectf(0), alEffectfv(0),
@@ -597,6 +599,7 @@ ContextImpl::ContextImpl(ALCcontext *context, DeviceImpl *device)
     alAuxiliaryEffectSloti(0), alAuxiliaryEffectSlotiv(0), alAuxiliaryEffectSlotf(0), alAuxiliaryEffectSlotfv(0),
     alGetAuxiliaryEffectSloti(0), alGetAuxiliaryEffectSlotiv(0), alGetAuxiliaryEffectSlotf(0), alGetAuxiliaryEffectSlotfv(0)
 {
+    mHasExt.clear();
     mPendingHead = new PendingBuffer;
     mPendingCurrent.store(mPendingHead, std::memory_order_relaxed);
     mPendingTail = mPendingHead;
@@ -712,7 +715,7 @@ bool ContextImpl::isSupported(ChannelConfig channels, SampleType type) const
 ArrayView<String> ContextImpl::getAvailableResamplers()
 {
     CheckContext(this);
-    if(mResamplers.empty() && hasExtension(SOFT_source_resampler))
+    if(mResamplers.empty() && hasExtension(AL::SOFT_source_resampler))
     {
         ALint num_resamplers = alGetInteger(AL_NUM_RESAMPLERS_SOFT);
         mResamplers.reserve(num_resamplers);
@@ -727,7 +730,7 @@ ArrayView<String> ContextImpl::getAvailableResamplers()
 ALsizei ContextImpl::getDefaultResamplerIndex() const
 {
     CheckContext(this);
-    if(!hasExtension(SOFT_source_resampler))
+    if(!hasExtension(AL::SOFT_source_resampler))
         return 0;
     return alGetInteger(AL_DEFAULT_RESAMPLER_SOFT);
 }
@@ -772,7 +775,7 @@ BufferOrExceptT ContextImpl::doCreateBuffer(StringView name, Vector<UniquePtr<Bu
     ALuint bid = 0;
     alGenBuffers(1, &bid);
     alBufferData(bid, format, data.data(), data.size(), srate);
-    if(hasExtension(SOFT_loop_points))
+    if(hasExtension(AL::SOFT_loop_points))
     {
         ALint pts[2]{(ALint)loop_pts.first, (ALint)loop_pts.second};
         alBufferiv(bid, AL_LOOP_POINTS_SOFT, pts);
@@ -1282,7 +1285,7 @@ void ContextImpl::removeStreamNoLock(SourceImpl *source)
 
 AuxiliaryEffectSlot ContextImpl::createAuxiliaryEffectSlot()
 {
-    if(!hasExtension(EXT_EFX) || !alGenAuxiliaryEffectSlots)
+    if(!hasExtension(AL::EXT_EFX) || !alGenAuxiliaryEffectSlots)
         throw std::runtime_error("AuxiliaryEffectSlots not supported");
     CheckContext(this);
 
@@ -1303,7 +1306,7 @@ AuxiliaryEffectSlot ContextImpl::createAuxiliaryEffectSlot()
 
 Effect ContextImpl::createEffect()
 {
-    if(!hasExtension(EXT_EFX))
+    if(!hasExtension(AL::EXT_EFX))
         throw std::runtime_error("Effects not supported");
     CheckContext(this);
 
@@ -1424,7 +1427,7 @@ void ContextImpl::update()
         mWakeThread.notify_all();
     }
 
-    if(hasExtension(EXT_disconnect) && mIsConnected)
+    if(hasExtension(AL::EXT_disconnect) && mIsConnected)
     {
         ALCint connected;
         alcGetIntegerv(mDevice->getALCdevice(), ALC_CONNECTED, 1, &connected);
@@ -1549,7 +1552,7 @@ void ListenerImpl::setMetersPerUnit(ALfloat m_u)
     if(!(m_u > 0.0f))
         throw std::runtime_error("Invalid meters per unit");
     CheckContext(mContext);
-    if(mContext->hasExtension(EXT_EFX))
+    if(mContext->hasExtension(AL::EXT_EFX))
         alListenerf(AL_METERS_PER_UNIT, m_u);
 }
 

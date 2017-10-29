@@ -12,12 +12,14 @@
 namespace alure {
 
 
-enum ALCExtension {
+enum class ALC {
+    ENUMERATE_ALL_EXT,
+    EXT_EFX,
     EXT_thread_local_context,
     SOFT_device_pause,
     SOFT_HRTF,
 
-    ALC_EXTENSION_MAX
+    EXTENSION_MAX
 };
 
 class DeviceImpl {
@@ -25,7 +27,7 @@ class DeviceImpl {
 
     Vector<UniquePtr<ContextImpl>> mContexts;
 
-    bool mHasExt[ALC_EXTENSION_MAX];
+    Bitfield<static_cast<size_t>(ALC::EXTENSION_MAX)> mHasExt;
 
     std::once_flag mSetExts;
     void setupExts();
@@ -36,7 +38,7 @@ public:
 
     ALCdevice *getALCdevice() const { return mDevice; }
 
-    bool hasExtension(ALCExtension ext) const { return mHasExt[ext]; }
+    bool hasExtension(ALC ext) const { return mHasExt[static_cast<size_t>(ext)]; }
 
     LPALCDEVICEPAUSESOFT alcDevicePauseSOFT;
     LPALCDEVICERESUMESOFT alcDeviceResumeSOFT;

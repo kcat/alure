@@ -212,7 +212,7 @@ void SourceImpl::resetProperties()
     mStereoAngles[0] =  F_PI / 6.0f;
     mStereoAngles[1] = -F_PI / 6.0f;
     mSpatialize = Spatialize::Auto;
-    mResampler = mContext->hasExtension(SOFT_source_resampler) ?
+    mResampler = mContext->hasExtension(AL::SOFT_source_resampler) ?
                  alGetInteger(AL_DEFAULT_RESAMPLER_SOFT) : 0;
     mLooping = false;
     mRelative = false;
@@ -247,23 +247,23 @@ void SourceImpl::applyProperties(bool looping, ALuint offset) const
     alSourcefv(mId, AL_POSITION, mPosition.getPtr());
     alSourcefv(mId, AL_VELOCITY, mVelocity.getPtr());
     alSourcefv(mId, AL_DIRECTION, mDirection.getPtr());
-    if(mContext->hasExtension(EXT_BFORMAT))
+    if(mContext->hasExtension(AL::EXT_BFORMAT))
         alSourcefv(mId, AL_ORIENTATION, &mOrientation[0][0]);
     alSourcef(mId, AL_CONE_INNER_ANGLE, mConeInnerAngle);
     alSourcef(mId, AL_CONE_OUTER_ANGLE, mConeOuterAngle);
     alSourcef(mId, AL_CONE_OUTER_GAIN, mConeOuterGain);
     alSourcef(mId, AL_ROLLOFF_FACTOR, mRolloffFactor);
     alSourcef(mId, AL_DOPPLER_FACTOR, mDopplerFactor);
-    if(mContext->hasExtension(EXT_SOURCE_RADIUS))
+    if(mContext->hasExtension(AL::EXT_SOURCE_RADIUS))
         alSourcef(mId, AL_SOURCE_RADIUS, mRadius);
-    if(mContext->hasExtension(EXT_STEREO_ANGLES))
+    if(mContext->hasExtension(AL::EXT_STEREO_ANGLES))
         alSourcefv(mId, AL_STEREO_ANGLES, mStereoAngles);
-    if(mContext->hasExtension(SOFT_source_spatialize))
+    if(mContext->hasExtension(AL::SOFT_source_spatialize))
         alSourcei(mId, AL_SOURCE_SPATIALIZE_SOFT, (ALint)mSpatialize);
-    if(mContext->hasExtension(SOFT_source_resampler))
+    if(mContext->hasExtension(AL::SOFT_source_resampler))
         alSourcei(mId, AL_SOURCE_RESAMPLER_SOFT, mResampler);
     alSourcei(mId, AL_SOURCE_RELATIVE, mRelative ? AL_TRUE : AL_FALSE);
-    if(mContext->hasExtension(EXT_EFX))
+    if(mContext->hasExtension(AL::EXT_EFX))
     {
         alSourcef(mId, AL_CONE_OUTER_GAINHF, mConeOuterGainHF);
         alSourcef(mId, AL_ROOM_ROLLOFF_FACTOR, mRoomRolloffFactor);
@@ -457,7 +457,7 @@ void SourceImpl::makeStopped(bool dolock)
     {
         alSourceRewind(mId);
         alSourcei(mId, AL_BUFFER, 0);
-        if(mContext->hasExtension(EXT_EFX))
+        if(mContext->hasExtension(AL::EXT_EFX))
         {
             alSourcei(mId, AL_DIRECT_FILTER, AL_FILTER_NULL);
             for(auto &i : mEffectSlots)
@@ -766,7 +766,7 @@ std::pair<uint64_t,std::chrono::nanoseconds> SourceImpl::getSampleOffsetLatency(
         ALint queued = 0, state = -1, srcpos = 0;
 
         alGetSourcei(mId, AL_BUFFERS_QUEUED, &queued);
-        if(mContext->hasExtension(SOFT_source_latency))
+        if(mContext->hasExtension(AL::SOFT_source_latency))
         {
             ALint64SOFT val[2];
             mContext->alGetSourcei64vSOFT(mId, AL_SAMPLE_OFFSET_LATENCY_SOFT, val);
@@ -802,7 +802,7 @@ std::pair<uint64_t,std::chrono::nanoseconds> SourceImpl::getSampleOffsetLatency(
     }
 
     ALint srcpos = 0;
-    if(mContext->hasExtension(SOFT_source_latency))
+    if(mContext->hasExtension(AL::SOFT_source_latency))
     {
         ALint64SOFT val[2];
         mContext->alGetSourcei64vSOFT(mId, AL_SAMPLE_OFFSET_LATENCY_SOFT, val);
@@ -828,7 +828,7 @@ std::pair<Seconds,Seconds> SourceImpl::getSecOffsetLatency() const
         ALdouble srcpos = 0;
 
         alGetSourcei(mId, AL_BUFFERS_QUEUED, &queued);
-        if(mContext->hasExtension(SOFT_source_latency))
+        if(mContext->hasExtension(AL::SOFT_source_latency))
         {
             ALdouble val[2];
             mContext->alGetSourcedvSOFT(mId, AL_SEC_OFFSET_LATENCY_SOFT, val);
@@ -871,7 +871,7 @@ std::pair<Seconds,Seconds> SourceImpl::getSecOffsetLatency() const
         return ret;
     }
 
-    if(mContext->hasExtension(SOFT_source_latency))
+    if(mContext->hasExtension(AL::SOFT_source_latency))
     {
         ALdouble val[2];
         mContext->alGetSourcedvSOFT(mId, AL_SEC_OFFSET_LATENCY_SOFT, val);
@@ -973,7 +973,7 @@ void SourceImpl::set3DParameters(const Vector3 &position, const Vector3 &velocit
         Batcher batcher = mContext->getBatcher();
         alSourcefv(mId, AL_POSITION, position.getPtr());
         alSourcefv(mId, AL_VELOCITY, velocity.getPtr());
-        if(mContext->hasExtension(EXT_BFORMAT))
+        if(mContext->hasExtension(AL::EXT_BFORMAT))
             alSourcefv(mId, AL_ORIENTATION, orientation.first.getPtr());
         alSourcefv(mId, AL_DIRECTION, orientation.first.getPtr());
     }
@@ -1050,7 +1050,7 @@ void SourceImpl::setOrientation(ALfloat x1, ALfloat y1, ALfloat z1, ALfloat x2, 
     if(mId != 0)
     {
         ALfloat ori[6] = { x1, y1, z1, x2, y2, z2 };
-        if(mContext->hasExtension(EXT_BFORMAT))
+        if(mContext->hasExtension(AL::EXT_BFORMAT))
             alSourcefv(mId, AL_ORIENTATION, ori);
         alSourcefv(mId, AL_DIRECTION, ori);
     }
@@ -1068,7 +1068,7 @@ void SourceImpl::setOrientation(const ALfloat *at, const ALfloat *up)
     if(mId != 0)
     {
         ALfloat ori[6] = { at[0], at[1], at[2], up[0], up[1], up[2] };
-        if(mContext->hasExtension(EXT_BFORMAT))
+        if(mContext->hasExtension(AL::EXT_BFORMAT))
             alSourcefv(mId, AL_ORIENTATION, ori);
         alSourcefv(mId, AL_DIRECTION, ori);
     }
@@ -1085,7 +1085,7 @@ void SourceImpl::setOrientation(const ALfloat *ori)
     CheckContext(mContext);
     if(mId != 0)
     {
-        if(mContext->hasExtension(EXT_BFORMAT))
+        if(mContext->hasExtension(AL::EXT_BFORMAT))
             alSourcefv(mId, AL_ORIENTATION, ori);
         alSourcefv(mId, AL_DIRECTION, ori);
     }
@@ -1120,7 +1120,7 @@ void SourceImpl::setOuterConeGains(ALfloat gain, ALfloat gainhf)
     if(mId != 0)
     {
         alSourcef(mId, AL_CONE_OUTER_GAIN, gain);
-        if(mContext->hasExtension(EXT_EFX))
+        if(mContext->hasExtension(AL::EXT_EFX))
             alSourcef(mId, AL_CONE_OUTER_GAINHF, gainhf);
     }
     mConeOuterGain = gain;
@@ -1136,7 +1136,7 @@ void SourceImpl::setRolloffFactors(ALfloat factor, ALfloat roomfactor)
     if(mId != 0)
     {
         alSourcef(mId, AL_ROLLOFF_FACTOR, factor);
-        if(mContext->hasExtension(EXT_EFX))
+        if(mContext->hasExtension(AL::EXT_EFX))
             alSourcef(mId, AL_ROOM_ROLLOFF_FACTOR, roomfactor);
     }
     mRolloffFactor = factor;
@@ -1158,7 +1158,7 @@ void SourceImpl::setAirAbsorptionFactor(ALfloat factor)
     if(!(factor >= 0.0f && factor <= 10.0f))
         throw std::runtime_error("Absorption factor out of range");
     CheckContext(mContext);
-    if(mId != 0 && mContext->hasExtension(EXT_EFX))
+    if(mId != 0 && mContext->hasExtension(AL::EXT_EFX))
         alSourcef(mId, AL_AIR_ABSORPTION_FACTOR, factor);
     mAirAbsorptionFactor = factor;
 }
@@ -1168,7 +1168,7 @@ void SourceImpl::setRadius(ALfloat radius)
     if(!(mRadius >= 0.0f))
         throw std::runtime_error("Radius out of range");
     CheckContext(mContext);
-    if(mId != 0 && mContext->hasExtension(EXT_SOURCE_RADIUS))
+    if(mId != 0 && mContext->hasExtension(AL::EXT_SOURCE_RADIUS))
         alSourcef(mId, AL_SOURCE_RADIUS, radius);
     mRadius = radius;
 }
@@ -1176,7 +1176,7 @@ void SourceImpl::setRadius(ALfloat radius)
 void SourceImpl::setStereoAngles(ALfloat leftAngle, ALfloat rightAngle)
 {
     CheckContext(mContext);
-    if(mId != 0 && mContext->hasExtension(EXT_STEREO_ANGLES))
+    if(mId != 0 && mContext->hasExtension(AL::EXT_STEREO_ANGLES))
     {
         ALfloat angles[2] = { leftAngle, rightAngle };
         alSourcefv(mId, AL_STEREO_ANGLES, angles);
@@ -1188,7 +1188,7 @@ void SourceImpl::setStereoAngles(ALfloat leftAngle, ALfloat rightAngle)
 void SourceImpl::set3DSpatialize(Spatialize spatialize)
 {
     CheckContext(mContext);
-    if(mId != 0 && mContext->hasExtension(SOFT_source_spatialize))
+    if(mId != 0 && mContext->hasExtension(AL::SOFT_source_spatialize))
         alSourcei(mId, AL_SOURCE_SPATIALIZE_SOFT, (ALint)spatialize);
     mSpatialize = spatialize;
 }
@@ -1198,7 +1198,7 @@ void SourceImpl::setResamplerIndex(ALsizei index)
     if(index < 0)
         throw std::runtime_error("Resampler index out of range");
     index = std::min<ALsizei>(index, mContext->getAvailableResamplers().size());
-    if(mId != 0 && mContext->hasExtension(SOFT_source_resampler))
+    if(mId != 0 && mContext->hasExtension(AL::SOFT_source_resampler))
         alSourcei(mId, AL_SOURCE_RESAMPLER_SOFT, index);
     mResampler = index;
 }
@@ -1214,7 +1214,7 @@ void SourceImpl::setRelative(bool relative)
 void SourceImpl::setGainAuto(bool directhf, bool send, bool sendhf)
 {
     CheckContext(mContext);
-    if(mId != 0 && mContext->hasExtension(EXT_EFX))
+    if(mId != 0 && mContext->hasExtension(AL::EXT_EFX))
     {
         alSourcei(mId, AL_DIRECT_FILTER_GAINHF_AUTO, directhf ? AL_TRUE : AL_FALSE);
         alSourcei(mId, AL_AUXILIARY_SEND_FILTER_GAIN_AUTO, send ? AL_TRUE : AL_FALSE);
@@ -1228,7 +1228,7 @@ void SourceImpl::setGainAuto(bool directhf, bool send, bool sendhf)
 
 void SourceImpl::setFilterParams(ALuint &filterid, const FilterParams &params)
 {
-    if(!mContext->hasExtension(EXT_EFX))
+    if(!mContext->hasExtension(AL::EXT_EFX))
         return;
 
     if(!(params.mGain < 1.0f || params.mGainHF < 1.0f || params.mGainLF < 1.0f))

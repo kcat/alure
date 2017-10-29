@@ -36,7 +36,7 @@ using mpark::holds_alternative;
 
 namespace alure {
 
-enum ALExtension {
+enum class AL {
     EXT_EFX,
 
     EXT_FLOAT32,
@@ -57,7 +57,7 @@ enum ALExtension {
     EXT_SOURCE_RADIUS,
     EXT_STEREO_ANGLES,
 
-    AL_EXTENSION_MAX
+    EXTENSION_MAX
 };
 
 // Batches OpenAL updates while the object is alive, if batching isn't already
@@ -175,7 +175,7 @@ private:
 
     Vector<String> mResamplers;
 
-    bool mHasExt[AL_EXTENSION_MAX];
+    Bitfield<static_cast<size_t>(AL::EXTENSION_MAX)> mHasExt;
 
     std::once_flag mSetExts;
     void setupExts();
@@ -195,7 +195,7 @@ public:
     long addRef() { return ++mRefs; }
     long decRef() { return --mRefs; }
 
-    bool hasExtension(ALExtension ext) const { return mHasExt[ext]; }
+    bool hasExtension(AL ext) const { return mHasExt[static_cast<size_t>(ext)]; }
 
     LPALGETSTRINGISOFT alGetStringiSOFT;
     LPALGETSOURCEI64VSOFT alGetSourcei64vSOFT;

@@ -60,7 +60,7 @@ void BufferImpl::load(ALuint frames, ALenum format, SharedPtr<Decoder> decoder, 
     );
 
     alBufferData(mId, format, data.data(), data.size(), mFrequency);
-    if(ctx->hasExtension(SOFT_loop_points))
+    if(ctx->hasExtension(AL::SOFT_loop_points))
     {
         ALint pts[2]{(ALint)loop_pts.first, (ALint)loop_pts.second};
         alBufferiv(mId, AL_LOOP_POINTS_SOFT, pts);
@@ -99,7 +99,7 @@ void BufferImpl::setLoopPoints(ALuint start, ALuint end)
     if(isInUse())
         throw std::runtime_error("Buffer is in use");
 
-    if(!mContext->hasExtension(SOFT_loop_points))
+    if(!mContext->hasExtension(AL::SOFT_loop_points))
     {
         if(start != 0 || end != length)
             throw std::runtime_error("Loop points not supported");
@@ -120,7 +120,7 @@ std::pair<ALuint,ALuint> BufferImpl::getLoopPoints() const
 {
     CheckContext(mContext);
 
-    if(!mContext->hasExtension(SOFT_loop_points))
+    if(!mContext->hasExtension(AL::SOFT_loop_points))
         return std::make_pair(0, getLength());
 
     ALint pts[2]{-1,-1};
@@ -218,7 +218,7 @@ ALenum GetFormat(ChannelConfig chans, SampleType type)
     {
         if(chans == ChannelConfig::Mono) return AL_FORMAT_MONO8;
         if(chans == ChannelConfig::Stereo) return AL_FORMAT_STEREO8;
-        if(ContextImpl::GetCurrent()->hasExtension(EXT_MCFORMATS))
+        if(ContextImpl::GetCurrent()->hasExtension(AL::EXT_MCFORMATS))
         {
             if(chans == ChannelConfig::Rear) RETURN_FMT("AL_FORMAT_REAR8");
             if(chans == ChannelConfig::Quad) RETURN_FMT("AL_FORMAT_QUAD8");
@@ -226,7 +226,7 @@ ALenum GetFormat(ChannelConfig chans, SampleType type)
             if(chans == ChannelConfig::X61) RETURN_FMT("AL_FORMAT_61CHN8");
             if(chans == ChannelConfig::X71) RETURN_FMT("AL_FORMAT_71CHN8");
         }
-        if(ContextImpl::GetCurrent()->hasExtension(EXT_BFORMAT))
+        if(ContextImpl::GetCurrent()->hasExtension(AL::EXT_BFORMAT))
         {
             if(chans == ChannelConfig::BFormat2D) RETURN_FMT("AL_FORMAT_BFORMAT2D_8");
             if(chans == ChannelConfig::BFormat3D) RETURN_FMT("AL_FORMAT_BFORMAT3D_8");
@@ -236,7 +236,7 @@ ALenum GetFormat(ChannelConfig chans, SampleType type)
     {
         if(chans == ChannelConfig::Mono) return AL_FORMAT_MONO16;
         if(chans == ChannelConfig::Stereo) return AL_FORMAT_STEREO16;
-        if(ContextImpl::GetCurrent()->hasExtension(EXT_MCFORMATS))
+        if(ContextImpl::GetCurrent()->hasExtension(AL::EXT_MCFORMATS))
         {
             if(chans == ChannelConfig::Rear) RETURN_FMT("AL_FORMAT_REAR16");
             if(chans == ChannelConfig::Quad) RETURN_FMT("AL_FORMAT_QUAD16");
@@ -244,17 +244,17 @@ ALenum GetFormat(ChannelConfig chans, SampleType type)
             if(chans == ChannelConfig::X61) RETURN_FMT("AL_FORMAT_61CHN16");
             if(chans == ChannelConfig::X71) RETURN_FMT("AL_FORMAT_71CHN16");
         }
-        if(ContextImpl::GetCurrent()->hasExtension(EXT_BFORMAT))
+        if(ContextImpl::GetCurrent()->hasExtension(AL::EXT_BFORMAT))
         {
             if(chans == ChannelConfig::BFormat2D) RETURN_FMT("AL_FORMAT_BFORMAT2D_16");
             if(chans == ChannelConfig::BFormat3D) RETURN_FMT("AL_FORMAT_BFORMAT3D_16");
         }
     }
-    else if(type == SampleType::Float32 && ContextImpl::GetCurrent()->hasExtension(EXT_FLOAT32))
+    else if(type == SampleType::Float32 && ContextImpl::GetCurrent()->hasExtension(AL::EXT_FLOAT32))
     {
         if(chans == ChannelConfig::Mono) return AL_FORMAT_MONO_FLOAT32;
         if(chans == ChannelConfig::Stereo) return AL_FORMAT_STEREO_FLOAT32;
-        if(ContextImpl::GetCurrent()->hasExtension(EXT_MCFORMATS))
+        if(ContextImpl::GetCurrent()->hasExtension(AL::EXT_MCFORMATS))
         {
             if(chans == ChannelConfig::Rear) RETURN_FMT("AL_FORMAT_REAR32");
             if(chans == ChannelConfig::Quad) RETURN_FMT("AL_FORMAT_QUAD32");
@@ -262,17 +262,17 @@ ALenum GetFormat(ChannelConfig chans, SampleType type)
             if(chans == ChannelConfig::X61) RETURN_FMT("AL_FORMAT_61CHN32");
             if(chans == ChannelConfig::X71) RETURN_FMT("AL_FORMAT_71CHN32");
         }
-        if(ContextImpl::GetCurrent()->hasExtension(EXT_BFORMAT))
+        if(ContextImpl::GetCurrent()->hasExtension(AL::EXT_BFORMAT))
         {
             if(chans == ChannelConfig::BFormat2D) RETURN_FMT("AL_FORMAT_BFORMAT2D_FLOAT32");
             if(chans == ChannelConfig::BFormat3D) RETURN_FMT("AL_FORMAT_BFORMAT3D_FLOAT32");
         }
     }
-    else if(type == SampleType::Mulaw && ContextImpl::GetCurrent()->hasExtension(EXT_MULAW))
+    else if(type == SampleType::Mulaw && ContextImpl::GetCurrent()->hasExtension(AL::EXT_MULAW))
     {
         if(chans == ChannelConfig::Mono) return AL_FORMAT_MONO_MULAW;
         if(chans == ChannelConfig::Stereo) return AL_FORMAT_STEREO_MULAW;
-        if(ContextImpl::GetCurrent()->hasExtension(EXT_MULAW_MCFORMATS))
+        if(ContextImpl::GetCurrent()->hasExtension(AL::EXT_MULAW_MCFORMATS))
         {
             if(chans == ChannelConfig::Rear) RETURN_FMT("AL_FORMAT_REAR_MULAW");
             if(chans == ChannelConfig::Quad) RETURN_FMT("AL_FORMAT_QUAD_MULAW");
@@ -280,7 +280,7 @@ ALenum GetFormat(ChannelConfig chans, SampleType type)
             if(chans == ChannelConfig::X61) RETURN_FMT("AL_FORMAT_61CHN_MULAW");
             if(chans == ChannelConfig::X71) RETURN_FMT("AL_FORMAT_71CHN_MULAW");
         }
-        if(ContextImpl::GetCurrent()->hasExtension(EXT_MULAW_BFORMAT))
+        if(ContextImpl::GetCurrent()->hasExtension(AL::EXT_MULAW_BFORMAT))
         {
             if(chans == ChannelConfig::BFormat2D) RETURN_FMT("AL_FORMAT_BFORMAT2D_MULAW");
             if(chans == ChannelConfig::BFormat3D) RETURN_FMT("AL_FORMAT_BFORMAT3D_MULAW");

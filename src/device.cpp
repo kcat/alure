@@ -39,23 +39,27 @@ static void LoadHrtf(DeviceImpl *device)
 static void LoadNothing(DeviceImpl*) { }
 
 static const struct {
-    enum ALCExtension extension;
+    enum ALC extension;
     const char name[32];
     void (&loader)(DeviceImpl*);
 } ALCExtensionList[] = {
-    { EXT_thread_local_context, "ALC_EXT_thread_local_context", LoadNothing },
-    { SOFT_device_pause, "ALC_SOFT_pause_device", LoadPauseDevice },
-    { SOFT_HRTF, "ALC_SOFT_HRTF", LoadHrtf },
+    { ALC::ENUMERATE_ALL_EXT, "ALC_ENUMERATE_ALL_EXT", LoadNothing },
+    { ALC::EXT_EFX, "ALC_EXT_EFX", LoadNothing },
+    { ALC::EXT_thread_local_context, "ALC_EXT_thread_local_context", LoadNothing },
+    { ALC::SOFT_device_pause, "ALC_SOFT_pause_device", LoadPauseDevice },
+    { ALC::SOFT_HRTF, "ALC_SOFT_HRTF", LoadHrtf },
 };
 
 
 void DeviceImpl::setupExts()
 {
-    std::fill(std::begin(mHasExt), std::end(mHasExt), false);
+    mHasExt.clear();
     for(const auto &entry : ALCExtensionList)
     {
-        mHasExt[entry.extension] = alcIsExtensionPresent(mDevice, entry.name);
-        if(mHasExt[entry.extension]) entry.loader(this);
+        if(!alcIsExtensionPresent(mDevice, entry.name))
+            continue;
+        mHasExt.set(static_cast<size_t>(entry.extension));
+        entry.loader(this);
     }
 }
 
@@ -83,7 +87,7 @@ void DeviceImpl::removeContext(ContextImpl *ctx)
 
 String DeviceImpl::getName(PlaybackName type) const
 {
-    if(type == PlaybackName::Full && !alcIsExtensionPresent(mDevice, "ALC_ENUMERATE_ALL_EXT"))
+    if(type == PlaybackName::Full && !hasExtension(ALC::ENUMERATE_ALL_EXT))
         type = PlaybackName::Basic;
     alcGetError(mDevice);
     const ALCchar *name = alcGetString(mDevice, (ALenum)type);
@@ -109,7 +113,7 @@ Version DeviceImpl::getALCVersion() const
 
 Version DeviceImpl::getEFXVersion() const
 {
-    if(!alcIsExtensionPresent(mDevice, "ALC_EXT_EFX"))
+    if(!hasExtension(ALC::EXT_EFX))
         return Version{ 0u, 0u };
 
     ALCint major=-1, minor=-1;
@@ -131,7 +135,7 @@ ALCuint DeviceImpl::getFrequency() const
 
 ALCuint DeviceImpl::getMaxAuxiliarySends() const
 {
-    if(!alcIsExtensionPresent(mDevice, "ALC_EXT_EFX"))
+    if(!hasExtension(ALC::EXT_EFX))
         return 0;
 
     ALCint sends=-1;
@@ -144,7 +148,7 @@ ALCuint DeviceImpl::getMaxAuxiliarySends() const
 
 Vector<String> DeviceImpl::enumerateHRTFNames() const
 {
-    if(!hasExtension(SOFT_HRTF))
+    if(!hasExtension(ALC::SOFT_HRTF))
         throw std::runtime_error("ALC_SOFT_HRTF not supported");
 
     ALCint num_hrtfs = -1;
@@ -161,7 +165,7 @@ Vector<String> DeviceImpl::enumerateHRTFNames() const
 
 bool DeviceImpl::isHRTFEnabled() const
 {
-    if(!hasExtension(SOFT_HRTF))
+    if(!hasExtension(ALC::SOFT_HRTF))
         throw std::runtime_error("ALC_SOFT_HRTF not supported");
 
     ALCint hrtf_state = -1;
@@ -173,14 +177,14 @@ bool DeviceImpl::isHRTFEnabled() const
 
 String DeviceImpl::getCurrentHRTF() const
 {
-    if(!hasExtension(SOFT_HRTF))
+    if(!hasExtension(ALC::SOFT_HRTF))
         throw std::runtime_error("ALC_SOFT_HRTF not supported");
     return String(alcGetString(mDevice, ALC_HRTF_SPECIFIER_SOFT));
 }
 
 void DeviceImpl::reset(ArrayView<AttributePair> attributes)
 {
-    if(!hasExtension(SOFT_HRTF))
+    if(!hasExtension(ALC::SOFT_HRTF))
         throw std::runtime_error("ALC_SOFT_HRTF not supported");
     auto do_reset = [this, &attributes]() -> ALCboolean
     {
@@ -251,14 +255,14 @@ Context DeviceImpl::createContext(ArrayView<AttributePair> attributes, bool doth
 
 void DeviceImpl::pauseDSP()
 {
-    if(!hasExtension(SOFT_device_pause))
+    if(!hasExtension(ALC::SOFT_device_pause))
        throw std::runtime_error("ALC_SOFT_pause_device not supported");
     alcDevicePauseSOFT(mDevice);
 }
 
 void DeviceImpl::resumeDSP()
 {
-    if(hasExtension(SOFT_device_pause))
+    if(hasExtension(ALC::SOFT_device_pause))
         alcDeviceResumeSOFT(mDevice);
 }
 
