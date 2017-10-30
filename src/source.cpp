@@ -291,7 +291,7 @@ void SourceImpl::setGroup(SourceGroupImpl *group)
     if(mId)
     {
         alSourcef(mId, AL_PITCH, mPitch * mGroupPitch);
-        alSourcef(mId, AL_GAIN, mGain * mGroupGain);
+        alSourcef(mId, AL_GAIN, mGain * mGroupGain * mFadeGain);
     }
 }
 
