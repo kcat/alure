@@ -198,7 +198,7 @@ public:
     {
         if(pos >= size())
             return ArrayView(data()+size(), 0);
-        if(len == npos || size()-pos >= len)
+        if(len == npos || size()-pos < len)
             return ArrayView(data()+pos, size()-pos);
         return ArrayView(data()+pos, len);
     }
@@ -213,6 +213,7 @@ public:
     using typename BaseT::value_type;
     using typename BaseT::size_type;
     using BaseT::npos;
+    using char_type = T;
     using traits_type = Tr;
 
     BasicStringView() noexcept = default;
@@ -271,7 +272,28 @@ public:
     bool operator>(BasicStringView rhs) const noexcept { return compare(rhs) > 0; }
 
     BasicStringView substr(size_type pos, size_type len = npos) const noexcept
-    { return BaseT::slice(pos, len); }
+    {
+        if(pos >= length())
+            return BasicStringView(BaseT::data()+length(), 0);
+        if(len == npos || length()-pos < len)
+            return BasicStringView(BaseT::data()+pos, length()-pos);
+        return BasicStringView(BaseT::data()+pos, len);
+    }
+
+    size_type find_first_of(char_type ch, size_type pos = 0) const noexcept
+    {
+        if(pos >= length()) return npos;
+        const char_type *chpos = traits_type::find(BaseT::data()+pos, length()-pos, ch);
+        if(chpos) return chpos - BaseT::data();
+        return npos;
+    }
+    size_type find_first_of(BasicStringView other, size_type pos = 0) const noexcept
+    {
+        size_type ret = npos;
+        for(auto ch : other)
+            ret = std::min<size_type>(ret, find_first_of(ch, pos));
+        return ret;
+    }
 };
 using StringView = BasicStringView<String::value_type>;
 
