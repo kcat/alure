@@ -500,7 +500,11 @@ public:                                                                       \
     }                                                                         \
                                                                               \
     bool operator==(const BaseT &rhs) const { return pImpl == rhs.pImpl; }    \
-    bool operator==(BaseT&& rhs) const { return pImpl == rhs.pImpl; }         \
+    bool operator!=(const BaseT &rhs) const { return pImpl != rhs.pImpl; }    \
+    bool operator<=(const BaseT &rhs) const { return pImpl <= rhs.pImpl; }    \
+    bool operator>=(const BaseT &rhs) const { return pImpl >= rhs.pImpl; }    \
+    bool operator<(const BaseT &rhs) const { return pImpl < rhs.pImpl; }      \
+    bool operator>(const BaseT &rhs) const { return pImpl > rhs.pImpl; }      \
                                                                               \
     operator bool() const { return !!pImpl; }                                 \
                                                                               \
