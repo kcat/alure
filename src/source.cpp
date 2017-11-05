@@ -169,6 +169,7 @@ SourceImpl::SourceImpl(ContextImpl *context)
     mDirectFilter(AL_FILTER_NULL)
 {
     resetProperties();
+    mEffectSlots.reserve(mContext->getDevice().getMaxAuxiliarySends());
 }
 
 SourceImpl::~SourceImpl()
@@ -224,10 +225,10 @@ void SourceImpl::resetProperties()
     mDirectFilter = 0;
     for(auto &i : mEffectSlots)
     {
-        if(i.second.mSlot)
-            i.second.mSlot->removeSourceSend({Source(this), i.first});
-        if(i.second.mFilter)
-            mContext->alDeleteFilters(1, &i.second.mFilter);
+        if(i.mSlot)
+            i.mSlot->removeSourceSend({Source(this), i.mSendIdx});
+        if(i.mFilter)
+            mContext->alDeleteFilters(1, &i.mFilter);
     }
     mEffectSlots.clear();
 
@@ -274,8 +275,8 @@ void SourceImpl::applyProperties(bool looping, ALuint offset) const
         alSourcei(mId, AL_DIRECT_FILTER, mDirectFilter);
         for(const auto &i : mEffectSlots)
         {
-            ALuint slotid = (i.second.mSlot ? i.second.mSlot->getId() : 0);
-            alSource3i(mId, AL_AUXILIARY_SEND_FILTER, slotid, i.first, i.second.mFilter);
+            ALuint slotid = (i.mSlot ? i.mSlot->getId() : 0);
+            alSource3i(mId, AL_AUXILIARY_SEND_FILTER, slotid, i.mSendIdx, i.mFilter);
         }
     }
 }
@@ -441,7 +442,7 @@ void SourceImpl::makeStopped(bool dolock)
         {
             alSourcei(mId, AL_DIRECT_FILTER, AL_FILTER_NULL);
             for(auto &i : mEffectSlots)
-                alSource3i(mId, AL_AUXILIARY_SEND_FILTER, 0, i.first, AL_FILTER_NULL);
+                alSource3i(mId, AL_AUXILIARY_SEND_FILTER, 0, i.mSendIdx, AL_FILTER_NULL);
         }
         mContext->insertSourceId(mId);
         mId = 0;
@@ -1307,23 +1308,26 @@ void SourceImpl::setSendFilter(ALuint send, const FilterParams &filter)
         throw std::runtime_error("Gain value out of range");
     CheckContext(mContext);
 
-    SendPropMap::iterator siter = mEffectSlots.find(send);
-    if(siter == mEffectSlots.end())
+    auto siter = std::lower_bound(mEffectSlots.begin(), mEffectSlots.end(), send,
+        [](const SendProps &prop, ALuint send) -> bool
+        { return prop.mSendIdx < send; }
+    );
+    if(siter == mEffectSlots.end() || siter->mSendIdx != send)
     {
         ALuint filterid = 0;
 
         setFilterParams(filterid, filter);
         if(!filterid) return;
 
-        siter = mEffectSlots.insert(std::make_pair(send, SendProps(filterid))).first;
+        siter = mEffectSlots.emplace(siter, send, filterid);
     }
     else
-        setFilterParams(siter->second.mFilter, filter);
+        setFilterParams(siter->mFilter, filter);
 
     if(mId)
     {
-        ALuint slotid = (siter->second.mSlot ? siter->second.mSlot->getId() : 0);
-        alSource3i(mId, AL_AUXILIARY_SEND_FILTER, slotid, send, siter->second.mFilter);
+        ALuint slotid = (siter->mSlot ? siter->mSlot->getId() : 0);
+        alSource3i(mId, AL_AUXILIARY_SEND_FILTER, slotid, send, siter->mFilter);
     }
 }
 
@@ -1333,25 +1337,28 @@ void SourceImpl::setAuxiliarySend(AuxiliaryEffectSlot auxslot, ALuint send)
     if(slot) CheckContext(slot->getContext());
     CheckContext(mContext);
 
-    SendPropMap::iterator siter = mEffectSlots.find(send);
-    if(siter == mEffectSlots.end())
+    auto siter = std::lower_bound(mEffectSlots.begin(), mEffectSlots.end(), send,
+        [](const SendProps &prop, ALuint send) -> bool
+        { return prop.mSendIdx < send; }
+    );
+    if(siter == mEffectSlots.end() || siter->mSendIdx != send)
     {
         if(!slot) return;
         slot->addSourceSend({Source(this), send});
-        siter = mEffectSlots.insert(std::make_pair(send, SendProps(slot))).first;
+        siter = mEffectSlots.emplace(siter, send, slot);
     }
-    else if(siter->second.mSlot != slot)
+    else if(siter->mSlot != slot)
     {
         if(slot) slot->addSourceSend({Source(this), send});
-        if(siter->second.mSlot)
-            siter->second.mSlot->removeSourceSend({Source(this), send});
-        siter->second.mSlot = slot;
+        if(siter->mSlot)
+            siter->mSlot->removeSourceSend({Source(this), send});
+        siter->mSlot = slot;
     }
 
     if(mId)
     {
-        ALuint slotid = (siter->second.mSlot ? siter->second.mSlot->getId() : 0);
-        alSource3i(mId, AL_AUXILIARY_SEND_FILTER, slotid, send, siter->second.mFilter);
+        ALuint slotid = (siter->mSlot ? siter->mSlot->getId() : 0);
+        alSource3i(mId, AL_AUXILIARY_SEND_FILTER, slotid, send, siter->mFilter);
     }
 }
 
@@ -1363,8 +1370,11 @@ void SourceImpl::setAuxiliarySendFilter(AuxiliaryEffectSlot auxslot, ALuint send
     if(slot) CheckContext(slot->getContext());
     CheckContext(mContext);
 
-    SendPropMap::iterator siter = mEffectSlots.find(send);
-    if(siter == mEffectSlots.end())
+    auto siter = std::lower_bound(mEffectSlots.begin(), mEffectSlots.end(), send,
+        [](const SendProps &prop, ALuint send) -> bool
+        { return prop.mSendIdx < send; }
+    );
+    if(siter == mEffectSlots.end() || siter->mSendIdx != send)
     {
         ALuint filterid = 0;
 
@@ -1373,24 +1383,24 @@ void SourceImpl::setAuxiliarySendFilter(AuxiliaryEffectSlot auxslot, ALuint send
             return;
 
         if(slot) slot->addSourceSend({Source(this), send});
-        siter = mEffectSlots.insert(std::make_pair(send, SendProps(slot, filterid))).first;
+        siter = mEffectSlots.emplace(siter, send, slot, filterid);
     }
     else
     {
-        if(siter->second.mSlot != slot)
+        if(siter->mSlot != slot)
         {
             if(slot) slot->addSourceSend({Source(this), send});
-            if(siter->second.mSlot)
-                siter->second.mSlot->removeSourceSend({Source(this), send});
-            siter->second.mSlot = slot;
+            if(siter->mSlot)
+                siter->mSlot->removeSourceSend({Source(this), send});
+            siter->mSlot = slot;
         }
-        setFilterParams(siter->second.mFilter, filter);
+        setFilterParams(siter->mFilter, filter);
     }
 
     if(mId)
     {
-        ALuint slotid = (siter->second.mSlot ? siter->second.mSlot->getId() : 0);
-        alSource3i(mId, AL_AUXILIARY_SEND_FILTER, slotid, send, siter->second.mFilter);
+        ALuint slotid = (siter->mSlot ? siter->mSlot->getId() : 0);
+        alSource3i(mId, AL_AUXILIARY_SEND_FILTER, slotid, send, siter->mFilter);
     }
 }
 

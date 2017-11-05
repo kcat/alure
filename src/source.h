@@ -3,7 +3,6 @@
 
 #include "main.h"
 
-#include <unordered_map>
 #include <atomic>
 #include <mutex>
 
@@ -15,17 +14,19 @@ namespace alure {
 class ALBufferStream;
 
 struct SendProps {
+    ALuint mSendIdx;
     AuxiliaryEffectSlotImpl *mSlot;
     ALuint mFilter;
 
-    SendProps(AuxiliaryEffectSlotImpl *slot) : mSlot(slot), mFilter(AL_FILTER_NULL)
+    SendProps(ALuint send, AuxiliaryEffectSlotImpl *slot)
+      : mSendIdx(send), mSlot(slot), mFilter(AL_FILTER_NULL)
     { }
-    SendProps(ALuint filter) : mSlot(0), mFilter(filter)
+    SendProps(ALuint send, ALuint filter) : mSendIdx(send), mSlot(0), mFilter(filter)
     { }
-    SendProps(AuxiliaryEffectSlotImpl *slot, ALuint filter) : mSlot(slot), mFilter(filter)
+    SendProps(ALuint send, AuxiliaryEffectSlotImpl *slot, ALuint filter)
+      : mSendIdx(send), mSlot(slot), mFilter(filter)
     { }
 };
-typedef std::unordered_map<ALuint,SendProps> SendPropMap;
 
 class SourceImpl {
     ContextImpl *const mContext;
@@ -72,7 +73,7 @@ class SourceImpl {
     bool mWetGainHFAuto : 1;
 
     ALuint mDirectFilter;
-    SendPropMap mEffectSlots;
+    Vector<SendProps> mEffectSlots;
 
     ALuint mPriority;
 
