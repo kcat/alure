@@ -25,19 +25,11 @@ class SourceGroupImpl : SourceGroupProps {
 
     const String mName;
 
-    void applyPropTree(SourceGroupProps &props) const
-    {
-        props.mGain *= mGain;
-        props.mPitch *= mPitch;
-        if(mParent)
-            mParent->applyPropTree(props);
-    }
-
     void update(ALfloat gain, ALfloat pitch);
 
-    void setParentGroup(SourceGroupImpl *group);
-    void unsetParentGroup();
+    void unsetParent();
 
+    void insertSubGroup(SourceGroupImpl *group);
     void eraseSubGroup(SourceGroupImpl *group);
 
     bool findInSubGroups(SourceGroupImpl *group) const;
@@ -59,14 +51,10 @@ public:
     ALfloat getAppliedGain() const { return mGain * mParentProps.mGain; }
     ALfloat getAppliedPitch() const { return mPitch * mParentProps.mPitch; }
 
-    void addSource(Source source);
-    void removeSource(Source source);
+    void insertSource(SourceImpl *source);
+    void eraseSource(SourceImpl *source);
 
-    void addSources(ArrayView<Source> sources);
-    void removeSources(ArrayView<Source> sources);
-
-    void addSubGroup(SourceGroup group);
-    void removeSubGroup(SourceGroup group);
+    void setParentGroup(SourceGroup group);
 
     Vector<Source> getSources() const;
 

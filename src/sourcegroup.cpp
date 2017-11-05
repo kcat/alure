@@ -9,6 +9,13 @@
 namespace alure
 {
 
+void SourceGroupImpl::insertSubGroup(SourceGroupImpl *group)
+{
+    auto iter = std::lower_bound(mSubGroups.begin(), mSubGroups.end(), group);
+    if(iter == mSubGroups.end() || *iter != group)
+        mSubGroups.insert(iter, group);
+}
+
 void SourceGroupImpl::eraseSubGroup(SourceGroupImpl *group)
 {
     auto iter = std::lower_bound(mSubGroups.begin(), mSubGroups.end(), group);
@@ -16,17 +23,7 @@ void SourceGroupImpl::eraseSubGroup(SourceGroupImpl *group)
 }
 
 
-void SourceGroupImpl::setParentGroup(SourceGroupImpl *group)
-{
-    if(mParent)
-        mParent->eraseSubGroup(this);
-    mParent = group;
-    SourceGroupProps props;
-    mParent->applyPropTree(props);
-    update(props.mGain, props.mPitch);
-}
-
-void SourceGroupImpl::unsetParentGroup()
+void SourceGroupImpl::unsetParent()
 {
     mParent = nullptr;
     update(1.0f, 1.0f);
@@ -51,106 +48,54 @@ bool SourceGroupImpl::findInSubGroups(SourceGroupImpl *group) const
     auto iter = std::lower_bound(mSubGroups.begin(), mSubGroups.end(), group);
     if(iter != mSubGroups.end() && *iter == group) return true;
 
-    for(SourceGroupImpl *group : mSubGroups)
+    for(SourceGroupImpl *grp : mSubGroups)
     {
-        if(group->findInSubGroups(group))
+        if(grp->findInSubGroups(group))
             return true;
     }
     return false;
 }
 
 
-void SourceGroupImpl::addSource(Source source)
+void SourceGroupImpl::insertSource(SourceImpl *source)
 {
-    SourceImpl *alsrc = source.getHandle();
-    if(!alsrc) throw std::runtime_error("Source is not valid");
-    CheckContext(mContext);
-
-    auto iter = std::lower_bound(mSources.begin(), mSources.end(), alsrc);
-    if(iter != mSources.end() && *iter == alsrc) return;
-
-    mSources.insert(iter, alsrc);
-    alsrc->setGroup(this);
+    auto iter = std::lower_bound(mSources.begin(), mSources.end(), source);
+    if(iter == mSources.end() || *iter != source)
+        mSources.insert(iter, source);
 }
 
-void SourceGroupImpl::removeSource(Source source)
+void SourceGroupImpl::eraseSource(SourceImpl *source)
 {
-    CheckContext(mContext);
-    auto iter = std::lower_bound(mSources.begin(), mSources.end(), source.getHandle());
-    if(iter != mSources.end() && *iter == source.getHandle())
-    {
-        (*iter)->unsetGroup();
+    auto iter = std::lower_bound(mSources.begin(), mSources.end(), source);
+    if(iter != mSources.end() && *iter == source)
         mSources.erase(iter);
-    }
 }
 
 
-void SourceGroupImpl::addSources(ArrayView<Source> sources)
+void SourceGroupImpl::setParentGroup(SourceGroup group)
 {
     CheckContext(mContext);
-    if(sources.empty())
-        return;
 
-    Vector<SourceImpl*> alsrcs;
-    alsrcs.reserve(sources.size());
-
-    for(Source source : sources)
+    SourceGroupImpl *parent = group.getHandle();
+    if(!parent)
     {
-        alsrcs.push_back(source.getHandle());
-        if(!alsrcs.back()) throw std::runtime_error("Source is not valid");
+        if(mParent)
+            mParent->eraseSubGroup(this);
+        mParent = nullptr;
+        update(1.0f, 1.0f);
     }
-
-    Batcher batcher = mContext->getBatcher();
-    for(SourceImpl *alsrc : alsrcs)
+    else
     {
-        auto iter = std::lower_bound(mSources.begin(), mSources.end(), alsrc);
-        if(iter != mSources.end() && *iter == alsrc) continue;
+        if(this == parent || findInSubGroups(parent))
+            throw std::runtime_error("Attempted circular group chain");
 
-        mSources.insert(iter, alsrc);
-        alsrc->setGroup(this);
-    }
-}
+        parent->insertSubGroup(this);
 
-void SourceGroupImpl::removeSources(ArrayView<Source> sources)
-{
-    Batcher batcher = mContext->getBatcher();
-    for(Source source : sources)
-    {
-        auto iter = std::lower_bound(mSources.begin(), mSources.end(), source.getHandle());
-        if(iter != mSources.end() && *iter == source.getHandle())
-        {
-            (*iter)->unsetGroup();
-            mSources.erase(iter);
-        }
-    }
-}
-
-
-void SourceGroupImpl::addSubGroup(SourceGroup group)
-{
-    SourceGroupImpl *algrp = group.getHandle();
-    if(!algrp) throw std::runtime_error("SourceGroup is not valid");
-    CheckContext(mContext);
-
-    auto iter = std::lower_bound(mSubGroups.begin(), mSubGroups.end(), algrp);
-    if(iter != mSubGroups.end() && *iter == algrp) return;
-
-    if(this == algrp || algrp->findInSubGroups(this))
-        throw std::runtime_error("Attempted circular group chain");
-
-    mSubGroups.insert(iter, algrp);
-    Batcher batcher = mContext->getBatcher();
-    algrp->setParentGroup(this);
-}
-
-void SourceGroupImpl::removeSubGroup(SourceGroup group)
-{
-    auto iter = std::lower_bound(mSubGroups.begin(), mSubGroups.end(), group.getHandle());
-    if(iter != mSubGroups.end() && *iter == group.getHandle())
-    {
         Batcher batcher = mContext->getBatcher();
-        (*iter)->unsetParentGroup();
-        mSubGroups.erase(iter);
+        if(mParent)
+            mParent->eraseSubGroup(this);
+        mParent = parent;
+        update(mParent->getAppliedGain(), mParent->getAppliedPitch());
     }
 }
 
@@ -160,7 +105,7 @@ Vector<Source> SourceGroupImpl::getSources() const
     Vector<Source> ret;
     ret.reserve(mSources.size());
     for(SourceImpl *src : mSources)
-        ret.emplace_back(Source(src));
+        ret.emplace_back(src);
     return ret;
 }
 
@@ -169,7 +114,7 @@ Vector<SourceGroup> SourceGroupImpl::getSubGroups() const
     Vector<SourceGroup> ret;
     ret.reserve(mSubGroups.size());
     for(SourceGroupImpl *grp : mSubGroups)
-        ret.emplace_back(SourceGroup(grp));
+        ret.emplace_back(grp);
     return ret;
 }
 
@@ -326,7 +271,7 @@ void SourceGroupImpl::release()
         source->unsetGroup();
     mSources.clear();
     for(SourceGroupImpl *group : mSubGroups)
-        group->unsetParentGroup();
+        group->unsetParent();
     mSubGroups.clear();
     if(mParent)
         mParent->eraseSubGroup(this);
@@ -337,12 +282,7 @@ void SourceGroupImpl::release()
 
 
 DECL_THUNK0(StringView, SourceGroup, getName, const)
-DECL_THUNK1(void, SourceGroup, addSource,, Source)
-DECL_THUNK1(void, SourceGroup, removeSource,, Source)
-DECL_THUNK1(void, SourceGroup, addSources,, ArrayView<Source>)
-DECL_THUNK1(void, SourceGroup, removeSources,, ArrayView<Source>)
-DECL_THUNK1(void, SourceGroup, addSubGroup,, SourceGroup)
-DECL_THUNK1(void, SourceGroup, removeSubGroup,, SourceGroup)
+DECL_THUNK1(void, SourceGroup, setParentGroup,, SourceGroup)
 DECL_THUNK0(Vector<Source>, SourceGroup, getSources, const)
 DECL_THUNK0(Vector<SourceGroup>, SourceGroup, getSubGroups, const)
 DECL_THUNK1(void, SourceGroup, setGain,, ALfloat)

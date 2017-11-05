@@ -95,7 +95,6 @@ public:
     bool playUpdate();
     bool updateAsync();
 
-    void setGroup(SourceGroupImpl *group);
     void unsetGroup();
     void groupPropUpdate(ALfloat gain, ALfloat pitch);
 
@@ -114,6 +113,8 @@ public:
     bool isPending() const;
     bool isPlaying() const;
     bool isPaused() const;
+
+    void setGroup(SourceGroup group);
 
     void setPriority(ALuint priority);
     ALuint getPriority() const { return mPriority; }

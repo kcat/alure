@@ -179,7 +179,7 @@ SourceImpl::~SourceImpl()
 void SourceImpl::resetProperties()
 {
     if(mGroup)
-        mGroup->removeSource(Source(this));
+        mGroup->eraseSource(this);
     mGroup = nullptr;
     mGroupPitch = 1.0f;
     mGroupGain = 1.0f;
@@ -281,30 +281,10 @@ void SourceImpl::applyProperties(bool looping, ALuint offset) const
 }
 
 
-void SourceImpl::setGroup(SourceGroupImpl *group)
-{
-    if(mGroup)
-        mGroup->removeSource(Source(this));
-    mGroup = group;
-    mGroupPitch = mGroup->getAppliedPitch();
-    mGroupGain = mGroup->getAppliedGain();
-    if(mId)
-    {
-        alSourcef(mId, AL_PITCH, mPitch * mGroupPitch);
-        alSourcef(mId, AL_GAIN, mGain * mGroupGain * mFadeGain);
-    }
-}
-
 void SourceImpl::unsetGroup()
 {
     mGroup = nullptr;
-    mGroupPitch = 1.0f;
-    mGroupGain = 1.0f;
-    if(mId)
-    {
-        alSourcef(mId, AL_PITCH, mPitch * mGroupPitch);
-        alSourcef(mId, AL_GAIN, mGain * mGroupGain * mFadeGain);
-    }
+    groupPropUpdate(1.0f, 1.0f);
 }
 
 void SourceImpl::groupPropUpdate(ALfloat gain, ALfloat pitch)
@@ -567,6 +547,36 @@ bool SourceImpl::isPaused() const
 {
     CheckContext(mContext);
     return mId != 0 && mPaused.load(std::memory_order_acquire);
+}
+
+
+void SourceImpl::setGroup(SourceGroup group)
+{
+    CheckContext(mContext);
+
+    SourceGroupImpl *parent = group.getHandle();
+    if(parent == mGroup) return;
+
+    if(mGroup)
+        mGroup->eraseSource(this);
+    mGroup = parent;
+    if(mGroup)
+    {
+        mGroup->insertSource(this);
+        mGroupPitch = mGroup->getAppliedPitch();
+        mGroupGain = mGroup->getAppliedGain();
+    }
+    else
+    {
+        mGroupPitch = 1.0f;
+        mGroupGain = 1.0f;
+    }
+
+    if(mId)
+    {
+        alSourcef(mId, AL_PITCH, mPitch * mGroupPitch);
+        alSourcef(mId, AL_GAIN, mGain * mGroupGain * mFadeGain);
+    }
 }
 
 
@@ -1411,6 +1421,7 @@ DECL_THUNK0(void, Source, resume,)
 DECL_THUNK0(bool, Source, isPending, const)
 DECL_THUNK0(bool, Source, isPlaying, const)
 DECL_THUNK0(bool, Source, isPaused, const)
+DECL_THUNK1(void, Source, setGroup,, SourceGroup)
 DECL_THUNK1(void, Source, setPriority,, ALuint)
 DECL_THUNK0(ALuint, Source, getPriority, const)
 DECL_THUNK1(void, Source, setOffset,, uint64_t)

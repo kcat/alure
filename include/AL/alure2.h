@@ -1066,6 +1066,16 @@ public:
     bool isPaused() const;
 
     /**
+     * Sets this source as a child of the given source group. The given source
+     * group's parameters will influence this and all other sources that belong
+     * to it. A source can only be the child of one source group at a time,
+     * although that source group may belong to another source group.
+     *
+     * Passing in a null group removes it from its current source group.
+     */
+    void setGroup(SourceGroup group);
+
+    /**
      * Specifies the source's playback priority. Lowest priority sources will
      * be evicted first when higher priority sources are played.
      */
@@ -1322,27 +1332,11 @@ public:
     StringView getName() const;
 
     /**
-     * Adds a source to the source group. A source may only be part of one
-     * group at a time, and will automatically be removed from its current
-     * group as needed.
+     * Adds this source group as a subgroup of the specified source group. This
+     * method will throw an exception if this group is being added to a group
+     * it has as a sub-group (i.e. it would create a circular sub-group chain).
      */
-    void addSource(Source source);
-    /** Removes a source from the source group. */
-    void removeSource(Source source);
-
-    /** Adds a list of sources to the group at once. */
-    void addSources(ArrayView<Source> sources);
-    /** Removes a list of sources from the source group. */
-    void removeSources(ArrayView<Source> sources);
-
-    /**
-     * Adds a group as a subgroup of this source group. This method will throw
-     * an exception if group is being added to a group it has as a sub-group
-     * (i.e. it would create a circular sub-group chain).
-     */
-    void addSubGroup(SourceGroup group);
-    /** Removes group from the source group. */
-    void removeSubGroup(SourceGroup group);
+    void setParentGroup(SourceGroup group);
 
     /** Returns the list of sources currently in the group. */
     Vector<Source> getSources() const;
