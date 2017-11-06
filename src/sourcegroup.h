@@ -44,8 +44,8 @@ class SourceGroupImpl : SourceGroupProps {
     void updateStoppedStatus() const;
 
 public:
-    SourceGroupImpl(ContextImpl *context, String name)
-      : mContext(context), mParent(nullptr), mName(std::move(name))
+    SourceGroupImpl(ContextImpl *context, StringView name)
+      : mContext(context), mParent(nullptr), mName(String(name))
     { }
 
     ALfloat getAppliedGain() const { return mGain * mParentProps.mGain; }

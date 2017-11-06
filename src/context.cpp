@@ -1334,7 +1334,7 @@ SourceGroup ContextImpl::createSourceGroup(StringView name)
     );
     if(iter != mSourceGroups.end() && (*iter)->getName() == name)
         throw std::runtime_error("Duplicate source group name");
-    iter = mSourceGroups.insert(iter, MakeUnique<SourceGroupImpl>(this, String(name)));
+    iter = mSourceGroups.insert(iter, MakeUnique<SourceGroupImpl>(this, name));
     return SourceGroup(iter->get());
 }
 
