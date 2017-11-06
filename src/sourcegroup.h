@@ -55,6 +55,7 @@ public:
     void eraseSource(SourceImpl *source);
 
     void setParentGroup(SourceGroup group);
+    SourceGroup getParentGroup() const { return SourceGroup(mParent); }
 
     Vector<Source> getSources() const;
 

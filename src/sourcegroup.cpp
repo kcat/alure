@@ -283,6 +283,7 @@ void SourceGroupImpl::release()
 
 DECL_THUNK0(StringView, SourceGroup, getName, const)
 DECL_THUNK1(void, SourceGroup, setParentGroup,, SourceGroup)
+DECL_THUNK0(SourceGroup, SourceGroup, getParentGroup, const)
 DECL_THUNK0(Vector<Source>, SourceGroup, getSources, const)
 DECL_THUNK0(Vector<SourceGroup>, SourceGroup, getSubGroups, const)
 DECL_THUNK1(void, SourceGroup, setGain,, ALfloat)

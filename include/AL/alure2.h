@@ -1075,6 +1075,9 @@ public:
      */
     void setGroup(SourceGroup group);
 
+    /** Retrieves the source group this source belongs to. */
+    SourceGroup getGroup() const;
+
     /**
      * Specifies the source's playback priority. Lowest priority sources will
      * be evicted first when higher priority sources are played.
@@ -1337,6 +1340,9 @@ public:
      * it has as a sub-group (i.e. it would create a circular sub-group chain).
      */
     void setParentGroup(SourceGroup group);
+
+    /** Retrieves the source group this source group is a child of. */
+    SourceGroup getParentGroup() const;
 
     /** Returns the list of sources currently in the group. */
     Vector<Source> getSources() const;

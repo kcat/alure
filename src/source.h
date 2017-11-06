@@ -116,6 +116,7 @@ public:
     bool isPaused() const;
 
     void setGroup(SourceGroup group);
+    SourceGroup getGroup() const { return SourceGroup(mGroup); }
 
     void setPriority(ALuint priority);
     ALuint getPriority() const { return mPriority; }
