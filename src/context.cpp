@@ -656,7 +656,7 @@ void ContextImpl::endBatch()
 }
 
 
-SharedPtr<MessageHandler> ContextImpl::setMessageHandler(SharedPtr<MessageHandler> handler)
+SharedPtr<MessageHandler> ContextImpl::setMessageHandler(SharedPtr<MessageHandler>&& handler)
 {
     std::lock_guard<std::mutex> lock(mGlobalCtxMutex);
     mMessage.swap(handler);
@@ -998,7 +998,7 @@ void ContextImpl::precacheBuffersAsync(ArrayView<StringView> names)
     mWakeThread.notify_all();
 }
 
-Buffer ContextImpl::createBufferFrom(StringView name, SharedPtr<Decoder> decoder)
+Buffer ContextImpl::createBufferFrom(StringView name, SharedPtr<Decoder>&& decoder)
 {
     CheckContext(this);
 
@@ -1017,7 +1017,7 @@ Buffer ContextImpl::createBufferFrom(StringView name, SharedPtr<Decoder> decoder
     return *buffer;
 }
 
-SharedFuture<Buffer> ContextImpl::createBufferAsyncFrom(StringView name, SharedPtr<Decoder> decoder)
+SharedFuture<Buffer> ContextImpl::createBufferAsyncFrom(StringView name, SharedPtr<Decoder>&& decoder)
 {
     SharedFuture<Buffer> future;
     CheckContext(this);
@@ -1493,7 +1493,7 @@ void ListenerImpl::setGain(ALfloat gain)
 }
 
 
-void ListenerImpl::set3DParameters(const Vector3 &position, const Vector3 &velocity, std::pair<Vector3,Vector3> orientation)
+void ListenerImpl::set3DParameters(const Vector3 &position, const Vector3 &velocity, const std::pair<Vector3,Vector3> &orientation)
 {
     static_assert(sizeof(orientation) == sizeof(ALfloat[6]), "Invalid Vector3 pair size");
     CheckContext(mContext);
@@ -1560,7 +1560,7 @@ void ListenerImpl::setMetersPerUnit(ALfloat m_u)
 using Vector3Pair = std::pair<Vector3,Vector3>;
 
 DECL_THUNK1(void, Listener, setGain,, ALfloat)
-DECL_THUNK3(void, Listener, set3DParameters,, const Vector3&, const Vector3&, Vector3Pair)
+DECL_THUNK3(void, Listener, set3DParameters,, const Vector3&, const Vector3&, const Vector3Pair&)
 DECL_THUNK3(void, Listener, setPosition,, ALfloat, ALfloat, ALfloat)
 DECL_THUNK1(void, Listener, setPosition,, const ALfloat*)
 DECL_THUNK3(void, Listener, setVelocity,, ALfloat, ALfloat, ALfloat)

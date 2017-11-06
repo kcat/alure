@@ -343,7 +343,7 @@ void SourceImpl::play(Buffer buffer)
     mContext->addPlayingSource(this, mId);
 }
 
-void SourceImpl::play(SharedPtr<Decoder> decoder, ALuint chunk_len, ALuint queue_size)
+void SourceImpl::play(SharedPtr<Decoder>&& decoder, ALuint chunk_len, ALuint queue_size)
 {
     if(chunk_len < 64)
         throw std::runtime_error("Update length out of range");
@@ -400,7 +400,7 @@ void SourceImpl::play(SharedPtr<Decoder> decoder, ALuint chunk_len, ALuint queue
     mContext->addPlayingSource(this);
 }
 
-void SourceImpl::play(SharedFuture<Buffer> future_buffer)
+void SourceImpl::play(SharedFuture<Buffer>&& future_buffer)
 {
     if(!future_buffer.valid())
         throw std::runtime_error("Invalid future buffer");
@@ -975,7 +975,7 @@ void SourceImpl::set3DParameters(const Vector3 &position, const Vector3 &velocit
     mDirection = direction;
 }
 
-void SourceImpl::set3DParameters(const Vector3 &position, const Vector3 &velocity, std::pair<Vector3,Vector3> orientation)
+void SourceImpl::set3DParameters(const Vector3 &position, const Vector3 &velocity, const std::pair<Vector3,Vector3> &orientation)
 {
     static_assert(sizeof(orientation) == sizeof(ALfloat[6]), "Invalid Vector3 pair size");
     CheckContext(mContext);
@@ -1449,7 +1449,7 @@ DECL_THUNK0(ALfloatPair, Source, getGainRange, const)
 DECL_THUNK2(void, Source, setDistanceRange,, ALfloat, ALfloat)
 DECL_THUNK0(ALfloatPair, Source, getDistanceRange, const)
 DECL_THUNK3(void, Source, set3DParameters,, const Vector3&, const Vector3&, const Vector3&)
-DECL_THUNK3(void, Source, set3DParameters,, const Vector3&, const Vector3&, Vector3Pair)
+DECL_THUNK3(void, Source, set3DParameters,, const Vector3&, const Vector3&, const Vector3Pair&)
 DECL_THUNK3(void, Source, setPosition,, ALfloat, ALfloat, ALfloat)
 DECL_THUNK1(void, Source, setPosition,, const ALfloat*)
 DECL_THUNK0(Vector3, Source, getPosition, const)

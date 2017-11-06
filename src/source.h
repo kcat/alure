@@ -104,8 +104,8 @@ public:
     void makeStopped(bool dolock=true);
 
     void play(Buffer buffer);
-    void play(SharedPtr<Decoder> decoder, ALuint chunk_len, ALuint queue_size);
-    void play(SharedFuture<Buffer> future_buffer);
+    void play(SharedPtr<Decoder>&& decoder, ALuint chunk_len, ALuint queue_size);
+    void play(SharedFuture<Buffer>&& future_buffer);
     void stop();
     void fadeOutToStop(ALfloat gain, std::chrono::milliseconds duration);
     void pause();
@@ -143,7 +143,7 @@ public:
     { return {mRefDist, mMaxDist}; }
 
     void set3DParameters(const Vector3 &position, const Vector3 &velocity, const Vector3 &direction);
-    void set3DParameters(const Vector3 &position, const Vector3 &velocity, std::pair<Vector3,Vector3> orientation);
+    void set3DParameters(const Vector3 &position, const Vector3 &velocity, const std::pair<Vector3,Vector3> &orientation);
 
     void setPosition(ALfloat x, ALfloat y, ALfloat z);
     void setPosition(const ALfloat *pos);

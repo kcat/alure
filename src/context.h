@@ -88,7 +88,7 @@ public:
 
     void setGain(ALfloat gain);
 
-    void set3DParameters(const Vector3 &position, const Vector3 &velocity, std::pair<Vector3,Vector3> orientation);
+    void set3DParameters(const Vector3 &position, const Vector3 &velocity, const std::pair<Vector3,Vector3> &orientation);
 
     void setPosition(ALfloat x, ALfloat y, ALfloat z);
     void setPosition(const ALfloat *pos);
@@ -280,7 +280,7 @@ public:
 
     Listener getListener() { return Listener(&mListener); }
 
-    SharedPtr<MessageHandler> setMessageHandler(SharedPtr<MessageHandler> handler);
+    SharedPtr<MessageHandler> setMessageHandler(SharedPtr<MessageHandler>&& handler);
     SharedPtr<MessageHandler> getMessageHandler() const { return mMessage; }
 
     void setAsyncWakeInterval(std::chrono::milliseconds interval);
@@ -296,8 +296,8 @@ public:
     Buffer getBuffer(StringView name);
     SharedFuture<Buffer> getBufferAsync(StringView name);
     void precacheBuffersAsync(ArrayView<StringView> names);
-    Buffer createBufferFrom(StringView name, SharedPtr<Decoder> decoder);
-    SharedFuture<Buffer> createBufferAsyncFrom(StringView name, SharedPtr<Decoder> decoder);
+    Buffer createBufferFrom(StringView name, SharedPtr<Decoder>&& decoder);
+    SharedFuture<Buffer> createBufferAsyncFrom(StringView name, SharedPtr<Decoder>&& decoder);
     void removeBuffer(StringView name);
     void removeBuffer(Buffer buffer) { removeBuffer(buffer.getName()); }
 

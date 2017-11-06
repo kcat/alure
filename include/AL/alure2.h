@@ -897,7 +897,7 @@ public:
      * Specifies the listener's 3D position, velocity, and orientation
      * together.
      */
-    void set3DParameters(const Vector3 &position, const Vector3 &velocity, std::pair<Vector3,Vector3> orientation);
+    void set3DParameters(const Vector3 &position, const Vector3 &velocity, const std::pair<Vector3,Vector3> &orientation);
 
     /** Specifies the listener's 3D position. */
     void setPosition(ALfloat x, ALfloat y, ALfloat z);
@@ -1162,7 +1162,7 @@ public:
     void set3DParameters(const Vector3 &position, const Vector3 &velocity, const Vector3 &direction);
 
     /** Specifies the source's 3D position, velocity, and orientation together. */
-    void set3DParameters(const Vector3 &position, const Vector3 &velocity, std::pair<Vector3,Vector3> orientation);
+    void set3DParameters(const Vector3 &position, const Vector3 &velocity, const std::pair<Vector3,Vector3> &orientation);
 
     /** Specifies the source's 3D position. */
     void setPosition(ALfloat x, ALfloat y, ALfloat z);
