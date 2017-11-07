@@ -53,11 +53,12 @@ void AuxiliaryEffectSlotImpl::setSendAuto(bool sendauto)
 void AuxiliaryEffectSlotImpl::applyEffect(Effect effect)
 {
     const EffectImpl *eff = effect.getHandle();
-    if(!eff) throw std::runtime_error("Invalid Effect");
-    CheckContexts(mContext, eff->getContext());
+    if(eff) CheckContexts(mContext, eff->getContext());
     CheckContext(mContext);
 
-    mContext->alAuxiliaryEffectSloti(mId, AL_EFFECTSLOT_EFFECT, eff->getId());
+    mContext->alAuxiliaryEffectSloti(mId,
+        AL_EFFECTSLOT_EFFECT, eff ? eff->getId() : AL_EFFECT_NULL
+    );
 }
 
 
