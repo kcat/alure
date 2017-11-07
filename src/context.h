@@ -113,7 +113,11 @@ class ContextImpl {
 
 public:
     static void MakeCurrent(ContextImpl *context);
-    static ContextImpl *GetCurrent() { return sThreadCurrentCtx ? sThreadCurrentCtx : sCurrentCtx; }
+    static ContextImpl *GetCurrent()
+    {
+        auto thrd_ctx = sThreadCurrentCtx;
+        return thrd_ctx ? thrd_ctx : sCurrentCtx;
+    }
 
     static void MakeThreadCurrent(ContextImpl *context);
     static ContextImpl *GetThreadCurrent() { return sThreadCurrentCtx; }
@@ -326,13 +330,20 @@ public:
 inline void CheckContext(const ContextImpl *ctx)
 {
     auto count = ContextImpl::sContextSetCount.load(std::memory_order_acquire);
-    if(Expect<false>(count != ctx->mContextSetCounter))
+    if(UNLIKELY(count != ctx->mContextSetCounter))
     {
-        if(Expect<false>(ctx != ContextImpl::GetCurrent()))
+        if(UNLIKELY(ctx != ContextImpl::GetCurrent()))
             throw std::runtime_error("Called context is not current");
         ctx->mContextSetCounter = count;
     }
 }
+
+inline void CheckContexts(const ContextImpl *ctx0, const ContextImpl *ctx1)
+{
+    if(UNLIKELY(ctx0 != ctx1))
+        throw std::runtime_error("Mismatched object contexts");
+}
+
 
 } // namespace alure
 

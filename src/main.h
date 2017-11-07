@@ -4,7 +4,14 @@
 #include "alure2.h"
 
 
-namespace alure {
+#ifdef __GNUC__
+#define LIKELY(x) __builtin_expect(static_cast<bool>(x), true)
+#define UNLIKELY(x) __builtin_expect(static_cast<bool>(x), false)
+#else
+#define LIKELY(x) static_cast<bool>(x)
+#define UNLIKELY(x) static_cast<bool>(x)
+#endif
+
 
 #define DECL_THUNK0(ret, C, Name, cv) \
 ret C::Name() cv { return pImpl->Name(); }
@@ -37,15 +44,8 @@ ret C::Name(T1 a, T2 b, T3 c, T4 d, T5 e, T6 f) cv                            \
                        std::forward<_t5&&>(e), std::forward<_t6&&>(f));       \
 }
 
-template<bool V, typename T, typename=EnableIfT<std::is_same<bool,RemoveRefT<T>>::value>>
-inline T Expect(T&& arg)
-{
-#ifdef __GNUC__
-    return __builtin_expect(std::forward<T&&>(arg), V);
-#else
-    return std::forward<T&&>(arg);
-#endif
-}
+
+namespace alure {
 
 template<size_t N>
 struct Bitfield {

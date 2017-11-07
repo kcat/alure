@@ -304,8 +304,8 @@ void SourceImpl::play(Buffer buffer)
 {
     BufferImpl *albuf = buffer.getHandle();
     if(!albuf) throw std::runtime_error("Buffer is not valid");
+    CheckContexts(mContext, albuf->getContext());
     CheckContext(mContext);
-    CheckContext(albuf->getContext());
 
     if(mStream)
         mContext->removeStream(this);
@@ -587,7 +587,7 @@ bool SourceImpl::checkPending(SharedFuture<Buffer> &future)
         return true;
 
     BufferImpl *buffer = future.get().getHandle();
-    if(Expect<false>(buffer->getContext() != mContext))
+    if(UNLIKELY(buffer->getContext() != mContext))
         return false;
 
     if(mId == 0)
@@ -640,7 +640,7 @@ bool SourceImpl::fadeUpdate(std::chrono::steady_clock::time_point cur_fade_time)
     mLastFadeTime = cur_fade_time;
 
     float gain = mFadeGain * std::pow(mult, (float)Seconds(duration).count());
-    if(Expect<false>(gain == mFadeGain))
+    if(UNLIKELY(gain == mFadeGain))
     {
         // Ensure the gain keeps moving toward its target, in case precision
         // loss results in no change with small steps.
@@ -657,7 +657,7 @@ bool SourceImpl::playUpdate(ALuint id)
 {
     ALint state = -1;
     alGetSourcei(id, AL_SOURCE_STATE, &state);
-    if(Expect<true>(state == AL_PLAYING || state == AL_PAUSED))
+    if(LIKELY(state == AL_PLAYING || state == AL_PAUSED))
         return true;
 
     makeStopped();
@@ -667,7 +667,7 @@ bool SourceImpl::playUpdate(ALuint id)
 
 bool SourceImpl::playUpdate()
 {
-    if(Expect<true>(mIsAsync.load(std::memory_order_acquire)))
+    if(LIKELY(mIsAsync.load(std::memory_order_acquire)))
         return true;
 
     makeStopped();
@@ -1334,7 +1334,7 @@ void SourceImpl::setSendFilter(ALuint send, const FilterParams &filter)
 void SourceImpl::setAuxiliarySend(AuxiliaryEffectSlot auxslot, ALuint send)
 {
     AuxiliaryEffectSlotImpl *slot = auxslot.getHandle();
-    if(slot) CheckContext(slot->getContext());
+    if(slot) CheckContexts(mContext, slot->getContext());
     CheckContext(mContext);
 
     auto siter = std::lower_bound(mEffectSlots.begin(), mEffectSlots.end(), send,
@@ -1367,7 +1367,7 @@ void SourceImpl::setAuxiliarySendFilter(AuxiliaryEffectSlot auxslot, ALuint send
     if(!(filter.mGain >= 0.0f && filter.mGainHF >= 0.0f && filter.mGainLF >= 0.0f))
         throw std::runtime_error("Gain value out of range");
     AuxiliaryEffectSlotImpl *slot = auxslot.getHandle();
-    if(slot) CheckContext(slot->getContext());
+    if(slot) CheckContexts(mContext, slot->getContext());
     CheckContext(mContext);
 
     auto siter = std::lower_bound(mEffectSlots.begin(), mEffectSlots.end(), send,
