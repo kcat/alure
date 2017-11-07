@@ -118,6 +118,9 @@ public:
     static void MakeThreadCurrent(ContextImpl *context);
     static ContextImpl *GetThreadCurrent() { return sThreadCurrentCtx; }
 
+    static std::atomic<uint64_t> sContextSetCount;
+    mutable uint64_t mContextSetCounter;
+
 private:
     ListenerImpl mListener;
     ALCcontext *mContext;
@@ -322,8 +325,13 @@ public:
 
 inline void CheckContext(const ContextImpl *ctx)
 {
-    if(Expect<false>(ctx != ContextImpl::GetCurrent()))
-        throw std::runtime_error("Called context is not current");
+    auto count = ContextImpl::sContextSetCount.load(std::memory_order_acquire);
+    if(Expect<false>(count != ctx->mContextSetCounter))
+    {
+        if(Expect<false>(ctx != ContextImpl::GetCurrent()))
+            throw std::runtime_error("Called context is not current");
+        ctx->mContextSetCounter = count;
+    }
 }
 
 } // namespace alure

@@ -461,6 +461,8 @@ static const struct {
 ContextImpl *ContextImpl::sCurrentCtx = nullptr;
 thread_local ContextImpl *ContextImpl::sThreadCurrentCtx = nullptr;
 
+std::atomic<uint64_t> ContextImpl::sContextSetCount{0};
+
 void ContextImpl::MakeCurrent(ContextImpl *context)
 {
     std::unique_lock<std::mutex> ctxlock(mGlobalCtxMutex);
@@ -477,7 +479,8 @@ void ContextImpl::MakeCurrent(ContextImpl *context)
 
     if(sThreadCurrentCtx)
         sThreadCurrentCtx->decRef();
-    sThreadCurrentCtx = 0;
+    sThreadCurrentCtx = nullptr;
+    sContextSetCount.fetch_add(1, std::memory_order_release);
 
     if((context = sCurrentCtx) != nullptr)
     {
@@ -500,6 +503,7 @@ void ContextImpl::MakeThreadCurrent(ContextImpl *context)
     if(sThreadCurrentCtx)
         sThreadCurrentCtx->decRef();
     sThreadCurrentCtx = context;
+    sContextSetCount.fetch_add(1, std::memory_order_release);
 }
 
 void ContextImpl::setupExts()
@@ -585,7 +589,8 @@ void ContextImpl::backgroundProc()
 
 
 ContextImpl::ContextImpl(ALCcontext *context, DeviceImpl *device)
-  : mListener(this), mContext(context), mDevice(device),
+  : mContextSetCounter(std::numeric_limits<uint64_t>::max()),
+    mListener(this), mContext(context), mDevice(device),
     mWakeInterval(std::chrono::milliseconds::zero()), mQuitThread(false),
     mRefs(0), mIsConnected(true), mIsBatching(false),
     alGetSourcei64vSOFT(0), alGetSourcedvSOFT(0),
