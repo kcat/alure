@@ -19,8 +19,14 @@
   #define ALURE_API
  #elif defined(_WIN32)
   #define ALURE_API __declspec(dllimport)
- #elif defined(__GNUC__) || (defined(__has_attribute) && __has_attribute(visibility))
+ #elif defined(__GNUC__)
   #define ALURE_API __attribute__((visibility("default")))
+ #elif defined(__has_attribute)
+  #if __has_attribute(visibility)
+   #define ALURE_API __attribute__((visibility("default")))
+  #else
+   #define ALURE_API
+  #endif
  #else
   #define ALURE_API
  #endif
