@@ -48,31 +48,6 @@ static int cb_read_char(void *user_data)
     return -1;
 }
 
-static int cb_seek(void *user_data, long n)
-{
-    std::istream *stream = static_cast<std::istream*>(user_data);
-    stream->clear();
-
-    if(!stream->seekg(n))
-        return 1;
-    return 0;
-}
-
-static long cb_get_size(void *user_data)
-{
-    std::istream *stream = static_cast<std::istream*>(user_data);
-    stream->clear();
-
-    long len = -1;
-    std::streampos pos = stream->tellg();
-    if(pos != -1 && stream->seekg(0, std::ios::end))
-    {
-        len = stream->tellg();
-        stream->seekg(pos);
-    }
-    return len;
-}
-
 
 // Inherit from alure::Decoder to make a custom decoder (DUMB for this example)
 class DumbDecoder final : public alure::Decoder {
@@ -181,16 +156,12 @@ class DumbFactory final : public alure::DecoderFactory {
         }};
 
         auto dfs = alure::MakeUnique<DUMBFILE_SYSTEM>();
+        std::memset(dfs.get(), 0, sizeof(DUMBFILE_SYSTEM));
         dfs->open = nullptr;
         dfs->skip = cb_skip;
         dfs->getc = cb_read_char;
         dfs->getnc = cb_read;
         dfs->close = nullptr;
-        dfs->seek = cb_seek;
-        dfs->get_size = cb_get_size;
-
-        DUMBFILE *dfile = dumbfile_open_ex(file.get(), dfs.get());
-        if(!dfile) return nullptr;
 
         alure::Context ctx = alure::Context::GetCurrent();
         alure::SampleType stype = alure::SampleType::Float32;
@@ -198,8 +169,12 @@ class DumbFactory final : public alure::DecoderFactory {
             stype = alure::SampleType::Int16;
         ALuint freq = ctx.getDevice().getFrequency();
 
+        DUMBFILE *dfile = nullptr;
         for(auto init : init_funcs)
         {
+            dfile = dumbfile_open_ex(file.get(), dfs.get());
+            if(!dfile) return nullptr;
+
             DUH *duh;
             if((duh=init(dfile)) != nullptr)
             {
@@ -213,23 +188,14 @@ class DumbFactory final : public alure::DecoderFactory {
                 duh = nullptr;
             }
 
-            dumbfile_seek(dfile, 0, SEEK_SET);
+            dumbfile_close(dfile);
+            dfile = nullptr;
+
+            file->clear();
+            if(!file->seekg(0))
+                break;
         }
 
-        DUH *duh;
-        if((duh=dumb_read_mod(dfile, 1)) != nullptr)
-        {
-            DUH_SIGRENDERER *renderer;
-            if((renderer=duh_start_sigrenderer(duh, 0, 2, 0)) != nullptr)
-                return alure::MakeShared<DumbDecoder>(
-                    std::move(file), std::move(dfs), dfile, duh, renderer, stype, freq
-                );
-
-            unload_duh(duh);
-            duh = nullptr;
-        }
-
-        dumbfile_close(dfile);
         return nullptr;
     }
 };
