@@ -48,7 +48,7 @@ class SourceImpl {
     std::atomic<bool> mIsAsync;
 
     std::atomic<bool> mPaused;
-    ALuint64SOFT mOffset;
+    uint64_t mOffset;
     ALfloat mPitch;
     ALfloat mGain;
     ALfloat mMinGain, mMaxGain;
