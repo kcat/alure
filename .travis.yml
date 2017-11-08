@@ -11,7 +11,7 @@ install:
       # Install OpenAL, VorbisFile, OpusFile, FLAC, libsndfile, libmpg123,
       # PhysicsFS, and DUMB dependencies for decoders and examples.
       sudo apt-get install -qq \
-        libopenal1-dev \
+        libopenal-dev \
         libvorbis-dev \
         libopus-dev \
         libflac-dev \
