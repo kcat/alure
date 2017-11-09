@@ -10,9 +10,6 @@
 #include <memory>
 #include <limits>
 
-#include "al.h"
-#include "alext.h"
-
 #include "context.h"
 #include "buffer.h"
 #include "auxeffectslot.h"

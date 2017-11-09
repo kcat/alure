@@ -12,7 +12,6 @@
 #include <chrono>
 
 #include "alure2.h"
-#include "alext.h"
 
 int main(int argc, char *argv[])
 {

@@ -8,9 +8,6 @@
 #include <stdexcept>
 #include <algorithm>
 
-#include "alc.h"
-#include "alext.h"
-
 #include "devicemanager.h"
 #include "context.h"
 #include "buffer.h"

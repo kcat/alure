@@ -13,6 +13,7 @@
 
 #include "alc.h"
 #include "al.h"
+#include "alure2-alext.h"
 
 #ifndef ALURE_API
  #if defined(ALURE_STATIC_LIB)

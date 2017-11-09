@@ -6,9 +6,6 @@
 #include <atomic>
 #include <mutex>
 
-#include "al.h"
-#include "alext.h"
-
 namespace alure {
 
 class ALBufferStream;

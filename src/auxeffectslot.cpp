@@ -5,9 +5,6 @@
 
 #include <stdexcept>
 
-#include "al.h"
-#include "alext.h"
-
 #include "context.h"
 #include "effect.h"
 

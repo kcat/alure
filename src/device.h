@@ -5,39 +5,8 @@
 
 #include <mutex>
 
-#include "alc.h"
-#include "alext.h"
-
-
-extern "C" {
-#ifndef ALC_SOFT_pause_device
-#define ALC_SOFT_pause_device 1
-typedef void (ALC_APIENTRY*LPALCDEVICEPAUSESOFT)(ALCdevice *device);
-typedef void (ALC_APIENTRY*LPALCDEVICERESUMESOFT)(ALCdevice *device);
-#endif
-
-#ifndef ALC_SOFT_HRTF
-#define ALC_SOFT_HRTF 1
-#define ALC_HRTF_SOFT                            0x1992
-#define ALC_DONT_CARE_SOFT                       0x0002
-#define ALC_HRTF_STATUS_SOFT                     0x1993
-#define ALC_HRTF_DISABLED_SOFT                   0x0000
-#define ALC_HRTF_ENABLED_SOFT                    0x0001
-#define ALC_HRTF_DENIED_SOFT                     0x0002
-#define ALC_HRTF_REQUIRED_SOFT                   0x0003
-#define ALC_HRTF_HEADPHONES_DETECTED_SOFT        0x0004
-#define ALC_HRTF_UNSUPPORTED_FORMAT_SOFT         0x0005
-#define ALC_NUM_HRTF_SPECIFIERS_SOFT             0x1994
-#define ALC_HRTF_SPECIFIER_SOFT                  0x1995
-#define ALC_HRTF_ID_SOFT                         0x1996
-typedef const ALCchar* (ALC_APIENTRY*LPALCGETSTRINGISOFT)(ALCdevice *device, ALCenum paramName, ALCsizei index);
-typedef ALCboolean (ALC_APIENTRY*LPALCRESETDEVICESOFT)(ALCdevice *device, const ALCint *attribs);
-#endif
-
-} // extern "C"
 
 namespace alure {
-
 
 enum class ALC {
     ENUMERATE_ALL_EXT,

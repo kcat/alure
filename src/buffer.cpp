@@ -7,9 +7,6 @@
 #include <sstream>
 #include <cstring>
 
-#include "al.h"
-#include "alext.h"
-
 #include "context.h"
 
 namespace alure
