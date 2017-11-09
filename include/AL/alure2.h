@@ -363,7 +363,8 @@ constexpr inline NonRefT LinearTodB(T&& value)
  */
 using AttributePair = std::pair<ALCint,ALCint>;
 static_assert(sizeof(AttributePair) == sizeof(ALCint[2]), "Bad AttributePair size");
-constexpr AttributePair AttributesEnd{0, 0};
+constexpr inline AttributePair AttributesEnd() noexcept
+{ return std::make_pair(0, 0); }
 
 
 struct FilterParams {
