@@ -25,6 +25,16 @@
 
 
 extern "C" {
+#ifndef AL_EXT_STEREO_ANGLES
+#define AL_EXT_STEREO_ANGLES 1
+#define AL_STEREO_ANGLES                         0x1030
+#endif
+
+#ifndef AL_EXT_SOURCE_RADIUS
+#define AL_EXT_SOURCE_RADIUS 1
+#define AL_SOURCE_RADIUS                         0x1031
+#endif
+
 #ifndef AL_SOFT_source_latency
 #define AL_SOFT_source_latency 1
 #define AL_SAMPLE_OFFSET_LATENCY_SOFT            0x1200
