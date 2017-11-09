@@ -26,7 +26,7 @@ install:
       sudo apt-get install -qq \
         libopenal-dev \
         libvorbis-dev \
-        libopus-dev \
+        libopusfile-dev \
         libflac-dev \
         libsndfile1-dev \
         libmpg123-dev \
