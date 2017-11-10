@@ -303,6 +303,8 @@ public:
     void precacheBuffersAsync(ArrayView<StringView> names);
     Buffer createBufferFrom(StringView name, SharedPtr<Decoder>&& decoder);
     SharedFuture<Buffer> createBufferAsyncFrom(StringView name, SharedPtr<Decoder>&& decoder);
+    Buffer findBuffer(StringView name);
+    SharedFuture<Buffer> findBufferAsync(StringView name);
     void removeBuffer(StringView name);
     void removeBuffer(Buffer buffer) { removeBuffer(buffer.getName()); }
 

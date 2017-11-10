@@ -851,6 +851,20 @@ public:
     SharedFuture<Buffer> createBufferAsyncFrom(StringView name, SharedPtr<Decoder> decoder);
 
     /**
+     * Looks for a cached buffer using the given name and returns it. If the
+     * given name does not exist in the cache, and null buffer is returned.
+     */
+    Buffer findBuffer(StringView name);
+
+    /**
+     * Looks for an asynchronously-loading buffer using the given name and
+     * returns a SharedFuture for it. If the given name does not exist in the
+     * cache, an invalid SharedFuture is returned (check with a call to
+     * \c SharedFuture::valid).
+     */
+    SharedFuture<Buffer> findBufferAsync(StringView name);
+
+    /**
      * Deletes the cached Buffer object for the given audio file or resource
      * name. The buffer must not be in use by a Source.
      */

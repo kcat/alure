@@ -1067,6 +1067,93 @@ SharedFuture<Buffer> ContextImpl::createBufferAsyncFrom(StringView name, SharedP
 }
 
 
+Buffer ContextImpl::findBuffer(StringView name)
+{
+    Buffer buffer;
+    CheckContext(this);
+
+    auto hasher = std::hash<StringView>();
+    if(UNLIKELY(!mFutureBuffers.empty()))
+    {
+        // If the buffer is already pending for the future, wait for it
+        auto iter = std::lower_bound(mFutureBuffers.begin(), mFutureBuffers.end(), hasher(name),
+            [hasher](const PendingFuture &lhs, size_t rhs) -> bool
+            { return hasher(lhs.mBuffer->getName()) < rhs; }
+        );
+        if(iter != mFutureBuffers.end() && iter->mBuffer->getName() == name)
+        {
+            buffer = iter->mFuture.get();
+            mFutureBuffers.erase(iter);
+        }
+
+        // Clear out any completed futures.
+        mFutureBuffers.erase(
+            std::remove_if(mFutureBuffers.begin(), mFutureBuffers.end(),
+                [](const PendingFuture &entry) -> bool
+                { return entry.mFuture.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready; }
+            ), mFutureBuffers.end()
+        );
+    }
+
+    if(LIKELY(!buffer))
+    {
+        auto iter = std::lower_bound(mBuffers.begin(), mBuffers.end(), hasher(name),
+            [hasher](const UniquePtr<BufferImpl> &lhs, size_t rhs) -> bool
+            { return hasher(lhs->getName()) < rhs; }
+        );
+        if(iter != mBuffers.end() && (*iter)->getName() == name)
+            buffer = Buffer(iter->get());
+    }
+    return buffer;
+}
+
+SharedFuture<Buffer> ContextImpl::findBufferAsync(StringView name)
+{
+    SharedFuture<Buffer> future;
+    CheckContext(this);
+
+    auto hasher = std::hash<StringView>();
+    if(UNLIKELY(!mFutureBuffers.empty()))
+    {
+        // Check if the future that's being created already exists
+        auto iter = std::lower_bound(mFutureBuffers.begin(), mFutureBuffers.end(), hasher(name),
+            [hasher](const PendingFuture &lhs, size_t rhs) -> bool
+            { return hasher(lhs.mBuffer->getName()) < rhs; }
+        );
+        if(iter != mFutureBuffers.end() && iter->mBuffer->getName() == name)
+        {
+            future = iter->mFuture;
+            if(future.wait_for(std::chrono::milliseconds::zero()) == std::future_status::ready)
+                mFutureBuffers.erase(iter);
+            return future;
+        }
+
+        // Clear out any fulfilled futures.
+        mFutureBuffers.erase(
+            std::remove_if(mFutureBuffers.begin(), mFutureBuffers.end(),
+                [](const PendingFuture &entry) -> bool
+                { return entry.mFuture.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready; }
+            ), mFutureBuffers.end()
+        );
+    }
+
+    auto iter = std::lower_bound(mBuffers.begin(), mBuffers.end(), hasher(name),
+        [hasher](const UniquePtr<BufferImpl> &lhs, size_t rhs) -> bool
+        { return hasher(lhs->getName()) < rhs; }
+    );
+    if(iter != mBuffers.end() && (*iter)->getName() == name)
+    {
+        // User asked to create a future buffer that's already loaded. Just
+        // construct a promise, fulfill the promise immediately, then return a
+        // shared future that's already set.
+        Promise<Buffer> promise;
+        promise.set_value(Buffer(iter->get()));
+        future = promise.get_future().share();
+    }
+    return future;
+}
+
+
 void ContextImpl::removeBuffer(StringView name)
 {
     CheckContext(this);
@@ -1463,6 +1550,8 @@ DECL_THUNK1(SharedFuture<Buffer>, Context, getBufferAsync,, StringView)
 DECL_THUNK1(void, Context, precacheBuffersAsync,, ArrayView<StringView>)
 DECL_THUNK2(Buffer, Context, createBufferFrom,, StringView, SharedPtr<Decoder>)
 DECL_THUNK2(SharedFuture<Buffer>, Context, createBufferAsyncFrom,, StringView, SharedPtr<Decoder>)
+DECL_THUNK1(Buffer, Context, findBuffer,, StringView)
+DECL_THUNK1(SharedFuture<Buffer>, Context, findBufferAsync,, StringView)
 DECL_THUNK1(void, Context, removeBuffer,, StringView)
 DECL_THUNK1(void, Context, removeBuffer,, Buffer)
 DECL_THUNK0(Source, Context, createSource,)
