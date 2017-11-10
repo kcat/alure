@@ -931,7 +931,8 @@ SharedFuture<Buffer> ContextImpl::getBufferAsync(StringView name)
         // shared future that's already set.
         Promise<Buffer> promise;
         promise.set_value(Buffer(iter->get()));
-        return promise.get_future().share();
+        future = promise.get_future().share();
+        return future;
     }
 
     Promise<Buffer> promise;
