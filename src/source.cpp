@@ -18,6 +18,14 @@
 namespace alure
 {
 
+// Need to use these to avoid extraneous commas in macro parameter lists
+using UInt64NSecPair = std::pair<uint64_t,std::chrono::nanoseconds>;
+using SecondsPair = std::pair<Seconds,Seconds>;
+using ALfloatPair = std::pair<ALfloat,ALfloat>;
+using Vector3Pair = std::pair<Vector3,Vector3>;
+using BoolTriple = std::tuple<bool,bool,bool>;
+
+
 class ALBufferStream {
     SharedPtr<Decoder> mDecoder;
 
@@ -297,6 +305,7 @@ void SourceImpl::groupPropUpdate(ALfloat gain, ALfloat pitch)
 }
 
 
+DECL_THUNK1(void, Source, play,, Buffer)
 void SourceImpl::play(Buffer buffer)
 {
     BufferImpl *albuf = buffer.getHandle();
@@ -340,6 +349,7 @@ void SourceImpl::play(Buffer buffer)
     mContext->addPlayingSource(this, mId);
 }
 
+DECL_THUNK3(void, Source, play,, SharedPtr<Decoder>, ALuint, ALuint)
 void SourceImpl::play(SharedPtr<Decoder>&& decoder, ALuint chunk_len, ALuint queue_size)
 {
     if(chunk_len < 64)
@@ -397,6 +407,7 @@ void SourceImpl::play(SharedPtr<Decoder>&& decoder, ALuint chunk_len, ALuint que
     mContext->addPlayingSource(this);
 }
 
+DECL_THUNK1(void, Source, play,, SharedFuture<Buffer>)
 void SourceImpl::play(SharedFuture<Buffer>&& future_buffer)
 {
     if(!future_buffer.valid())
@@ -453,6 +464,7 @@ void SourceImpl::makeStopped(bool dolock)
     mPaused.store(false, std::memory_order_release);
 }
 
+DECL_THUNK0(void, Source, stop,)
 void SourceImpl::stop()
 {
     CheckContext(mContext);
@@ -463,6 +475,7 @@ void SourceImpl::stop()
 }
 
 
+DECL_THUNK2(void, Source, fadeOutToStop,, ALfloat, std::chrono::milliseconds)
 void SourceImpl::fadeOutToStop(ALfloat gain, std::chrono::milliseconds duration)
 {
     if(!(gain < 1.0f && gain >= 0.0f))
@@ -491,6 +504,7 @@ void SourceImpl::checkPaused()
                   std::memory_order_release);
 }
 
+DECL_THUNK0(void, Source, pause,)
 void SourceImpl::pause()
 {
     CheckContext(mContext);
@@ -509,6 +523,7 @@ void SourceImpl::pause()
     }
 }
 
+DECL_THUNK0(void, Source, resume,)
 void SourceImpl::resume()
 {
     CheckContext(mContext);
@@ -521,12 +536,14 @@ void SourceImpl::resume()
 }
 
 
+DECL_THUNK0(bool, Source, isPending, const)
 bool SourceImpl::isPending() const
 {
     CheckContext(mContext);
     return mContext->isPendingSource(this);
 }
 
+DECL_THUNK0(bool, Source, isPlaying, const)
 bool SourceImpl::isPlaying() const
 {
     CheckContext(mContext);
@@ -541,6 +558,7 @@ bool SourceImpl::isPlaying() const
                                    mStream && mStream->hasMoreData());
 }
 
+DECL_THUNK0(bool, Source, isPaused, const)
 bool SourceImpl::isPaused() const
 {
     CheckContext(mContext);
@@ -548,6 +566,7 @@ bool SourceImpl::isPaused() const
 }
 
 
+DECL_THUNK1(void, Source, setGroup,, SourceGroup)
 void SourceImpl::setGroup(SourceGroup group)
 {
     CheckContext(mContext);
@@ -725,12 +744,14 @@ bool SourceImpl::updateAsync()
 }
 
 
+DECL_THUNK1(void, Source, setPriority,, ALuint)
 void SourceImpl::setPriority(ALuint priority)
 {
     mPriority = priority;
 }
 
 
+DECL_THUNK1(void, Source, setOffset,, uint64_t)
 void SourceImpl::setOffset(uint64_t offset)
 {
     CheckContext(mContext);
@@ -762,6 +783,7 @@ void SourceImpl::setOffset(uint64_t offset)
     }
 }
 
+DECL_THUNK0(UInt64NSecPair, Source, getSampleOffsetLatency, const)
 std::pair<uint64_t,std::chrono::nanoseconds> SourceImpl::getSampleOffsetLatency() const
 {
     std::pair<uint64_t,std::chrono::nanoseconds> ret{0, std::chrono::nanoseconds::zero()};
@@ -823,6 +845,7 @@ std::pair<uint64_t,std::chrono::nanoseconds> SourceImpl::getSampleOffsetLatency(
     return ret;
 }
 
+DECL_THUNK0(SecondsPair, Source, getSecOffsetLatency, const)
 std::pair<Seconds,Seconds> SourceImpl::getSecOffsetLatency() const
 {
     std::pair<Seconds,Seconds> ret{Seconds::zero(), Seconds::zero()};
@@ -896,6 +919,7 @@ std::pair<Seconds,Seconds> SourceImpl::getSecOffsetLatency() const
 }
 
 
+DECL_THUNK1(void, Source, setLooping,, bool)
 void SourceImpl::setLooping(bool looping)
 {
     CheckContext(mContext);
@@ -906,6 +930,7 @@ void SourceImpl::setLooping(bool looping)
 }
 
 
+DECL_THUNK1(void, Source, setPitch,, ALfloat)
 void SourceImpl::setPitch(ALfloat pitch)
 {
     if(!(pitch > 0.0f))
@@ -917,6 +942,7 @@ void SourceImpl::setPitch(ALfloat pitch)
 }
 
 
+DECL_THUNK1(void, Source, setGain,, ALfloat)
 void SourceImpl::setGain(ALfloat gain)
 {
     if(!(gain >= 0.0f))
@@ -927,6 +953,7 @@ void SourceImpl::setGain(ALfloat gain)
     mGain = gain;
 }
 
+DECL_THUNK2(void, Source, setGainRange,, ALfloat, ALfloat)
 void SourceImpl::setGainRange(ALfloat mingain, ALfloat maxgain)
 {
     if(!(mingain >= 0.0f && maxgain <= 1.0f && maxgain >= mingain))
@@ -942,6 +969,7 @@ void SourceImpl::setGainRange(ALfloat mingain, ALfloat maxgain)
 }
 
 
+DECL_THUNK2(void, Source, setDistanceRange,, ALfloat, ALfloat)
 void SourceImpl::setDistanceRange(ALfloat refdist, ALfloat maxdist)
 {
     if(!(refdist >= 0.0f && maxdist <= std::numeric_limits<float>::max() && refdist <= maxdist))
@@ -957,6 +985,7 @@ void SourceImpl::setDistanceRange(ALfloat refdist, ALfloat maxdist)
 }
 
 
+DECL_THUNK3(void, Source, set3DParameters,, const Vector3&, const Vector3&, const Vector3&)
 void SourceImpl::set3DParameters(const Vector3 &position, const Vector3 &velocity, const Vector3 &direction)
 {
     CheckContext(mContext);
@@ -972,6 +1001,7 @@ void SourceImpl::set3DParameters(const Vector3 &position, const Vector3 &velocit
     mDirection = direction;
 }
 
+DECL_THUNK3(void, Source, set3DParameters,, const Vector3&, const Vector3&, const Vector3Pair&)
 void SourceImpl::set3DParameters(const Vector3 &position, const Vector3 &velocity, const std::pair<Vector3,Vector3> &orientation)
 {
     static_assert(sizeof(orientation) == sizeof(ALfloat[6]), "Invalid Vector3 pair size");
@@ -992,6 +1022,7 @@ void SourceImpl::set3DParameters(const Vector3 &position, const Vector3 &velocit
 }
 
 
+DECL_THUNK3(void, Source, setPosition,, ALfloat, ALfloat, ALfloat)
 void SourceImpl::setPosition(ALfloat x, ALfloat y, ALfloat z)
 {
     CheckContext(mContext);
@@ -1002,6 +1033,7 @@ void SourceImpl::setPosition(ALfloat x, ALfloat y, ALfloat z)
     mPosition[2] = z;
 }
 
+DECL_THUNK1(void, Source, setPosition,, const ALfloat*)
 void SourceImpl::setPosition(const ALfloat *pos)
 {
     CheckContext(mContext);
@@ -1012,6 +1044,7 @@ void SourceImpl::setPosition(const ALfloat *pos)
     mPosition[2] = pos[2];
 }
 
+DECL_THUNK3(void, Source, setVelocity,, ALfloat, ALfloat, ALfloat)
 void SourceImpl::setVelocity(ALfloat x, ALfloat y, ALfloat z)
 {
     CheckContext(mContext);
@@ -1022,6 +1055,7 @@ void SourceImpl::setVelocity(ALfloat x, ALfloat y, ALfloat z)
     mVelocity[2] = z;
 }
 
+DECL_THUNK1(void, Source, setVelocity,, const ALfloat*)
 void SourceImpl::setVelocity(const ALfloat *vel)
 {
     CheckContext(mContext);
@@ -1032,6 +1066,7 @@ void SourceImpl::setVelocity(const ALfloat *vel)
     mVelocity[2] = vel[2];
 }
 
+DECL_THUNK3(void, Source, setDirection,, ALfloat, ALfloat, ALfloat)
 void SourceImpl::setDirection(ALfloat x, ALfloat y, ALfloat z)
 {
     CheckContext(mContext);
@@ -1042,6 +1077,7 @@ void SourceImpl::setDirection(ALfloat x, ALfloat y, ALfloat z)
     mDirection[2] = z;
 }
 
+DECL_THUNK1(void, Source, setDirection,, const ALfloat*)
 void SourceImpl::setDirection(const ALfloat *dir)
 {
     CheckContext(mContext);
@@ -1052,6 +1088,7 @@ void SourceImpl::setDirection(const ALfloat *dir)
     mDirection[2] = dir[2];
 }
 
+DECL_THUNK6(void, Source, setOrientation,, ALfloat, ALfloat, ALfloat, ALfloat, ALfloat, ALfloat)
 void SourceImpl::setOrientation(ALfloat x1, ALfloat y1, ALfloat z1, ALfloat x2, ALfloat y2, ALfloat z2)
 {
     CheckContext(mContext);
@@ -1070,6 +1107,7 @@ void SourceImpl::setOrientation(ALfloat x1, ALfloat y1, ALfloat z1, ALfloat x2, 
     mOrientation[1][2] = z2;
 }
 
+DECL_THUNK2(void, Source, setOrientation,, const ALfloat*, const ALfloat*)
 void SourceImpl::setOrientation(const ALfloat *at, const ALfloat *up)
 {
     CheckContext(mContext);
@@ -1088,6 +1126,7 @@ void SourceImpl::setOrientation(const ALfloat *at, const ALfloat *up)
     mOrientation[1][2] = up[2];
 }
 
+DECL_THUNK1(void, Source, setOrientation,, const ALfloat*)
 void SourceImpl::setOrientation(const ALfloat *ori)
 {
     CheckContext(mContext);
@@ -1106,6 +1145,7 @@ void SourceImpl::setOrientation(const ALfloat *ori)
 }
 
 
+DECL_THUNK2(void, Source, setConeAngles,, ALfloat, ALfloat)
 void SourceImpl::setConeAngles(ALfloat inner, ALfloat outer)
 {
     if(!(inner >= 0.0f && outer <= 360.0f && outer >= inner))
@@ -1120,6 +1160,7 @@ void SourceImpl::setConeAngles(ALfloat inner, ALfloat outer)
     mConeOuterAngle = outer;
 }
 
+DECL_THUNK2(void, Source, setOuterConeGains,, ALfloat, ALfloat)
 void SourceImpl::setOuterConeGains(ALfloat gain, ALfloat gainhf)
 {
     if(!(gain >= 0.0f && gain <= 1.0f && gainhf >= 0.0f && gainhf <= 1.0f))
@@ -1136,6 +1177,7 @@ void SourceImpl::setOuterConeGains(ALfloat gain, ALfloat gainhf)
 }
 
 
+DECL_THUNK2(void, Source, setRolloffFactors,, ALfloat, ALfloat)
 void SourceImpl::setRolloffFactors(ALfloat factor, ALfloat roomfactor)
 {
     if(!(factor >= 0.0f && roomfactor >= 0.0f))
@@ -1151,6 +1193,7 @@ void SourceImpl::setRolloffFactors(ALfloat factor, ALfloat roomfactor)
     mRoomRolloffFactor = roomfactor;
 }
 
+DECL_THUNK1(void, Source, setDopplerFactor,, ALfloat)
 void SourceImpl::setDopplerFactor(ALfloat factor)
 {
     if(!(factor >= 0.0f && factor <= 1.0f))
@@ -1161,16 +1204,16 @@ void SourceImpl::setDopplerFactor(ALfloat factor)
     mDopplerFactor = factor;
 }
 
-void SourceImpl::setAirAbsorptionFactor(ALfloat factor)
+DECL_THUNK1(void, Source, setRelative,, bool)
+void SourceImpl::setRelative(bool relative)
 {
-    if(!(factor >= 0.0f && factor <= 10.0f))
-        throw std::runtime_error("Absorption factor out of range");
     CheckContext(mContext);
-    if(mId != 0 && mContext->hasExtension(AL::EXT_EFX))
-        alSourcef(mId, AL_AIR_ABSORPTION_FACTOR, factor);
-    mAirAbsorptionFactor = factor;
+    if(mId != 0)
+        alSourcei(mId, AL_SOURCE_RELATIVE, relative ? AL_TRUE : AL_FALSE);
+    mRelative = relative;
 }
 
+DECL_THUNK1(void, Source, setRadius,, ALfloat)
 void SourceImpl::setRadius(ALfloat radius)
 {
     if(!(mRadius >= 0.0f))
@@ -1181,6 +1224,7 @@ void SourceImpl::setRadius(ALfloat radius)
     mRadius = radius;
 }
 
+DECL_THUNK2(void, Source, setStereoAngles,, ALfloat, ALfloat)
 void SourceImpl::setStereoAngles(ALfloat leftAngle, ALfloat rightAngle)
 {
     CheckContext(mContext);
@@ -1193,6 +1237,7 @@ void SourceImpl::setStereoAngles(ALfloat leftAngle, ALfloat rightAngle)
     mStereoAngles[1] = rightAngle;
 }
 
+DECL_THUNK1(void, Source, set3DSpatialize,, Spatialize)
 void SourceImpl::set3DSpatialize(Spatialize spatialize)
 {
     CheckContext(mContext);
@@ -1201,6 +1246,7 @@ void SourceImpl::set3DSpatialize(Spatialize spatialize)
     mSpatialize = spatialize;
 }
 
+DECL_THUNK1(void, Source, setResamplerIndex,, ALsizei)
 void SourceImpl::setResamplerIndex(ALsizei index)
 {
     if(index < 0)
@@ -1211,14 +1257,18 @@ void SourceImpl::setResamplerIndex(ALsizei index)
     mResampler = index;
 }
 
-void SourceImpl::setRelative(bool relative)
+DECL_THUNK1(void, Source, setAirAbsorptionFactor,, ALfloat)
+void SourceImpl::setAirAbsorptionFactor(ALfloat factor)
 {
+    if(!(factor >= 0.0f && factor <= 10.0f))
+        throw std::runtime_error("Absorption factor out of range");
     CheckContext(mContext);
-    if(mId != 0)
-        alSourcei(mId, AL_SOURCE_RELATIVE, relative ? AL_TRUE : AL_FALSE);
-    mRelative = relative;
+    if(mId != 0 && mContext->hasExtension(AL::EXT_EFX))
+        alSourcef(mId, AL_AIR_ABSORPTION_FACTOR, factor);
+    mAirAbsorptionFactor = factor;
 }
 
+DECL_THUNK3(void, Source, setGainAuto,, bool, bool, bool)
 void SourceImpl::setGainAuto(bool directhf, bool send, bool sendhf)
 {
     CheckContext(mContext);
@@ -1288,6 +1338,7 @@ void SourceImpl::setFilterParams(ALuint &filterid, const FilterParams &params)
 }
 
 
+DECL_THUNK1(void, Source, setDirectFilter,, const FilterParams&)
 void SourceImpl::setDirectFilter(const FilterParams &filter)
 {
     if(!(filter.mGain >= 0.0f && filter.mGainHF >= 0.0f && filter.mGainLF >= 0.0f))
@@ -1299,6 +1350,7 @@ void SourceImpl::setDirectFilter(const FilterParams &filter)
         alSourcei(mId, AL_DIRECT_FILTER, mDirectFilter);
 }
 
+DECL_THUNK2(void, Source, setSendFilter,, ALuint, const FilterParams&)
 void SourceImpl::setSendFilter(ALuint send, const FilterParams &filter)
 {
     if(!(filter.mGain >= 0.0f && filter.mGainHF >= 0.0f && filter.mGainLF >= 0.0f))
@@ -1328,6 +1380,7 @@ void SourceImpl::setSendFilter(ALuint send, const FilterParams &filter)
     }
 }
 
+DECL_THUNK2(void, Source, setAuxiliarySend,, AuxiliaryEffectSlot, ALuint)
 void SourceImpl::setAuxiliarySend(AuxiliaryEffectSlot auxslot, ALuint send)
 {
     AuxiliaryEffectSlotImpl *slot = auxslot.getHandle();
@@ -1359,6 +1412,7 @@ void SourceImpl::setAuxiliarySend(AuxiliaryEffectSlot auxslot, ALuint send)
     }
 }
 
+DECL_THUNK3(void, Source, setAuxiliarySendFilter,, AuxiliaryEffectSlot, ALuint, const FilterParams&)
 void SourceImpl::setAuxiliarySendFilter(AuxiliaryEffectSlot auxslot, ALuint send, const FilterParams &filter)
 {
     if(!(filter.mGain >= 0.0f && filter.mGainHF >= 0.0f && filter.mGainLF >= 0.0f))
@@ -1402,6 +1456,12 @@ void SourceImpl::setAuxiliarySendFilter(AuxiliaryEffectSlot auxslot, ALuint send
 }
 
 
+void Source::release()
+{
+    SourceImpl *i = pImpl;
+    pImpl = nullptr;
+    i->release();
+}
 void SourceImpl::release()
 {
     stop();
@@ -1411,85 +1471,27 @@ void SourceImpl::release()
 }
 
 
-// Need to use these to avoid extraneous commas in macro parameter lists
-using UInt64NSecPair = std::pair<uint64_t,std::chrono::nanoseconds>;
-using SecondsPair = std::pair<Seconds,Seconds>;
-using ALfloatPair = std::pair<ALfloat,ALfloat>;
-using Vector3Pair = std::pair<Vector3,Vector3>;
-using BoolTriple = std::tuple<bool,bool,bool>;
-
-DECL_THUNK1(void, Source, play,, Buffer)
-DECL_THUNK3(void, Source, play,, SharedPtr<Decoder>, ALuint, ALuint)
-DECL_THUNK1(void, Source, play,, SharedFuture<Buffer>)
-DECL_THUNK0(void, Source, stop,)
-DECL_THUNK2(void, Source, fadeOutToStop,, ALfloat, std::chrono::milliseconds)
-DECL_THUNK0(void, Source, pause,)
-DECL_THUNK0(void, Source, resume,)
-DECL_THUNK0(bool, Source, isPending, const)
-DECL_THUNK0(bool, Source, isPlaying, const)
-DECL_THUNK0(bool, Source, isPaused, const)
-DECL_THUNK1(void, Source, setGroup,, SourceGroup)
 DECL_THUNK0(SourceGroup, Source, getGroup, const)
-DECL_THUNK1(void, Source, setPriority,, ALuint)
 DECL_THUNK0(ALuint, Source, getPriority, const)
-DECL_THUNK1(void, Source, setOffset,, uint64_t)
-DECL_THUNK0(UInt64NSecPair, Source, getSampleOffsetLatency, const)
-DECL_THUNK0(SecondsPair, Source, getSecOffsetLatency, const)
-DECL_THUNK1(void, Source, setLooping,, bool)
 DECL_THUNK0(bool, Source, getLooping, const)
-DECL_THUNK1(void, Source, setPitch,, ALfloat)
 DECL_THUNK0(ALfloat, Source, getPitch, const)
-DECL_THUNK1(void, Source, setGain,, ALfloat)
 DECL_THUNK0(ALfloat, Source, getGain, const)
-DECL_THUNK2(void, Source, setGainRange,, ALfloat, ALfloat)
 DECL_THUNK0(ALfloatPair, Source, getGainRange, const)
-DECL_THUNK2(void, Source, setDistanceRange,, ALfloat, ALfloat)
 DECL_THUNK0(ALfloatPair, Source, getDistanceRange, const)
-DECL_THUNK3(void, Source, set3DParameters,, const Vector3&, const Vector3&, const Vector3&)
-DECL_THUNK3(void, Source, set3DParameters,, const Vector3&, const Vector3&, const Vector3Pair&)
-DECL_THUNK3(void, Source, setPosition,, ALfloat, ALfloat, ALfloat)
-DECL_THUNK1(void, Source, setPosition,, const ALfloat*)
 DECL_THUNK0(Vector3, Source, getPosition, const)
-DECL_THUNK3(void, Source, setVelocity,, ALfloat, ALfloat, ALfloat)
-DECL_THUNK1(void, Source, setVelocity,, const ALfloat*)
 DECL_THUNK0(Vector3, Source, getVelocity, const)
-DECL_THUNK3(void, Source, setDirection,, ALfloat, ALfloat, ALfloat)
-DECL_THUNK1(void, Source, setDirection,, const ALfloat*)
 DECL_THUNK0(Vector3, Source, getDirection, const)
-DECL_THUNK6(void, Source, setOrientation,, ALfloat, ALfloat, ALfloat, ALfloat, ALfloat, ALfloat)
-DECL_THUNK2(void, Source, setOrientation,, const ALfloat*, const ALfloat*)
-DECL_THUNK1(void, Source, setOrientation,, const ALfloat*)
 DECL_THUNK0(Vector3Pair, Source, getOrientation, const)
-DECL_THUNK2(void, Source, setConeAngles,, ALfloat, ALfloat)
 DECL_THUNK0(ALfloatPair, Source, getConeAngles, const)
-DECL_THUNK2(void, Source, setOuterConeGains,, ALfloat, ALfloat)
 DECL_THUNK0(ALfloatPair, Source, getOuterConeGains, const)
-DECL_THUNK2(void, Source, setRolloffFactors,, ALfloat, ALfloat)
 DECL_THUNK0(ALfloatPair, Source, getRolloffFactors, const)
-DECL_THUNK1(void, Source, setDopplerFactor,, ALfloat)
 DECL_THUNK0(ALfloat, Source, getDopplerFactor, const)
-DECL_THUNK1(void, Source, setRelative,, bool)
 DECL_THUNK0(bool, Source, getRelative, const)
-DECL_THUNK1(void, Source, setRadius,, ALfloat)
 DECL_THUNK0(ALfloat, Source, getRadius, const)
-DECL_THUNK2(void, Source, setStereoAngles,, ALfloat, ALfloat)
 DECL_THUNK0(ALfloatPair, Source, getStereoAngles, const)
-DECL_THUNK1(void, Source, set3DSpatialize,, Spatialize)
 DECL_THUNK0(Spatialize, Source, get3DSpatialize, const)
-DECL_THUNK1(void, Source, setResamplerIndex,, ALsizei)
 DECL_THUNK0(ALsizei, Source, getResamplerIndex, const)
-DECL_THUNK1(void, Source, setAirAbsorptionFactor,, ALfloat)
 DECL_THUNK0(ALfloat, Source, getAirAbsorptionFactor, const)
-DECL_THUNK3(void, Source, setGainAuto,, bool, bool, bool)
 DECL_THUNK0(BoolTriple, Source, getGainAuto, const)
-DECL_THUNK1(void, Source, setDirectFilter,, const FilterParams&)
-DECL_THUNK2(void, Source, setSendFilter,, ALuint, const FilterParams&)
-DECL_THUNK2(void, Source, setAuxiliarySend,, AuxiliaryEffectSlot, ALuint)
-DECL_THUNK3(void, Source, setAuxiliarySendFilter,, AuxiliaryEffectSlot, ALuint, const FilterParams&)
-void Source::release()
-{
-    pImpl->release();
-    pImpl = nullptr;
-}
 
 }

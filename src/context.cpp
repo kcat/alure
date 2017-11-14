@@ -302,6 +302,9 @@ alure::UniquePtr<alure::FileIOFactory> sFileFactory;
 namespace alure
 {
 
+using Vector3Pair = std::pair<Vector3,Vector3>;
+
+
 Decoder::~Decoder() { }
 DecoderFactory::~DecoderFactory() { }
 
@@ -625,6 +628,12 @@ ContextImpl::~ContextImpl()
 }
 
 
+void Context::destroy()
+{
+    ContextImpl *i = pImpl;
+    pImpl = nullptr;
+    i->destroy();
+}
 void ContextImpl::destroy()
 {
     if(mRefs != 0)
@@ -648,12 +657,14 @@ void ContextImpl::destroy()
 }
 
 
+DECL_THUNK0(void, Context, startBatch,)
 void ContextImpl::startBatch()
 {
     alcSuspendContext(mContext);
     mIsBatching = true;
 }
 
+DECL_THUNK0(void, Context, endBatch,)
 void ContextImpl::endBatch()
 {
     alcProcessContext(mContext);
@@ -661,6 +672,7 @@ void ContextImpl::endBatch()
 }
 
 
+DECL_THUNK1(SharedPtr<MessageHandler>, Context, setMessageHandler,, SharedPtr<MessageHandler>)
 SharedPtr<MessageHandler> ContextImpl::setMessageHandler(SharedPtr<MessageHandler>&& handler)
 {
     std::lock_guard<std::mutex> lock(mGlobalCtxMutex);
@@ -669,6 +681,7 @@ SharedPtr<MessageHandler> ContextImpl::setMessageHandler(SharedPtr<MessageHandle
 }
 
 
+DECL_THUNK1(void, Context, setAsyncWakeInterval,, std::chrono::milliseconds)
 void ContextImpl::setAsyncWakeInterval(std::chrono::milliseconds interval)
 {
     if(interval.count() < 0 || interval > std::chrono::seconds(1))
@@ -700,6 +713,7 @@ DecoderOrExceptT ContextImpl::findDecoder(StringView name)
     return (ret = GetDecoder(oldname, std::move(file)));
 }
 
+DECL_THUNK1(SharedPtr<Decoder>, Context, createDecoder,, StringView)
 SharedPtr<Decoder> ContextImpl::createDecoder(StringView name)
 {
     CheckContext(this);
@@ -710,6 +724,7 @@ SharedPtr<Decoder> ContextImpl::createDecoder(StringView name)
 }
 
 
+DECL_THUNK2(bool, Context, isSupported, const, ChannelConfig, SampleType)
 bool ContextImpl::isSupported(ChannelConfig channels, SampleType type) const
 {
     CheckContext(this);
@@ -717,6 +732,7 @@ bool ContextImpl::isSupported(ChannelConfig channels, SampleType type) const
 }
 
 
+DECL_THUNK0(ArrayView<String>, Context, getAvailableResamplers,)
 ArrayView<String> ContextImpl::getAvailableResamplers()
 {
     CheckContext(this);
@@ -732,6 +748,7 @@ ArrayView<String> ContextImpl::getAvailableResamplers()
     return mResamplers;
 }
 
+DECL_THUNK0(ALsizei, Context, getDefaultResamplerIndex, const)
 ALsizei ContextImpl::getDefaultResamplerIndex() const
 {
     CheckContext(this);
@@ -844,6 +861,7 @@ BufferOrExceptT ContextImpl::doCreateBufferAsync(StringView name, Vector<UniqueP
     return (retval = mBuffers.insert(iter, std::move(buffer))->get());
 }
 
+DECL_THUNK1(Buffer, Context, getBuffer,, StringView)
 Buffer ContextImpl::getBuffer(StringView name)
 {
     CheckContext(this);
@@ -890,6 +908,7 @@ Buffer ContextImpl::getBuffer(StringView name)
     return *buffer;
 }
 
+DECL_THUNK1(SharedFuture<Buffer>, Context, getBufferAsync,, StringView)
 SharedFuture<Buffer> ContextImpl::getBufferAsync(StringView name)
 {
     SharedFuture<Buffer> future;
@@ -955,6 +974,7 @@ SharedFuture<Buffer> ContextImpl::getBufferAsync(StringView name)
     return future;
 }
 
+DECL_THUNK1(void, Context, precacheBuffersAsync,, ArrayView<StringView>)
 void ContextImpl::precacheBuffersAsync(ArrayView<StringView> names)
 {
     CheckContext(this);
@@ -1004,6 +1024,7 @@ void ContextImpl::precacheBuffersAsync(ArrayView<StringView> names)
     mWakeThread.notify_all();
 }
 
+DECL_THUNK2(Buffer, Context, createBufferFrom,, StringView, SharedPtr<Decoder>)
 Buffer ContextImpl::createBufferFrom(StringView name, SharedPtr<Decoder>&& decoder)
 {
     CheckContext(this);
@@ -1023,6 +1044,7 @@ Buffer ContextImpl::createBufferFrom(StringView name, SharedPtr<Decoder>&& decod
     return *buffer;
 }
 
+DECL_THUNK2(SharedFuture<Buffer>, Context, createBufferAsyncFrom,, StringView, SharedPtr<Decoder>)
 SharedFuture<Buffer> ContextImpl::createBufferAsyncFrom(StringView name, SharedPtr<Decoder>&& decoder)
 {
     SharedFuture<Buffer> future;
@@ -1068,6 +1090,7 @@ SharedFuture<Buffer> ContextImpl::createBufferAsyncFrom(StringView name, SharedP
 }
 
 
+DECL_THUNK1(Buffer, Context, findBuffer,, StringView)
 Buffer ContextImpl::findBuffer(StringView name)
 {
     Buffer buffer;
@@ -1108,6 +1131,7 @@ Buffer ContextImpl::findBuffer(StringView name)
     return buffer;
 }
 
+DECL_THUNK1(SharedFuture<Buffer>, Context, findBufferAsync,, StringView)
 SharedFuture<Buffer> ContextImpl::findBufferAsync(StringView name)
 {
     SharedFuture<Buffer> future;
@@ -1155,6 +1179,8 @@ SharedFuture<Buffer> ContextImpl::findBufferAsync(StringView name)
 }
 
 
+DECL_THUNK1(void, Context, removeBuffer,, Buffer)
+DECL_THUNK1(void, Context, removeBuffer,, StringView)
 void ContextImpl::removeBuffer(StringView name)
 {
     CheckContext(this);
@@ -1242,6 +1268,7 @@ ALuint ContextImpl::getSourceId(ALuint maxprio)
 }
 
 
+DECL_THUNK0(Source, Context, createSource,)
 Source ContextImpl::createSource()
 {
     CheckContext(this);
@@ -1376,6 +1403,7 @@ void ContextImpl::removeStreamNoLock(SourceImpl *source)
 }
 
 
+DECL_THUNK0(AuxiliaryEffectSlot, Context, createAuxiliaryEffectSlot,)
 AuxiliaryEffectSlot ContextImpl::createAuxiliaryEffectSlot()
 {
     if(!hasExtension(AL::EXT_EFX) || !alGenAuxiliaryEffectSlots)
@@ -1397,6 +1425,7 @@ AuxiliaryEffectSlot ContextImpl::createAuxiliaryEffectSlot()
 }
 
 
+DECL_THUNK0(Effect, Context, createEffect,)
 Effect ContextImpl::createEffect()
 {
     if(!hasExtension(AL::EXT_EFX))
@@ -1418,6 +1447,7 @@ Effect ContextImpl::createEffect()
 }
 
 
+DECL_THUNK1(SourceGroup, Context, createSourceGroup,, StringView)
 SourceGroup ContextImpl::createSourceGroup(StringView name)
 {
     auto hasher = std::hash<StringView>();
@@ -1431,6 +1461,7 @@ SourceGroup ContextImpl::createSourceGroup(StringView name)
     return SourceGroup(iter->get());
 }
 
+DECL_THUNK1(SourceGroup, Context, getSourceGroup,, StringView)
 SourceGroup ContextImpl::getSourceGroup(StringView name)
 {
     auto hasher = std::hash<StringView>();
@@ -1455,6 +1486,7 @@ void ContextImpl::freeSourceGroup(SourceGroupImpl *group)
 }
 
 
+DECL_THUNK1(void, Context, setDopplerFactor,, ALfloat)
 void ContextImpl::setDopplerFactor(ALfloat factor)
 {
     if(!(factor >= 0.0f))
@@ -1464,6 +1496,7 @@ void ContextImpl::setDopplerFactor(ALfloat factor)
 }
 
 
+DECL_THUNK1(void, Context, setSpeedOfSound,, ALfloat)
 void ContextImpl::setSpeedOfSound(ALfloat speed)
 {
     if(!(speed > 0.0f))
@@ -1473,6 +1506,7 @@ void ContextImpl::setSpeedOfSound(ALfloat speed)
 }
 
 
+DECL_THUNK1(void, Context, setDistanceModel,, DistanceModel)
 void ContextImpl::setDistanceModel(DistanceModel model)
 {
     CheckContext(this);
@@ -1480,6 +1514,7 @@ void ContextImpl::setDistanceModel(DistanceModel model)
 }
 
 
+DECL_THUNK0(void, Context, update,)
 void ContextImpl::update()
 {
     CheckContext(this);
@@ -1529,42 +1564,10 @@ void ContextImpl::update()
     }
 }
 
-void Context::destroy()
-{
-    pImpl->destroy();
-    pImpl = nullptr;
-}
 DECL_THUNK0(Device, Context, getDevice,)
-DECL_THUNK0(void, Context, startBatch,)
-DECL_THUNK0(void, Context, endBatch,)
-DECL_THUNK0(Listener, Context, getListener,)
-DECL_THUNK1(SharedPtr<MessageHandler>, Context, setMessageHandler,, SharedPtr<MessageHandler>)
-DECL_THUNK0(SharedPtr<MessageHandler>, Context, getMessageHandler, const)
-DECL_THUNK1(void, Context, setAsyncWakeInterval,, std::chrono::milliseconds)
 DECL_THUNK0(std::chrono::milliseconds, Context, getAsyncWakeInterval, const)
-DECL_THUNK1(SharedPtr<Decoder>, Context, createDecoder,, StringView)
-DECL_THUNK2(bool, Context, isSupported, const, ChannelConfig, SampleType)
-DECL_THUNK0(ArrayView<String>, Context, getAvailableResamplers,)
-DECL_THUNK0(ALsizei, Context, getDefaultResamplerIndex, const)
-DECL_THUNK1(Buffer, Context, getBuffer,, StringView)
-DECL_THUNK1(SharedFuture<Buffer>, Context, getBufferAsync,, StringView)
-DECL_THUNK1(void, Context, precacheBuffersAsync,, ArrayView<StringView>)
-DECL_THUNK2(Buffer, Context, createBufferFrom,, StringView, SharedPtr<Decoder>)
-DECL_THUNK2(SharedFuture<Buffer>, Context, createBufferAsyncFrom,, StringView, SharedPtr<Decoder>)
-DECL_THUNK1(Buffer, Context, findBuffer,, StringView)
-DECL_THUNK1(SharedFuture<Buffer>, Context, findBufferAsync,, StringView)
-DECL_THUNK1(void, Context, removeBuffer,, StringView)
-DECL_THUNK1(void, Context, removeBuffer,, Buffer)
-DECL_THUNK0(Source, Context, createSource,)
-DECL_THUNK0(AuxiliaryEffectSlot, Context, createAuxiliaryEffectSlot,)
-DECL_THUNK0(Effect, Context, createEffect,)
-DECL_THUNK1(SourceGroup, Context, createSourceGroup,, StringView)
-DECL_THUNK1(SourceGroup, Context, getSourceGroup,, StringView)
-DECL_THUNK1(void, Context, setDopplerFactor,, ALfloat)
-DECL_THUNK1(void, Context, setSpeedOfSound,, ALfloat)
-DECL_THUNK1(void, Context, setDistanceModel,, DistanceModel)
-DECL_THUNK0(void, Context, update,)
-
+DECL_THUNK0(Listener, Context, getListener,)
+DECL_THUNK0(SharedPtr<MessageHandler>, Context, getMessageHandler, const)
 
 void Context::MakeCurrent(Context context)
 { ContextImpl::MakeCurrent(context.pImpl); }
@@ -1579,6 +1582,7 @@ Context Context::GetThreadCurrent()
 { return Context(ContextImpl::GetThreadCurrent()); }
 
 
+DECL_THUNK1(void, Listener, setGain,, ALfloat)
 void ListenerImpl::setGain(ALfloat gain)
 {
     if(!(gain >= 0.0f))
@@ -1588,6 +1592,7 @@ void ListenerImpl::setGain(ALfloat gain)
 }
 
 
+DECL_THUNK3(void, Listener, set3DParameters,, const Vector3&, const Vector3&, const Vector3Pair&)
 void ListenerImpl::set3DParameters(const Vector3 &position, const Vector3 &velocity, const std::pair<Vector3,Vector3> &orientation)
 {
     static_assert(sizeof(orientation) == sizeof(ALfloat[6]), "Invalid Vector3 pair size");
@@ -1598,30 +1603,35 @@ void ListenerImpl::set3DParameters(const Vector3 &position, const Vector3 &veloc
     alListenerfv(AL_ORIENTATION, orientation.first.getPtr());
 }
 
+DECL_THUNK3(void, Listener, setPosition,, ALfloat, ALfloat, ALfloat)
 void ListenerImpl::setPosition(ALfloat x, ALfloat y, ALfloat z)
 {
     CheckContext(mContext);
     alListener3f(AL_POSITION, x, y, z);
 }
 
+DECL_THUNK1(void, Listener, setPosition,, const ALfloat*)
 void ListenerImpl::setPosition(const ALfloat *pos)
 {
     CheckContext(mContext);
     alListenerfv(AL_POSITION, pos);
 }
 
+DECL_THUNK3(void, Listener, setVelocity,, ALfloat, ALfloat, ALfloat)
 void ListenerImpl::setVelocity(ALfloat x, ALfloat y, ALfloat z)
 {
     CheckContext(mContext);
     alListener3f(AL_VELOCITY, x, y, z);
 }
 
+DECL_THUNK1(void, Listener, setVelocity,, const ALfloat*)
 void ListenerImpl::setVelocity(const ALfloat *vel)
 {
     CheckContext(mContext);
     alListenerfv(AL_VELOCITY, vel);
 }
 
+DECL_THUNK6(void, Listener, setOrientation,, ALfloat, ALfloat, ALfloat, ALfloat, ALfloat, ALfloat)
 void ListenerImpl::setOrientation(ALfloat x1, ALfloat y1, ALfloat z1, ALfloat x2, ALfloat y2, ALfloat z2)
 {
     CheckContext(mContext);
@@ -1629,6 +1639,7 @@ void ListenerImpl::setOrientation(ALfloat x1, ALfloat y1, ALfloat z1, ALfloat x2
     alListenerfv(AL_ORIENTATION, ori);
 }
 
+DECL_THUNK2(void, Listener, setOrientation,, const ALfloat*, const ALfloat*)
 void ListenerImpl::setOrientation(const ALfloat *at, const ALfloat *up)
 {
     CheckContext(mContext);
@@ -1636,12 +1647,14 @@ void ListenerImpl::setOrientation(const ALfloat *at, const ALfloat *up)
     alListenerfv(AL_ORIENTATION, ori);
 }
 
+DECL_THUNK1(void, Listener, setOrientation,, const ALfloat*)
 void ListenerImpl::setOrientation(const ALfloat *ori)
 {
     CheckContext(mContext);
     alListenerfv(AL_ORIENTATION, ori);
 }
 
+DECL_THUNK1(void, Listener, setMetersPerUnit,, ALfloat)
 void ListenerImpl::setMetersPerUnit(ALfloat m_u)
 {
     if(!(m_u > 0.0f))
@@ -1650,19 +1663,5 @@ void ListenerImpl::setMetersPerUnit(ALfloat m_u)
     if(mContext->hasExtension(AL::EXT_EFX))
         alListenerf(AL_METERS_PER_UNIT, m_u);
 }
-
-
-using Vector3Pair = std::pair<Vector3,Vector3>;
-
-DECL_THUNK1(void, Listener, setGain,, ALfloat)
-DECL_THUNK3(void, Listener, set3DParameters,, const Vector3&, const Vector3&, const Vector3Pair&)
-DECL_THUNK3(void, Listener, setPosition,, ALfloat, ALfloat, ALfloat)
-DECL_THUNK1(void, Listener, setPosition,, const ALfloat*)
-DECL_THUNK3(void, Listener, setVelocity,, ALfloat, ALfloat, ALfloat)
-DECL_THUNK1(void, Listener, setVelocity,, const ALfloat*)
-DECL_THUNK6(void, Listener, setOrientation,, ALfloat, ALfloat, ALfloat, ALfloat, ALfloat, ALfloat)
-DECL_THUNK2(void, Listener, setOrientation,, const ALfloat*, const ALfloat*)
-DECL_THUNK1(void, Listener, setOrientation,, const ALfloat*)
-DECL_THUNK1(void, Listener, setMetersPerUnit,, ALfloat)
 
 }

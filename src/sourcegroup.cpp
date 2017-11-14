@@ -72,6 +72,7 @@ void SourceGroupImpl::eraseSource(SourceImpl *source)
 }
 
 
+DECL_THUNK1(void, SourceGroup, setParentGroup,, SourceGroup)
 void SourceGroupImpl::setParentGroup(SourceGroup group)
 {
     CheckContext(mContext);
@@ -100,6 +101,7 @@ void SourceGroupImpl::setParentGroup(SourceGroup group)
 }
 
 
+DECL_THUNK0(Vector<Source>, SourceGroup, getSources, const)
 Vector<Source> SourceGroupImpl::getSources() const
 {
     Vector<Source> ret;
@@ -109,6 +111,7 @@ Vector<Source> SourceGroupImpl::getSources() const
     return ret;
 }
 
+DECL_THUNK0(Vector<SourceGroup>, SourceGroup, getSubGroups, const)
 Vector<SourceGroup> SourceGroupImpl::getSubGroups() const
 {
     Vector<SourceGroup> ret;
@@ -119,6 +122,7 @@ Vector<SourceGroup> SourceGroupImpl::getSubGroups() const
 }
 
 
+DECL_THUNK1(void, SourceGroup, setGain,, ALfloat)
 void SourceGroupImpl::setGain(ALfloat gain)
 {
     if(!(gain >= 0.0f))
@@ -134,6 +138,7 @@ void SourceGroupImpl::setGain(ALfloat gain)
         group->update(gain, pitch);
 }
 
+DECL_THUNK1(void, SourceGroup, setPitch,, ALfloat)
 void SourceGroupImpl::setPitch(ALfloat pitch)
 {
     if(!(pitch > 0.0f))
@@ -169,6 +174,7 @@ void SourceGroupImpl::updatePausedStatus() const
         group->updatePausedStatus();
 }
 
+DECL_THUNK0(void, SourceGroup, pauseAll, const)
 void SourceGroupImpl::pauseAll() const
 {
     CheckContext(mContext);
@@ -205,6 +211,7 @@ void SourceGroupImpl::updatePlayingStatus() const
         group->updatePlayingStatus();
 }
 
+DECL_THUNK0(void, SourceGroup, resumeAll, const)
 void SourceGroupImpl::resumeAll() const
 {
     CheckContext(mContext);
@@ -247,6 +254,7 @@ void SourceGroupImpl::updateStoppedStatus() const
         group->updateStoppedStatus();
 }
 
+DECL_THUNK0(void, SourceGroup, stopAll, const)
 void SourceGroupImpl::stopAll() const
 {
     CheckContext(mContext);
@@ -263,6 +271,12 @@ void SourceGroupImpl::stopAll() const
 }
 
 
+void SourceGroup::release()
+{
+    SourceGroupImpl *i = pImpl;
+    pImpl = nullptr;
+    i->release();
+}
 void SourceGroupImpl::release()
 {
     CheckContext(mContext);
@@ -282,21 +296,8 @@ void SourceGroupImpl::release()
 
 
 DECL_THUNK0(StringView, SourceGroup, getName, const)
-DECL_THUNK1(void, SourceGroup, setParentGroup,, SourceGroup)
 DECL_THUNK0(SourceGroup, SourceGroup, getParentGroup, const)
-DECL_THUNK0(Vector<Source>, SourceGroup, getSources, const)
-DECL_THUNK0(Vector<SourceGroup>, SourceGroup, getSubGroups, const)
-DECL_THUNK1(void, SourceGroup, setGain,, ALfloat)
 DECL_THUNK0(ALfloat, SourceGroup, getGain, const)
-DECL_THUNK1(void, SourceGroup, setPitch,, ALfloat)
 DECL_THUNK0(ALfloat, SourceGroup, getPitch, const)
-DECL_THUNK0(void, SourceGroup, pauseAll, const)
-DECL_THUNK0(void, SourceGroup, resumeAll, const)
-DECL_THUNK0(void, SourceGroup, stopAll, const)
-void SourceGroup::release()
-{
-    pImpl->release();
-    pImpl = nullptr;
-}
 
 } // namespace alure

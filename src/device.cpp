@@ -82,6 +82,7 @@ void DeviceImpl::removeContext(ContextImpl *ctx)
 }
 
 
+DECL_THUNK1(String, Device, getName, const, PlaybackName)
 String DeviceImpl::getName(PlaybackName type) const
 {
     if(type == PlaybackName::Full && !hasExtension(ALC::ENUMERATE_ALL_EXT))
@@ -93,11 +94,15 @@ String DeviceImpl::getName(PlaybackName type) const
     return name ? String(name) : String();
 }
 
+bool Device::queryExtension(const String &name) const
+{ return pImpl->queryExtension(name.c_str()); }
+DECL_THUNK1(bool, Device, queryExtension, const, const char*)
 bool DeviceImpl::queryExtension(const char *name) const
 {
     return alcIsExtensionPresent(mDevice, name);
 }
 
+DECL_THUNK0(Version, Device, getALCVersion, const)
 Version DeviceImpl::getALCVersion() const
 {
     ALCint major=-1, minor=-1;
@@ -108,6 +113,7 @@ Version DeviceImpl::getALCVersion() const
     return Version{ (ALCuint)major, (ALCuint)minor };
 }
 
+DECL_THUNK0(Version, Device, getEFXVersion, const)
 Version DeviceImpl::getEFXVersion() const
 {
     if(!hasExtension(ALC::EXT_EFX))
@@ -121,6 +127,7 @@ Version DeviceImpl::getEFXVersion() const
     return Version{ (ALCuint)major, (ALCuint)minor };
 }
 
+DECL_THUNK0(ALCuint, Device, getFrequency, const)
 ALCuint DeviceImpl::getFrequency() const
 {
     ALCint freq = -1;
@@ -130,6 +137,7 @@ ALCuint DeviceImpl::getFrequency() const
     return freq;
 }
 
+DECL_THUNK0(ALCuint, Device, getMaxAuxiliarySends, const)
 ALCuint DeviceImpl::getMaxAuxiliarySends() const
 {
     if(!hasExtension(ALC::EXT_EFX))
@@ -143,6 +151,7 @@ ALCuint DeviceImpl::getMaxAuxiliarySends() const
 }
 
 
+DECL_THUNK0(Vector<String>, Device, enumerateHRTFNames, const)
 Vector<String> DeviceImpl::enumerateHRTFNames() const
 {
     if(!hasExtension(ALC::SOFT_HRTF))
@@ -160,6 +169,7 @@ Vector<String> DeviceImpl::enumerateHRTFNames() const
     return hrtfs;
 }
 
+DECL_THUNK0(bool, Device, isHRTFEnabled, const)
 bool DeviceImpl::isHRTFEnabled() const
 {
     if(!hasExtension(ALC::SOFT_HRTF))
@@ -172,6 +182,7 @@ bool DeviceImpl::isHRTFEnabled() const
     return hrtf_state != ALC_FALSE;
 }
 
+DECL_THUNK0(String, Device, getCurrentHRTF, const)
 String DeviceImpl::getCurrentHRTF() const
 {
     if(!hasExtension(ALC::SOFT_HRTF))
@@ -179,6 +190,7 @@ String DeviceImpl::getCurrentHRTF() const
     return String(alcGetString(mDevice, ALC_HRTF_SPECIFIER_SOFT));
 }
 
+DECL_THUNK1(void, Device, reset,, ArrayView<AttributePair>)
 void DeviceImpl::reset(ArrayView<AttributePair> attributes)
 {
     if(!hasExtension(ALC::SOFT_HRTF))
@@ -212,6 +224,12 @@ void DeviceImpl::reset(ArrayView<AttributePair> attributes)
 }
 
 
+Context Device::createContext(ArrayView<AttributePair> attrs)
+{ return pImpl->createContext(attrs, true); }
+Context Device::createContext(ArrayView<AttributePair> attrs, const std::nothrow_t&)
+{ return pImpl->createContext(attrs, false); }
+Context Device::createContext(const std::nothrow_t&)
+{ return pImpl->createContext(ArrayView<AttributePair>(), false); }
 Context DeviceImpl::createContext(ArrayView<AttributePair> attributes, bool dothrow)
 {
     ALCcontext *ctx = [this, &attributes]() -> ALCcontext*
@@ -250,6 +268,7 @@ Context DeviceImpl::createContext(ArrayView<AttributePair> attributes, bool doth
 }
 
 
+DECL_THUNK0(void, Device, pauseDSP,)
 void DeviceImpl::pauseDSP()
 {
     if(!hasExtension(ALC::SOFT_device_pause))
@@ -257,6 +276,7 @@ void DeviceImpl::pauseDSP()
     alcDevicePauseSOFT(mDevice);
 }
 
+DECL_THUNK0(void, Device, resumeDSP,)
 void DeviceImpl::resumeDSP()
 {
     if(hasExtension(ALC::SOFT_device_pause))
@@ -264,6 +284,12 @@ void DeviceImpl::resumeDSP()
 }
 
 
+void Device::close()
+{
+    DeviceImpl *i = pImpl;
+    pImpl = nullptr;
+    i->close();
+}
 void DeviceImpl::close()
 {
     if(!mContexts.empty())
@@ -274,33 +300,6 @@ void DeviceImpl::close()
     mDevice = 0;
 
     DeviceManagerImpl::get().removeDevice(this);
-}
-
-
-DECL_THUNK1(String, Device, getName, const, PlaybackName)
-DECL_THUNK1(bool, Device, queryExtension, const, const char*)
-bool Device::queryExtension(const String &name) const
-{ return pImpl->queryExtension(name.c_str()); }
-DECL_THUNK0(Version, Device, getALCVersion, const)
-DECL_THUNK0(Version, Device, getEFXVersion, const)
-DECL_THUNK0(ALCuint, Device, getFrequency, const)
-DECL_THUNK0(ALCuint, Device, getMaxAuxiliarySends, const)
-DECL_THUNK0(Vector<String>, Device, enumerateHRTFNames, const)
-DECL_THUNK0(bool, Device, isHRTFEnabled, const)
-DECL_THUNK0(String, Device, getCurrentHRTF, const)
-DECL_THUNK1(void, Device, reset,, ArrayView<AttributePair>)
-Context Device::createContext(ArrayView<AttributePair> attrs)
-{ return pImpl->createContext(attrs, true); }
-Context Device::createContext(ArrayView<AttributePair> attrs, const std::nothrow_t&)
-{ return pImpl->createContext(attrs, false); }
-Context Device::createContext(const std::nothrow_t&)
-{ return pImpl->createContext(ArrayView<AttributePair>(), false); }
-DECL_THUNK0(void, Device, pauseDSP,)
-DECL_THUNK0(void, Device, resumeDSP,)
-void Device::close()
-{
-    pImpl->close();
-    pImpl = nullptr;
 }
 
 }

@@ -14,6 +14,7 @@ template<typename T>
 static inline T clamp(const T& val, const T& min, const T& max)
 { return std::min<T>(std::max<T>(val, min), max); }
 
+DECL_THUNK1(void, Effect, setReverbProperties,, const EFXEAXREVERBPROPERTIES&)
 void EffectImpl::setReverbProperties(const EFXEAXREVERBPROPERTIES &props)
 {
     CheckContext(mContext);
@@ -81,6 +82,12 @@ void EffectImpl::setReverbProperties(const EFXEAXREVERBPROPERTIES &props)
     }
 }
 
+void Effect::destroy()
+{
+    EffectImpl *i = pImpl;
+    pImpl = nullptr;
+    i->destroy();
+}
 void EffectImpl::destroy()
 {
     CheckContext(mContext);
@@ -92,13 +99,6 @@ void EffectImpl::destroy()
     mId = 0;
 
     delete this;
-}
-
-DECL_THUNK1(void, Effect, setReverbProperties,, const EFXEAXREVERBPROPERTIES&)
-void Effect::destroy()
-{
-    pImpl->destroy();
-    pImpl = nullptr;
 }
 
 }

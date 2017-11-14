@@ -33,6 +33,7 @@ void AuxiliaryEffectSlotImpl::removeSourceSend(SourceSend source_send)
 }
 
 
+DECL_THUNK1(void, AuxiliaryEffectSlot, setGain,, ALfloat)
 void AuxiliaryEffectSlotImpl::setGain(ALfloat gain)
 {
     if(!(gain >= 0.0f && gain <= 1.0f))
@@ -41,12 +42,14 @@ void AuxiliaryEffectSlotImpl::setGain(ALfloat gain)
     mContext->alAuxiliaryEffectSlotf(mId, AL_EFFECTSLOT_GAIN, gain);
 }
 
+DECL_THUNK1(void, AuxiliaryEffectSlot, setSendAuto,, bool)
 void AuxiliaryEffectSlotImpl::setSendAuto(bool sendauto)
 {
     CheckContext(mContext);
     mContext->alAuxiliaryEffectSloti(mId, AL_EFFECTSLOT_AUXILIARY_SEND_AUTO, sendauto ? AL_TRUE : AL_FALSE);
 }
 
+DECL_THUNK1(void, AuxiliaryEffectSlot, applyEffect,, Effect)
 void AuxiliaryEffectSlotImpl::applyEffect(Effect effect)
 {
     const EffectImpl *eff = effect.getHandle();
@@ -59,6 +62,12 @@ void AuxiliaryEffectSlotImpl::applyEffect(Effect effect)
 }
 
 
+void AuxiliaryEffectSlot::release()
+{
+    AuxiliaryEffectSlotImpl *i = pImpl;
+    pImpl = nullptr;
+    i->release();
+}
 void AuxiliaryEffectSlotImpl::release()
 {
     CheckContext(mContext);
@@ -74,15 +83,6 @@ void AuxiliaryEffectSlotImpl::release()
     delete this;
 }
 
-
-DECL_THUNK1(void, AuxiliaryEffectSlot, setGain,, ALfloat)
-DECL_THUNK1(void, AuxiliaryEffectSlot, setSendAuto,, bool)
-DECL_THUNK1(void, AuxiliaryEffectSlot, applyEffect,, Effect)
-void AuxiliaryEffectSlot::release()
-{
-    pImpl->release();
-    pImpl = nullptr;
-}
 DECL_THUNK0(Vector<SourceSend>, AuxiliaryEffectSlot, getSourceSends, const)
 DECL_THUNK0(bool, AuxiliaryEffectSlot, isInUse, const)
 

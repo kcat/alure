@@ -12,6 +12,9 @@
 namespace alure
 {
 
+using ALuintPair = std::pair<ALuint,ALuint>;
+
+
 void BufferImpl::cleanup()
 {
     if(isInUse())
@@ -65,6 +68,7 @@ void BufferImpl::load(ALuint frames, ALenum format, SharedPtr<Decoder> decoder, 
 }
 
 
+DECL_THUNK0(ALuint, Buffer, getLength, const)
 ALuint BufferImpl::getLength() const
 {
     CheckContext(mContext);
@@ -78,6 +82,7 @@ ALuint BufferImpl::getLength() const
     return size / chans * 8 / bits;
 }
 
+DECL_THUNK0(ALuint, Buffer, getSize, const)
 ALuint BufferImpl::getSize() const
 {
     CheckContext(mContext);
@@ -89,6 +94,7 @@ ALuint BufferImpl::getSize() const
     return size;
 }
 
+DECL_THUNK2(void, Buffer, setLoopPoints,, ALuint, ALuint)
 void BufferImpl::setLoopPoints(ALuint start, ALuint end)
 {
     ALuint length = getLength();
@@ -113,6 +119,7 @@ void BufferImpl::setLoopPoints(ALuint start, ALuint end)
         throw std::runtime_error("Failed to set loop points");
 }
 
+DECL_THUNK0(ALuintPair, Buffer, getLoopPoints, const)
 std::pair<ALuint,ALuint> BufferImpl::getLoopPoints() const
 {
     CheckContext(mContext);
@@ -128,15 +135,9 @@ std::pair<ALuint,ALuint> BufferImpl::getLoopPoints() const
     return std::make_pair(pts[0], pts[1]);
 }
 
-
-using ALuintPair = std::pair<ALuint,ALuint>;
-DECL_THUNK0(ALuint, Buffer, getLength, const)
 DECL_THUNK0(ALuint, Buffer, getFrequency, const)
 DECL_THUNK0(ChannelConfig, Buffer, getChannelConfig, const)
 DECL_THUNK0(SampleType, Buffer, getSampleType, const)
-DECL_THUNK0(ALuint, Buffer, getSize, const)
-DECL_THUNK2(void, Buffer, setLoopPoints,, ALuint, ALuint)
-DECL_THUNK0(ALuintPair, Buffer, getLoopPoints, const)
 DECL_THUNK0(Vector<Source>, Buffer, getSources, const)
 DECL_THUNK0(StringView, Buffer, getName, const)
 DECL_THUNK0(bool, Buffer, isInUse, const)
@@ -170,7 +171,6 @@ ALURE_API const char *GetChannelConfigName(ChannelConfig cfg)
     }
     throw std::runtime_error("Invalid config");
 }
-
 
 ALURE_API ALuint FramesToBytes(ALuint frames, ChannelConfig chans, SampleType type)
 {
