@@ -14,6 +14,7 @@
 #include <memory>
 #include <future>
 #include <chrono>
+#include <array>
 
 namespace alure {
 
