@@ -293,9 +293,6 @@ using StringView = BasicStringView<String::value_type>;
 
 // Inline operators to concat String and C-style strings with StringViews.
 template<typename T, typename Tr>
-inline BasicString<T,Tr> operator+(const BasicString<T,Tr> &lhs, BasicStringView<T,Tr> rhs)
-{ return BasicString<T,Tr>(lhs).append(rhs.data(), rhs.size()); }
-template<typename T, typename Tr>
 inline BasicString<T,Tr> operator+(BasicString<T,Tr> lhs, BasicStringView<T,Tr> rhs)
 { return std::move(lhs.append(rhs.data(), rhs.size())); }
 template<typename T, typename Tr>
