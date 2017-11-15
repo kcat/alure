@@ -195,13 +195,11 @@ void DeviceImpl::reset(ArrayView<AttributePair> attributes)
 {
     if(!hasExtension(ALC::SOFT_HRTF))
         throw std::runtime_error("ALC_SOFT_HRTF not supported");
-    auto do_reset = [this, &attributes]() -> ALCboolean
+    bool success = false;
+    if(attributes.end()) /* No explicit attributes. */
+        success = alcResetDeviceSOFT(mDevice, nullptr);
+    else
     {
-        if(attributes.empty())
-        {
-            /* No explicit attributes. */
-            return alcResetDeviceSOFT(mDevice, nullptr);
-        }
         auto attr_end = std::find_if(attributes.begin(), attributes.end(),
             [](const AttributePair &attr) -> bool
             { return std::get<0>(attr) == 0; }
@@ -215,11 +213,12 @@ void DeviceImpl::reset(ArrayView<AttributePair> attributes)
             attrs.reserve(attributes.size() + 1);
             std::copy(attributes.begin(), attributes.end(), std::back_inserter(attrs));
             attrs.push_back(AttributesEnd());
-            return alcResetDeviceSOFT(mDevice, &std::get<0>(attrs.front()));
+            success = alcResetDeviceSOFT(mDevice, &std::get<0>(attrs.front()));
         }
-        return alcResetDeviceSOFT(mDevice, &std::get<0>(attributes.front()));
+        else
+            success = alcResetDeviceSOFT(mDevice, &std::get<0>(attributes.front()));
     };
-    if(!do_reset())
+    if(!success)
         throw std::runtime_error("Device reset error");
 }
 
@@ -232,13 +231,11 @@ Context Device::createContext(const std::nothrow_t&)
 { return pImpl->createContext(ArrayView<AttributePair>(), false); }
 Context DeviceImpl::createContext(ArrayView<AttributePair> attributes, bool dothrow)
 {
-    ALCcontext *ctx = [this, &attributes]() -> ALCcontext*
+    ALCcontext *ctx = nullptr;
+    if(attributes.empty()) /* No explicit attributes. */
+        ctx = alcCreateContext(mDevice, nullptr);
+    else
     {
-        if(attributes.empty())
-        {
-            /* No explicit attributes. */
-            return alcCreateContext(mDevice, nullptr);
-        }
         auto attr_end = std::find_if(attributes.begin(), attributes.end(),
             [](const AttributePair &attr) -> bool
             { return std::get<0>(attr) == 0; }
@@ -252,10 +249,11 @@ Context DeviceImpl::createContext(ArrayView<AttributePair> attributes, bool doth
             attrs.reserve(attributes.size() + 1);
             std::copy(attributes.begin(), attributes.end(), std::back_inserter(attrs));
             attrs.push_back(AttributesEnd());
-            return alcCreateContext(mDevice, &std::get<0>(attrs.front()));
+            ctx = alcCreateContext(mDevice, &std::get<0>(attrs.front()));
         }
-        return alcCreateContext(mDevice, &std::get<0>(attributes.front()));
-    }();
+        else
+            ctx = alcCreateContext(mDevice, &std::get<0>(attributes.front()));
+    }
     if(!ctx)
     {
         if(dothrow)
