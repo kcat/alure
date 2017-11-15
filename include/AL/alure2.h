@@ -98,23 +98,32 @@ using Seconds = std::chrono::duration<double>;
 // changed, you must recompile the library.
 template<typename... Args> using SharedPtr = std::shared_ptr<Args...>;
 template<typename T, typename... Args>
-constexpr inline SharedPtr<T> MakeShared(Args&&... args)
-{
-    return std::make_shared<T>(std::forward<Args>(args)...);
-}
+inline SharedPtr<T> MakeShared(Args&&... args)
+{ return std::make_shared<T>(std::forward<Args>(args)...); }
 
 // A UniquePtr implementation, defaults to C++11's std::unique_ptr. If this is
 // changed, you must recompile the library.
 template<typename... Args> using UniquePtr = std::unique_ptr<Args...>;
+// Implement MakeUnique for single objects and arrays.
+namespace _details {
+    template<typename T>
+    struct MakeUniq { using object = UniquePtr<T>; };
+    template<typename T>
+    struct MakeUniq<T[]> { using array = UniquePtr<T[]>; };
+    template<typename T, std::size_t N>
+    struct MakeUniq<T[N]> { struct invalid_type { }; };
+} // namespace _details
+// MakeUnique for a single object.
 template<typename T, typename... Args>
-constexpr inline UniquePtr<T> MakeUnique(Args&&... args)
-{
-#if __cplusplus >= 201402L
-    return std::make_unique<T>(std::forward<Args>(args)...);
-#else
-    return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
-#endif
-}
+inline typename _details::MakeUniq<T>::object MakeUnique(Args&&... args)
+{ return UniquePtr<T>(new T(std::forward<Args>(args)...)); }
+// MakeUnique for an array.
+template<typename T>
+inline typename _details::MakeUniq<T>::array MakeUnique(std::size_t num)
+{ return UniquePtr<T>(new typename std::remove_extent<T>::type[num]()); }
+// Disable MakeUnique for an array of declared size.
+template<typename T, typename... Args>
+inline typename _details::MakeUniq<T>::invalid_type MakeUnique(Args&&...) = delete;
 
 // A Promise/Future (+SharedFuture) implementation, defaults to C++11's
 // std::promise, std::future, and std::shared_future. If this is changed, you
