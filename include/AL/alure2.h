@@ -241,7 +241,9 @@ class Version {
     ALuint mMinor : 16;
 
 public:
-    constexpr Version(ALuint _maj, ALuint _min) : mMajor(_maj), mMinor(_min) { }
+    constexpr Version() noexcept : mMajor(0), mMinor(0) { }
+    constexpr Version(ALuint _maj, ALuint _min) noexcept : mMajor(_maj), mMinor(_min) { }
+    constexpr Version(const Version&) noexcept = default;
 
     constexpr ALuint getMajor() const noexcept { return mMajor; }
     constexpr ALuint getMinor() const noexcept { return mMinor; }
