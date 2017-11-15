@@ -358,13 +358,13 @@ inline std::basic_ostream<T>& operator<<(std::basic_ostream<T,Tr> &lhs, BasicStr
 template<typename T, typename NonRefT=RemoveRefT<T>,
          typename=EnableIfT<std::is_floating_point<NonRefT>::value>>
 constexpr inline NonRefT dBToLinear(T&& value)
-{ return std::pow(NonRefT(10.0), std::forward<T&&>(value) / NonRefT(20.0)); }
+{ return std::pow(NonRefT(10.0), std::forward<T>(value) / NonRefT(20.0)); }
 
 /** Convert a value from linear gain to decibels.  */
 template<typename T, typename NonRefT=RemoveRefT<T>,
          typename=EnableIfT<std::is_floating_point<NonRefT>::value>>
 constexpr inline NonRefT LinearTodB(T&& value)
-{ return std::log10(std::forward<T&&>(value)) * NonRefT(20.0); }
+{ return std::log10(std::forward<T>(value)) * NonRefT(20.0); }
 
 /**
  * An attribute pair, for passing attributes to Device::createContext and
