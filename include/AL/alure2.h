@@ -322,7 +322,7 @@ public:
      * Opens the playback device given by name, or the default if blank. Throws
      * an exception on error.
      */
-    Device openPlayback(const String &name=String());
+    Device openPlayback(const String &name={});
     Device openPlayback(const char *name);
 
     /**
@@ -404,7 +404,7 @@ public:
      * Creates a new Context on this device, using the specified attributes.
      * Throws an exception if context creation fails.
      */
-    Context createContext(ArrayView<AttributePair> attributes=ArrayView<AttributePair>());
+    Context createContext(ArrayView<AttributePair> attributes={});
     /**
      * Creates a new Context on this device, using the specified attributes.
      * Returns an empty Context if context creation fails.
@@ -657,7 +657,7 @@ public:
 
     /**
      * Specifies the listener's 3D position, velocity, and orientation
-     * together.
+     * together (see: setPosition, setVelocity, and setOrientation).
      */
     void set3DParameters(const Vector3 &position, const Vector3 &velocity, const std::pair<Vector3,Vector3> &orientation);
 
@@ -920,10 +920,16 @@ public:
     ALfloat getReferenceDistance() const { return std::get<0>(getDistanceRange()); }
     ALfloat getMaxDistance() const { return std::get<1>(getDistanceRange()); }
 
-    /** Specifies the source's 3D position, velocity, and direction together. */
+    /**
+     * Specifies the source's 3D position, velocity, and direction together
+     * (see: setPosition, setVelocity, and setDirection).
+     */
     void set3DParameters(const Vector3 &position, const Vector3 &velocity, const Vector3 &direction);
 
-    /** Specifies the source's 3D position, velocity, and orientation together. */
+    /**
+     * Specifies the source's 3D position, velocity, and orientation together
+     * (see: setPosition, setVelocity, and setOrientation).
+     */
     void set3DParameters(const Vector3 &position, const Vector3 &velocity, const std::pair<Vector3,Vector3> &orientation);
 
     /** Specifies the source's 3D position. */
@@ -949,9 +955,10 @@ public:
     Vector3 getDirection() const;
 
     /**
-     * Specifies the source's 3D orientation. Note: unlike the AL_EXT_BFORMAT
-     * extension this property comes from, this also affects the facing
-     * direction, superceding setDirection.
+     * Specifies the source's 3D orientation, using position-relative 'at' and
+     * 'up' direction vectors. Note: unlike the AL_EXT_BFORMAT extension this
+     * property comes from, this also affects the facing direction, superceding
+     * setDirection.
      */
     void setOrientation(ALfloat x1, ALfloat y1, ALfloat z1, ALfloat x2, ALfloat y2, ALfloat z2);
     void setOrientation(const ALfloat *at, const ALfloat *up);
@@ -962,7 +969,9 @@ public:
      * Specifies the source's cone angles, in degrees. The inner angle is the
      * area within which the listener will hear the source with no extra
      * attenuation, while the listener being outside of the outer angle will
-     * hear the source attenuated according to the outer cone gains.
+     * hear the source attenuated according to the outer cone gains. The area
+     * follows the facing direction, so for example an inner angle of 180 means
+     * the entire front face of the source is in the inner cone.
      */
     void setConeAngles(ALfloat inner, ALfloat outer);
     std::pair<ALfloat,ALfloat> getConeAngles() const;
