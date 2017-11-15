@@ -64,28 +64,6 @@ typedef struct {
 
 namespace alure {
 
-class DeviceManager;
-class DeviceManagerImpl;
-class Device;
-class DeviceImpl;
-class Context;
-class ContextImpl;
-class Listener;
-class ListenerImpl;
-class Buffer;
-class BufferImpl;
-class Source;
-class SourceImpl;
-class SourceGroup;
-class SourceGroupImpl;
-class AuxiliaryEffectSlot;
-class AuxiliaryEffectSlotImpl;
-class Effect;
-class EffectImpl;
-class Decoder;
-class DecoderFactory;
-class MessageHandler;
-
 // Convenience aliases
 template<typename T> using RemoveRefT = typename std::remove_reference<T>::type;
 template<bool B> using EnableIfT = typename std::enable_if<B>::type;
@@ -353,6 +331,31 @@ inline std::basic_ostream<T>& operator<<(std::basic_ostream<T,Tr> &lhs, BasicStr
     return lhs;
 }
 
+
+// Available class interfaces.
+class DeviceManager;
+class Device;
+class Context;
+class Listener;
+class Buffer;
+class Source;
+class SourceGroup;
+class AuxiliaryEffectSlot;
+class Effect;
+class Decoder;
+class DecoderFactory;
+class MessageHandler;
+
+// Opaque class implementations.
+class DeviceManagerImpl;
+class DeviceImpl;
+class ContextImpl;
+class ListenerImpl;
+class BufferImpl;
+class SourceImpl;
+class SourceGroupImpl;
+class AuxiliaryEffectSlotImpl;
+class EffectImpl;
 
 /** Convert a value from decibels to linear gain.  */
 template<typename T, typename NonRefT=RemoveRefT<T>,
