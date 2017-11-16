@@ -548,8 +548,8 @@ void ContextImpl::backgroundProc()
         // Only do one pending buffer at a time. In case there's several large
         // buffers to load, we still need to process streaming sources so they
         // don't underrun.
-        PendingBuffer *lastpb = mPendingCurrent.load(std::memory_order_acquire);
-        if(PendingBuffer *pb = lastpb->mNext.load(std::memory_order_relaxed))
+        PendingPromise *lastpb = mPendingCurrent.load(std::memory_order_acquire);
+        if(PendingPromise *pb = lastpb->mNext.load(std::memory_order_relaxed))
         {
             pb->mBuffer->load(pb->mFrames, pb->mFormat, std::move(pb->mDecoder), this);
             pb->mPromise.set_value(Buffer(pb->mBuffer));
@@ -608,17 +608,17 @@ ContextImpl::ContextImpl(ALCcontext *context, DeviceImpl *device)
     alGetAuxiliaryEffectSloti(0), alGetAuxiliaryEffectSlotiv(0), alGetAuxiliaryEffectSlotf(0), alGetAuxiliaryEffectSlotfv(0)
 {
     mHasExt.clear();
-    mPendingHead = new PendingBuffer;
+    mPendingHead = new PendingPromise;
     mPendingCurrent.store(mPendingHead, std::memory_order_relaxed);
     mPendingTail = mPendingHead;
 }
 
 ContextImpl::~ContextImpl()
 {
-    PendingBuffer *pb = mPendingTail;
+    PendingPromise *pb = mPendingTail;
     while(pb)
     {
-        PendingBuffer *next = pb->mNext.load(std::memory_order_relaxed);
+        PendingPromise *next = pb->mNext.load(std::memory_order_relaxed);
         delete pb;
         pb = next;
     }
@@ -841,22 +841,22 @@ BufferOrExceptT ContextImpl::doCreateBufferAsync(StringView name, Vector<UniqueP
     if(mThread.get_id() == std::thread::id())
         mThread = std::thread(std::mem_fn(&ContextImpl::backgroundProc), this);
 
-    PendingBuffer *pb = nullptr;
+    PendingPromise *pf = nullptr;
     if(mPendingTail == mPendingCurrent.load(std::memory_order_acquire))
-        pb = new PendingBuffer{buffer.get(), decoder, format, frames, std::move(promise)};
+        pf = new PendingPromise{buffer.get(), decoder, format, frames, std::move(promise)};
     else
     {
-        pb = mPendingTail;
-        pb->mBuffer = buffer.get();
-        pb->mDecoder = decoder;
-        pb->mFormat = format;
-        pb->mFrames = frames;
-        pb->mPromise = std::move(promise);
-        mPendingTail = pb->mNext.exchange(nullptr, std::memory_order_relaxed);
+        pf = mPendingTail;
+        pf->mBuffer = buffer.get();
+        pf->mDecoder = decoder;
+        pf->mFormat = format;
+        pf->mFrames = frames;
+        pf->mPromise = std::move(promise);
+        mPendingTail = pf->mNext.exchange(nullptr, std::memory_order_relaxed);
     }
 
-    mPendingHead->mNext.store(pb, std::memory_order_release);
-    mPendingHead = pb;
+    mPendingHead->mNext.store(pf, std::memory_order_release);
+    mPendingHead = pf;
 
     return (retval = mBuffers.insert(iter, std::move(buffer))->get());
 }
@@ -873,7 +873,7 @@ Buffer ContextImpl::getBuffer(StringView name)
 
         // If the buffer is already pending for the future, wait for it
         auto iter = std::lower_bound(mFutureBuffers.begin(), mFutureBuffers.end(), hasher(name),
-            [hasher](const PendingFuture &lhs, size_t rhs) -> bool
+            [hasher](const PendingBuffer &lhs, size_t rhs) -> bool
             { return hasher(lhs.mBuffer->getName()) < rhs; }
         );
         if(iter != mFutureBuffers.end() && iter->mBuffer->getName() == name)
@@ -885,7 +885,7 @@ Buffer ContextImpl::getBuffer(StringView name)
         // Clear out any completed futures.
         mFutureBuffers.erase(
             std::remove_if(mFutureBuffers.begin(), mFutureBuffers.end(),
-                [](const PendingFuture &entry) -> bool
+                [](const PendingBuffer &entry) -> bool
                 { return entry.mFuture.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready; }
             ), mFutureBuffers.end()
         );
@@ -919,7 +919,7 @@ SharedFuture<Buffer> ContextImpl::getBufferAsync(StringView name)
     {
         // Check if the future that's being created already exists
         auto iter = std::lower_bound(mFutureBuffers.begin(), mFutureBuffers.end(), hasher(name),
-            [hasher](const PendingFuture &lhs, size_t rhs) -> bool
+            [hasher](const PendingBuffer &lhs, size_t rhs) -> bool
             { return hasher(lhs.mBuffer->getName()) < rhs; }
         );
         if(iter != mFutureBuffers.end() && iter->mBuffer->getName() == name)
@@ -933,7 +933,7 @@ SharedFuture<Buffer> ContextImpl::getBufferAsync(StringView name)
         // Clear out any fulfilled futures.
         mFutureBuffers.erase(
             std::remove_if(mFutureBuffers.begin(), mFutureBuffers.end(),
-                [](const PendingFuture &entry) -> bool
+                [](const PendingBuffer &entry) -> bool
                 { return entry.mFuture.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready; }
             ), mFutureBuffers.end()
         );
@@ -966,7 +966,7 @@ SharedFuture<Buffer> ContextImpl::getBufferAsync(StringView name)
 
     mFutureBuffers.insert(
         std::lower_bound(mFutureBuffers.begin(), mFutureBuffers.end(), hasher(name),
-            [hasher](const PendingFuture &lhs, size_t rhs) -> bool
+            [hasher](const PendingBuffer &lhs, size_t rhs) -> bool
             { return hasher(lhs.mBuffer->getName()) < rhs; }
         ), { buffer->getHandle(), future }
     );
@@ -984,7 +984,7 @@ void ContextImpl::precacheBuffersAsync(ArrayView<StringView> names)
         // Clear out any fulfilled futures.
         mFutureBuffers.erase(
             std::remove_if(mFutureBuffers.begin(), mFutureBuffers.end(),
-                [](const PendingFuture &entry) -> bool
+                [](const PendingBuffer &entry) -> bool
                 { return entry.mFuture.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready; }
             ), mFutureBuffers.end()
         );
@@ -1015,7 +1015,7 @@ void ContextImpl::precacheBuffersAsync(ArrayView<StringView> names)
 
         mFutureBuffers.insert(
             std::lower_bound(mFutureBuffers.begin(), mFutureBuffers.end(), hasher(name),
-                [hasher](const PendingFuture &lhs, size_t rhs) -> bool
+                [hasher](const PendingBuffer &lhs, size_t rhs) -> bool
                 { return hasher(lhs.mBuffer->getName()) < rhs; }
             ), { buffer->getHandle(), future }
         );
@@ -1055,7 +1055,7 @@ SharedFuture<Buffer> ContextImpl::createBufferAsyncFrom(StringView name, SharedP
         // Clear out any fulfilled futures.
         mFutureBuffers.erase(
             std::remove_if(mFutureBuffers.begin(), mFutureBuffers.end(),
-                [](const PendingFuture &entry) -> bool
+                [](const PendingBuffer &entry) -> bool
                 { return entry.mFuture.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready; }
             ), mFutureBuffers.end()
         );
@@ -1081,7 +1081,7 @@ SharedFuture<Buffer> ContextImpl::createBufferAsyncFrom(StringView name, SharedP
 
     mFutureBuffers.insert(
         std::lower_bound(mFutureBuffers.begin(), mFutureBuffers.end(), hasher(name),
-            [hasher](const PendingFuture &lhs, size_t rhs) -> bool
+            [hasher](const PendingBuffer &lhs, size_t rhs) -> bool
             { return hasher(lhs.mBuffer->getName()) < rhs; }
         ), { buffer->getHandle(), future }
     );
@@ -1101,7 +1101,7 @@ Buffer ContextImpl::findBuffer(StringView name)
     {
         // If the buffer is already pending for the future, wait for it
         auto iter = std::lower_bound(mFutureBuffers.begin(), mFutureBuffers.end(), hasher(name),
-            [hasher](const PendingFuture &lhs, size_t rhs) -> bool
+            [hasher](const PendingBuffer &lhs, size_t rhs) -> bool
             { return hasher(lhs.mBuffer->getName()) < rhs; }
         );
         if(iter != mFutureBuffers.end() && iter->mBuffer->getName() == name)
@@ -1113,7 +1113,7 @@ Buffer ContextImpl::findBuffer(StringView name)
         // Clear out any completed futures.
         mFutureBuffers.erase(
             std::remove_if(mFutureBuffers.begin(), mFutureBuffers.end(),
-                [](const PendingFuture &entry) -> bool
+                [](const PendingBuffer &entry) -> bool
                 { return entry.mFuture.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready; }
             ), mFutureBuffers.end()
         );
@@ -1142,7 +1142,7 @@ SharedFuture<Buffer> ContextImpl::findBufferAsync(StringView name)
     {
         // Check if the future that's being created already exists
         auto iter = std::lower_bound(mFutureBuffers.begin(), mFutureBuffers.end(), hasher(name),
-            [hasher](const PendingFuture &lhs, size_t rhs) -> bool
+            [hasher](const PendingBuffer &lhs, size_t rhs) -> bool
             { return hasher(lhs.mBuffer->getName()) < rhs; }
         );
         if(iter != mFutureBuffers.end() && iter->mBuffer->getName() == name)
@@ -1156,7 +1156,7 @@ SharedFuture<Buffer> ContextImpl::findBufferAsync(StringView name)
         // Clear out any fulfilled futures.
         mFutureBuffers.erase(
             std::remove_if(mFutureBuffers.begin(), mFutureBuffers.end(),
-                [](const PendingFuture &entry) -> bool
+                [](const PendingBuffer &entry) -> bool
                 { return entry.mFuture.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready; }
             ), mFutureBuffers.end()
         );
@@ -1191,7 +1191,7 @@ void ContextImpl::removeBuffer(StringView name)
         // If the buffer is already pending for the future, wait for it to
         // finish before continuing.
         auto iter = std::lower_bound(mFutureBuffers.begin(), mFutureBuffers.end(), hasher(name),
-            [hasher](const PendingFuture &lhs, size_t rhs) -> bool
+            [hasher](const PendingBuffer &lhs, size_t rhs) -> bool
             { return hasher(lhs.mBuffer->getName()) < rhs; }
         );
         if(iter != mFutureBuffers.end() && iter->mBuffer->getName() == name)
@@ -1203,7 +1203,7 @@ void ContextImpl::removeBuffer(StringView name)
         // Clear out any completed futures.
         mFutureBuffers.erase(
             std::remove_if(mFutureBuffers.begin(), mFutureBuffers.end(),
-                [](const PendingFuture &entry) -> bool
+                [](const PendingBuffer &entry) -> bool
                 { return entry.mFuture.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready; }
             ), mFutureBuffers.end()
         );

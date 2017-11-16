@@ -128,11 +128,11 @@ private:
     ALCcontext *mContext;
     std::stack<ALuint> mSourceIds;
 
-    struct PendingFuture { BufferImpl *mBuffer;  SharedFuture<Buffer> mFuture; };
+    struct PendingBuffer { BufferImpl *mBuffer;  SharedFuture<Buffer> mFuture; };
     struct PendingSource { SourceImpl *mSource;  SharedFuture<Buffer> mFuture; };
 
     DeviceImpl *const mDevice;
-    Vector<PendingFuture> mFutureBuffers;
+    Vector<PendingBuffer> mFutureBuffers;
     Vector<UniquePtr<BufferImpl>> mBuffers;
     Vector<UniquePtr<SourceGroupImpl>> mSourceGroups;
     std::deque<SourceImpl> mAllSources;
@@ -152,25 +152,25 @@ private:
 
     SharedPtr<MessageHandler> mMessage;
 
-    struct PendingBuffer {
+    struct PendingPromise {
         BufferImpl *mBuffer{nullptr};
         SharedPtr<Decoder> mDecoder;
         ALenum mFormat{0};
         ALuint mFrames{0};
         Promise<Buffer> mPromise;
 
-        std::atomic<PendingBuffer*> mNext{nullptr};
+        std::atomic<PendingPromise*> mNext{nullptr};
 
-        PendingBuffer() = default;
-        PendingBuffer(BufferImpl *buffer, SharedPtr<Decoder> decoder, ALenum format, ALuint frames,
-                      Promise<Buffer> promise)
+        PendingPromise() = default;
+        PendingPromise(BufferImpl *buffer, SharedPtr<Decoder> decoder, ALenum format, ALuint frames,
+                       Promise<Buffer> promise)
           : mBuffer(buffer), mDecoder(std::move(decoder)), mFormat(format), mFrames(frames)
           , mPromise(std::move(promise)), mNext(nullptr)
         { }
     };
-    std::atomic<PendingBuffer*> mPendingCurrent;
-    PendingBuffer *mPendingTail;
-    PendingBuffer *mPendingHead;
+    std::atomic<PendingPromise*> mPendingCurrent;
+    PendingPromise *mPendingTail;
+    PendingPromise *mPendingHead;
 
     std::atomic<bool> mQuitThread;
     std::thread mThread;
