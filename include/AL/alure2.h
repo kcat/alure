@@ -249,7 +249,21 @@ public:
 
     constexpr ALuint getMajor() const noexcept { return mMajor; }
     constexpr ALuint getMinor() const noexcept { return mMinor; }
-    constexpr bool isZero() const noexcept { return mMajor == 0 && mMinor == 0; }
+
+    constexpr bool operator==(const Version &rhs) const noexcept
+    { return mMajor == rhs.mMajor && mMinor == rhs.mMinor; }
+    constexpr bool operator!=(const Version &rhs) const noexcept
+    { return !(*this == rhs); }
+    constexpr bool operator<=(const Version &rhs) const noexcept
+    { return mMajor < rhs.mMajor || (mMajor == rhs.mMajor && mMinor <= rhs.mMinor); }
+    constexpr bool operator>=(const Version &rhs) const noexcept
+    { return mMajor > rhs.mMajor || (mMajor == rhs.mMajor && mMinor >= rhs.mMinor); }
+    constexpr bool operator<(const Version &rhs) const noexcept
+    { return mMajor < rhs.mMajor || (mMajor == rhs.mMajor && mMinor < rhs.mMinor); }
+    constexpr bool operator>(const Version &rhs) const noexcept
+    { return mMajor > rhs.mMajor || (mMajor == rhs.mMajor && mMinor > rhs.mMinor); }
+
+    constexpr bool isZero() const noexcept { return *this == Version{0,0}; }
 };
 
 #define MAKE_PIMPL(BaseT, ImplT)                                              \
