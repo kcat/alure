@@ -59,7 +59,7 @@ public:
     String getCurrentHRTF() const;
     void reset(ArrayView<AttributePair> attributes);
 
-    Context createContext(ArrayView<AttributePair> attributes, bool dothrow);
+    Context createContext(ArrayView<AttributePair> attributes);
 
     void pauseDSP();
     void resumeDSP();

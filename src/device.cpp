@@ -223,13 +223,8 @@ void DeviceImpl::reset(ArrayView<AttributePair> attributes)
 }
 
 
-Context Device::createContext(ArrayView<AttributePair> attrs)
-{ return pImpl->createContext(attrs, true); }
-Context Device::createContext(ArrayView<AttributePair> attrs, const std::nothrow_t&)
-{ return pImpl->createContext(attrs, false); }
-Context Device::createContext(const std::nothrow_t&)
-{ return pImpl->createContext(ArrayView<AttributePair>(), false); }
-Context DeviceImpl::createContext(ArrayView<AttributePair> attributes, bool dothrow)
+DECL_THUNK1(Context, Device, createContext,, ArrayView<AttributePair>)
+Context DeviceImpl::createContext(ArrayView<AttributePair> attributes)
 {
     ALCcontext *ctx = nullptr;
     if(attributes.empty()) /* No explicit attributes. */
@@ -254,15 +249,36 @@ Context DeviceImpl::createContext(ArrayView<AttributePair> attributes, bool doth
         else
             ctx = alcCreateContext(mDevice, &std::get<0>(attributes.front()));
     }
-    if(!ctx)
+    if(ctx)
     {
-        if(dothrow)
-            throw std::runtime_error("Failed to create context");
-        return Context();
+        try {
+            mContexts.emplace_back(MakeUnique<ContextImpl>(ctx, this));
+            return Context(mContexts.back().get());
+        }
+        catch(...) {
+            alcDestroyContext(ctx);
+            throw;
+        }
     }
-
-    mContexts.emplace_back(MakeUnique<ContextImpl>(ctx, this));
-    return Context(mContexts.back().get());
+    throw std::runtime_error("Failed to create context");
+}
+Context Device::createContext(ArrayView<AttributePair> attrs, const std::nothrow_t&) noexcept
+{
+    try {
+        return pImpl->createContext(attrs);
+    }
+    catch(...) {
+    }
+    return Context();
+}
+Context Device::createContext(const std::nothrow_t&) noexcept
+{
+    try {
+        return pImpl->createContext({});
+    }
+    catch(...) {
+    }
+    return Context();
 }
 
 

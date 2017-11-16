@@ -345,11 +345,11 @@ public:
      * Opens the playback device given by name, or the default if blank.
      * Returns an empty Device on error.
      */
-    Device openPlayback(const String &name, const std::nothrow_t&);
-    Device openPlayback(const char *name, const std::nothrow_t&);
+    Device openPlayback(const String &name, const std::nothrow_t&) noexcept;
+    Device openPlayback(const char *name, const std::nothrow_t&) noexcept;
 
     /** Opens the default playback device. Returns an empty Device on error. */
-    Device openPlayback(const std::nothrow_t&);
+    Device openPlayback(const std::nothrow_t&) noexcept;
 };
 
 
@@ -425,8 +425,8 @@ public:
      * Creates a new Context on this device, using the specified attributes.
      * Returns an empty Context if context creation fails.
      */
-    Context createContext(ArrayView<AttributePair> attributes, const std::nothrow_t&);
-    Context createContext(const std::nothrow_t&);
+    Context createContext(ArrayView<AttributePair> attributes, const std::nothrow_t&) noexcept;
+    Context createContext(const std::nothrow_t&) noexcept;
 
     /**
      * Pauses device processing, stopping updates for its contexts. Multiple

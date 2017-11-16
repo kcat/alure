@@ -82,27 +82,35 @@ DECL_THUNK1(Device, DeviceManager, openPlayback,, const char*)
 Device DeviceManagerImpl::openPlayback(const char *name)
 {
     ALCdevice *dev = alcOpenDevice(name);
-    if(!dev)
+    if(dev)
     {
-        if(!name || !name[0])
-            throw std::runtime_error("Failed to open default device");
-        throw std::runtime_error(StringView("Failed to open device \"")+name+"\"");
+        try {
+            mDevices.emplace_back(MakeUnique<DeviceImpl>(dev));
+            return Device(mDevices.back().get());
+        }
+        catch(...) {
+            alcCloseDevice(dev);
+            throw;
+        }
     }
-    mDevices.emplace_back(MakeUnique<DeviceImpl>(dev));
-    return Device(mDevices.back().get());
+    if(!name || !name[0])
+        throw std::runtime_error("Failed to open default device");
+    throw std::runtime_error(StringView("Failed to open device \"")+name+"\"");
 }
 
-Device DeviceManager::openPlayback(const String &name, const std::nothrow_t &nt)
+Device DeviceManager::openPlayback(const String &name, const std::nothrow_t &nt) noexcept
 { return pImpl->openPlayback(name.c_str(), nt); }
-Device DeviceManager::openPlayback(const std::nothrow_t &)
+Device DeviceManager::openPlayback(const std::nothrow_t&) noexcept
 { return pImpl->openPlayback(nullptr, std::nothrow); }
-DECL_THUNK2(Device, DeviceManager, openPlayback,, const char*, const std::nothrow_t&)
-Device DeviceManagerImpl::openPlayback(const char *name, const std::nothrow_t&)
+DECL_THUNK2(Device, DeviceManager, openPlayback, noexcept, const char*, const std::nothrow_t&)
+Device DeviceManagerImpl::openPlayback(const char *name, const std::nothrow_t&) noexcept
 {
-    ALCdevice *dev = alcOpenDevice(name);
-    if(!dev) return Device();
-    mDevices.emplace_back(MakeUnique<DeviceImpl>(dev));
-    return Device(mDevices.back().get());
+    try {
+        openPlayback(name);
+    }
+    catch(...) {
+    }
+    return Device();
 }
 
 void DeviceManagerImpl::removeDevice(DeviceImpl *dev)

@@ -24,7 +24,7 @@ public:
     String defaultDeviceName(DefaultDeviceType type) const;
 
     Device openPlayback(const char *name);
-    Device openPlayback(const char *name, const std::nothrow_t&);
+    Device openPlayback(const char *name, const std::nothrow_t&) noexcept;
 };
 
 } // namespace alure
