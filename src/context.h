@@ -1,8 +1,6 @@
 #ifndef CONTEXT_H
 #define CONTEXT_H
 
-#include "main.h"
-
 #include <condition_variable>
 #include <unordered_map>
 #include <stdexcept>
@@ -16,6 +14,8 @@
 #else
 #include "mpark/variant.hpp"
 #endif
+
+#include "main.h"
 
 #include "device.h"
 #include "source.h"

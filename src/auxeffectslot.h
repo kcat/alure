@@ -1,9 +1,9 @@
 #ifndef AUXEFFECTSLOT_H
 #define AUXEFFECTSLOT_H
 
-#include "main.h"
-
 #include <algorithm>
+
+#include "main.h"
 
 namespace alure {
 

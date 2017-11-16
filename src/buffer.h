@@ -1,9 +1,9 @@
 #ifndef BUFFER_H
 #define BUFFER_H
 
-#include "main.h"
-
 #include <algorithm>
+
+#include "main.h"
 
 namespace alure {
 

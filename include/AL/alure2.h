@@ -1,6 +1,9 @@
 #ifndef AL_ALURE2_H
 #define AL_ALURE2_H
 
+#include <type_traits>
+#include <utility>
+#include <tuple>
 #include <cmath>
 
 #include "alc.h"
@@ -11,19 +14,18 @@
 #include "alure2-typeviews.h"
 
 #ifndef ALURE_API
- #if defined(ALURE_STATIC_LIB)
-  #define ALURE_API
- #elif defined(_WIN32)
-  #define ALURE_API __declspec(dllimport)
- #elif defined(__GNUC__)
-  #define ALURE_API __attribute__((visibility("default")))
- #elif defined(__has_attribute)
-  #if __has_attribute(visibility)
+ #ifndef ALURE_STATIC_LIB
+  #if defined(_WIN32)
+   #define ALURE_API __declspec(dllimport)
+  #elif defined(__has_attribute)
+   #if __has_attribute(visibility)
+    #define ALURE_API __attribute__((visibility("default")))
+   #endif
+  #elif defined(__GNUC__)
    #define ALURE_API __attribute__((visibility("default")))
-  #else
-   #define ALURE_API
   #endif
- #else
+ #endif
+ #ifndef ALURE_API
   #define ALURE_API
  #endif
 #endif /* ALURE_API */

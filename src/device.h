@@ -1,9 +1,9 @@
 #ifndef DEVICE_H
 #define DEVICE_H
 
-#include "main.h"
-
 #include <mutex>
+
+#include "main.h"
 
 
 namespace alure {
