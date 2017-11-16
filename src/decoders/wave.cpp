@@ -8,34 +8,50 @@
 #include "buffer.h"
 
 
-namespace alure
+namespace
 {
 
-static const ALubyte SUBTYPE_PCM[] = {
+struct IDType {
+    alure::Array<ALubyte,16> mGuid;
+    using char16 = char[16];
+};
+
+inline bool operator==(const IDType::char16 &lhs, const IDType &rhs)
+{
+    auto liter = std::begin(lhs);
+    for(ALubyte c : rhs.mGuid)
+    {
+        if(liter == std::end(lhs) || c != *liter)
+            return false;
+    }
+    return (liter == std::end(lhs));
+}
+
+const IDType SUBTYPE_PCM{{{
     0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x00, 0x80, 0x00, 0x00, 0xaa,
     0x00, 0x38, 0x9b, 0x71
-};
-static const ALubyte SUBTYPE_FLOAT[] = {
+}}};
+const IDType SUBTYPE_FLOAT{{{
     0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x00, 0x80, 0x00, 0x00, 0xaa,
     0x00, 0x38, 0x9b, 0x71
-};
+}}};
 
-static const ALubyte SUBTYPE_BFORMAT_PCM[] = {
+const IDType SUBTYPE_BFORMAT_PCM{{{
     0x01, 0x00, 0x00, 0x00, 0x21, 0x07, 0xd3, 0x11, 0x86, 0x44, 0xc8, 0xc1,
     0xca, 0x00, 0x00, 0x00
-};
-static const ALubyte SUBTYPE_BFORMAT_FLOAT[] = {
+}}};
+const IDType SUBTYPE_BFORMAT_FLOAT{{{
     0x03, 0x00, 0x00, 0x00, 0x21, 0x07, 0xd3, 0x11, 0x86, 0x44, 0xc8, 0xc1,
     0xca, 0x00, 0x00, 0x00
-};
+}}};
 
-static const int CHANNELS_MONO       = 0x04;
-static const int CHANNELS_STEREO     = 0x01 | 0x02;
-static const int CHANNELS_QUAD       = 0x01 | 0x02               | 0x10 | 0x20;
-static const int CHANNELS_5DOT1      = 0x01 | 0x02 | 0x04 | 0x08                       | 0x200 | 0x400;
-static const int CHANNELS_5DOT1_REAR = 0x01 | 0x02 | 0x04 | 0x08 | 0x10 | 0x20;
-static const int CHANNELS_6DOT1      = 0x01 | 0x02 | 0x04 | 0x08               | 0x100 | 0x200 | 0x400;
-static const int CHANNELS_7DOT1      = 0x01 | 0x02 | 0x04 | 0x08 | 0x10 | 0x20 | 0x200         | 0x400;
+constexpr int CHANNELS_MONO       = 0x04;
+constexpr int CHANNELS_STEREO     = 0x01 | 0x02;
+constexpr int CHANNELS_QUAD       = 0x01 | 0x02               | 0x10 | 0x20;
+constexpr int CHANNELS_5DOT1      = 0x01 | 0x02 | 0x04 | 0x08                       | 0x200 | 0x400;
+constexpr int CHANNELS_5DOT1_REAR = 0x01 | 0x02 | 0x04 | 0x08 | 0x10 | 0x20;
+constexpr int CHANNELS_6DOT1      = 0x01 | 0x02 | 0x04 | 0x08               | 0x100 | 0x200 | 0x400;
+constexpr int CHANNELS_7DOT1      = 0x01 | 0x02 | 0x04 | 0x08 | 0x10 | 0x20 | 0x200         | 0x400;
 
 
 static ALuint read_le32(std::istream &stream)
@@ -55,6 +71,10 @@ static ALushort read_le16(std::istream &stream)
     return ((ALushort(buf[0]   )&0x00ff) | (ALushort(buf[1]<<8)&0xff00));
 }
 
+}
+
+namespace alure
+{
 
 class WaveDecoder final : public Decoder {
     UniquePtr<std::istream> mFile;
@@ -313,7 +333,7 @@ SharedPtr<Decoder> WaveDecoderFactory::createDecoder(UniquePtr<std::istream> &fi
                 if(validbits != bitdepth)
                     goto next_chunk;
 
-                if(memcmp(subtype, SUBTYPE_BFORMAT_PCM, 16) == 0 || memcmp(subtype, SUBTYPE_BFORMAT_FLOAT, 16) == 0)
+                if(subtype == SUBTYPE_BFORMAT_PCM || subtype == SUBTYPE_BFORMAT_FLOAT)
                 {
                     if(chanmask != 0)
                         goto next_chunk;
@@ -325,7 +345,7 @@ SharedPtr<Decoder> WaveDecoderFactory::createDecoder(UniquePtr<std::istream> &fi
                     else
                         goto next_chunk;
                 }
-                else if(memcmp(subtype, SUBTYPE_PCM, 16) == 0 || memcmp(subtype, SUBTYPE_FLOAT, 16) == 0)
+                else if(subtype == SUBTYPE_PCM || subtype == SUBTYPE_FLOAT)
                 {
                     if(chancount == 1 && chanmask == CHANNELS_MONO)
                         channels = ChannelConfig::Mono;
@@ -343,7 +363,7 @@ SharedPtr<Decoder> WaveDecoderFactory::createDecoder(UniquePtr<std::istream> &fi
                         goto next_chunk;
                 }
 
-                if(memcmp(subtype, SUBTYPE_PCM, 16) == 0 || memcmp(subtype, SUBTYPE_BFORMAT_PCM, 16) == 0)
+                if(subtype == SUBTYPE_PCM || subtype == SUBTYPE_BFORMAT_PCM)
                 {
                     if(bitdepth == 8)
                         type = SampleType::UInt8;
@@ -352,7 +372,7 @@ SharedPtr<Decoder> WaveDecoderFactory::createDecoder(UniquePtr<std::istream> &fi
                     else
                         goto next_chunk;
                 }
-                else if(memcmp(subtype, SUBTYPE_FLOAT, 16) == 0 || memcmp(subtype, SUBTYPE_BFORMAT_FLOAT, 16) == 0)
+                else if(subtype == SUBTYPE_FLOAT || subtype == SUBTYPE_BFORMAT_FLOAT)
                 {
                     if(bitdepth == 32)
                         type = SampleType::Float32;
