@@ -570,17 +570,18 @@ public:
     void precacheBuffersAsync(ArrayView<StringView> names);
 
     /**
-     * Creates and caches a Buffer using the given name. The name may alias an
-     * audio file, but it must not currently exist in the buffer cache.
+     * Creates and caches a Buffer using the given name by reading the given
+     * decoder. The name may alias an audio file, but it must not currently
+     * exist in the buffer cache.
      */
     Buffer createBufferFrom(StringView name, SharedPtr<Decoder> decoder);
 
     /**
-     * Asynchronously prepares a cached Buffer using the given name. The name
-     * may alias an audio file, but it must not currently exist in the buffer
-     * cache. Once called, the buffer must be freed using removeBuffer before
-     * destroying the context, even if you never get the Buffer from the
-     * SharedFuture.
+     * Asynchronously prepares a cached Buffer using the given name by reading
+     * the given decoder. The name may alias an audio file, but it must not
+     * currently exist in the buffer cache. Once called, the buffer must be
+     * freed using removeBuffer before destroying the context, even if you
+     * never get the Buffer from the SharedFuture.
      *
      * The Buffer will be scheduled to load asynchronously, and the caller gets
      * back a SharedFuture that can be checked later (or waited on) to get the
@@ -617,9 +618,9 @@ public:
     void removeBuffer(Buffer buffer);
 
     /**
-     * Creates a new Source. There is no practical limit to the number of
-     * sources you may create. You must call Source::release when the source is
-     * no longer needed.
+     * Creates a new Source for playing audio. There is no practical limit to
+     * the number of sources you may create. You must call Source::release when
+     * the source is no longer needed.
      */
     Source createSource();
 
@@ -630,7 +631,7 @@ public:
     SourceGroup createSourceGroup(StringView name);
     SourceGroup getSourceGroup(StringView name);
 
-    /** Sets the doppler factor to apply to all source calculations. */
+    /** Sets the doppler factor to apply to all source doppler calculations. */
     void setDopplerFactor(ALfloat factor);
 
     /**
@@ -642,6 +643,16 @@ public:
      */
     void setSpeedOfSound(ALfloat speed);
 
+    /**
+     * Sets the distance model used to attenuate sources given their distance
+     * from the listener. The default, InverseClamped, provides a realistic 1/r
+     * reduction in volume (that is, every doubling of distance causes the gain
+     * to reduce by half).
+     *
+     * The Clamped distance models restrict the source distance for the purpose
+     * of distance attenuation, so a source won't sound closer than its
+     * reference distance or farther than its max distance.
+     */
     void setDistanceModel(DistanceModel model);
 
     /** Updates the context and all sources belonging to this context. */
@@ -841,8 +852,9 @@ public:
     SourceGroup getGroup() const;
 
     /**
-     * Specifies the source's playback priority. Lowest priority sources will
-     * be evicted first when higher priority sources are played.
+     * Specifies the source's playback priority. The lowest priority sources
+     * will be forcefully stopped when no more mixing sources are available and
+     * higher priority sources are played.
      */
     void setPriority(ALuint priority);
     /** Retrieves the source's priority. */
@@ -981,7 +993,8 @@ public:
     /**
      * Specifies the linear gain multiplier when the listener is outside of the
      * source's outer cone area. The specified gain applies to all frequencies,
-     * while gainhf applies extra attenuation to high frequencies.
+     * while gainhf applies extra attenuation to high frequencies creating a
+     * low-pass effect.
      *
      * \param gainhf has no effect without the ALC_EXT_EFX extension.
      */
@@ -1066,6 +1079,11 @@ public:
     void setAirAbsorptionFactor(ALfloat factor);
     ALfloat getAirAbsorptionFactor() const;
 
+    /**
+     * Specifies to automatically apply adjustments to the direct path's high-
+     * frequency gain, and the send paths' gain and high-frequency gain. The
+     * default is true for all.
+     */
     void setGainAuto(bool directhf, bool send, bool sendhf);
     std::tuple<bool,bool,bool> getGainAuto() const;
     bool getDirectGainHFAuto() const { return std::get<0>(getGainAuto()); }
@@ -1245,7 +1263,7 @@ public:
 
     /**
      * Retrieves the loop points, in sample frames, as a [start,end) pair. If
-     * start >= end, use all available data.
+     * start >= end, all available samples are included in the loop.
      */
     virtual std::pair<uint64_t,uint64_t> getLoopPoints() const = 0;
 
@@ -1368,7 +1386,7 @@ public:
 
     /**
      * Called when the given source was forced to stop. This can be because
-     * either there were no more system sources and a higher-priority source
+     * either there were no more mixing sources and a higher-priority source
      * preempted it, or it's part of a SourceGroup (or sub-group thereof) that
      * had its SourceGroup::stopAll method called.
      */
@@ -1388,12 +1406,11 @@ public:
 
     /**
      * Called when a resource isn't found, allowing the app to substitute in a
-     * different resource. For buffers created with Context::getBuffer or
-     * Context::getBufferAsync, the original name will still be used for the
-     * cache map so the app doesn't have to keep track of substituted resource
-     * names.
+     * different resource. For buffers being cached, the original name will
+     * still be used for the cache entry so the app doesn't have to keep track
+     * of substituted resource names.
      *
-     * This will be called again if the new name isn't found.
+     * This will be called again if the new name also isn't found.
      *
      * \param name The resource name that was not found.
      * \return The replacement resource name to use instead. Returning an empty
