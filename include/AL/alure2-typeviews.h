@@ -34,6 +34,9 @@ public:
     using iterator = const value_type*;
     using const_iterator = const value_type*;
 
+    using reverse_iterator = std::reverse_iterator<iterator>;
+    using const_reverse_iterator = std::reverse_iterator<const_iterator>;
+
     using size_type = size_t;
 
     static constexpr size_type npos = static_cast<size_type>(-1);
@@ -79,6 +82,12 @@ public:
 
     const_iterator end() const noexcept { return mElems + mNumElems; }
     const_iterator cend() const noexcept { return mElems + mNumElems; }
+
+    const_reverse_iterator rbegin() const noexcept { return reverse_iterator(end()); }
+    const_reverse_iterator rend() const noexcept { return reverse_iterator(begin()); }
+
+    const_reverse_iterator crbegin() const noexcept { return const_reverse_iterator(cend()); }
+    const_reverse_iterator crend() const noexcept { return const_reverse_iterator(cbegin()); }
 
     ArrayView slice(size_type pos, size_type len = npos) const noexcept
     {
