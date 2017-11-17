@@ -126,7 +126,7 @@ public:
 private:
     ListenerImpl mListener;
     ALCcontext *mContext;
-    std::stack<ALuint> mSourceIds;
+    Vector<ALuint> mSourceIds;
 
     struct PendingBuffer { BufferImpl *mBuffer;  SharedFuture<Buffer> mFuture; };
     struct PendingSource { SourceImpl *mSource;  SharedFuture<Buffer> mFuture; };
@@ -243,7 +243,7 @@ public:
     LPALGETAUXILIARYEFFECTSLOTFV alGetAuxiliaryEffectSlotfv;
 
     ALuint getSourceId(ALuint maxprio);
-    void insertSourceId(ALuint id) { mSourceIds.push(id); }
+    void insertSourceId(ALuint id) { mSourceIds.push_back(id); }
 
     void addPendingSource(SourceImpl *source, SharedFuture<Buffer> future);
     void removePendingSource(SourceImpl *source);

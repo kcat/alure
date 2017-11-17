@@ -608,6 +608,7 @@ ContextImpl::ContextImpl(ALCcontext *context, DeviceImpl *device)
     alGetAuxiliaryEffectSloti(0), alGetAuxiliaryEffectSlotiv(0), alGetAuxiliaryEffectSlotf(0), alGetAuxiliaryEffectSlotfv(0)
 {
     mHasExt.clear();
+    mSourceIds.reserve(256);
     mPendingHead = new PendingPromise;
     mPendingCurrent.store(mPendingHead, std::memory_order_relaxed);
     mPendingTail = mPendingHead;
@@ -1262,8 +1263,8 @@ ALuint ContextImpl::getSourceId(ALuint maxprio)
     if(mSourceIds.empty())
         throw std::runtime_error("No available sources");
 
-    id = mSourceIds.top();
-    mSourceIds.pop();
+    id = mSourceIds.back();
+    mSourceIds.pop_back();
     return id;
 }
 
