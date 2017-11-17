@@ -200,11 +200,11 @@ void DeviceImpl::reset(ArrayView<AttributePair> attributes)
         success = alcResetDeviceSOFT(mDevice, nullptr);
     else
     {
-        auto attr_end = std::find_if(attributes.begin(), attributes.end(),
+        auto attr_end = std::find_if(attributes.rbegin(), attributes.rend(),
             [](const AttributePair &attr) -> bool
             { return std::get<0>(attr) == 0; }
         );
-        if(attr_end == attributes.end())
+        if(attr_end == attributes.rend())
         {
             /* Attribute list was not properly terminated. Copy the attribute
              * list and add the 0 sentinel.
@@ -231,11 +231,11 @@ Context DeviceImpl::createContext(ArrayView<AttributePair> attributes)
         ctx = alcCreateContext(mDevice, nullptr);
     else
     {
-        auto attr_end = std::find_if(attributes.begin(), attributes.end(),
+        auto attr_end = std::find_if(attributes.rbegin(), attributes.rend(),
             [](const AttributePair &attr) -> bool
             { return std::get<0>(attr) == 0; }
         );
-        if(attr_end == attributes.end())
+        if(attr_end == attributes.rend())
         {
             /* Attribute list was not properly terminated. Copy the attribute
              * list and add the 0 sentinel.
