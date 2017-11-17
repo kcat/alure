@@ -106,7 +106,7 @@ DECL_THUNK2(Device, DeviceManager, openPlayback, noexcept, const char*, const st
 Device DeviceManagerImpl::openPlayback(const char *name, const std::nothrow_t&) noexcept
 {
     try {
-        openPlayback(name);
+        return openPlayback(name);
     }
     catch(...) {
     }
