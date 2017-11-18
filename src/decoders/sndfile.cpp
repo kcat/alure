@@ -6,6 +6,22 @@
 
 #include "sndfile.h"
 
+namespace
+{
+
+constexpr alure::Array<int,1> CHANNELS_MONO      {{SF_CHANNEL_MAP_MONO}};
+constexpr alure::Array<int,2> CHANNELS_STEREO    {{SF_CHANNEL_MAP_LEFT, SF_CHANNEL_MAP_RIGHT}};
+constexpr alure::Array<int,2> CHANNELS_REAR      {{SF_CHANNEL_MAP_REAR_LEFT, SF_CHANNEL_MAP_REAR_RIGHT}};
+constexpr alure::Array<int,4> CHANNELS_QUAD      {{SF_CHANNEL_MAP_LEFT, SF_CHANNEL_MAP_RIGHT, SF_CHANNEL_MAP_REAR_LEFT, SF_CHANNEL_MAP_REAR_RIGHT}};
+constexpr alure::Array<int,6> CHANNELS_5DOT1     {{SF_CHANNEL_MAP_LEFT, SF_CHANNEL_MAP_RIGHT, SF_CHANNEL_MAP_CENTER, SF_CHANNEL_MAP_LFE, SF_CHANNEL_MAP_SIDE_LEFT, SF_CHANNEL_MAP_SIDE_RIGHT}};
+constexpr alure::Array<int,6> CHANNELS_5DOT1_REAR{{SF_CHANNEL_MAP_LEFT, SF_CHANNEL_MAP_RIGHT, SF_CHANNEL_MAP_CENTER, SF_CHANNEL_MAP_LFE, SF_CHANNEL_MAP_REAR_LEFT, SF_CHANNEL_MAP_REAR_RIGHT}};
+constexpr alure::Array<int,7> CHANNELS_6DOT1     {{SF_CHANNEL_MAP_LEFT, SF_CHANNEL_MAP_RIGHT, SF_CHANNEL_MAP_CENTER, SF_CHANNEL_MAP_LFE, SF_CHANNEL_MAP_REAR_CENTER, SF_CHANNEL_MAP_SIDE_LEFT, SF_CHANNEL_MAP_SIDE_RIGHT}};
+constexpr alure::Array<int,8> CHANNELS_7DOT1     {{SF_CHANNEL_MAP_LEFT, SF_CHANNEL_MAP_RIGHT, SF_CHANNEL_MAP_CENTER, SF_CHANNEL_MAP_LFE, SF_CHANNEL_MAP_REAR_LEFT, SF_CHANNEL_MAP_REAR_RIGHT, SF_CHANNEL_MAP_SIDE_LEFT, SF_CHANNEL_MAP_SIDE_RIGHT}};
+constexpr alure::Array<int,3> CHANNELS_BFORMAT2D {{SF_CHANNEL_MAP_AMBISONIC_B_W, SF_CHANNEL_MAP_AMBISONIC_B_X, SF_CHANNEL_MAP_AMBISONIC_B_Y}};
+constexpr alure::Array<int,4> CHANNELS_BFORMAT3D {{SF_CHANNEL_MAP_AMBISONIC_B_W, SF_CHANNEL_MAP_AMBISONIC_B_X, SF_CHANNEL_MAP_AMBISONIC_B_Y, SF_CHANNEL_MAP_AMBISONIC_B_Z}};
+
+}
+
 namespace alure
 {
 
@@ -150,44 +166,30 @@ SharedPtr<Decoder> SndFileDecoderFactory::createDecoder(UniquePtr<std::istream> 
     Vector<int> chanmap(sndinfo.channels);
     if(sf_command(sndfile, SFC_GET_CHANNEL_MAP_INFO, chanmap.data(), chanmap.size()*sizeof(int)) == SF_TRUE)
     {
-        auto matches = [](const Vector<int> &first, std::initializer_list<int> second) -> bool
+        auto matches = [](const Vector<int> &first, ArrayView<int> second) -> bool
         {
             if(first.size() != second.size())
                 return false;
-            return std::mismatch(first.begin(), first.end(), second.begin()).first == first.end();
+            return std::equal(first.begin(), first.end(), second.begin());
         };
 
-        if(matches(chanmap, {SF_CHANNEL_MAP_MONO}))
+        if(matches(chanmap, CHANNELS_MONO))
             sconfig = ChannelConfig::Mono;
-        else if(matches(chanmap, {SF_CHANNEL_MAP_LEFT, SF_CHANNEL_MAP_RIGHT}))
+        else if(matches(chanmap, CHANNELS_STEREO))
             sconfig = ChannelConfig::Stereo;
-        else if(matches(chanmap, {SF_CHANNEL_MAP_REAR_LEFT, SF_CHANNEL_MAP_REAR_RIGHT}))
+        else if(matches(chanmap, CHANNELS_REAR))
             sconfig = ChannelConfig::Rear;
-        else if(matches(chanmap, {SF_CHANNEL_MAP_LEFT, SF_CHANNEL_MAP_RIGHT,
-                                  SF_CHANNEL_MAP_REAR_LEFT, SF_CHANNEL_MAP_REAR_RIGHT}))
+        else if(matches(chanmap, CHANNELS_QUAD))
             sconfig = ChannelConfig::Quad;
-        else if(matches(chanmap, {SF_CHANNEL_MAP_LEFT, SF_CHANNEL_MAP_RIGHT,
-                                  SF_CHANNEL_MAP_CENTER, SF_CHANNEL_MAP_LFE,
-                                  SF_CHANNEL_MAP_REAR_LEFT, SF_CHANNEL_MAP_REAR_RIGHT}) ||
-                matches(chanmap, {SF_CHANNEL_MAP_LEFT, SF_CHANNEL_MAP_RIGHT,
-                                  SF_CHANNEL_MAP_CENTER, SF_CHANNEL_MAP_LFE,
-                                  SF_CHANNEL_MAP_SIDE_LEFT, SF_CHANNEL_MAP_SIDE_RIGHT}))
+        else if(matches(chanmap, CHANNELS_5DOT1) || matches(chanmap, CHANNELS_5DOT1_REAR))
             sconfig = ChannelConfig::X51;
-        else if(matches(chanmap, {SF_CHANNEL_MAP_LEFT, SF_CHANNEL_MAP_RIGHT,
-                                  SF_CHANNEL_MAP_CENTER, SF_CHANNEL_MAP_LFE,
-                                  SF_CHANNEL_MAP_REAR_CENTER, SF_CHANNEL_MAP_SIDE_LEFT,
-                                  SF_CHANNEL_MAP_SIDE_RIGHT}))
+        else if(matches(chanmap, CHANNELS_6DOT1))
             sconfig = ChannelConfig::X61;
-        else if(matches(chanmap, {SF_CHANNEL_MAP_LEFT, SF_CHANNEL_MAP_RIGHT,
-                                  SF_CHANNEL_MAP_CENTER, SF_CHANNEL_MAP_LFE,
-                                  SF_CHANNEL_MAP_REAR_LEFT, SF_CHANNEL_MAP_REAR_RIGHT,
-                                  SF_CHANNEL_MAP_SIDE_LEFT, SF_CHANNEL_MAP_SIDE_RIGHT}))
+        else if(matches(chanmap, CHANNELS_7DOT1))
             sconfig = ChannelConfig::X71;
-        else if(matches(chanmap, {SF_CHANNEL_MAP_AMBISONIC_B_W, SF_CHANNEL_MAP_AMBISONIC_B_X,
-                                  SF_CHANNEL_MAP_AMBISONIC_B_Y}))
+        else if(matches(chanmap, CHANNELS_BFORMAT2D))
             sconfig = ChannelConfig::BFormat2D;
-        else if(matches(chanmap, {SF_CHANNEL_MAP_AMBISONIC_B_W, SF_CHANNEL_MAP_AMBISONIC_B_X,
-                                  SF_CHANNEL_MAP_AMBISONIC_B_Y, SF_CHANNEL_MAP_AMBISONIC_B_Z}))
+        else if(matches(chanmap, CHANNELS_BFORMAT3D))
             sconfig = ChannelConfig::BFormat3D;
         else
         {
@@ -195,7 +197,7 @@ SharedPtr<Decoder> SndFileDecoderFactory::createDecoder(UniquePtr<std::istream> 
             return nullptr;
         }
     }
-    else if(sf_command(sndfile, SFC_WAVEX_GET_AMBISONIC, 0, 0) == SF_AMBISONIC_B_FORMAT)
+    else if(sf_command(sndfile, SFC_WAVEX_GET_AMBISONIC, nullptr, 0) == SF_AMBISONIC_B_FORMAT)
     {
         if(sndinfo.channels == 3)
             sconfig = ChannelConfig::BFormat2D;

@@ -18,13 +18,8 @@ struct IDType {
 
 inline bool operator==(const IDType::char16 &lhs, const IDType &rhs)
 {
-    auto liter = std::begin(lhs);
-    for(ALubyte c : rhs.mGuid)
-    {
-        if(liter == std::end(lhs) || c != *liter)
-            return false;
-    }
-    return (liter == std::end(lhs));
+    static_assert(sizeof(lhs) == sizeof(rhs.mGuid), "Invalid ID size");
+    return std::equal(std::begin(lhs), std::end(lhs), rhs.mGuid.begin());
 }
 
 const IDType SUBTYPE_PCM{{{
