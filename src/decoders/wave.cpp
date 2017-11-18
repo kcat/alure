@@ -84,13 +84,14 @@ class WaveDecoder final : public Decoder {
 
     // In bytes from beginning of file
     std::istream::pos_type mStart, mEnd;
+    std::istream::pos_type mCurrentPos;
 
 public:
     WaveDecoder(UniquePtr<std::istream> file, ChannelConfig channels, SampleType type, ALuint frequency, ALuint framesize,
                 std::istream::pos_type start, std::istream::pos_type end, ALuint loopstart, ALuint loopend)
       : mFile(std::move(file)), mChannelConfig(channels), mSampleType(type), mFrequency(frequency)
       , mFrameSize(framesize), mLoopPts{loopstart,loopend}, mStart(start), mEnd(end)
-    { }
+    { mCurrentPos = mFile->tellg(); }
     ~WaveDecoder() override;
 
     ALuint getFrequency() const override;
@@ -137,6 +138,7 @@ bool WaveDecoder::seek(uint64_t pos)
     mFile->clear();
     if(offset > mEnd || !mFile->seekg(offset))
         return false;
+    mCurrentPos = offset;
     return true;
 }
 
@@ -149,13 +151,10 @@ ALuint WaveDecoder::read(ALvoid *ptr, ALuint count)
 {
     mFile->clear();
 
-    auto pos = mFile->tellg();
-    size_t len = count * mFrameSize;
     ALuint total = 0;
-
-    if(pos < mEnd)
+    if(mCurrentPos < mEnd)
     {
-        len = std::min<std::istream::pos_type>(len, mEnd-pos);
+        size_t len = std::min<std::istream::pos_type>(count*mFrameSize, mEnd-mCurrentPos);
 #ifdef __BIG_ENDIAN__
         switch(mSampleType)
         {
@@ -171,6 +170,7 @@ ALuint WaveDecoder::read(ALvoid *ptr, ALuint count)
                     for(std::streamsize i = 0;i < got;++i)
                         reinterpret_cast<char*>(ptr)[total+i] = temp[i^3];
 
+                    mCurrentPos += got;
                     total += got;
                 }
                 total /= mFrameSize;
@@ -188,6 +188,7 @@ ALuint WaveDecoder::read(ALvoid *ptr, ALuint count)
                     for(std::streamsize i = 0;i < got;++i)
                         reinterpret_cast<char*>(ptr)[total+i] = temp[i^1];
 
+                    mCurrentPos += got;
                     total += got;
                 }
                 total /= mFrameSize;
@@ -199,7 +200,10 @@ ALuint WaveDecoder::read(ALvoid *ptr, ALuint count)
         {
 #endif
                 mFile->read(reinterpret_cast<char*>(ptr), len);
-                total = mFile->gcount() / mFrameSize;
+                std::streamsize got = mFile->gcount();
+
+                mCurrentPos += got;
+                total = got / mFrameSize;
         }
     }
 
