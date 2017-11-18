@@ -318,7 +318,7 @@ void SourceImpl::play(Buffer buffer)
     mIsAsync.store(false, std::memory_order_release);
 
     mFadeGainTarget = mFadeGain = 1.0f;
-    mFadeTimeTarget = mLastFadeTime = std::chrono::steady_clock::now();
+    mFadeTimeTarget = mLastFadeTime = std::chrono::steady_clock::time_point();
 
     if(mId == 0)
     {
@@ -366,7 +366,7 @@ void SourceImpl::play(SharedPtr<Decoder>&& decoder, ALuint chunk_len, ALuint que
     mIsAsync.store(false, std::memory_order_release);
 
     mFadeGainTarget = mFadeGain = 1.0f;
-    mFadeTimeTarget = mLastFadeTime = std::chrono::steady_clock::now();
+    mFadeTimeTarget = mLastFadeTime = std::chrono::steady_clock::time_point();
 
     if(mId == 0)
     {
@@ -425,7 +425,7 @@ void SourceImpl::play(SharedFuture<Buffer>&& future_buffer)
     makeStopped(true);
 
     mFadeGainTarget = mFadeGain = 1.0f;
-    mFadeTimeTarget = mLastFadeTime = std::chrono::steady_clock::now();
+    mFadeTimeTarget = mLastFadeTime = std::chrono::steady_clock::time_point();
 
     mContext->addPendingSource(this, std::move(future_buffer));
 }
