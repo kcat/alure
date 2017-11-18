@@ -30,17 +30,16 @@ int main(int argc, char *argv[])
         dev = devMgr.openPlayback();
     std::cout<< "Opened \""<<dev.getName()<<"\"" <<std::endl;
 
-    if(!dev.queryExtension("ALC_SOFT_HRTF"))
-    {
-        std::cerr<< "ALC_SOFT_HRTF not supported!" <<std::endl;
-        return 1;
-    }
-
     // Enumerate (and display) the available HRTFs
-    std::cout<< "Available HRTFs:\n";
     alure::Vector<alure::String> hrtf_names = dev.enumerateHRTFNames();
-    for(const alure::String &name : hrtf_names)
-        std::cout<< "    "<<name <<'\n';
+    if(hrtf_names.empty())
+        std::cout<< "No HRTFs found!\n";
+    else
+    {
+        std::cout<< "Available HRTFs:\n";
+        for(const alure::String &name : hrtf_names)
+            std::cout<< "    "<<name <<'\n';
+    }
     std::cout.flush();
 
     alure::Vector<alure::AttributePair> attrs;
@@ -61,7 +60,10 @@ int main(int argc, char *argv[])
     alure::Context ctx = dev.createContext(attrs);
     alure::Context::MakeCurrent(ctx);
 
-    std::cout<< "Using HRTF \""<<dev.getCurrentHRTF()<<"\"" <<std::endl;
+    if(dev.isHRTFEnabled())
+        std::cout<< "Using HRTF \""<<dev.getCurrentHRTF()<<"\"" <<std::endl;
+    else
+        std::cout<< "HRTF not enabled!" <<std::endl;
 
     for(int i = fileidx;i < argc;i++)
     {
@@ -79,7 +81,10 @@ int main(int argc, char *argv[])
                     alure::AttributesEnd()
                 }};
                 dev.reset(attrs);
-                std::cout<< "Using HRTF \""<<dev.getCurrentHRTF()<<"\"" <<std::endl;
+                if(dev.isHRTFEnabled())
+                    std::cout<< "Using HRTF \""<<dev.getCurrentHRTF()<<"\"" <<std::endl;
+                else
+                    std::cout<< "HRTF not enabled!" <<std::endl;
             }
 
             ++i;

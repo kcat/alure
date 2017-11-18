@@ -391,28 +391,30 @@ public:
      * them, such that the index of a given name is the ID to use with
      * ALC_HRTF_ID_SOFT.
      *
-     * Requires the ALC_SOFT_HRTF extension.
+     * If the ALC_SOFT_HRTF extension is unavailable, this will return an empty
+     * vector.
      */
     Vector<String> enumerateHRTFNames() const;
 
     /**
      * Retrieves whether HRTF is enabled on the device or not.
      *
-     * Requires the ALC_SOFT_HRTF extension.
+     * If the ALC_SOFT_HRTF extension is unavailable, this will return false
+     * although there could still be HRTF applied at a lower hardware level.
      */
     bool isHRTFEnabled() const;
 
     /**
      * Retrieves the name of the HRTF currently being used by this device.
      *
-     * Requires the ALC_SOFT_HRTF extension.
+     * If HRTF is not currently enabled, this will be empty.
      */
     String getCurrentHRTF() const;
 
     /**
      * Resets the device, using the specified attributes.
      *
-     * Requires the ALC_SOFT_HRTF extension.
+     * If the ALC_SOFT_HRTF extension is unavailable, this will be a no-op.
      */
     void reset(ArrayView<AttributePair> attributes);
 

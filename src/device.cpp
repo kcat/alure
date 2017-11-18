@@ -154,15 +154,15 @@ ALCuint DeviceImpl::getMaxAuxiliarySends() const
 DECL_THUNK0(Vector<String>, Device, enumerateHRTFNames, const)
 Vector<String> DeviceImpl::enumerateHRTFNames() const
 {
+    Vector<String> hrtfs;
     if(!hasExtension(ALC::SOFT_HRTF))
-        throw std::runtime_error("ALC_SOFT_HRTF not supported");
+        return hrtfs;
 
     ALCint num_hrtfs = -1;
     alcGetIntegerv(mDevice, ALC_NUM_HRTF_SPECIFIERS_SOFT, 1, &num_hrtfs);
     if(num_hrtfs < 0)
         throw std::runtime_error("HRTF specifier count error");
 
-    Vector<String> hrtfs;
     hrtfs.reserve(num_hrtfs);
     for(int i = 0;i < num_hrtfs;++i)
         hrtfs.emplace_back(alcGetStringiSOFT(mDevice, ALC_HRTF_SPECIFIER_SOFT, i));
@@ -173,7 +173,7 @@ DECL_THUNK0(bool, Device, isHRTFEnabled, const)
 bool DeviceImpl::isHRTFEnabled() const
 {
     if(!hasExtension(ALC::SOFT_HRTF))
-        throw std::runtime_error("ALC_SOFT_HRTF not supported");
+        return false;
 
     ALCint hrtf_state = -1;
     alcGetIntegerv(mDevice, ALC_HRTF_SOFT, 1, &hrtf_state);
@@ -186,7 +186,7 @@ DECL_THUNK0(String, Device, getCurrentHRTF, const)
 String DeviceImpl::getCurrentHRTF() const
 {
     if(!hasExtension(ALC::SOFT_HRTF))
-        throw std::runtime_error("ALC_SOFT_HRTF not supported");
+        return String();
     return String(alcGetString(mDevice, ALC_HRTF_SPECIFIER_SOFT));
 }
 
@@ -194,7 +194,7 @@ DECL_THUNK1(void, Device, reset,, ArrayView<AttributePair>)
 void DeviceImpl::reset(ArrayView<AttributePair> attributes)
 {
     if(!hasExtension(ALC::SOFT_HRTF))
-        throw std::runtime_error("ALC_SOFT_HRTF not supported");
+        return;
     bool success = false;
     if(attributes.end()) /* No explicit attributes. */
         success = alcResetDeviceSOFT(mDevice, nullptr);
@@ -286,7 +286,7 @@ DECL_THUNK0(void, Device, pauseDSP,)
 void DeviceImpl::pauseDSP()
 {
     if(!hasExtension(ALC::SOFT_device_pause))
-       throw std::runtime_error("ALC_SOFT_pause_device not supported");
+        throw std::runtime_error("ALC_SOFT_pause_device not supported");
     alcDevicePauseSOFT(mDevice);
 }
 
