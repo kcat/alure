@@ -37,7 +37,7 @@ DECL_THUNK1(void, AuxiliaryEffectSlot, setGain,, ALfloat)
 void AuxiliaryEffectSlotImpl::setGain(ALfloat gain)
 {
     if(!(gain >= 0.0f && gain <= 1.0f))
-        throw std::runtime_error("Gain out of range");
+        throw std::out_of_range("Gain out of range");
     CheckContext(mContext);
     mContext->alAuxiliaryEffectSlotf(mId, AL_EFFECTSLOT_GAIN, gain);
 }

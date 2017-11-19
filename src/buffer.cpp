@@ -110,7 +110,7 @@ void BufferImpl::setLoopPoints(ALuint start, ALuint end)
     }
 
     if(start >= end || end > length)
-        throw std::runtime_error("Loop points out of range");
+        throw std::out_of_range("Loop points out of range");
 
     ALint pts[2]{(ALint)start, (ALint)end};
     alGetError();
@@ -152,7 +152,7 @@ ALURE_API const char *GetSampleTypeName(SampleType type)
         case SampleType::Float32: return "32-bit float";
         case SampleType::Mulaw: return "Mulaw";
     }
-    throw std::runtime_error("Invalid type");
+    throw std::invalid_argument("Invalid type");
 }
 
 ALURE_API const char *GetChannelConfigName(ChannelConfig cfg)
@@ -169,7 +169,7 @@ ALURE_API const char *GetChannelConfigName(ChannelConfig cfg)
         case ChannelConfig::BFormat2D: return "B-Format 2D";
         case ChannelConfig::BFormat3D: return "B-Format 3D";
     }
-    throw std::runtime_error("Invalid config");
+    throw std::invalid_argument("Invalid config");
 }
 
 ALURE_API ALuint FramesToBytes(ALuint frames, ChannelConfig chans, SampleType type)
