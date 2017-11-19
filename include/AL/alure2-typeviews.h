@@ -115,7 +115,7 @@ public:
     BasicStringView(const BasicStringView&) noexcept = default;
     BasicStringView(const value_type *elems, size_type num_elems) noexcept
       : ArrayView<T>(elems, num_elems) { }
-    BasicStringView(const value_type *elems) : ArrayView<T>(elems, std::strlen(elems)) { }
+    BasicStringView(const value_type *elems) : ArrayView<T>(elems, traits_type::length(elems)) { }
     BasicStringView(StringT&&) = delete;
     BasicStringView(const StringT &rhs) noexcept : ArrayView<T>(rhs) { }
 #if __cplusplus >= 201703L
