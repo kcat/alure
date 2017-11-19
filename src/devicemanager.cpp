@@ -93,9 +93,7 @@ Device DeviceManagerImpl::openPlayback(const char *name)
             throw;
         }
     }
-    if(!name || !name[0])
-        throw std::runtime_error("Failed to open default device");
-    throw std::runtime_error(StringView("Failed to open device \"")+name+"\"");
+    throw std::runtime_error("Device open failed");
 }
 
 Device DeviceManager::openPlayback(const String &name, const std::nothrow_t &nt) noexcept

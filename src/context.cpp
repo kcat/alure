@@ -251,8 +251,7 @@ alure::Vector<DecoderEntryPair> sDecoders;
 
 
 template<typename T>
-alure::DecoderOrExceptT GetDecoder(alure::StringView name, alure::UniquePtr<std::istream> &file,
-                                   T start, T end)
+alure::DecoderOrExceptT GetDecoder(alure::UniquePtr<std::istream> &file, T start, T end)
 {
     alure::DecoderOrExceptT ret;
     while(start != end)
@@ -262,7 +261,7 @@ alure::DecoderOrExceptT GetDecoder(alure::StringView name, alure::UniquePtr<std:
         if(decoder) return (ret = std::move(decoder));
 
         if(!file || !(file->clear(),file->seekg(0)))
-            return (ret = std::runtime_error("Failed to rewind "+name+" for the next decoder factory"));
+            return (ret = std::runtime_error("Failed to rewind file for the next decoder factory"));
 
         ++start;
     }
@@ -270,15 +269,15 @@ alure::DecoderOrExceptT GetDecoder(alure::StringView name, alure::UniquePtr<std:
     return (ret = nullptr);
 }
 
-static alure::DecoderOrExceptT GetDecoder(alure::StringView name, alure::UniquePtr<std::istream> file)
+static alure::DecoderOrExceptT GetDecoder(alure::UniquePtr<std::istream> file)
 {
-    auto decoder = GetDecoder(name, file, sDecoders.begin(), sDecoders.end());
+    auto decoder = GetDecoder(file, sDecoders.begin(), sDecoders.end());
     if(std::holds_alternative<std::runtime_error>(decoder)) return decoder;
     if(std::get<alure::SharedPtr<alure::Decoder>>(decoder)) return decoder;
-    decoder = GetDecoder(name, file, std::begin(sDefaultDecoders), std::end(sDefaultDecoders));
+    decoder = GetDecoder(file, std::begin(sDefaultDecoders), std::end(sDefaultDecoders));
     if(std::holds_alternative<std::runtime_error>(decoder)) return decoder;
     if(std::get<alure::SharedPtr<alure::Decoder>>(decoder)) return decoder;
-    return (decoder = std::runtime_error("No decoder for "+name));
+    return (decoder = std::runtime_error("No decoder found"));
 }
 
 class DefaultFileIOFactory final : public alure::FileIOFactory {
@@ -315,7 +314,7 @@ void RegisterDecoder(StringView name, UniquePtr<DecoderFactory> factory)
         { return entry.first < rhs; }
     );
     if(iter != sDecoders.end())
-        throw std::runtime_error("Decoder factory \""+name+"\" already registered");
+        throw std::runtime_error("Decoder factory already registered");
     sDecoders.insert(iter, std::make_pair(String(name), std::move(factory)));
 }
 
@@ -699,19 +698,19 @@ DecoderOrExceptT ContextImpl::findDecoder(StringView name)
 
     String oldname = String(name);
     auto file = FileIOFactory::get().openFile(oldname);
-    if(file) return (ret = GetDecoder(name, std::move(file)));
+    if(file) return (ret = GetDecoder(std::move(file)));
 
     // Resource not found. Try to find a substitute.
-    if(!mMessage.get()) return (ret = std::runtime_error("Failed to open "+oldname));
+    if(!mMessage.get()) return (ret = std::runtime_error("Failed to open file"));
     do {
         String newname(mMessage->resourceNotFound(oldname));
         if(newname.empty())
-            return (ret = std::runtime_error("Failed to open "+oldname));
+            return (ret = std::runtime_error("Failed to open file"));
         file = FileIOFactory::get().openFile(newname);
         oldname = std::move(newname);
     } while(!file);
 
-    return (ret = GetDecoder(oldname, std::move(file)));
+    return (ret = GetDecoder(std::move(file)));
 }
 
 DECL_THUNK1(SharedPtr<Decoder>, Context, createDecoder,, StringView)
@@ -786,9 +785,12 @@ BufferOrExceptT ContextImpl::doCreateBuffer(StringView name, Vector<UniquePtr<Bu
     ALenum format = GetFormat(chans, type);
     if(format == AL_NONE)
     {
-        std::stringstream sstr;
-        sstr<< "Format not supported ("<<GetSampleTypeName(type)<<", "<<GetChannelConfigName(chans)<<")";
-        return (retval = std::runtime_error(sstr.str()));
+        String str("Unsupported format (");
+        str += GetSampleTypeName(type);
+        str += ", ";
+        str += GetChannelConfigName(chans);
+        str += ")";
+        return (retval = std::runtime_error(str));
     }
 
     if(mMessage.get())
@@ -1036,7 +1038,7 @@ Buffer ContextImpl::createBufferFrom(StringView name, SharedPtr<Decoder>&& decod
         { return hasher(lhs->getName()) < rhs; }
     );
     if(iter != mBuffers.end() && (*iter)->getName() == name)
-        throw std::runtime_error("Buffer \""+name+"\" already exists");
+        throw std::runtime_error("Buffer already exists");
 
     BufferOrExceptT ret = doCreateBuffer(name, iter, std::move(decoder));
     Buffer *buffer = std::get_if<Buffer>(&ret);
@@ -1068,7 +1070,7 @@ SharedFuture<Buffer> ContextImpl::createBufferAsyncFrom(StringView name, SharedP
         { return hasher(lhs->getName()) < rhs; }
     );
     if(iter != mBuffers.end() && (*iter)->getName() == name)
-        throw std::runtime_error("Buffer \""+name+"\" already exists");
+        throw std::runtime_error("Buffer already exists");
 
     Promise<Buffer> promise;
     future = promise.get_future().share();
