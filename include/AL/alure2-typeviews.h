@@ -102,7 +102,6 @@ public:
 template<typename T, typename Tr=std::char_traits<T>>
 class BasicStringView : public ArrayView<T> {
     using BaseT = ArrayView<T>;
-    using StringT = BasicString<T,Tr>;
 
 public:
     using typename BaseT::value_type;
@@ -116,8 +115,10 @@ public:
     BasicStringView(const value_type *elems, size_type num_elems) noexcept
       : ArrayView<T>(elems, num_elems) { }
     BasicStringView(const value_type *elems) : ArrayView<T>(elems, traits_type::length(elems)) { }
-    BasicStringView(StringT&&) = delete;
-    BasicStringView(const StringT &rhs) noexcept : ArrayView<T>(rhs) { }
+    template<typename Alloc>
+    BasicStringView(BasicString<T,Tr,Alloc>&&) = delete;
+    template<typename Alloc>
+    BasicStringView(const BasicString<T,Tr,Alloc> &rhs) noexcept : ArrayView<T>(rhs) { }
 #if __cplusplus >= 201703L
     BasicStringView(const std::basic_string_view<T> &rhs) noexcept
       : ArrayView<T>(rhs.data(), rhs.length()) { }
@@ -127,21 +128,18 @@ public:
 
     size_type length() const { return BaseT::size(); }
 
-    explicit operator StringT() const { return StringT(BaseT::data(), length()); }
+    template<typename Alloc>
+    explicit operator BasicString<T,Tr,Alloc>() const
+    { return BasicString<T,Tr,Alloc>(BaseT::data(), length()); }
 #if __cplusplus >= 201703L
     operator std::basic_string_view<T,Tr>() const noexcept
     { return std::basic_string_view<T,Tr>(BaseT::data(), length()); }
 #endif
 
-    StringT operator+(const StringT &rhs) const
+    template<typename Alloc>
+    BasicString<T,Tr,Alloc> operator+(const BasicString<T,Tr,Alloc> &rhs) const
     {
-        StringT ret = StringT(*this);
-        ret += rhs;
-        return ret;
-    }
-    StringT operator+(const typename StringT::value_type *rhs) const
-    {
-        StringT ret = StringT(*this);
+        BasicString<T,Tr,Alloc> ret = BasicString<T,Tr,Alloc>(*this);
         ret += rhs;
         return ret;
     }
@@ -192,24 +190,24 @@ public:
 };
 using StringView = BasicStringView<String::value_type>;
 
-// Inline operators to concat String and C-style strings with StringViews.
-template<typename T, typename Tr>
-inline BasicString<T,Tr> operator+(BasicString<T,Tr> lhs, BasicStringView<T,Tr> rhs)
+// Inline operators to concat Strings with StringViews.
+template<typename T, typename Tr, typename Alloc>
+inline BasicString<T,Tr,Alloc> operator+(const BasicString<T,Tr,Alloc> &lhs, BasicStringView<T,Tr> rhs)
+{ return BasicString<T,Tr>(lhs).append(rhs.data(), rhs.size()); }
+template<typename T, typename Tr, typename Alloc>
+inline BasicString<T,Tr,Alloc> operator+(BasicString<T,Tr,Alloc>&& lhs, BasicStringView<T,Tr> rhs)
 { return std::move(lhs.append(rhs.data(), rhs.size())); }
-template<typename T, typename Tr>
-inline BasicString<T,Tr> operator+(const typename BasicString<T,Tr>::value_type *lhs, BasicStringView<T,Tr> rhs)
-{ return lhs + BasicString<T,Tr>(rhs); }
-template<typename T, typename Tr>
-inline BasicString<T,Tr>& operator+=(BasicString<T,Tr> &lhs, BasicStringView<T,Tr> rhs)
+template<typename T, typename Tr, typename Alloc>
+inline BasicString<T,Tr,Alloc>& operator+=(BasicString<T,Tr,Alloc> &lhs, BasicStringView<T,Tr> rhs)
 { return lhs.append(rhs.data(), rhs.size()); }
 
 // Inline operators to compare String and C-style strings with StringViews.
 #define ALURE_DECL_STROP(op)                                                     \
-template<typename T, typename Tr>                                                \
-inline bool operator op(const BasicString<T,Tr> &lhs, BasicStringView<T,Tr> rhs) \
+template<typename T, typename Tr, typename Alloc>                                \
+inline bool operator op(const BasicString<T,Tr,Alloc> &lhs, BasicStringView<T,Tr> rhs) \
 { return BasicStringView<T,Tr>(lhs) op rhs; }                                    \
 template<typename T, typename Tr>                                                \
-inline bool operator op(const typename BasicString<T,Tr>::value_type *lhs,       \
+inline bool operator op(const typename BasicStringView<T,Tr>::value_type *lhs,   \
                         BasicStringView<T,Tr> rhs)                               \
 { return BasicStringView<T,Tr>(lhs) op rhs; }
 ALURE_DECL_STROP(==)
