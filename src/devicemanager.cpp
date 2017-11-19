@@ -48,8 +48,8 @@ al_category al_category::sSingleton;
 
 
 template<typename T>
-static inline void GetDeviceProc(T **func, ALCdevice *device, const char *name)
-{ *func = reinterpret_cast<T*>(alcGetProcAddress(device, name)); }
+static inline void GetDeviceProc(T *&func, ALCdevice *device, const char *name)
+{ func = reinterpret_cast<T*>(alcGetProcAddress(device, name)); }
 
 
 ALCboolean (ALC_APIENTRY*DeviceManagerImpl::SetThreadContext)(ALCcontext*);
@@ -66,7 +66,7 @@ DeviceManagerImpl &DeviceManagerImpl::get()
 DeviceManagerImpl::DeviceManagerImpl()
 {
     if(alcIsExtensionPresent(0, "ALC_EXT_thread_local_context"))
-        GetDeviceProc(&SetThreadContext, 0, "alcSetThreadContext");
+        GetDeviceProc(SetThreadContext, nullptr, "alcSetThreadContext");
 }
 
 DeviceManagerImpl::~DeviceManagerImpl()
