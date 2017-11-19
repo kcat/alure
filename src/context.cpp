@@ -261,23 +261,25 @@ alure::DecoderOrExceptT GetDecoder(alure::UniquePtr<std::istream> &file, T start
         if(decoder) return (ret = std::move(decoder));
 
         if(!file || !(file->clear(),file->seekg(0)))
-            return (ret = std::runtime_error("Failed to rewind file for the next decoder factory"));
+            return (ret = std::make_exception_ptr(std::runtime_error(
+                "Failed to rewind file for the next decoder factory"
+            )));
 
         ++start;
     }
 
-    return (ret = nullptr);
+    return (ret = alure::SharedPtr<alure::Decoder>(nullptr));
 }
 
 static alure::DecoderOrExceptT GetDecoder(alure::UniquePtr<std::istream> file)
 {
     auto decoder = GetDecoder(file, sDecoders.begin(), sDecoders.end());
-    if(std::holds_alternative<std::runtime_error>(decoder)) return decoder;
+    if(std::holds_alternative<std::exception_ptr>(decoder)) return decoder;
     if(std::get<alure::SharedPtr<alure::Decoder>>(decoder)) return decoder;
     decoder = GetDecoder(file, std::begin(sDefaultDecoders), std::end(sDefaultDecoders));
-    if(std::holds_alternative<std::runtime_error>(decoder)) return decoder;
+    if(std::holds_alternative<std::exception_ptr>(decoder)) return decoder;
     if(std::get<alure::SharedPtr<alure::Decoder>>(decoder)) return decoder;
-    return (decoder = std::runtime_error("No decoder found"));
+    return (decoder = std::make_exception_ptr(std::runtime_error("No decoder found")));
 }
 
 class DefaultFileIOFactory final : public alure::FileIOFactory {
@@ -701,11 +703,12 @@ DecoderOrExceptT ContextImpl::findDecoder(StringView name)
     if(file) return (ret = GetDecoder(std::move(file)));
 
     // Resource not found. Try to find a substitute.
-    if(!mMessage.get()) return (ret = std::runtime_error("Failed to open file"));
+    if(!mMessage.get())
+        return (ret = std::make_exception_ptr(std::runtime_error("Failed to open file")));
     do {
         String newname(mMessage->resourceNotFound(oldname));
         if(newname.empty())
-            return (ret = std::runtime_error("Failed to open file"));
+            return (ret = std::make_exception_ptr(std::runtime_error("Failed to open file")));
         file = FileIOFactory::get().openFile(newname);
         oldname = std::move(newname);
     } while(!file);
@@ -720,7 +723,7 @@ SharedPtr<Decoder> ContextImpl::createDecoder(StringView name)
     DecoderOrExceptT dec = findDecoder(name);
     if(SharedPtr<Decoder> *decoder = std::get_if<SharedPtr<Decoder>>(&dec))
         return *decoder;
-    throw std::get<std::runtime_error>(dec);
+    std::rethrow_exception(std::get<std::exception_ptr>(dec));
 }
 
 
@@ -768,7 +771,8 @@ BufferOrExceptT ContextImpl::doCreateBuffer(StringView name, Vector<UniquePtr<Bu
 
     Vector<ALbyte> data(FramesToBytes(frames, chans, type));
     frames = decoder->read(data.data(), frames);
-    if(!frames) return (retval = std::runtime_error("No samples for buffer"));
+    if(!frames)
+        return (retval = std::make_exception_ptr(std::runtime_error("No samples for buffer")));
     data.resize(FramesToBytes(frames, chans, type));
 
     std::pair<uint64_t,uint64_t> loop_pts = decoder->getLoopPoints();
@@ -790,7 +794,7 @@ BufferOrExceptT ContextImpl::doCreateBuffer(StringView name, Vector<UniquePtr<Bu
         str += ", ";
         str += GetChannelConfigName(chans);
         str += ")";
-        return (retval = std::runtime_error(str));
+        return (retval = std::make_exception_ptr(std::runtime_error(str)));
     }
 
     if(mMessage.get())
@@ -808,7 +812,7 @@ BufferOrExceptT ContextImpl::doCreateBuffer(StringView name, Vector<UniquePtr<Bu
     if(alGetError() != AL_NO_ERROR)
     {
         alDeleteBuffers(1, &bid);
-        return (retval = std::runtime_error("Failed to buffer data"));
+        return (retval = std::make_exception_ptr(std::runtime_error("Failed to buffer data")));
     }
 
     return (retval = mBuffers.insert(iter,
@@ -823,21 +827,22 @@ BufferOrExceptT ContextImpl::doCreateBufferAsync(StringView name, Vector<UniqueP
     ChannelConfig chans = decoder->getChannelConfig();
     SampleType type = decoder->getSampleType();
     ALuint frames = decoder->getLength();
-    if(!frames) return (retval = std::runtime_error("No samples for buffer"));
+    if(!frames)
+        return (retval = std::make_exception_ptr(std::runtime_error("No samples for buffer")));
 
     ALenum format = GetFormat(chans, type);
     if(format == AL_NONE)
     {
         std::stringstream sstr;
         sstr<< "Format not supported ("<<GetSampleTypeName(type)<<", "<<GetChannelConfigName(chans)<<")";
-        return (retval = std::runtime_error(sstr.str()));
+        return (retval = std::make_exception_ptr(std::runtime_error(sstr.str())));
     }
 
     alGetError();
     ALuint bid = 0;
     alGenBuffers(1, &bid);
     if(alGetError() != AL_NO_ERROR)
-        return (retval = std::runtime_error("Failed to create buffer"));
+        return (retval = std::make_exception_ptr(std::runtime_error("Failed to create buffer")));
 
     auto buffer = MakeUnique<BufferImpl>(this, bid, srate, chans, type, name);
 
@@ -907,7 +912,7 @@ Buffer ContextImpl::getBuffer(StringView name)
     BufferOrExceptT ret = doCreateBuffer(name, iter, createDecoder(name));
     Buffer *buffer = std::get_if<Buffer>(&ret);
     if(UNLIKELY(!buffer))
-        throw std::get<std::runtime_error>(ret);
+        std::rethrow_exception(std::get<std::exception_ptr>(ret));
     return *buffer;
 }
 
@@ -963,7 +968,7 @@ SharedFuture<Buffer> ContextImpl::getBufferAsync(StringView name)
     BufferOrExceptT ret = doCreateBufferAsync(name, iter, createDecoder(name), std::move(promise));
     Buffer *buffer = std::get_if<Buffer>(&ret);
     if(UNLIKELY(!buffer))
-        throw std::get<std::runtime_error>(ret);
+        std::rethrow_exception(std::get<std::exception_ptr>(ret));
     mWakeMutex.lock(); mWakeMutex.unlock();
     mWakeThread.notify_all();
 
@@ -1043,7 +1048,7 @@ Buffer ContextImpl::createBufferFrom(StringView name, SharedPtr<Decoder>&& decod
     BufferOrExceptT ret = doCreateBuffer(name, iter, std::move(decoder));
     Buffer *buffer = std::get_if<Buffer>(&ret);
     if(UNLIKELY(!buffer))
-        throw std::get<std::runtime_error>(ret);
+        std::rethrow_exception(std::get<std::exception_ptr>(ret));
     return *buffer;
 }
 
@@ -1078,7 +1083,7 @@ SharedFuture<Buffer> ContextImpl::createBufferAsyncFrom(StringView name, SharedP
     BufferOrExceptT ret = doCreateBufferAsync(name, iter, std::move(decoder), std::move(promise));
     Buffer *buffer = std::get_if<Buffer>(&ret);
     if(UNLIKELY(!buffer))
-        throw std::get<std::runtime_error>(ret);
+        std::rethrow_exception(std::get<std::exception_ptr>(ret));
     mWakeMutex.lock(); mWakeMutex.unlock();
     mWakeThread.notify_all();
 

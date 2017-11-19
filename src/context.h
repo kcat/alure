@@ -102,8 +102,8 @@ public:
 };
 
 
-using DecoderOrExceptT = std::variant<SharedPtr<Decoder>,std::runtime_error>;
-using BufferOrExceptT = std::variant<Buffer,std::runtime_error>;
+using DecoderOrExceptT = std::variant<SharedPtr<Decoder>,std::exception_ptr>;
+using BufferOrExceptT = std::variant<Buffer,std::exception_ptr>;
 
 class ContextImpl {
     static ContextImpl *sCurrentCtx;
