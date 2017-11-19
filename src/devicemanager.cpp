@@ -55,7 +55,7 @@ static inline void GetDeviceProc(T **func, ALCdevice *device, const char *name)
 ALCboolean (ALC_APIENTRY*DeviceManagerImpl::SetThreadContext)(ALCcontext*);
 
 DeviceManager DeviceManager::get()
-{ return DeviceManager(&DeviceManagerImpl::get()); }
+{ return DeviceManager(DeviceManagerImpl::get()); }
 DeviceManagerImpl &DeviceManagerImpl::get()
 {
     static DeviceManagerImpl singleton;
@@ -75,14 +75,16 @@ DeviceManagerImpl::~DeviceManagerImpl()
 
 
 bool DeviceManager::queryExtension(const String &name) const
-{ return pImpl->queryExtension(name.c_str()); }
-DECL_THUNK1(bool, DeviceManager, queryExtension, const, const char*)
+{ return pImpl.queryExtension(name.c_str()); }
+bool DeviceManager::queryExtension(const char *name) const
+{ return pImpl.queryExtension(name); }
 bool DeviceManagerImpl::queryExtension(const char *name) const
 {
     return alcIsExtensionPresent(nullptr, name);
 }
 
-DECL_THUNK1(Vector<String>, DeviceManager, enumerate, const, DeviceEnumeration)
+Vector<String> DeviceManager::enumerate(DeviceEnumeration type) const
+{ return pImpl.enumerate(type); }
 Vector<String> DeviceManagerImpl::enumerate(DeviceEnumeration type) const
 {
     Vector<String> list;
@@ -97,7 +99,8 @@ Vector<String> DeviceManagerImpl::enumerate(DeviceEnumeration type) const
     return list;
 }
 
-DECL_THUNK1(String, DeviceManager, defaultDeviceName, const, DefaultDeviceType)
+String DeviceManager::defaultDeviceName(DefaultDeviceType type) const
+{ return pImpl.defaultDeviceName(type); }
 String DeviceManagerImpl::defaultDeviceName(DefaultDeviceType type) const
 {
     if(type == DefaultDeviceType::Full && !alcIsExtensionPresent(nullptr, "ALC_ENUMERATE_ALL_EXT"))
@@ -108,8 +111,9 @@ String DeviceManagerImpl::defaultDeviceName(DefaultDeviceType type) const
 
 
 Device DeviceManager::openPlayback(const String &name)
-{ return pImpl->openPlayback(name.c_str()); }
-DECL_THUNK1(Device, DeviceManager, openPlayback,, const char*)
+{ return pImpl.openPlayback(name.c_str()); }
+Device DeviceManager::openPlayback(const char *name)
+{ return pImpl.openPlayback(name); }
 Device DeviceManagerImpl::openPlayback(const char *name)
 {
     ALCdevice *dev = alcOpenDevice(name);
@@ -126,10 +130,11 @@ Device DeviceManagerImpl::openPlayback(const char *name)
 }
 
 Device DeviceManager::openPlayback(const String &name, const std::nothrow_t &nt) noexcept
-{ return pImpl->openPlayback(name.c_str(), nt); }
+{ return pImpl.openPlayback(name.c_str(), nt); }
 Device DeviceManager::openPlayback(const std::nothrow_t&) noexcept
-{ return pImpl->openPlayback(nullptr, std::nothrow); }
-DECL_THUNK2(Device, DeviceManager, openPlayback, noexcept, const char*, const std::nothrow_t&)
+{ return pImpl.openPlayback(nullptr, std::nothrow); }
+Device DeviceManager::openPlayback(const char *name, const std::nothrow_t &nt) noexcept
+{ return pImpl.openPlayback(name, nt); }
 Device DeviceManagerImpl::openPlayback(const char *name, const std::nothrow_t&) noexcept
 {
     try {

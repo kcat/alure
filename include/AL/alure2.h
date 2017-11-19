@@ -313,10 +313,9 @@ enum class DefaultDeviceType {
  * is a singleton, only one instance will exist in a process.
  */
 class ALURE_API DeviceManager {
-    DeviceManagerImpl *pImpl;
+    DeviceManagerImpl &pImpl;
 
-    DeviceManager(DeviceManagerImpl *impl) : pImpl(impl) { }
-    friend class ALDeviceManager;
+    DeviceManager(DeviceManagerImpl &impl) : pImpl(impl) { }
 
 public:
     DeviceManager(const DeviceManager&) = default;
