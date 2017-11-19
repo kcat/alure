@@ -809,10 +809,11 @@ BufferOrExceptT ContextImpl::doCreateBuffer(StringView name, Vector<UniquePtr<Bu
         ALint pts[2]{(ALint)loop_pts.first, (ALint)loop_pts.second};
         alBufferiv(bid, AL_LOOP_POINTS_SOFT, pts);
     }
-    if(alGetError() != AL_NO_ERROR)
+    ALenum err = alGetError();
+    if(err != AL_NO_ERROR)
     {
         alDeleteBuffers(1, &bid);
-        return (retval = std::make_exception_ptr(std::runtime_error("Failed to buffer data")));
+        return (retval = std::make_exception_ptr(al_error(err, "Failed to buffer data")));
     }
 
     return (retval = mBuffers.insert(iter,
@@ -841,8 +842,9 @@ BufferOrExceptT ContextImpl::doCreateBufferAsync(StringView name, Vector<UniqueP
     alGetError();
     ALuint bid = 0;
     alGenBuffers(1, &bid);
-    if(alGetError() != AL_NO_ERROR)
-        return (retval = std::make_exception_ptr(std::runtime_error("Failed to create buffer")));
+    ALenum err = alGetError();
+    if(err != AL_NO_ERROR)
+        return (retval = std::make_exception_ptr(al_error(err, "Failed to create buffer")));
 
     auto buffer = MakeUnique<BufferImpl>(this, bid, srate, chans, type, name);
 
@@ -1421,8 +1423,9 @@ AuxiliaryEffectSlot ContextImpl::createAuxiliaryEffectSlot()
     alGetError();
     ALuint id = 0;
     alGenAuxiliaryEffectSlots(1, &id);
-    if(alGetError() != AL_NO_ERROR)
-        throw std::runtime_error("Failed to create AuxiliaryEffectSlot");
+    ALenum err = alGetError();
+    if(err != AL_NO_ERROR)
+        throw al_error(err, "Failed to create AuxiliaryEffectSlot");
     try {
         return AuxiliaryEffectSlot(new AuxiliaryEffectSlotImpl(this, id));
     }
@@ -1443,8 +1446,9 @@ Effect ContextImpl::createEffect()
     alGetError();
     ALuint id = 0;
     alGenEffects(1, &id);
-    if(alGetError() != AL_NO_ERROR)
-        throw std::runtime_error("Failed to create Effect");
+    ALenum err = alGetError();
+    if(err != AL_NO_ERROR)
+        throw al_error(err, "Failed to create Effect");
     try {
         return Effect(new EffectImpl(this, id));
     }

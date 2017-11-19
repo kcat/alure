@@ -22,8 +22,9 @@ void BufferImpl::cleanup()
 
     alGetError();
     alDeleteBuffers(1, &mId);
-    if(alGetError() != AL_NO_ERROR)
-        throw std::runtime_error("Buffer failed to delete");
+    ALenum err = alGetError();
+    if(err != AL_NO_ERROR)
+        throw al_error(err, "Buffer failed to delete");
     mId = 0;
 }
 
@@ -112,11 +113,12 @@ void BufferImpl::setLoopPoints(ALuint start, ALuint end)
     if(start >= end || end > length)
         throw std::out_of_range("Loop points out of range");
 
-    ALint pts[2]{(ALint)start, (ALint)end};
     alGetError();
+    ALint pts[2]{(ALint)start, (ALint)end};
     alBufferiv(mId, AL_LOOP_POINTS_SOFT, pts);
-    if(alGetError() != AL_NO_ERROR)
-        throw std::runtime_error("Failed to set loop points");
+    ALenum err = alGetError();
+    if(err != AL_NO_ERROR)
+        throw al_error(err, "Failed to set loop points");
 }
 
 DECL_THUNK0(ALuintPair, Buffer, getLoopPoints, const)

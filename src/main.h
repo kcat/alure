@@ -3,6 +3,8 @@
 
 #include "alure2.h"
 
+#include <system_error>
+
 
 #ifdef __GNUC__
 #define LIKELY(x) __builtin_expect(static_cast<bool>(x), true)
@@ -58,6 +60,53 @@ public:
     void clear() { std::fill(mElems.begin(), mElems.end(), 0); }
     void set(size_t i) { mElems[i/8] |= 1<<(i%8); }
 };
+
+
+class alc_category : public std::error_category {
+    alc_category() noexcept { }
+
+public:
+    static alc_category sSingleton;
+
+    const char *name() const noexcept override final { return "alc_category"; }
+    std::error_condition default_error_condition(int code) const noexcept override final
+    { return std::error_condition(code, *this); }
+
+    bool equivalent(int code, const std::error_condition &condition) const noexcept override final
+    { return default_error_condition(code) == condition; }
+    bool equivalent(const std::error_code &code, int condition) const noexcept override final
+    { return *this == code.category() && code.value() == condition; }
+
+    std::string message(int condition) const override final;
+};
+template<typename T>
+inline std::system_error alc_error(int code, T&& what)
+{ return std::system_error(code, alc_category::sSingleton, std::forward<T>(what)); }
+inline std::system_error alc_error(int code)
+{ return std::system_error(code, alc_category::sSingleton); }
+
+class al_category : public std::error_category {
+    al_category() noexcept { }
+
+public:
+    static al_category sSingleton;
+
+    const char *name() const noexcept override final { return "al_category"; }
+    std::error_condition default_error_condition(int code) const noexcept override final
+    { return std::error_condition(code, *this); }
+
+    bool equivalent(int code, const std::error_condition &condition) const noexcept override final
+    { return default_error_condition(code) == condition; }
+    bool equivalent(const std::error_code &code, int condition) const noexcept override final
+    { return *this == code.category() && code.value() == condition; }
+
+    std::string message(int condition) const override final;
+};
+template<typename T>
+inline std::system_error al_error(int code, T&& what)
+{ return std::system_error(code, al_category::sSingleton, std::forward<T>(what)); }
+inline std::system_error al_error(int code)
+{ return std::system_error(code, al_category::sSingleton); }
 
 } // namespace alure
 

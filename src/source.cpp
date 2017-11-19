@@ -770,8 +770,9 @@ void SourceImpl::setOffset(uint64_t offset)
             throw std::out_of_range("Offset out of range");
         alGetError();
         alSourcei(mId, AL_SAMPLE_OFFSET, (ALint)offset);
-        if(alGetError() != AL_NO_ERROR)
-            throw std::runtime_error("Failed to set offset");
+        ALenum err = alGetError();
+        if(err != AL_NO_ERROR)
+            throw al_error(err, "Failed to set offset");
     }
     else
     {
@@ -1303,8 +1304,9 @@ void SourceImpl::setFilterParams(ALuint &filterid, const FilterParams &params)
     if(!filterid)
     {
         mContext->alGenFilters(1, &filterid);
-        if(alGetError() != AL_NO_ERROR)
-            throw std::runtime_error("Failed to create Filter");
+        ALenum err = alGetError();
+        if(err != AL_NO_ERROR)
+            throw al_error(err, "Failed to create Filter");
     }
     bool filterset = false;
     if(params.mGainHF < 1.0f && params.mGainLF < 1.0f)

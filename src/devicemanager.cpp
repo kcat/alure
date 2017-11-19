@@ -3,8 +3,7 @@
 
 #include "devicemanager.h"
 #include "device.h"
-
-#include <string.h>
+#include "main.h"
 
 #include <algorithm>
 #include <stdexcept>
@@ -15,6 +14,38 @@
 
 namespace alure
 {
+
+std::string alc_category::message(int condition) const
+{
+    switch(condition)
+    {
+    case ALC_NO_ERROR: return "No error";
+    case ALC_INVALID_ENUM: return "Invalid enum";
+    case ALC_INVALID_VALUE: return "Invalid value";
+    case ALC_INVALID_DEVICE: return "Invalid device";
+    case ALC_INVALID_CONTEXT: return "Invalid context";
+    case ALC_OUT_OF_MEMORY: return "Out of memory";
+    }
+    return "Unknown ALC error "+std::to_string(condition);
+}
+
+std::string al_category::message(int condition) const
+{
+    switch(condition)
+    {
+    case AL_NO_ERROR: return "No error";
+    case AL_INVALID_NAME: return "Invalid name";
+    case AL_INVALID_ENUM: return "Invalid enum";
+    case AL_INVALID_VALUE: return "Invalid value";
+    case AL_INVALID_OPERATION: return "Invalid operation";
+    case AL_OUT_OF_MEMORY: return "Out of memory";
+    }
+    return "Unknown AL error "+std::to_string(condition);
+}
+
+alc_category alc_category::sSingleton;
+al_category al_category::sSingleton;
+
 
 template<typename T>
 static inline void GetDeviceProc(T **func, ALCdevice *device, const char *name)
@@ -82,18 +113,16 @@ DECL_THUNK1(Device, DeviceManager, openPlayback,, const char*)
 Device DeviceManagerImpl::openPlayback(const char *name)
 {
     ALCdevice *dev = alcOpenDevice(name);
-    if(dev)
-    {
-        try {
-            mDevices.emplace_back(MakeUnique<DeviceImpl>(dev));
-            return Device(mDevices.back().get());
-        }
-        catch(...) {
-            alcCloseDevice(dev);
-            throw;
-        }
+    if(!dev) throw alc_error(alcGetError(nullptr), "alcOpenDevice failed");
+
+    try {
+        mDevices.emplace_back(MakeUnique<DeviceImpl>(dev));
+        return Device(mDevices.back().get());
     }
-    throw std::runtime_error("Device open failed");
+    catch(...) {
+        alcCloseDevice(dev);
+        throw;
+    }
 }
 
 Device DeviceManager::openPlayback(const String &name, const std::nothrow_t &nt) noexcept

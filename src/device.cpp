@@ -219,7 +219,7 @@ void DeviceImpl::reset(ArrayView<AttributePair> attributes)
             success = alcResetDeviceSOFT(mDevice, &std::get<0>(attributes.front()));
     };
     if(!success)
-        throw std::runtime_error("Device reset error");
+        throw alc_error(alcGetError(mDevice), "alcResetDeviceSOFT failed");
 }
 
 
@@ -249,18 +249,16 @@ Context DeviceImpl::createContext(ArrayView<AttributePair> attributes)
         else
             ctx = alcCreateContext(mDevice, &std::get<0>(attributes.front()));
     }
-    if(ctx)
-    {
-        try {
-            mContexts.emplace_back(MakeUnique<ContextImpl>(ctx, this));
-            return Context(mContexts.back().get());
-        }
-        catch(...) {
-            alcDestroyContext(ctx);
-            throw;
-        }
+    if(!ctx) throw alc_error(alcGetError(mDevice), "alcCreateContext failed");
+
+    try {
+        mContexts.emplace_back(MakeUnique<ContextImpl>(ctx, this));
+        return Context(mContexts.back().get());
     }
-    throw std::runtime_error("Failed to create context");
+    catch(...) {
+        alcDestroyContext(ctx);
+        throw;
+    }
 }
 Context Device::createContext(ArrayView<AttributePair> attrs, const std::nothrow_t&) noexcept
 {
@@ -310,8 +308,8 @@ void DeviceImpl::close()
         throw std::runtime_error("Trying to close device with contexts");
 
     if(alcCloseDevice(mDevice) == ALC_FALSE)
-        throw std::runtime_error("Failed to close device");
-    mDevice = 0;
+        throw alc_error(alcGetError(mDevice), "alcCloseDevice failed");
+    mDevice = nullptr;
 
     DeviceManagerImpl::get().removeDevice(this);
 }
