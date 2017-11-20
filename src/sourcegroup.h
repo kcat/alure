@@ -23,8 +23,6 @@ class SourceGroupImpl : SourceGroupProps {
     SourceGroupProps mParentProps;
     SourceGroupImpl *mParent;
 
-    const String mName;
-
     void update(ALfloat gain, ALfloat pitch);
 
     void unsetParent();
@@ -44,9 +42,7 @@ class SourceGroupImpl : SourceGroupProps {
     void updateStoppedStatus() const;
 
 public:
-    SourceGroupImpl(ContextImpl *context, StringView name)
-      : mContext(context), mParent(nullptr), mName(String(name))
-    { }
+    SourceGroupImpl(ContextImpl *context) : mContext(context), mParent(nullptr) { }
 
     ALfloat getAppliedGain() const { return mGain * mParentProps.mGain; }
     ALfloat getAppliedPitch() const { return mPitch * mParentProps.mPitch; }
@@ -71,8 +67,6 @@ public:
     void resumeAll() const;
 
     void stopAll() const;
-
-    StringView getName() const { return mName; }
 
     void release();
 };

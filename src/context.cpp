@@ -1459,39 +1459,21 @@ Effect ContextImpl::createEffect()
 }
 
 
-DECL_THUNK1(SourceGroup, Context, getSourceGroup,, StringView)
-SourceGroup ContextImpl::getSourceGroup(StringView name)
+DECL_THUNK0(SourceGroup, Context, createSourceGroup,)
+SourceGroup ContextImpl::createSourceGroup()
 {
-    auto hasher = std::hash<StringView>();
-    auto iter = std::lower_bound(mSourceGroups.begin(), mSourceGroups.end(), hasher(name),
-        [hasher](const UniquePtr<SourceGroupImpl> &lhs, size_t rhs) -> bool
-        { return hasher(lhs->getName()) < rhs; }
-    );
-    if(iter != mSourceGroups.end() && (*iter)->getName() == name)
-        return SourceGroup(iter->get());
-    iter = mSourceGroups.insert(iter, MakeUnique<SourceGroupImpl>(this, name));
-    return SourceGroup(iter->get());
-}
+    auto srcgroup = MakeUnique<SourceGroupImpl>(this);
+    auto iter = std::lower_bound(mSourceGroups.begin(), mSourceGroups.end(), srcgroup);
 
-DECL_THUNK1(SourceGroup, Context, findSourceGroup,, StringView)
-SourceGroup ContextImpl::findSourceGroup(StringView name)
-{
-    auto hasher = std::hash<StringView>();
-    auto iter = std::lower_bound(mSourceGroups.begin(), mSourceGroups.end(), hasher(name),
-        [hasher](const UniquePtr<SourceGroupImpl> &lhs, size_t rhs) -> bool
-        { return hasher(lhs->getName()) < rhs; }
-    );
-    if(iter == mSourceGroups.end() || (*iter)->getName() != name)
-        throw std::runtime_error("Source group not found");
+    iter = mSourceGroups.insert(iter, std::move(srcgroup));
     return SourceGroup(iter->get());
 }
 
 void ContextImpl::freeSourceGroup(SourceGroupImpl *group)
 {
-    auto hasher = std::hash<StringView>();
-    auto iter = std::lower_bound(mSourceGroups.begin(), mSourceGroups.end(), hasher(group->getName()),
-        [hasher](const UniquePtr<SourceGroupImpl> &lhs, size_t rhs) -> bool
-        { return hasher(lhs->getName()) < rhs; }
+    auto iter = std::lower_bound(mSourceGroups.begin(), mSourceGroups.end(), group,
+        [](const UniquePtr<SourceGroupImpl> &lhs, SourceGroupImpl *rhs) -> bool
+        { return lhs.get() < rhs; }
     );
     if(iter != mSourceGroups.end() && iter->get() == group)
         mSourceGroups.erase(iter);

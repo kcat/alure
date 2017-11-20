@@ -295,7 +295,6 @@ void SourceGroupImpl::release()
 }
 
 
-DECL_THUNK0(StringView, SourceGroup, getName, const)
 DECL_THUNK0(SourceGroup, SourceGroup, getParentGroup, const)
 DECL_THUNK0(ALfloat, SourceGroup, getGain, const)
 DECL_THUNK0(ALfloat, SourceGroup, getPitch, const)
