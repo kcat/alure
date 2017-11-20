@@ -56,7 +56,7 @@ public:
 
     StringView getName() const { return mName; }
 
-    bool isInUse() const { return (mSources.size() > 0); }
+    size_t getSourceCount() const { return mSources.size(); }
 };
 
 } // namespace alure

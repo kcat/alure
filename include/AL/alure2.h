@@ -625,12 +625,13 @@ public:
 
     /**
      * Deletes the cached Buffer object for the given audio file or resource
-     * name. The buffer must not be in use by a Source.
+     * name. If a source is currently playing the buffer, it will be stopped
+     * first.
      */
     void removeBuffer(StringView name);
     /**
-     * Deletes the given cached buffer. The buffer must not be in use by a
-     * Source.
+     * Deletes the given cached buffer. If a source is currently playing the
+     * buffer, it will be stopped first.
      */
     void removeBuffer(Buffer buffer);
 
@@ -769,8 +770,13 @@ public:
     /** Retrieves the name the buffer was created with. */
     StringView getName() const;
 
-    /** Queries if the buffer is in use and can't be removed. */
-    bool isInUse() const;
+    /**
+     * Queries the number of sources currently using the buffer. Be aware that
+     * you need to call \c Context::update to reliably ensure the count is kept
+     * updated for when sources reach their end. This is equivalent to calling
+     * getSources().size().
+     */
+    size_t getSourceCount() const;
 };
 
 
@@ -1219,8 +1225,8 @@ public:
     void applyEffect(Effect effect);
 
     /**
-     * Releases the effect slot, returning it to the system. It must not be in
-     * use by a source.
+     * Releases the effect slot, returning it to the system. If the effect slot
+     * is currently set on a source send, it will be removed first.
      */
     void release();
 
@@ -1231,8 +1237,11 @@ public:
      */
     Vector<SourceSend> getSourceSends() const;
 
-    /** Determines if the effect slot is in use by a source. */
-    bool isInUse() const;
+    /**
+     * Queries the number of source sends the effect slot is used by. This is
+     * equivalent to calling getSourceSends().size().
+     */
+    size_t getUseCount() const;
 };
 
 

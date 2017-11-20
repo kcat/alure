@@ -71,8 +71,16 @@ void AuxiliaryEffectSlot::release()
 void AuxiliaryEffectSlotImpl::release()
 {
     CheckContext(mContext);
-    if(isInUse())
-        throw std::runtime_error("AuxiliaryEffectSlot is in use");
+
+    if(!mSourceSends.empty())
+    {
+        Vector<SourceSend> source_sends;
+        source_sends.swap(mSourceSends);
+
+        auto batcher = mContext->getBatcher();
+        for(const SourceSend &srcsend : source_sends)
+            srcsend.mSource.getHandle()->setAuxiliarySend(nullptr, srcsend.mSend);
+    }
 
     alGetError();
     mContext->alDeleteAuxiliaryEffectSlots(1, &mId);
@@ -85,6 +93,6 @@ void AuxiliaryEffectSlotImpl::release()
 }
 
 DECL_THUNK0(Vector<SourceSend>, AuxiliaryEffectSlot, getSourceSends, const)
-DECL_THUNK0(bool, AuxiliaryEffectSlot, isInUse, const)
+DECL_THUNK0(size_t, AuxiliaryEffectSlot, getUseCount, const)
 
 } // namespace alure

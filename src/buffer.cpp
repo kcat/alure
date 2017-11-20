@@ -17,10 +17,32 @@ using ALuintPair = std::pair<ALuint,ALuint>;
 
 void BufferImpl::cleanup()
 {
-    if(isInUse())
-        throw std::runtime_error("Buffer is in use");
-
     alGetError();
+    while(!mSources.empty())
+    {
+        Vector<Source> sources;
+        sources.swap(mSources);
+
+        Vector<ALuint> sourceids;
+        sourceids.reserve(sources.size());
+        for(Source alsrc : sources)
+        {
+            if(ALuint id = alsrc.getHandle()->getId())
+                sourceids.push_back(id);
+        }
+        auto lock = mContext->getSourceStreamLock();
+        alSourceRewindv(sourceids.size(), sourceids.data());
+        for(Source alsrc : sources)
+        {
+            SourceImpl *source = alsrc.getHandle();
+            mContext->removePendingSource(source);
+            mContext->removeFadingSource(source);
+            mContext->removePlayingSource(source);
+            source->makeStopped(false);
+            mContext->send(&MessageHandler::sourceForceStopped, source);
+        }
+    }
+
     alDeleteBuffers(1, &mId);
     ALenum err = alGetError();
     if(err != AL_NO_ERROR)
@@ -100,7 +122,7 @@ void BufferImpl::setLoopPoints(ALuint start, ALuint end)
 {
     ALuint length = getLength();
 
-    if(isInUse())
+    if(UNLIKELY(!mSources.empty()))
         throw std::runtime_error("Buffer is in use");
 
     if(!mContext->hasExtension(AL::SOFT_loop_points))
@@ -142,7 +164,7 @@ DECL_THUNK0(ChannelConfig, Buffer, getChannelConfig, const)
 DECL_THUNK0(SampleType, Buffer, getSampleType, const)
 DECL_THUNK0(Vector<Source>, Buffer, getSources, const)
 DECL_THUNK0(StringView, Buffer, getName, const)
-DECL_THUNK0(bool, Buffer, isInUse, const)
+DECL_THUNK0(size_t, Buffer, getSourceCount, const)
 
 
 ALURE_API const char *GetSampleTypeName(SampleType type)

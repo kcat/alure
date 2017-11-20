@@ -33,7 +33,7 @@ public:
 
     Vector<SourceSend> getSourceSends() const { return mSourceSends; }
 
-    bool isInUse() const { return (mSourceSends.size() > 0); }
+    size_t getUseCount() const { return mSourceSends.size(); }
 };
 
 } // namespace alure
