@@ -645,8 +645,8 @@ public:
 
     Effect createEffect();
 
-    SourceGroup createSourceGroup(StringView name);
     SourceGroup getSourceGroup(StringView name);
+    SourceGroup findSourceGroup(StringView name);
 
     /** Sets the doppler factor to apply to all source doppler calculations. */
     void setDopplerFactor(ALfloat factor);

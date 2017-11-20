@@ -1459,8 +1459,8 @@ Effect ContextImpl::createEffect()
 }
 
 
-DECL_THUNK1(SourceGroup, Context, createSourceGroup,, StringView)
-SourceGroup ContextImpl::createSourceGroup(StringView name)
+DECL_THUNK1(SourceGroup, Context, getSourceGroup,, StringView)
+SourceGroup ContextImpl::getSourceGroup(StringView name)
 {
     auto hasher = std::hash<StringView>();
     auto iter = std::lower_bound(mSourceGroups.begin(), mSourceGroups.end(), hasher(name),
@@ -1468,13 +1468,13 @@ SourceGroup ContextImpl::createSourceGroup(StringView name)
         { return hasher(lhs->getName()) < rhs; }
     );
     if(iter != mSourceGroups.end() && (*iter)->getName() == name)
-        throw std::runtime_error("Duplicate source group name");
+        return SourceGroup(iter->get());
     iter = mSourceGroups.insert(iter, MakeUnique<SourceGroupImpl>(this, name));
     return SourceGroup(iter->get());
 }
 
-DECL_THUNK1(SourceGroup, Context, getSourceGroup,, StringView)
-SourceGroup ContextImpl::getSourceGroup(StringView name)
+DECL_THUNK1(SourceGroup, Context, findSourceGroup,, StringView)
+SourceGroup ContextImpl::findSourceGroup(StringView name)
 {
     auto hasher = std::hash<StringView>();
     auto iter = std::lower_bound(mSourceGroups.begin(), mSourceGroups.end(), hasher(name),
