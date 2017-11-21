@@ -415,7 +415,7 @@ void SourceImpl::play(SharedFuture<Buffer>&& future_buffer)
 {
     if(!future_buffer.valid())
         throw std::future_error(std::future_errc::no_state);
-    if(future_buffer.wait_for(std::chrono::milliseconds::zero()) == std::future_status::ready)
+    if(GetFutureState(future_buffer) == std::future_status::ready)
     {
         play(future_buffer.get());
         return;
@@ -602,7 +602,7 @@ void SourceImpl::setGroup(SourceGroup group)
 
 bool SourceImpl::checkPending(SharedFuture<Buffer> &future)
 {
-    if(future.wait_for(std::chrono::milliseconds::zero()) != std::future_status::ready)
+    if(GetFutureState(future) != std::future_status::ready)
         return true;
 
     BufferImpl *buffer = future.get().getHandle();

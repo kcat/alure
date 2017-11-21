@@ -896,7 +896,7 @@ Buffer ContextImpl::getBuffer(StringView name)
         mFutureBuffers.erase(
             std::remove_if(mFutureBuffers.begin(), mFutureBuffers.end(),
                 [](const PendingBuffer &entry) -> bool
-                { return entry.mFuture.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready; }
+                { return GetFutureState(entry.mFuture) == std::future_status::ready; }
             ), mFutureBuffers.end()
         );
 
@@ -935,7 +935,7 @@ SharedFuture<Buffer> ContextImpl::getBufferAsync(StringView name)
         if(iter != mFutureBuffers.end() && iter->mBuffer->getName() == name)
         {
             future = iter->mFuture;
-            if(future.wait_for(std::chrono::milliseconds::zero()) == std::future_status::ready)
+            if(GetFutureState(future) == std::future_status::ready)
                 mFutureBuffers.erase(iter);
             return future;
         }
@@ -944,7 +944,7 @@ SharedFuture<Buffer> ContextImpl::getBufferAsync(StringView name)
         mFutureBuffers.erase(
             std::remove_if(mFutureBuffers.begin(), mFutureBuffers.end(),
                 [](const PendingBuffer &entry) -> bool
-                { return entry.mFuture.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready; }
+                { return GetFutureState(entry.mFuture) == std::future_status::ready; }
             ), mFutureBuffers.end()
         );
     }
@@ -995,7 +995,7 @@ void ContextImpl::precacheBuffersAsync(ArrayView<StringView> names)
         mFutureBuffers.erase(
             std::remove_if(mFutureBuffers.begin(), mFutureBuffers.end(),
                 [](const PendingBuffer &entry) -> bool
-                { return entry.mFuture.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready; }
+                { return GetFutureState(entry.mFuture) == std::future_status::ready; }
             ), mFutureBuffers.end()
         );
     }
@@ -1066,7 +1066,7 @@ SharedFuture<Buffer> ContextImpl::createBufferAsyncFrom(StringView name, SharedP
         mFutureBuffers.erase(
             std::remove_if(mFutureBuffers.begin(), mFutureBuffers.end(),
                 [](const PendingBuffer &entry) -> bool
-                { return entry.mFuture.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready; }
+                { return GetFutureState(entry.mFuture) == std::future_status::ready; }
             ), mFutureBuffers.end()
         );
     }
@@ -1124,7 +1124,7 @@ Buffer ContextImpl::findBuffer(StringView name)
         mFutureBuffers.erase(
             std::remove_if(mFutureBuffers.begin(), mFutureBuffers.end(),
                 [](const PendingBuffer &entry) -> bool
-                { return entry.mFuture.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready; }
+                { return GetFutureState(entry.mFuture) == std::future_status::ready; }
             ), mFutureBuffers.end()
         );
     }
@@ -1158,7 +1158,7 @@ SharedFuture<Buffer> ContextImpl::findBufferAsync(StringView name)
         if(iter != mFutureBuffers.end() && iter->mBuffer->getName() == name)
         {
             future = iter->mFuture;
-            if(future.wait_for(std::chrono::milliseconds::zero()) == std::future_status::ready)
+            if(GetFutureState(future) == std::future_status::ready)
                 mFutureBuffers.erase(iter);
             return future;
         }
@@ -1167,7 +1167,7 @@ SharedFuture<Buffer> ContextImpl::findBufferAsync(StringView name)
         mFutureBuffers.erase(
             std::remove_if(mFutureBuffers.begin(), mFutureBuffers.end(),
                 [](const PendingBuffer &entry) -> bool
-                { return entry.mFuture.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready; }
+                { return GetFutureState(entry.mFuture) == std::future_status::ready; }
             ), mFutureBuffers.end()
         );
     }
@@ -1214,7 +1214,7 @@ void ContextImpl::removeBuffer(StringView name)
         mFutureBuffers.erase(
             std::remove_if(mFutureBuffers.begin(), mFutureBuffers.end(),
                 [](const PendingBuffer &entry) -> bool
-                { return entry.mFuture.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready; }
+                { return GetFutureState(entry.mFuture) == std::future_status::ready; }
             ), mFutureBuffers.end()
         );
     }
@@ -1230,7 +1230,7 @@ void ContextImpl::removeBuffer(StringView name)
             std::remove_if(mPendingSources.begin(), mPendingSources.end(),
                 [iter](PendingSource &entry) -> bool
                 {
-                    return (entry.mFuture.wait_for(std::chrono::milliseconds::zero()) == std::future_status::ready &&
+                    return (GetFutureState(entry.mFuture) == std::future_status::ready &&
                             entry.mFuture.get().getHandle() == iter->get());
                 }
             ), mPendingSources.end()

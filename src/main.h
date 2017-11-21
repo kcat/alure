@@ -14,7 +14,6 @@
 #define UNLIKELY(x) static_cast<bool>(x)
 #endif
 
-
 #define DECL_THUNK0(ret, C, Name, cv) \
 ret C::Name() cv { return pImpl->Name(); }
 #define DECL_THUNK1(ret, C, Name, cv, T1)                                     \
@@ -48,6 +47,10 @@ ret C::Name(T1 a, T2 b, T3 c, T4 d, T5 e, T6 f) cv                            \
 
 
 namespace alure {
+
+template<typename T>
+inline std::future_status GetFutureState(const SharedFuture<T> &future)
+{ return future.wait_for(std::chrono::seconds::zero()); }
 
 template<size_t N>
 struct Bitfield {
