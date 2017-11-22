@@ -690,7 +690,7 @@ public:
     void set3DParameters(const Vector3 &position, const Vector3 &velocity, const std::pair<Vector3,Vector3> &orientation);
 
     /** Specifies the listener's 3D position. */
-    void setPosition(ALfloat x, ALfloat y, ALfloat z);
+    void setPosition(const Vector3 &position);
     void setPosition(const ALfloat *pos);
 
     /**
@@ -698,14 +698,14 @@ public:
      * OpenAL, this does not actually alter the listener's position, and
      * instead just alters the pitch as determined by the doppler effect.
      */
-    void setVelocity(ALfloat x, ALfloat y, ALfloat z);
+    void setVelocity(const Vector3 &velocity);
     void setVelocity(const ALfloat *vel);
 
     /**
      * Specifies the listener's 3D orientation, using position-relative 'at'
      * and 'up' direction vectors.
      */
-    void setOrientation(ALfloat x1, ALfloat y1, ALfloat z1, ALfloat x2, ALfloat y2, ALfloat z2);
+    void setOrientation(const std::pair<Vector3,Vector3> &orientation);
     void setOrientation(const ALfloat *at, const ALfloat *up);
     void setOrientation(const ALfloat *ori);
 
@@ -967,7 +967,7 @@ public:
     void set3DParameters(const Vector3 &position, const Vector3 &velocity, const std::pair<Vector3,Vector3> &orientation);
 
     /** Specifies the source's 3D position. */
-    void setPosition(ALfloat x, ALfloat y, ALfloat z);
+    void setPosition(const Vector3 &position);
     void setPosition(const ALfloat *pos);
     Vector3 getPosition() const;
 
@@ -976,7 +976,7 @@ public:
      * this does not actually alter the source's position, and instead just
      * alters the pitch as determined by the doppler effect.
      */
-    void setVelocity(ALfloat x, ALfloat y, ALfloat z);
+    void setVelocity(const Vector3 &velocity);
     void setVelocity(const ALfloat *vel);
     Vector3 getVelocity() const;
 
@@ -984,7 +984,7 @@ public:
      * Specifies the source's 3D facing direction. Deprecated in favor of
      * setOrientation.
      */
-    void setDirection(ALfloat x, ALfloat y, ALfloat z);
+    void setDirection(const Vector3 &direction);
     void setDirection(const ALfloat *dir);
     Vector3 getDirection() const;
 
@@ -994,7 +994,7 @@ public:
      * property comes from, this also affects the facing direction, superceding
      * setDirection.
      */
-    void setOrientation(ALfloat x1, ALfloat y1, ALfloat z1, ALfloat x2, ALfloat y2, ALfloat z2);
+    void setOrientation(const std::pair<Vector3,Vector3> &orientation);
     void setOrientation(const ALfloat *at, const ALfloat *up);
     void setOrientation(const ALfloat *ori);
     std::pair<Vector3,Vector3> getOrientation() const;

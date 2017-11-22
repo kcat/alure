@@ -1597,11 +1597,11 @@ void ListenerImpl::set3DParameters(const Vector3 &position, const Vector3 &veloc
     alListenerfv(AL_ORIENTATION, orientation.first.getPtr());
 }
 
-DECL_THUNK3(void, Listener, setPosition,, ALfloat, ALfloat, ALfloat)
-void ListenerImpl::setPosition(ALfloat x, ALfloat y, ALfloat z)
+DECL_THUNK1(void, Listener, setPosition,, const Vector3&)
+void ListenerImpl::setPosition(const Vector3 &position)
 {
     CheckContext(mContext);
-    alListener3f(AL_POSITION, x, y, z);
+    alListenerfv(AL_POSITION, position.getPtr());
 }
 
 DECL_THUNK1(void, Listener, setPosition,, const ALfloat*)
@@ -1611,11 +1611,11 @@ void ListenerImpl::setPosition(const ALfloat *pos)
     alListenerfv(AL_POSITION, pos);
 }
 
-DECL_THUNK3(void, Listener, setVelocity,, ALfloat, ALfloat, ALfloat)
-void ListenerImpl::setVelocity(ALfloat x, ALfloat y, ALfloat z)
+DECL_THUNK1(void, Listener, setVelocity,, const Vector3&)
+void ListenerImpl::setVelocity(const Vector3 &velocity)
 {
     CheckContext(mContext);
-    alListener3f(AL_VELOCITY, x, y, z);
+    alListenerfv(AL_VELOCITY, velocity.getPtr());
 }
 
 DECL_THUNK1(void, Listener, setVelocity,, const ALfloat*)
@@ -1625,12 +1625,11 @@ void ListenerImpl::setVelocity(const ALfloat *vel)
     alListenerfv(AL_VELOCITY, vel);
 }
 
-DECL_THUNK6(void, Listener, setOrientation,, ALfloat, ALfloat, ALfloat, ALfloat, ALfloat, ALfloat)
-void ListenerImpl::setOrientation(ALfloat x1, ALfloat y1, ALfloat z1, ALfloat x2, ALfloat y2, ALfloat z2)
+DECL_THUNK1(void, Listener, setOrientation,, const Vector3Pair&)
+void ListenerImpl::setOrientation(const std::pair<Vector3,Vector3> &orientation)
 {
     CheckContext(mContext);
-    ALfloat ori[6] = { x1, y1, z1, x2, y2, z2 };
-    alListenerfv(AL_ORIENTATION, ori);
+    alListenerfv(AL_ORIENTATION, orientation.first.getPtr());
 }
 
 DECL_THUNK2(void, Listener, setOrientation,, const ALfloat*, const ALfloat*)

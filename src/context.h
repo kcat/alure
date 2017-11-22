@@ -88,13 +88,13 @@ public:
 
     void set3DParameters(const Vector3 &position, const Vector3 &velocity, const std::pair<Vector3,Vector3> &orientation);
 
-    void setPosition(ALfloat x, ALfloat y, ALfloat z);
+    void setPosition(const Vector3 &position);
     void setPosition(const ALfloat *pos);
 
-    void setVelocity(ALfloat x, ALfloat y, ALfloat z);
+    void setVelocity(const Vector3 &velocity);
     void setVelocity(const ALfloat *vel);
 
-    void setOrientation(ALfloat x1, ALfloat y1, ALfloat z1, ALfloat x2, ALfloat y2, ALfloat z2);
+    void setOrientation(const std::pair<Vector3,Vector3> &orientation);
     void setOrientation(const ALfloat *at, const ALfloat *up);
     void setOrientation(const ALfloat *ori);
 

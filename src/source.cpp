@@ -1026,15 +1026,13 @@ void SourceImpl::set3DParameters(const Vector3 &position, const Vector3 &velocit
 }
 
 
-DECL_THUNK3(void, Source, setPosition,, ALfloat, ALfloat, ALfloat)
-void SourceImpl::setPosition(ALfloat x, ALfloat y, ALfloat z)
+DECL_THUNK1(void, Source, setPosition,, const Vector3&)
+void SourceImpl::setPosition(const Vector3 &position)
 {
     CheckContext(mContext);
     if(mId != 0)
-        alSource3f(mId, AL_POSITION, x, y, z);
-    mPosition[0] = x;
-    mPosition[1] = y;
-    mPosition[2] = z;
+        alSourcefv(mId, AL_POSITION, position.getPtr());
+    mPosition = position;
 }
 
 DECL_THUNK1(void, Source, setPosition,, const ALfloat*)
@@ -1048,15 +1046,13 @@ void SourceImpl::setPosition(const ALfloat *pos)
     mPosition[2] = pos[2];
 }
 
-DECL_THUNK3(void, Source, setVelocity,, ALfloat, ALfloat, ALfloat)
-void SourceImpl::setVelocity(ALfloat x, ALfloat y, ALfloat z)
+DECL_THUNK1(void, Source, setVelocity,, const Vector3&)
+void SourceImpl::setVelocity(const Vector3 &velocity)
 {
     CheckContext(mContext);
     if(mId != 0)
-        alSource3f(mId, AL_VELOCITY, x, y, z);
-    mVelocity[0] = x;
-    mVelocity[1] = y;
-    mVelocity[2] = z;
+        alSourcefv(mId, AL_VELOCITY, velocity.getPtr());
+    mVelocity = velocity;
 }
 
 DECL_THUNK1(void, Source, setVelocity,, const ALfloat*)
@@ -1070,15 +1066,13 @@ void SourceImpl::setVelocity(const ALfloat *vel)
     mVelocity[2] = vel[2];
 }
 
-DECL_THUNK3(void, Source, setDirection,, ALfloat, ALfloat, ALfloat)
-void SourceImpl::setDirection(ALfloat x, ALfloat y, ALfloat z)
+DECL_THUNK1(void, Source, setDirection,, const Vector3&)
+void SourceImpl::setDirection(const Vector3 &direction)
 {
     CheckContext(mContext);
     if(mId != 0)
-        alSource3f(mId, AL_DIRECTION, x, y, z);
-    mDirection[0] = x;
-    mDirection[1] = y;
-    mDirection[2] = z;
+        alSourcefv(mId, AL_DIRECTION, direction.getPtr());
+    mDirection = direction;
 }
 
 DECL_THUNK1(void, Source, setDirection,, const ALfloat*)
@@ -1092,23 +1086,18 @@ void SourceImpl::setDirection(const ALfloat *dir)
     mDirection[2] = dir[2];
 }
 
-DECL_THUNK6(void, Source, setOrientation,, ALfloat, ALfloat, ALfloat, ALfloat, ALfloat, ALfloat)
-void SourceImpl::setOrientation(ALfloat x1, ALfloat y1, ALfloat z1, ALfloat x2, ALfloat y2, ALfloat z2)
+DECL_THUNK1(void, Source, setOrientation,, const Vector3Pair&)
+void SourceImpl::setOrientation(const std::pair<Vector3,Vector3> &orientation)
 {
     CheckContext(mContext);
     if(mId != 0)
     {
-        ALfloat ori[6] = { x1, y1, z1, x2, y2, z2 };
         if(mContext->hasExtension(AL::EXT_BFORMAT))
-            alSourcefv(mId, AL_ORIENTATION, ori);
-        alSourcefv(mId, AL_DIRECTION, ori);
+            alSourcefv(mId, AL_ORIENTATION, orientation.first.getPtr());
+        alSourcefv(mId, AL_DIRECTION, orientation.first.getPtr());
     }
-    mDirection[0] = mOrientation[0][0] = x1;
-    mDirection[1] = mOrientation[0][1] = y1;
-    mDirection[2] = mOrientation[0][2] = z1;
-    mOrientation[1][0] = x2;
-    mOrientation[1][1] = y2;
-    mOrientation[1][2] = z2;
+    mDirection = mOrientation[0] = orientation.first;
+    mOrientation[1] = orientation.second;
 }
 
 DECL_THUNK2(void, Source, setOrientation,, const ALfloat*, const ALfloat*)
