@@ -357,23 +357,23 @@ MessageHandler::~MessageHandler()
 {
 }
 
-void MessageHandler::deviceDisconnected(Device)
+void MessageHandler::deviceDisconnected(Device) noexcept
 {
 }
 
-void MessageHandler::sourceStopped(Source)
+void MessageHandler::sourceStopped(Source) noexcept
 {
 }
 
-void MessageHandler::sourceForceStopped(Source)
+void MessageHandler::sourceForceStopped(Source) noexcept
 {
 }
 
-void MessageHandler::bufferLoading(StringView, ChannelConfig, SampleType, ALuint, ArrayView<ALbyte>)
+void MessageHandler::bufferLoading(StringView, ChannelConfig, SampleType, ALuint, ArrayView<ALbyte>) noexcept
 {
 }
 
-String MessageHandler::resourceNotFound(StringView)
+String MessageHandler::resourceNotFound(StringView) noexcept
 {
     return String();
 }

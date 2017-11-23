@@ -1396,7 +1396,7 @@ public:
      * disconnected. This method may not be called if the device lacks support
      * for the ALC_EXT_disconnect extension.
      */
-    virtual void deviceDisconnected(Device device);
+    virtual void deviceDisconnected(Device device) noexcept;
 
     /**
      * Called when the given source reaches the end of the buffer or stream.
@@ -1404,7 +1404,7 @@ public:
      * Sources that stopped automatically will be detected upon a call to
      * Context::update.
      */
-    virtual void sourceStopped(Source source);
+    virtual void sourceStopped(Source source) noexcept;
 
     /**
      * Called when the given source was forced to stop. This can be because
@@ -1413,7 +1413,7 @@ public:
      * its SourceGroup::stopAll method called, or it was playing a buffer
      * that's getting removed.
      */
-    virtual void sourceForceStopped(Source source);
+    virtual void sourceForceStopped(Source source) noexcept;
 
     /**
      * Called when a new buffer is about to be created and loaded. May be
@@ -1425,7 +1425,7 @@ public:
      * \param samplerate Sample rate of the given audio data.
      * \param data The audio data that is about to be fed to the OpenAL buffer.
      */
-    virtual void bufferLoading(StringView name, ChannelConfig channels, SampleType type, ALuint samplerate, ArrayView<ALbyte> data);
+    virtual void bufferLoading(StringView name, ChannelConfig channels, SampleType type, ALuint samplerate, ArrayView<ALbyte> data) noexcept;
 
     /**
      * Called when a resource isn't found, allowing the app to substitute in a
@@ -1439,7 +1439,7 @@ public:
      * \return The replacement resource name to use instead. Returning an empty
      *         string means to stop trying.
      */
-    virtual String resourceNotFound(StringView name);
+    virtual String resourceNotFound(StringView name) noexcept;
 };
 
 #undef MAKE_PIMPL
