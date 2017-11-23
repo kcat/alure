@@ -606,7 +606,7 @@ bool SourceImpl::checkPending(SharedFuture<Buffer> &future)
         return true;
 
     BufferImpl *buffer = future.get().getHandle();
-    if(UNLIKELY(buffer->getContext() != mContext))
+    if(UNLIKELY(!buffer || buffer->getContext() != mContext))
         return false;
 
     if(mId == 0)
