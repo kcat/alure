@@ -321,7 +321,7 @@ void SourceImpl::play(Buffer buffer)
     mIsAsync.store(false, std::memory_order_release);
 
     mFadeGainTarget = mFadeGain = 1.0f;
-    mFadeTimeTarget = mLastFadeTime = std::chrono::steady_clock::time_point();
+    mFadeTimeTarget = mLastFadeTime = std::chrono::nanoseconds::zero();
 
     if(mId == 0)
     {
@@ -369,7 +369,7 @@ void SourceImpl::play(SharedPtr<Decoder>&& decoder, ALuint chunk_len, ALuint que
     mIsAsync.store(false, std::memory_order_release);
 
     mFadeGainTarget = mFadeGain = 1.0f;
-    mFadeTimeTarget = mLastFadeTime = std::chrono::steady_clock::time_point();
+    mFadeTimeTarget = mLastFadeTime = std::chrono::nanoseconds::zero();
 
     if(mId == 0)
     {
@@ -428,7 +428,7 @@ void SourceImpl::play(SharedFuture<Buffer>&& future_buffer)
     makeStopped(true);
 
     mFadeGainTarget = mFadeGain = 1.0f;
-    mFadeTimeTarget = mLastFadeTime = std::chrono::steady_clock::time_point();
+    mFadeTimeTarget = mLastFadeTime = std::chrono::nanoseconds::zero();
 
     mContext->addPendingSource(this, std::move(future_buffer));
 }
@@ -488,7 +488,7 @@ void SourceImpl::fadeOutToStop(ALfloat gain, std::chrono::milliseconds duration)
     CheckContext(mContext);
 
     mFadeGainTarget = std::max<ALfloat>(gain, 0.0001f);
-    mLastFadeTime = std::chrono::steady_clock::now();
+    mLastFadeTime = std::chrono::steady_clock::now().time_since_epoch();
     mFadeTimeTarget = mLastFadeTime + duration;
 
     mContext->addFadingSource(this);
@@ -633,7 +633,7 @@ bool SourceImpl::checkPending(SharedFuture<Buffer> &future)
     return false;
 }
 
-bool SourceImpl::fadeUpdate(std::chrono::steady_clock::time_point cur_fade_time)
+bool SourceImpl::fadeUpdate(std::chrono::nanoseconds cur_fade_time)
 {
     if((cur_fade_time - mFadeTimeTarget).count() >= 0)
     {
@@ -655,7 +655,7 @@ bool SourceImpl::fadeUpdate(std::chrono::steady_clock::time_point cur_fade_time)
         float(1.0/Seconds(mFadeTimeTarget-mLastFadeTime).count())
     );
 
-    std::chrono::steady_clock::duration duration = cur_fade_time - mLastFadeTime;
+    std::chrono::nanoseconds duration = cur_fade_time - mLastFadeTime;
     mLastFadeTime = cur_fade_time;
 
     float gain = mFadeGain * std::pow(mult, (float)Seconds(duration).count());

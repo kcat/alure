@@ -1520,7 +1520,7 @@ void ContextImpl::update()
     );
     if(!mFadingSources.empty())
     {
-        auto cur_time = std::chrono::steady_clock::now();
+        auto cur_time = std::chrono::steady_clock::now().time_since_epoch();
         mFadingSources.erase(
             std::remove_if(mFadingSources.begin(), mFadingSources.end(),
                 [cur_time](SourceImpl *source) -> bool

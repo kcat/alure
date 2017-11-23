@@ -36,8 +36,8 @@ class SourceImpl {
     ALfloat mGroupPitch;
     ALfloat mGroupGain;
 
-    std::chrono::steady_clock::time_point mLastFadeTime;
-    std::chrono::steady_clock::time_point mFadeTimeTarget;
+    std::chrono::nanoseconds mLastFadeTime;
+    std::chrono::nanoseconds mFadeTimeTarget;
     ALfloat mFadeGainTarget;
     ALfloat mFadeGain;
 
@@ -88,7 +88,7 @@ public:
     ALuint getId() const { return mId; }
 
     bool checkPending(SharedFuture<Buffer> &future);
-    bool fadeUpdate(std::chrono::steady_clock::time_point cur_fade_time);
+    bool fadeUpdate(std::chrono::nanoseconds cur_fade_time);
     bool playUpdate(ALuint id);
     bool playUpdate();
     bool updateAsync();
