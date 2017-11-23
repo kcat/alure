@@ -88,22 +88,22 @@ class WaveDecoder final : public Decoder {
 
 public:
     WaveDecoder(UniquePtr<std::istream> file, ChannelConfig channels, SampleType type, ALuint frequency, ALuint framesize,
-                std::istream::pos_type start, std::istream::pos_type end, ALuint loopstart, ALuint loopend)
+                std::istream::pos_type start, std::istream::pos_type end, ALuint loopstart, ALuint loopend) noexcept
       : mFile(std::move(file)), mChannelConfig(channels), mSampleType(type), mFrequency(frequency)
       , mFrameSize(framesize), mLoopPts{loopstart,loopend}, mStart(start), mEnd(end)
     { mCurrentPos = mFile->tellg(); }
     ~WaveDecoder() override;
 
-    ALuint getFrequency() const override;
-    ChannelConfig getChannelConfig() const override;
-    SampleType getSampleType() const override;
+    ALuint getFrequency() const noexcept override;
+    ChannelConfig getChannelConfig() const noexcept override;
+    SampleType getSampleType() const noexcept override;
 
-    uint64_t getLength() const override;
-    bool seek(uint64_t pos) override;
+    uint64_t getLength() const noexcept override;
+    bool seek(uint64_t pos) noexcept override;
 
-    std::pair<uint64_t,uint64_t> getLoopPoints() const override;
+    std::pair<uint64_t,uint64_t> getLoopPoints() const noexcept override;
 
-    ALuint read(ALvoid *ptr, ALuint count) override;
+    ALuint read(ALvoid *ptr, ALuint count) noexcept override;
 };
 
 WaveDecoder::~WaveDecoder()
@@ -111,28 +111,28 @@ WaveDecoder::~WaveDecoder()
 }
 
 
-ALuint WaveDecoder::getFrequency() const
+ALuint WaveDecoder::getFrequency() const noexcept
 {
     return mFrequency;
 }
 
-ChannelConfig WaveDecoder::getChannelConfig() const
+ChannelConfig WaveDecoder::getChannelConfig() const noexcept
 {
     return mChannelConfig;
 }
 
-SampleType WaveDecoder::getSampleType() const
+SampleType WaveDecoder::getSampleType() const noexcept
 {
     return mSampleType;
 }
 
 
-uint64_t WaveDecoder::getLength() const
+uint64_t WaveDecoder::getLength() const noexcept
 {
     return (mEnd - mStart) / mFrameSize;
 }
 
-bool WaveDecoder::seek(uint64_t pos)
+bool WaveDecoder::seek(uint64_t pos) noexcept
 {
     std::streamsize offset = pos*mFrameSize + mStart;
     mFile->clear();
@@ -142,12 +142,12 @@ bool WaveDecoder::seek(uint64_t pos)
     return true;
 }
 
-std::pair<uint64_t,uint64_t> WaveDecoder::getLoopPoints() const
+std::pair<uint64_t,uint64_t> WaveDecoder::getLoopPoints() const noexcept
 {
     return mLoopPts;
 }
 
-ALuint WaveDecoder::read(ALvoid *ptr, ALuint count)
+ALuint WaveDecoder::read(ALvoid *ptr, ALuint count) noexcept
 {
     mFile->clear();
 
@@ -211,7 +211,7 @@ ALuint WaveDecoder::read(ALvoid *ptr, ALuint count)
 }
 
 
-SharedPtr<Decoder> WaveDecoderFactory::createDecoder(UniquePtr<std::istream> &file)
+SharedPtr<Decoder> WaveDecoderFactory::createDecoder(UniquePtr<std::istream> &file) noexcept
 {
     ChannelConfig channels = ChannelConfig::Mono;
     SampleType type = SampleType::UInt8;

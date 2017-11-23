@@ -59,22 +59,22 @@ class VorbisFileDecoder final : public Decoder {
     ChannelConfig mChannelConfig;
 
 public:
-    VorbisFileDecoder(UniquePtr<std::istream> file, UniquePtr<OggVorbis_File> oggfile, vorbis_info *vorbisinfo, ChannelConfig sconfig)
+    VorbisFileDecoder(UniquePtr<std::istream> file, UniquePtr<OggVorbis_File> oggfile, vorbis_info *vorbisinfo, ChannelConfig sconfig) noexcept
       : mFile(std::move(file)), mOggFile(std::move(oggfile)), mVorbisInfo(vorbisinfo)
       , mOggBitstream(0), mChannelConfig(sconfig)
     { }
     ~VorbisFileDecoder() override;
 
-    ALuint getFrequency() const override;
-    ChannelConfig getChannelConfig() const override;
-    SampleType getSampleType() const override;
+    ALuint getFrequency() const noexcept override;
+    ChannelConfig getChannelConfig() const noexcept override;
+    SampleType getSampleType() const noexcept override;
 
-    uint64_t getLength() const override;
-    bool seek(uint64_t pos) override;
+    uint64_t getLength() const noexcept override;
+    bool seek(uint64_t pos) noexcept override;
 
-    std::pair<uint64_t,uint64_t> getLoopPoints() const override;
+    std::pair<uint64_t,uint64_t> getLoopPoints() const noexcept override;
 
-    ALuint read(ALvoid *ptr, ALuint count) override;
+    ALuint read(ALvoid *ptr, ALuint count) noexcept override;
 };
 
 VorbisFileDecoder::~VorbisFileDecoder()
@@ -83,39 +83,39 @@ VorbisFileDecoder::~VorbisFileDecoder()
 }
 
 
-ALuint VorbisFileDecoder::getFrequency() const
+ALuint VorbisFileDecoder::getFrequency() const noexcept
 {
     return mVorbisInfo->rate;
 }
 
-ChannelConfig VorbisFileDecoder::getChannelConfig() const
+ChannelConfig VorbisFileDecoder::getChannelConfig() const noexcept
 {
     return mChannelConfig;
 }
 
-SampleType VorbisFileDecoder::getSampleType() const
+SampleType VorbisFileDecoder::getSampleType() const noexcept
 {
     return SampleType::Int16;
 }
 
 
-uint64_t VorbisFileDecoder::getLength() const
+uint64_t VorbisFileDecoder::getLength() const noexcept
 {
     ogg_int64_t len = ov_pcm_total(mOggFile.get(), -1);
     return std::max<ogg_int64_t>(len, 0);
 }
 
-bool VorbisFileDecoder::seek(uint64_t pos)
+bool VorbisFileDecoder::seek(uint64_t pos) noexcept
 {
     return ov_pcm_seek(mOggFile.get(), pos) == 0;
 }
 
-std::pair<uint64_t,uint64_t> VorbisFileDecoder::getLoopPoints() const
+std::pair<uint64_t,uint64_t> VorbisFileDecoder::getLoopPoints() const noexcept
 {
     return std::make_pair(0, 0);
 }
 
-ALuint VorbisFileDecoder::read(ALvoid *ptr, ALuint count)
+ALuint VorbisFileDecoder::read(ALvoid *ptr, ALuint count) noexcept
 {
     ALuint total = 0;
     ALshort *samples = (ALshort*)ptr;
@@ -182,7 +182,7 @@ ALuint VorbisFileDecoder::read(ALvoid *ptr, ALuint count)
 }
 
 
-SharedPtr<Decoder> VorbisFileDecoderFactory::createDecoder(UniquePtr<std::istream> &file)
+SharedPtr<Decoder> VorbisFileDecoderFactory::createDecoder(UniquePtr<std::istream> &file) noexcept
 {
     static const ov_callbacks streamIO = {
         read, seek, close, tell

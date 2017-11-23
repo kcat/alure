@@ -83,22 +83,22 @@ class SndFileDecoder final : public Decoder {
     SampleType mSampleType;
 
 public:
-    SndFileDecoder(UniquePtr<std::istream> file, SNDFILE *sndfile, const SF_INFO sndinfo, ChannelConfig sconfig, SampleType stype)
+    SndFileDecoder(UniquePtr<std::istream> file, SNDFILE *sndfile, const SF_INFO sndinfo, ChannelConfig sconfig, SampleType stype) noexcept
       : mFile(std::move(file)), mSndFile(sndfile), mSndInfo(sndinfo)
       , mChannelConfig(sconfig), mSampleType(stype)
     { }
     ~SndFileDecoder() override;
 
-    ALuint getFrequency() const override;
-    ChannelConfig getChannelConfig() const override;
-    SampleType getSampleType() const override;
+    ALuint getFrequency() const noexcept override;
+    ChannelConfig getChannelConfig() const noexcept override;
+    SampleType getSampleType() const noexcept override;
 
-    uint64_t getLength() const override;
-    bool seek(uint64_t pos) override;
+    uint64_t getLength() const noexcept override;
+    bool seek(uint64_t pos) noexcept override;
 
-    std::pair<uint64_t,uint64_t> getLoopPoints() const override;
+    std::pair<uint64_t,uint64_t> getLoopPoints() const noexcept override;
 
-    ALuint read(ALvoid *ptr, ALuint count) override;
+    ALuint read(ALvoid *ptr, ALuint count) noexcept override;
 };
 
 SndFileDecoder::~SndFileDecoder()
@@ -108,40 +108,40 @@ SndFileDecoder::~SndFileDecoder()
 }
 
 
-ALuint SndFileDecoder::getFrequency() const
+ALuint SndFileDecoder::getFrequency() const noexcept
 {
     return mSndInfo.samplerate;
 }
 
-ChannelConfig SndFileDecoder::getChannelConfig() const
+ChannelConfig SndFileDecoder::getChannelConfig() const noexcept
 {
     return mChannelConfig;
 }
 
-SampleType SndFileDecoder::getSampleType() const
+SampleType SndFileDecoder::getSampleType() const noexcept
 {
     return mSampleType;
 }
 
 
-uint64_t SndFileDecoder::getLength() const
+uint64_t SndFileDecoder::getLength() const noexcept
 {
     return std::max<sf_count_t>(mSndInfo.frames, 0);
 }
 
-bool SndFileDecoder::seek(uint64_t pos)
+bool SndFileDecoder::seek(uint64_t pos) noexcept
 {
     sf_count_t newpos = sf_seek(mSndFile, pos, SEEK_SET);
     if(newpos < 0) return false;
     return true;
 }
 
-std::pair<uint64_t,uint64_t> SndFileDecoder::getLoopPoints() const
+std::pair<uint64_t,uint64_t> SndFileDecoder::getLoopPoints() const noexcept
 {
     return std::make_pair(0, 0);
 }
 
-ALuint SndFileDecoder::read(ALvoid *ptr, ALuint count)
+ALuint SndFileDecoder::read(ALvoid *ptr, ALuint count) noexcept
 {
     sf_count_t got = 0;
     if(mSampleType == SampleType::Int16)
@@ -152,7 +152,7 @@ ALuint SndFileDecoder::read(ALvoid *ptr, ALuint count)
 }
 
 
-SharedPtr<Decoder> SndFileDecoderFactory::createDecoder(UniquePtr<std::istream> &file)
+SharedPtr<Decoder> SndFileDecoderFactory::createDecoder(UniquePtr<std::istream> &file) noexcept
 {
     SF_VIRTUAL_IO vio = {
         get_filelen, seek,

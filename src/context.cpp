@@ -283,7 +283,7 @@ static alure::DecoderOrExceptT GetDecoder(alure::UniquePtr<std::istream> file)
 }
 
 class DefaultFileIOFactory final : public alure::FileIOFactory {
-    alure::UniquePtr<std::istream> openFile(const alure::String &name) override
+    alure::UniquePtr<std::istream> openFile(const alure::String &name) noexcept override
     {
 #ifdef _WIN32
         auto file = alure::MakeUnique<Stream>(name.c_str());
@@ -320,31 +320,32 @@ void RegisterDecoder(StringView name, UniquePtr<DecoderFactory> factory)
     sDecoders.insert(iter, std::make_pair(String(name), std::move(factory)));
 }
 
-UniquePtr<DecoderFactory> UnregisterDecoder(StringView name)
+UniquePtr<DecoderFactory> UnregisterDecoder(StringView name) noexcept
 {
+    UniquePtr<DecoderFactory> factory;
     auto iter = std::lower_bound(sDecoders.begin(), sDecoders.end(), name,
-        [](const DecoderEntryPair &entry, StringView rhs) -> bool
+        [](const DecoderEntryPair &entry, StringView rhs) noexcept -> bool
         { return entry.first < rhs; }
     );
     if(iter != sDecoders.end())
     {
-        UniquePtr<DecoderFactory> factory = std::move(iter->second);
+        factory = std::move(iter->second);
         sDecoders.erase(iter);
         return factory;
     }
-    return nullptr;
+    return factory;
 }
 
 
 FileIOFactory::~FileIOFactory() { }
 
-UniquePtr<FileIOFactory> FileIOFactory::set(UniquePtr<FileIOFactory> factory)
+UniquePtr<FileIOFactory> FileIOFactory::set(UniquePtr<FileIOFactory> factory) noexcept
 {
-    std::swap(sFileFactory, factory);
+    sFileFactory.swap(factory);
     return factory;
 }
 
-FileIOFactory &FileIOFactory::get()
+FileIOFactory &FileIOFactory::get() noexcept
 {
     FileIOFactory *factory = sFileFactory.get();
     if(factory) return *factory;

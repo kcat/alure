@@ -37,21 +37,21 @@ class Mpg123Decoder final : public Decoder {
     long mSampleRate;
 
 public:
-    Mpg123Decoder(UniquePtr<std::istream> file, mpg123_handle *mpg123, int chans, long srate)
+    Mpg123Decoder(UniquePtr<std::istream> file, mpg123_handle *mpg123, int chans, long srate) noexcept
       : mFile(std::move(file)), mMpg123(mpg123), mChannels(chans), mSampleRate(srate)
     { }
     ~Mpg123Decoder() override;
 
-    ALuint getFrequency() const override;
-    ChannelConfig getChannelConfig() const override;
-    SampleType getSampleType() const override;
+    ALuint getFrequency() const noexcept override;
+    ChannelConfig getChannelConfig() const noexcept override;
+    SampleType getSampleType() const noexcept override;
 
-    uint64_t getLength() const override;
-    bool seek(uint64_t pos) override;
+    uint64_t getLength() const noexcept override;
+    bool seek(uint64_t pos) noexcept override;
 
-    std::pair<uint64_t,uint64_t> getLoopPoints() const override;
+    std::pair<uint64_t,uint64_t> getLoopPoints() const noexcept override;
 
-    ALuint read(ALvoid *ptr, ALuint count) override;
+    ALuint read(ALvoid *ptr, ALuint count) noexcept override;
 };
 
 Mpg123Decoder::~Mpg123Decoder()
@@ -62,45 +62,44 @@ Mpg123Decoder::~Mpg123Decoder()
 }
 
 
-ALuint Mpg123Decoder::getFrequency() const
+ALuint Mpg123Decoder::getFrequency() const noexcept
 {
     return mSampleRate;
 }
 
-ChannelConfig Mpg123Decoder::getChannelConfig() const
+ChannelConfig Mpg123Decoder::getChannelConfig() const noexcept
 {
     if(mChannels == 1)
         return ChannelConfig::Mono;
-    if(mChannels == 2)
+    /*if(mChannels == 2)*/
         return ChannelConfig::Stereo;
-    throw std::runtime_error("Unsupported sample configuration");
 }
 
-SampleType Mpg123Decoder::getSampleType() const
+SampleType Mpg123Decoder::getSampleType() const noexcept
 {
     return SampleType::Int16;
 }
 
 
-uint64_t Mpg123Decoder::getLength() const
+uint64_t Mpg123Decoder::getLength() const noexcept
 {
     off_t len = mpg123_length(mMpg123);
     return (ALuint)std::max<off_t>(len, 0);
 }
 
-bool Mpg123Decoder::seek(uint64_t pos)
+bool Mpg123Decoder::seek(uint64_t pos) noexcept
 {
     off_t newpos = mpg123_seek(mMpg123, pos, SEEK_SET);
     if(newpos < 0) return false;
     return true;
 }
 
-std::pair<uint64_t,uint64_t> Mpg123Decoder::getLoopPoints() const
+std::pair<uint64_t,uint64_t> Mpg123Decoder::getLoopPoints() const noexcept
 {
     return std::make_pair(0, 0);
 }
 
-ALuint Mpg123Decoder::read(ALvoid *ptr, ALuint count)
+ALuint Mpg123Decoder::read(ALvoid *ptr, ALuint count) noexcept
 {
     unsigned char *dst = reinterpret_cast<unsigned char*>(ptr);
     ALuint bytes = count * mChannels * 2;
@@ -120,7 +119,7 @@ ALuint Mpg123Decoder::read(ALvoid *ptr, ALuint count)
 }
 
 
-Mpg123DecoderFactory::Mpg123DecoderFactory()
+Mpg123DecoderFactory::Mpg123DecoderFactory() noexcept
   : mIsInited(false)
 {
     if(!mIsInited)
@@ -138,7 +137,7 @@ Mpg123DecoderFactory::~Mpg123DecoderFactory()
 }
 
 
-SharedPtr<Decoder> Mpg123DecoderFactory::createDecoder(UniquePtr<std::istream> &file)
+SharedPtr<Decoder> Mpg123DecoderFactory::createDecoder(UniquePtr<std::istream> &file) noexcept
 {
     if(!mIsInited)
         return nullptr;

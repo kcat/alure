@@ -190,24 +190,24 @@ class FlacDecoder final : public Decoder {
     }
 
 public:
-    FlacDecoder()
+    FlacDecoder() noexcept
       : mFlacFile(nullptr), mChannelConfig(ChannelConfig::Mono), mSampleType(SampleType::Int16)
       , mFrequency(0), mFrameSize(0), mOutBytes(nullptr), mOutMax(0), mOutLen(0)
     { }
     ~FlacDecoder() override;
 
-    bool open(UniquePtr<std::istream> &file);
+    bool open(UniquePtr<std::istream> &file) noexcept;
 
-    ALuint getFrequency() const override;
-    ChannelConfig getChannelConfig() const override;
-    SampleType getSampleType() const override;
+    ALuint getFrequency() const noexcept override;
+    ChannelConfig getChannelConfig() const noexcept override;
+    SampleType getSampleType() const noexcept override;
 
-    uint64_t getLength() const override;
-    bool seek(uint64_t pos) override;
+    uint64_t getLength() const noexcept override;
+    bool seek(uint64_t pos) noexcept override;
 
-    std::pair<uint64_t,uint64_t> getLoopPoints() const override;
+    std::pair<uint64_t,uint64_t> getLoopPoints() const noexcept override;
 
-    ALuint read(ALvoid *ptr, ALuint count) override;
+    ALuint read(ALvoid *ptr, ALuint count) noexcept override;
 };
 
 FlacDecoder::~FlacDecoder()
@@ -221,7 +221,7 @@ FlacDecoder::~FlacDecoder()
 }
 
 
-bool FlacDecoder::open(UniquePtr<std::istream> &file)
+bool FlacDecoder::open(UniquePtr<std::istream> &file) noexcept
 {
     mFlacFile = FLAC__stream_decoder_new();
     if(mFlacFile)
@@ -250,40 +250,40 @@ bool FlacDecoder::open(UniquePtr<std::istream> &file)
 }
 
 
-ALuint FlacDecoder::getFrequency() const
+ALuint FlacDecoder::getFrequency() const noexcept
 {
     return mFrequency;
 }
 
-ChannelConfig FlacDecoder::getChannelConfig() const
+ChannelConfig FlacDecoder::getChannelConfig() const noexcept
 {
     return mChannelConfig;
 }
 
-SampleType FlacDecoder::getSampleType() const
+SampleType FlacDecoder::getSampleType() const noexcept
 {
     return mSampleType;
 }
 
 
-uint64_t FlacDecoder::getLength() const
+uint64_t FlacDecoder::getLength() const noexcept
 {
     return FLAC__stream_decoder_get_total_samples(mFlacFile);
 }
 
-bool FlacDecoder::seek(uint64_t pos)
+bool FlacDecoder::seek(uint64_t pos) noexcept
 {
     if(!FLAC__stream_decoder_seek_absolute(mFlacFile, pos))
         return false;
     return true;
 }
 
-std::pair<uint64_t,uint64_t> FlacDecoder::getLoopPoints() const
+std::pair<uint64_t,uint64_t> FlacDecoder::getLoopPoints() const noexcept
 {
     return std::make_pair(0, 0);
 }
 
-ALuint FlacDecoder::read(ALvoid *ptr, ALuint count)
+ALuint FlacDecoder::read(ALvoid *ptr, ALuint count) noexcept
 {
     mOutBytes = reinterpret_cast<ALubyte*>(ptr);
     mOutLen = 0;
@@ -307,7 +307,7 @@ ALuint FlacDecoder::read(ALvoid *ptr, ALuint count)
 }
 
 
-SharedPtr<Decoder> FlacDecoderFactory::createDecoder(UniquePtr<std::istream> &file)
+SharedPtr<Decoder> FlacDecoderFactory::createDecoder(UniquePtr<std::istream> &file) noexcept
 {
     auto decoder = MakeShared<FlacDecoder>();
     if(!decoder->open(file)) decoder.reset();

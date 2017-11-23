@@ -9,10 +9,10 @@ class Mpg123DecoderFactory final : public DecoderFactory {
     bool mIsInited;
 
 public:
-    Mpg123DecoderFactory();
+    Mpg123DecoderFactory() noexcept;
     ~Mpg123DecoderFactory() override;
 
-    SharedPtr<Decoder> createDecoder(UniquePtr<std::istream> &file) override;
+    SharedPtr<Decoder> createDecoder(UniquePtr<std::istream> &file) noexcept override;
 };
 
 } // namespace alure

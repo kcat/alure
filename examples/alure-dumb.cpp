@@ -66,7 +66,7 @@ class DumbDecoder final : public alure::Decoder {
 public:
     DumbDecoder(alure::UniquePtr<std::istream> file, alure::UniquePtr<DUMBFILE_SYSTEM> dfs,
                 DUMBFILE *dfile, DUH *duh, DUH_SIGRENDERER *renderer, alure::SampleType stype,
-                ALuint srate)
+                ALuint srate) noexcept
       : mFile(std::move(file)), mDfs(std::move(dfs)), mDumbfile(dfile), mDuh(duh)
       , mRenderer(renderer), mSampleType(stype), mFrequency(srate)
     { }
@@ -82,40 +82,40 @@ public:
         mDumbfile = nullptr;
     }
 
-    ALuint getFrequency() const override
+    ALuint getFrequency() const noexcept override
     { return mFrequency; }
-    alure::ChannelConfig getChannelConfig() const override
+    alure::ChannelConfig getChannelConfig() const noexcept override
     {
         // We always have DUMB render to stereo
         return alure::ChannelConfig::Stereo;
     }
-    alure::SampleType getSampleType() const override
+    alure::SampleType getSampleType() const noexcept override
     {
         // DUMB renders to 8.24 normalized fixed point, which we convert to
         // 32-bit float or signed 16-bit samples
         return mSampleType;
     }
 
-    uint64_t getLength() const override
+    uint64_t getLength() const noexcept override
     {
         // Modules have no explicit length, they just keep playing as long as
         // more samples get generated.
         return 0;
     }
 
-    bool seek(uint64_t) override
+    bool seek(uint64_t) noexcept override
     {
         // Cannot seek
         return false;
     }
 
-    std::pair<uint64_t,uint64_t> getLoopPoints() const override
+    std::pair<uint64_t,uint64_t> getLoopPoints() const noexcept override
     {
         // No loop points
         return std::make_pair(0, 0);
     }
 
-    ALuint read(ALvoid *ptr, ALuint count) override
+    ALuint read(ALvoid *ptr, ALuint count) noexcept override
     {
         ALuint ret = 0;
 
@@ -149,7 +149,7 @@ public:
 
 // Inherit from alure::DecoderFactory to use our custom decoder
 class DumbFactory final : public alure::DecoderFactory {
-    alure::SharedPtr<alure::Decoder> createDecoder(alure::UniquePtr<std::istream> &file) override
+    alure::SharedPtr<alure::Decoder> createDecoder(alure::UniquePtr<std::istream> &file) noexcept override
     {
         static const alure::Array<DUH*(*)(DUMBFILE*),3> init_funcs{{
             dumb_read_it, dumb_read_xm, dumb_read_s3m

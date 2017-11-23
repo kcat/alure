@@ -73,7 +73,7 @@ class OpusFileDecoder final : public Decoder {
     SampleType mSampleType;
 
     template<typename T>
-    ALuint do_read(T *ptr, ALuint count)
+    ALuint do_read(T *ptr, ALuint count) noexcept
     {
         ALuint total = 0;
         T *samples = ptr;
@@ -138,21 +138,21 @@ class OpusFileDecoder final : public Decoder {
     }
 
 public:
-    OpusFileDecoder(UniquePtr<std::istream> file, OggOpusFile *oggfile, ChannelConfig sconfig, SampleType stype)
+    OpusFileDecoder(UniquePtr<std::istream> file, OggOpusFile *oggfile, ChannelConfig sconfig, SampleType stype) noexcept
       : mFile(std::move(file)), mOggFile(oggfile), mOggBitstream(0), mChannelConfig(sconfig), mSampleType(stype)
     { }
     ~OpusFileDecoder() override;
 
-    ALuint getFrequency() const override;
-    ChannelConfig getChannelConfig() const override;
-    SampleType getSampleType() const override;
+    ALuint getFrequency() const noexcept override;
+    ChannelConfig getChannelConfig() const noexcept override;
+    SampleType getSampleType() const noexcept override;
 
-    uint64_t getLength() const override;
-    bool seek(uint64_t pos) override;
+    uint64_t getLength() const noexcept override;
+    bool seek(uint64_t pos) noexcept override;
 
-    std::pair<uint64_t,uint64_t> getLoopPoints() const override;
+    std::pair<uint64_t,uint64_t> getLoopPoints() const noexcept override;
 
-    ALuint read(ALvoid *ptr, ALuint count) override;
+    ALuint read(ALvoid *ptr, ALuint count) noexcept override;
 };
 
 OpusFileDecoder::~OpusFileDecoder()
@@ -161,40 +161,40 @@ OpusFileDecoder::~OpusFileDecoder()
 }
 
 
-ALuint OpusFileDecoder::getFrequency() const
+ALuint OpusFileDecoder::getFrequency() const noexcept
 {
     // libopusfile always decodes to 48khz.
     return 48000;
 }
 
-ChannelConfig OpusFileDecoder::getChannelConfig() const
+ChannelConfig OpusFileDecoder::getChannelConfig() const noexcept
 {
     return mChannelConfig;
 }
 
-SampleType OpusFileDecoder::getSampleType() const
+SampleType OpusFileDecoder::getSampleType() const noexcept
 {
     return mSampleType;
 }
 
 
-uint64_t OpusFileDecoder::getLength() const
+uint64_t OpusFileDecoder::getLength() const noexcept
 {
     ogg_int64_t len = op_pcm_total(mOggFile, -1);
     return std::max<ogg_int64_t>(len, 0);
 }
 
-bool OpusFileDecoder::seek(uint64_t pos)
+bool OpusFileDecoder::seek(uint64_t pos) noexcept
 {
     return op_pcm_seek(mOggFile, pos) == 0;
 }
 
-std::pair<uint64_t,uint64_t> OpusFileDecoder::getLoopPoints() const
+std::pair<uint64_t,uint64_t> OpusFileDecoder::getLoopPoints() const noexcept
 {
     return std::make_pair(0, std::numeric_limits<uint64_t>::max());
 }
 
-ALuint OpusFileDecoder::read(ALvoid *ptr, ALuint count)
+ALuint OpusFileDecoder::read(ALvoid *ptr, ALuint count) noexcept
 {
     if(mSampleType == SampleType::Float32)
         return do_read<float>(reinterpret_cast<float*>(ptr), count);
@@ -202,7 +202,7 @@ ALuint OpusFileDecoder::read(ALvoid *ptr, ALuint count)
 }
 
 
-SharedPtr<Decoder> OpusFileDecoderFactory::createDecoder(UniquePtr<std::istream> &file)
+SharedPtr<Decoder> OpusFileDecoderFactory::createDecoder(UniquePtr<std::istream> &file) noexcept
 {
     static const OpusFileCallbacks streamIO = {
         read, seek, tell, nullptr

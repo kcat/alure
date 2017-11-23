@@ -1265,36 +1265,36 @@ public:
     virtual ~Decoder();
 
     /** Retrieves the sample frequency, in hz, of the audio being decoded. */
-    virtual ALuint getFrequency() const = 0;
+    virtual ALuint getFrequency() const noexcept = 0;
     /** Retrieves the channel configuration of the audio being decoded. */
-    virtual ChannelConfig getChannelConfig() const = 0;
+    virtual ChannelConfig getChannelConfig() const noexcept = 0;
     /** Retrieves the sample type of the audio being decoded. */
-    virtual SampleType getSampleType() const = 0;
+    virtual SampleType getSampleType() const noexcept = 0;
 
     /**
      * Retrieves the total length of the audio, in sample frames. If unknown,
      * returns 0. Note that if the returned length is 0, the decoder may not be
      * used to load a Buffer.
      */
-    virtual uint64_t getLength() const = 0;
+    virtual uint64_t getLength() const noexcept = 0;
     /**
      * Seek to pos, specified in sample frames. Returns true if the seek was
      * successful.
      */
-    virtual bool seek(uint64_t pos) = 0;
+    virtual bool seek(uint64_t pos) noexcept = 0;
 
     /**
      * Retrieves the loop points, in sample frames, as a [start,end) pair. If
      * start >= end, all available samples are included in the loop.
      */
-    virtual std::pair<uint64_t,uint64_t> getLoopPoints() const = 0;
+    virtual std::pair<uint64_t,uint64_t> getLoopPoints() const noexcept = 0;
 
     /**
      * Decodes count sample frames, writing them to ptr, and returns the number
      * of sample frames written. Returning less than the requested count
      * indicates the end of the audio.
      */
-    virtual ALuint read(ALvoid *ptr, ALuint count) = 0;
+    virtual ALuint read(ALvoid *ptr, ALuint count) noexcept = 0;
 };
 
 /**
@@ -1313,7 +1313,7 @@ public:
      *
      * \return nullptr if a decoder can't be created from the file.
      */
-    virtual SharedPtr<Decoder> createDecoder(UniquePtr<std::istream> &file) = 0;
+    virtual SharedPtr<Decoder> createDecoder(UniquePtr<std::istream> &file) noexcept = 0;
 };
 
 /**
@@ -1341,7 +1341,7 @@ ALURE_API void RegisterDecoder(StringView name, UniquePtr<DecoderFactory> factor
  * \return The unregistered decoder factory instance, or 0 (nullptr) if a
  * decoder factory with the given name doesn't exist.
  */
-ALURE_API UniquePtr<DecoderFactory> UnregisterDecoder(StringView name);
+ALURE_API UniquePtr<DecoderFactory> UnregisterDecoder(StringView name) noexcept;
 
 
 /**
@@ -1356,18 +1356,18 @@ public:
      * previous factory was set, it's returned to the application. Passing in a
      * nullptr reverts to the default.
      */
-    static UniquePtr<FileIOFactory> set(UniquePtr<FileIOFactory> factory);
+    static UniquePtr<FileIOFactory> set(UniquePtr<FileIOFactory> factory) noexcept;
 
     /**
      * Gets the current FileIOFactory instance being used by the audio
      * decoders.
      */
-    static FileIOFactory &get();
+    static FileIOFactory &get() noexcept;
 
     virtual ~FileIOFactory();
 
     /** Opens a read-only binary file for the given name. */
-    virtual UniquePtr<std::istream> openFile(const String &name) = 0;
+    virtual UniquePtr<std::istream> openFile(const String &name) noexcept = 0;
 };
 
 

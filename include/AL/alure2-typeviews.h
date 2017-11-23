@@ -204,7 +204,8 @@ inline BasicString<T,Tr,Alloc>& operator+=(BasicString<T,Tr,Alloc> &lhs, BasicSt
 // Inline operators to compare String and C-style strings with StringViews.
 #define ALURE_DECL_STROP(op)                                                     \
 template<typename T, typename Tr, typename Alloc>                                \
-inline bool operator op(const BasicString<T,Tr,Alloc> &lhs, BasicStringView<T,Tr> rhs) \
+inline bool operator op(const BasicString<T,Tr,Alloc> &lhs,                      \
+                        BasicStringView<T,Tr> rhs) noexcept                      \
 { return BasicStringView<T,Tr>(lhs) op rhs; }                                    \
 template<typename T, typename Tr>                                                \
 inline bool operator op(const typename BasicStringView<T,Tr>::value_type *lhs,   \

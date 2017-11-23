@@ -99,7 +99,7 @@ class StreamBuf final : public std::streambuf {
     }
 
 public:
-    bool open(const char *filename)
+    bool open(const char *filename) noexcept
     {
         mFile = PHYSFS_openRead(filename);
         if(!mFile) return false;
@@ -151,7 +151,7 @@ public:
         PHYSFS_deinit();
     }
 
-    alure::UniquePtr<std::istream> openFile(const alure::String &name) override
+    alure::UniquePtr<std::istream> openFile(const alure::String &name) noexcept override
     {
         auto stream = alure::MakeUnique<Stream>(name.c_str());
         if(stream->fail()) stream = nullptr;
