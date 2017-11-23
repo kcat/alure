@@ -1409,8 +1409,9 @@ public:
     /**
      * Called when the given source was forced to stop. This can be because
      * either there were no more mixing sources and a higher-priority source
-     * preempted it, or it's part of a SourceGroup (or sub-group thereof) that
-     * had its SourceGroup::stopAll method called.
+     * preempted it, it's part of a SourceGroup (or sub-group thereof) that had
+     * its SourceGroup::stopAll method called, or it was playing a buffer
+     * that's getting removed.
      */
     virtual void sourceForceStopped(Source source);
 
