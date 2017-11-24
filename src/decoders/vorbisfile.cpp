@@ -1,8 +1,9 @@
 
 #include "vorbisfile.hpp"
 
-#include <stdexcept>
 #include <iostream>
+
+#include "context.h"
 
 #include "vorbis/vorbisfile.h"
 
@@ -49,6 +50,61 @@ static int close(void*)
 }
 
 
+// This variant is a poor man's optional
+static std::variant<std::monostate,uint64_t> parse_timeval(StringView strval, double srate)
+{
+    size_t cpos = strval.find_first_of(':');
+    if(cpos == StringView::npos)
+    {
+        // No colon is present, treat it as a plain sample offset
+        char *end;
+        auto str = String(strval);
+        uint64_t val = std::strtoull(str.c_str(), &end, 10);
+        if(*end != 0) return {};
+        return val;
+    }
+
+    // Value is not a sample offset. Its format is [[HH:]MM]:SS[.sss] (at
+    // least one colon must exist to be interpreted this way).
+    uint64_t val = 0;
+    String str;
+    char *end;
+
+    if(cpos != 0)
+    {
+        // If a non-empty first value, parse it (may be hours or minutes)
+        str = String(strval.data(), cpos);
+        val = std::strtoul(str.c_str(), &end, 10);
+        if(*end != 0) return {};
+    }
+
+    strval = strval.substr(cpos+1);
+    cpos = strval.find_first_of(':');
+    if(cpos != StringView::npos)
+    {
+        // If a second colon is present, the first value was hours and this is
+        // minutes, otherwise the first value was minutes.
+        str = String(strval.data(), cpos);
+        uint64_t val2 = std::strtoul(str.c_str(), &end, 10);
+        if(*end != 0 || val2 >= 60) return {};
+
+        // Combines hours and minutes into the full minute count
+        if(val > std::numeric_limits<uint64_t>::max()/60)
+            return {};
+        val = val*60 + val2;
+        strval = strval.substr(cpos+1);
+    }
+
+    // Parse the seconds and its fraction.
+    str = String(strval);
+    auto val2 = std::strtod(str.c_str(), &end);
+    if(*end != 0 || val2 >= 60.0) return {};
+
+    // Convert minutes to seconds, add the seconds, then convert to samples.
+    return static_cast<uint64_t>((val*60.0 + val2) * srate);
+}
+
+
 class VorbisFileDecoder final : public Decoder {
     UniquePtr<std::istream> mFile;
 
@@ -58,10 +114,14 @@ class VorbisFileDecoder final : public Decoder {
 
     ChannelConfig mChannelConfig;
 
+    std::pair<uint64_t,uint64_t> mLoopPoints;
+
 public:
-    VorbisFileDecoder(UniquePtr<std::istream> file, UniquePtr<OggVorbis_File> oggfile, vorbis_info *vorbisinfo, ChannelConfig sconfig) noexcept
+    VorbisFileDecoder(UniquePtr<std::istream> file, UniquePtr<OggVorbis_File> oggfile,
+                      vorbis_info *vorbisinfo, ChannelConfig sconfig,
+                      std::pair<uint64_t,uint64_t> loop_points) noexcept
       : mFile(std::move(file)), mOggFile(std::move(oggfile)), mVorbisInfo(vorbisinfo)
-      , mOggBitstream(0), mChannelConfig(sconfig)
+      , mOggBitstream(0), mChannelConfig(sconfig), mLoopPoints(loop_points)
     { }
     ~VorbisFileDecoder() override;
 
@@ -112,7 +172,7 @@ bool VorbisFileDecoder::seek(uint64_t pos) noexcept
 
 std::pair<uint64_t,uint64_t> VorbisFileDecoder::getLoopPoints() const noexcept
 {
-    return std::make_pair(0, 0);
+    return mLoopPoints;
 }
 
 ALuint VorbisFileDecoder::read(ALvoid *ptr, ALuint count) noexcept
@@ -200,6 +260,46 @@ SharedPtr<Decoder> VorbisFileDecoderFactory::createDecoder(UniquePtr<std::istrea
         return nullptr;
     }
 
+    std::pair<uint64_t,uint64_t> loop_points = { 0, std::numeric_limits<uint64_t>::max() };
+    if(vorbis_comment *vc = ov_comment(oggfile.get(), -1))
+    {
+        for(int i = 0;i < vc->comments;i++)
+        {
+            auto seppos = StringView(
+                vc->user_comments[i], vc->comment_lengths[i]
+            ).find_first_of('=');
+            if(seppos == StringView::npos) continue;
+
+            StringView key(vc->user_comments[i], seppos);
+            StringView val(vc->user_comments[i]+seppos+1, vc->comment_lengths[i]-(seppos+1));
+
+            // RPG Maker seems to recognize LOOPSTART and LOOPLENGTH for loop
+            // points in a Vorbis file. ZDoom recognizes LOOP_START and
+            // LOOP_END. We can recognize both.
+            if(key == "LOOP_START" || key == "LOOPSTART")
+            {
+                auto pt = parse_timeval(val, vorbisinfo->rate);
+                if(pt.index() == 1) loop_points.first = std::get<1>(pt);
+                continue;
+            }
+
+            if(key == "LOOP_END")
+            {
+                auto pt = parse_timeval(val, vorbisinfo->rate);
+                if(pt.index() == 1) loop_points.second = std::get<1>(pt);
+                continue;
+            }
+
+            if(key == "LOOPLENGTH")
+            {
+                auto pt = parse_timeval(val, vorbisinfo->rate);
+                if(pt.index() == 1)
+                    loop_points.second = loop_points.first + std::get<1>(pt);
+                continue;
+            }
+        }
+    }
+
     ChannelConfig channels = ChannelConfig::Mono;
     if(vorbisinfo->channels == 1)
         channels = ChannelConfig::Mono;
@@ -220,7 +320,7 @@ SharedPtr<Decoder> VorbisFileDecoderFactory::createDecoder(UniquePtr<std::istrea
     }
 
     return MakeShared<VorbisFileDecoder>(
-        std::move(file), std::move(oggfile), vorbisinfo, channels
+        std::move(file), std::move(oggfile), vorbisinfo, channels, loop_points
     );
 }
 

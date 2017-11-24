@@ -26,6 +26,7 @@
 #if !(__cplusplus >= 201703L)
 namespace std {
 using mpark::variant;
+using mpark::monostate;
 using mpark::get;
 using mpark::get_if;
 using mpark::holds_alternative;
