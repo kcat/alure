@@ -5,6 +5,8 @@
 #include <iostream>
 #include <cstring>
 
+#include "main.h"
+
 #include "FLAC/all.h"
 
 
@@ -19,6 +21,7 @@ class FlacDecoder final : public Decoder {
     SampleType mSampleType;
     ALuint mFrequency;
     ALuint mFrameSize;
+    std::pair<uint64_t,uint64_t> mLoopPts;
 
     Vector<ALubyte> mData;
 
@@ -136,6 +139,46 @@ class FlacDecoder final : public Decoder {
             self->mFrameSize = info.channels * bps/8;
             self->mFrequency = info.sample_rate;
         }
+        else if(mdata->type == FLAC__METADATA_TYPE_VORBIS_COMMENT)
+        {
+            const FLAC__StreamMetadata_VorbisComment &vc = mdata->data.vorbis_comment;
+            for(FLAC__uint32 i = 0;i < vc.num_comments;i++)
+            {
+                auto seppos = StringView(
+                    (char*)vc.comments[i].entry, vc.comments[i].length
+                ).find_first_of('=');
+                if(seppos == StringView::npos) continue;
+
+                StringView key((char*)vc.comments[i].entry, seppos);
+                StringView val((char*)vc.comments[i].entry+seppos+1,
+                               vc.comments[i].length-(seppos+1));
+
+                // RPG Maker seems to recognize LOOPSTART and LOOPLENGTH for
+                // loop points in a Vorbis comment. ZDoom recognizes LOOP_START
+                // and LOOP_END. We can recognize both.
+                if(key == "LOOP_START" || key == "LOOPSTART")
+                {
+                    auto pt = parse_timeval(val, self->mFrequency);
+                    if(pt.index() == 1) self->mLoopPts.first = std::get<1>(pt);
+                    continue;
+                }
+
+                if(key == "LOOP_END")
+                {
+                    auto pt = parse_timeval(val, self->mFrequency);
+                    if(pt.index() == 1) self->mLoopPts.second = std::get<1>(pt);
+                    continue;
+                }
+
+                if(key == "LOOPLENGTH")
+                {
+                    auto pt = parse_timeval(val, self->mFrequency);
+                    if(pt.index() == 1)
+                        self->mLoopPts.second = self->mLoopPts.first + std::get<1>(pt);
+                    continue;
+                }
+            }
+        }
     }
     static void ErrorCallback(const FLAC__StreamDecoder*,FLAC__StreamDecoderErrorStatus,void*)
     {
@@ -198,7 +241,8 @@ class FlacDecoder final : public Decoder {
 public:
     FlacDecoder() noexcept
       : mFlacFile(nullptr), mChannelConfig(ChannelConfig::Mono), mSampleType(SampleType::Int16)
-      , mFrequency(0), mFrameSize(0), mOutBytes(nullptr), mOutMax(0), mOutLen(0)
+      , mFrequency(0), mFrameSize(0), mLoopPts{0,std::numeric_limits<uint64_t>::max()}
+      , mOutBytes(nullptr), mOutMax(0), mOutLen(0)
     { }
     ~FlacDecoder() override;
 
@@ -276,14 +320,12 @@ uint64_t FlacDecoder::getLength() const noexcept
 
 bool FlacDecoder::seek(uint64_t pos) noexcept
 {
-    if(!FLAC__stream_decoder_seek_absolute(mFlacFile, pos))
-        return false;
-    return true;
+    return FLAC__stream_decoder_seek_absolute(mFlacFile, pos);
 }
 
 std::pair<uint64_t,uint64_t> FlacDecoder::getLoopPoints() const noexcept
 {
-    return std::make_pair(0, 0);
+    return mLoopPts;
 }
 
 ALuint FlacDecoder::read(ALvoid *ptr, ALuint count) noexcept

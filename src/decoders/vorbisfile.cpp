@@ -219,7 +219,7 @@ SharedPtr<Decoder> VorbisFileDecoderFactory::createDecoder(UniquePtr<std::istrea
             StringView val(vc->user_comments[i]+seppos+1, vc->comment_lengths[i]-(seppos+1));
 
             // RPG Maker seems to recognize LOOPSTART and LOOPLENGTH for loop
-            // points in a Vorbis file. ZDoom recognizes LOOP_START and
+            // points in a Vorbis comment. ZDoom recognizes LOOP_START and
             // LOOP_END. We can recognize both.
             if(key == "LOOP_START" || key == "LOOPSTART")
             {

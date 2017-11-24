@@ -225,8 +225,8 @@ SharedPtr<Decoder> OpusFileDecoderFactory::createDecoder(UniquePtr<std::istream>
             StringView val(tags->user_comments[i]+seppos+1, tags->comment_lengths[i]-(seppos+1));
 
             // RPG Maker seems to recognize LOOPSTART and LOOPLENGTH for loop
-            // points in an Ogg file. ZDoom recognizes LOOP_START and LOOP_END.
-            // We can recognize both.
+            // points in a Vorbis comment. ZDoom recognizes LOOP_START and
+            // LOOP_END. We can recognize both.
             if(key == "LOOP_START" || key == "LOOPSTART")
             {
                 auto pt = parse_timeval(val, 48000.0);
