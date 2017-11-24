@@ -235,14 +235,11 @@ bool FlacDecoder::open(UniquePtr<std::istream> &file) noexcept
         mFile = std::move(file);
         if(FLAC__stream_decoder_init_stream(mFlacFile, ReadCallback, SeekCallback, TellCallback, LengthCallback, EofCallback, WriteCallback, MetadataCallback, ErrorCallback, this) == FLAC__STREAM_DECODER_INIT_STATUS_OK)
         {
-            while(mFrequency == 0)
+            if(FLAC__stream_decoder_process_until_end_of_metadata(mFlacFile) != false)
             {
-                if(FLAC__stream_decoder_process_single(mFlacFile) == false ||
-                   FLAC__stream_decoder_get_state(mFlacFile) == FLAC__STREAM_DECODER_END_OF_STREAM)
-                    break;
+                if(mFrequency != 0)
+                    return true;
             }
-            if(mFrequency != 0)
-                return true;
 
             FLAC__stream_decoder_finish(mFlacFile);
         }
