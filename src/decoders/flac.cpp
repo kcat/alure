@@ -76,36 +76,6 @@ class FlacDecoder final : public Decoder {
     {
         FlacDecoder *self = static_cast<FlacDecoder*>(client_data);
 
-        if(self->mFrequency == 0)
-        {
-            if(frame->header.channels == 1)
-                self->mChannelConfig = ChannelConfig::Mono;
-            else if(frame->header.channels == 2)
-                self->mChannelConfig = ChannelConfig::Stereo;
-            else
-                return FLAC__STREAM_DECODER_WRITE_STATUS_ABORT;
-
-            ALuint bps = frame->header.bits_per_sample;
-            if(bps > 16 && Context::GetCurrent().isSupported(self->mChannelConfig, SampleType::Float32))
-            {
-                self->mSampleType = SampleType::Float32;
-                bps = 32;
-            }
-            else if(bps > 8)
-            {
-                self->mSampleType = SampleType::Int16;
-                bps = 16;
-            }
-            else
-            {
-                self->mSampleType = SampleType::UInt8;
-                bps = 8;
-            }
-
-            self->mFrameSize = frame->header.channels * bps/8;
-            self->mFrequency = frame->header.sample_rate;
-        }
-
         ALubyte *data = self->mOutBytes + self->mOutLen;
         ALuint todo = std::min<ALuint>((self->mOutMax-self->mOutLen) / self->mFrameSize,
                                        frame->header.blocksize);
@@ -128,8 +98,44 @@ class FlacDecoder final : public Decoder {
 
         return FLAC__STREAM_DECODER_WRITE_STATUS_CONTINUE;
     }
-    static void MetadataCallback(const FLAC__StreamDecoder*,const FLAC__StreamMetadata*,void*)
+    static void MetadataCallback(const FLAC__StreamDecoder*, const FLAC__StreamMetadata *mdata, void *client_data)
     {
+        FlacDecoder *self = static_cast<FlacDecoder*>(client_data);
+
+        if(mdata->type == FLAC__METADATA_TYPE_STREAMINFO)
+        {
+            // Ignore duplicate StreamInfo blocks
+            if(self->mFrequency != 0)
+                return;
+
+            const FLAC__StreamMetadata_StreamInfo &info = mdata->data.stream_info;
+            if(info.channels == 1)
+                self->mChannelConfig = ChannelConfig::Mono;
+            else if(info.channels == 2)
+                self->mChannelConfig = ChannelConfig::Stereo;
+            else
+                return;
+
+            ALuint bps = info.bits_per_sample;
+            if(bps > 16 && Context::GetCurrent().isSupported(self->mChannelConfig, SampleType::Float32))
+            {
+                self->mSampleType = SampleType::Float32;
+                bps = 32;
+            }
+            else if(bps > 8)
+            {
+                self->mSampleType = SampleType::Int16;
+                bps = 16;
+            }
+            else
+            {
+                self->mSampleType = SampleType::UInt8;
+                bps = 8;
+            }
+
+            self->mFrameSize = info.channels * bps/8;
+            self->mFrequency = info.sample_rate;
+        }
     }
     static void ErrorCallback(const FLAC__StreamDecoder*,FLAC__StreamDecoderErrorStatus,void*)
     {
@@ -229,13 +235,13 @@ bool FlacDecoder::open(UniquePtr<std::istream> &file) noexcept
         mFile = std::move(file);
         if(FLAC__stream_decoder_init_stream(mFlacFile, ReadCallback, SeekCallback, TellCallback, LengthCallback, EofCallback, WriteCallback, MetadataCallback, ErrorCallback, this) == FLAC__STREAM_DECODER_INIT_STATUS_OK)
         {
-            while(mData.empty())
+            while(mFrequency == 0)
             {
                 if(FLAC__stream_decoder_process_single(mFlacFile) == false ||
                    FLAC__stream_decoder_get_state(mFlacFile) == FLAC__STREAM_DECODER_END_OF_STREAM)
                     break;
             }
-            if(!mData.empty())
+            if(mFrequency != 0)
                 return true;
 
             FLAC__stream_decoder_finish(mFlacFile);
