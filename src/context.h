@@ -9,11 +9,6 @@
 #include <stack>
 #include <queue>
 #include <set>
-#if __cplusplus >= 201703L
-#include <variant>
-#else
-#include "mpark/variant.hpp"
-#endif
 
 #include "main.h"
 
@@ -22,16 +17,6 @@
 
 
 #define F_PI (3.14159265358979323846f)
-
-#if !(__cplusplus >= 201703L)
-namespace std {
-using mpark::variant;
-using mpark::monostate;
-using mpark::get;
-using mpark::get_if;
-using mpark::holds_alternative;
-} // namespace std
-#endif
 
 namespace alure {
 

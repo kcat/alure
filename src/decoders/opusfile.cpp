@@ -211,6 +211,46 @@ SharedPtr<Decoder> OpusFileDecoderFactory::createDecoder(UniquePtr<std::istream>
     OggOpusFile *oggfile = op_open_callbacks(file.get(), &streamIO, nullptr, 0, nullptr);
     if(!oggfile) return nullptr;
 
+    std::pair<uint64_t,uint64_t> loop_points = { 0, std::numeric_limits<uint64_t>::max() };
+    if(const OpusTags *tags = op_tags(oggfile, -1))
+    {
+        for(int i = 0;i < tags->comments;i++)
+        {
+            auto seppos = StringView(
+                tags->user_comments[i], tags->comment_lengths[i]
+            ).find_first_of('=');
+            if(seppos == StringView::npos) continue;
+
+            StringView key(tags->user_comments[i], seppos);
+            StringView val(tags->user_comments[i]+seppos+1, tags->comment_lengths[i]-(seppos+1));
+
+            // RPG Maker seems to recognize LOOPSTART and LOOPLENGTH for loop
+            // points in an Ogg file. ZDoom recognizes LOOP_START and LOOP_END.
+            // We can recognize both.
+            if(key == "LOOP_START" || key == "LOOPSTART")
+            {
+                auto pt = parse_timeval(val, 48000.0);
+                if(pt.index() == 1) loop_points.first = std::get<1>(pt);
+                continue;
+            }
+
+            if(key == "LOOP_END")
+            {
+                auto pt = parse_timeval(val, 48000.0);
+                if(pt.index() == 1) loop_points.second = std::get<1>(pt);
+                continue;
+            }
+
+            if(key == "LOOPLENGTH")
+            {
+                auto pt = parse_timeval(val, 48000.0);
+                if(pt.index() == 1)
+                    loop_points.second = loop_points.first + std::get<1>(pt);
+                continue;
+            }
+        }
+    }
+
     int num_chans = op_head(oggfile, -1)->channel_count;
     ChannelConfig channels = ChannelConfig::Mono;
     if(num_chans == 1)

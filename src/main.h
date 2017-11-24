@@ -3,8 +3,23 @@
 
 #include "alure2.h"
 
+#if __cplusplus >= 201703L
+#include <variant>
+#else
+#include "mpark/variant.hpp"
+#endif
 #include <system_error>
 
+
+#if !(__cplusplus >= 201703L)
+namespace std {
+using mpark::variant;
+using mpark::monostate;
+using mpark::get;
+using mpark::get_if;
+using mpark::holds_alternative;
+} // namespace std
+#endif
 
 #ifdef __GNUC__
 #define LIKELY(x) __builtin_expect(static_cast<bool>(x), true)
@@ -51,6 +66,9 @@ namespace alure {
 template<typename T>
 inline std::future_status GetFutureState(const SharedFuture<T> &future)
 { return future.wait_for(std::chrono::seconds::zero()); }
+
+// This variant is a poor man's optional
+std::variant<std::monostate,uint64_t> parse_timeval(StringView strval, double srate);
 
 template<size_t N>
 struct Bitfield {
