@@ -95,13 +95,23 @@ static std::variant<std::monostate,uint64_t> parse_timeval(StringView strval, do
         strval = strval.substr(cpos+1);
     }
 
-    // Parse the seconds and its fraction.
-    str = String(strval);
-    auto val2 = std::strtod(str.c_str(), &end);
-    if(*end != 0 || val2 >= 60.0) return {};
+    double secs = 0.0;
+    if(!strval.empty())
+    {
+        // Parse the seconds and its fraction. Only include the first 3 decimal
+        // places for millisecond precision.
+        size_t dpos = strval.find_first_of(".");
+        if(dpos == StringView::npos)
+            str = String(strval);
+        else
+            str = String(strval.substr(0, dpos+4));
+        secs = std::strtod(str.c_str(), &end);
+        if(*end != 0 || !(secs >= 0.0 && secs < 60.0))
+            return {};
+    }
 
     // Convert minutes to seconds, add the seconds, then convert to samples.
-    return static_cast<uint64_t>((val*60.0 + val2) * srate);
+    return static_cast<uint64_t>((val*60.0 + secs) * srate);
 }
 
 
