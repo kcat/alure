@@ -140,7 +140,8 @@ public:
             if(mSamplePos < mLoopPts.second)
             {
                 mLoopPts.second = mSamplePos;
-                mLoopPts.first = std::min(mLoopPts.first, mLoopPts.second-1);
+                if(mLoopPts.first >= mLoopPts.second)
+                    mLoopPts.first = 0;
             }
 
             do {
