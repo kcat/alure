@@ -303,67 +303,71 @@ alure::UniquePtr<alure::FileIOFactory> sFileFactory;
 namespace alure
 {
 
-std::variant<std::monostate,uint64_t> ParseTimeval(StringView strval, double srate)
+std::variant<std::monostate,uint64_t> ParseTimeval(StringView strval, double srate) noexcept
 {
-    size_t cpos = strval.find_first_of(':');
-    if(cpos == StringView::npos)
-    {
-        // No colon is present, treat it as a plain sample offset
-        char *end;
-        auto str = String(strval);
-        uint64_t val = std::strtoull(str.c_str(), &end, 10);
-        if(*end != 0) return {};
-        return val;
-    }
+    try {
+        size_t endpos;
+        size_t cpos = strval.find_first_of(':');
+        if(cpos == StringView::npos)
+        {
+            // No colon is present, treat it as a plain sample offset
+            uint64_t val = std::stoull(String(strval), &endpos);
+            if(endpos != strval.length()) return {};
+            return val;
+        }
 
-    // Value is not a sample offset. Its format is [[HH:]MM]:SS[.sss] (at
-    // least one colon must exist to be interpreted this way).
-    uint64_t val = 0;
-    String str;
-    char *end;
+        // Value is not a sample offset. Its format is [[HH:]MM]:SS[.sss] (at
+        // least one colon must exist to be interpreted this way).
+        uint64_t val = 0;
 
-    if(cpos != 0)
-    {
-        // If a non-empty first value, parse it (may be hours or minutes)
-        str = String(strval.data(), cpos);
-        val = std::strtoul(str.c_str(), &end, 10);
-        if(*end != 0) return {};
-    }
+        if(cpos != 0)
+        {
+            // If a non-empty first value, parse it (may be hours or minutes)
+            val = std::stoul(String(strval.data(), cpos), &endpos);
+            if(endpos != cpos) return {};
+        }
 
-    strval = strval.substr(cpos+1);
-    cpos = strval.find_first_of(':');
-    if(cpos != StringView::npos)
-    {
-        // If a second colon is present, the first value was hours and this is
-        // minutes, otherwise the first value was minutes.
-        str = String(strval.data(), cpos);
-        uint64_t val2 = std::strtoul(str.c_str(), &end, 10);
-        if(*end != 0 || val2 >= 60) return {};
-
-        // Combines hours and minutes into the full minute count
-        if(val > std::numeric_limits<uint64_t>::max()/60)
-            return {};
-        val = val*60 + val2;
         strval = strval.substr(cpos+1);
+        cpos = strval.find_first_of(':');
+        if(cpos != StringView::npos)
+        {
+            // If a second colon is present, the first value was hours and this is
+            // minutes, otherwise the first value was minutes.
+            uint64_t val2 = 0;
+
+            if(cpos != 0)
+            {
+                val2 = std::stoul(String(strval.data(), cpos), &endpos);
+                if(endpos != cpos || val2 >= 60) return {};
+            }
+
+            // Combines hours and minutes into the full minute count
+            if(val > std::numeric_limits<uint64_t>::max()/60)
+                return {};
+            val = val*60 + val2;
+            strval = strval.substr(cpos+1);
+        }
+
+        double secs = 0.0;
+        if(!strval.empty())
+        {
+            // Parse the seconds and its fraction. Only include the first 3 decimal
+            // places for millisecond precision.
+            size_t dpos = strval.find_first_of('.');
+            String str = (dpos == StringView::npos) ?
+                         String(strval) : String(strval.substr(0, dpos+4));
+            secs = std::stod(str, &endpos);
+            if(endpos != str.length() || !(secs >= 0.0 && secs < 60.0))
+                return {};
+        }
+
+        // Convert minutes to seconds, add the seconds, then convert to samples.
+        return static_cast<uint64_t>((val*60.0 + secs) * srate);
+    }
+    catch(...) {
     }
 
-    double secs = 0.0;
-    if(!strval.empty())
-    {
-        // Parse the seconds and its fraction. Only include the first 3 decimal
-        // places for millisecond precision.
-        size_t dpos = strval.find_first_of(".");
-        if(dpos == StringView::npos)
-            str = String(strval);
-        else
-            str = String(strval.substr(0, dpos+4));
-        secs = std::strtod(str.c_str(), &end);
-        if(*end != 0 || !(secs >= 0.0 && secs < 60.0))
-            return {};
-    }
-
-    // Convert minutes to seconds, add the seconds, then convert to samples.
-    return static_cast<uint64_t>((val*60.0 + secs) * srate);
+    return {};
 }
 
 

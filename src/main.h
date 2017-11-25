@@ -59,7 +59,7 @@ inline std::future_status GetFutureState(const SharedFuture<T> &future)
 { return future.wait_for(std::chrono::seconds::zero()); }
 
 // This variant is a poor man's optional
-std::variant<std::monostate,uint64_t> ParseTimeval(StringView strval, double srate);
+std::variant<std::monostate,uint64_t> ParseTimeval(StringView strval, double srate) noexcept;
 
 template<size_t N>
 struct Bitfield {
