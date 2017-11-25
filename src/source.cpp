@@ -6,7 +6,6 @@
 #include <cstring>
 
 #include <stdexcept>
-#include <sstream>
 #include <memory>
 #include <limits>
 

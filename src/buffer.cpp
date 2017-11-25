@@ -4,7 +4,6 @@
 #include "buffer.h"
 
 #include <stdexcept>
-#include <sstream>
 #include <cstring>
 
 #include "context.h"

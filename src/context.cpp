@@ -8,7 +8,6 @@
 #include <functional>
 #include <memory>
 #include <iostream>
-#include <sstream>
 #include <fstream>
 #include <cstring>
 #include <map>
@@ -900,9 +899,12 @@ BufferOrExceptT ContextImpl::doCreateBufferAsync(StringView name, Vector<UniqueP
     ALenum format = GetFormat(chans, type);
     if(format == AL_NONE)
     {
-        std::stringstream sstr;
-        sstr<< "Format not supported ("<<GetSampleTypeName(type)<<", "<<GetChannelConfigName(chans)<<")";
-        return (retval = std::make_exception_ptr(std::runtime_error(sstr.str())));
+        String str("Unsupported format (");
+        str += GetSampleTypeName(type);
+        str += ", ";
+        str += GetChannelConfigName(chans);
+        str += ")";
+        return (retval = std::make_exception_ptr(std::runtime_error(str)));
     }
 
     alGetError();

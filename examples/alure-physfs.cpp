@@ -5,7 +5,6 @@
  */
 
 #include <iostream>
-#include <sstream>
 #include <iomanip>
 #include <cstring>
 #include <limits>
@@ -135,11 +134,8 @@ public:
     {
         // Need to initialize PhysFS before using it
         if(PHYSFS_init(argv0) == 0)
-        {
-            std::stringstream sstr;
-            sstr<< "Failed to initialize PhysFS: "<<PHYSFS_getLastError();
-            throw std::runtime_error(sstr.str());
-        }
+            throw std::runtime_error(alure::String("Failed to initialize PhysFS: ") +
+                                     PHYSFS_getLastError());
 
         std::cout<< "Initialized PhysFS, supported archive formats:" <<std::endl;
         for(const PHYSFS_ArchiveInfo **i = PHYSFS_supportedArchiveTypes();*i != NULL;i++)
