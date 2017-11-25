@@ -72,6 +72,8 @@ class OpusFileDecoder final : public Decoder {
     ChannelConfig mChannelConfig;
     SampleType mSampleType;
 
+    std::pair<uint64_t,uint64_t> mLoopPts;
+
     template<typename T>
     ALuint do_read(T *ptr, ALuint count) noexcept
     {
@@ -138,8 +140,10 @@ class OpusFileDecoder final : public Decoder {
     }
 
 public:
-    OpusFileDecoder(UniquePtr<std::istream> file, OggOpusFile *oggfile, ChannelConfig sconfig, SampleType stype) noexcept
-      : mFile(std::move(file)), mOggFile(oggfile), mOggBitstream(0), mChannelConfig(sconfig), mSampleType(stype)
+    OpusFileDecoder(UniquePtr<std::istream> file, OggOpusFile *oggfile, ChannelConfig sconfig,
+                    SampleType stype, const std::pair<uint64_t,uint64_t> &loop_points) noexcept
+      : mFile(std::move(file)), mOggFile(oggfile), mOggBitstream(0), mChannelConfig(sconfig)
+      , mSampleType(stype), mLoopPts(loop_points)
     { }
     ~OpusFileDecoder() override;
 
@@ -191,7 +195,7 @@ bool OpusFileDecoder::seek(uint64_t pos) noexcept
 
 std::pair<uint64_t,uint64_t> OpusFileDecoder::getLoopPoints() const noexcept
 {
-    return std::make_pair(0, std::numeric_limits<uint64_t>::max());
+    return mLoopPts;
 }
 
 ALuint OpusFileDecoder::read(ALvoid *ptr, ALuint count) noexcept
@@ -272,8 +276,10 @@ SharedPtr<Decoder> OpusFileDecoderFactory::createDecoder(UniquePtr<std::istream>
     }
 
     if(Context::GetCurrent().isSupported(channels, SampleType::Float32))
-        return MakeShared<OpusFileDecoder>(std::move(file), oggfile, channels, SampleType::Float32);
-    return MakeShared<OpusFileDecoder>(std::move(file), oggfile, channels, SampleType::Int16);
+        return MakeShared<OpusFileDecoder>(std::move(file), oggfile, channels, SampleType::Float32,
+                                           loop_points);
+    return MakeShared<OpusFileDecoder>(std::move(file), oggfile, channels, SampleType::Int16,
+                                       loop_points);
 }
 
 }
