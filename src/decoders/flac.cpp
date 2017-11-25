@@ -158,21 +158,21 @@ class FlacDecoder final : public Decoder {
                 // and LOOP_END. We can recognize both.
                 if(key == "LOOP_START" || key == "LOOPSTART")
                 {
-                    auto pt = parse_timeval(val, self->mFrequency);
+                    auto pt = ParseTimeval(val, self->mFrequency);
                     if(pt.index() == 1) self->mLoopPts.first = std::get<1>(pt);
                     continue;
                 }
 
                 if(key == "LOOP_END")
                 {
-                    auto pt = parse_timeval(val, self->mFrequency);
+                    auto pt = ParseTimeval(val, self->mFrequency);
                     if(pt.index() == 1) self->mLoopPts.second = std::get<1>(pt);
                     continue;
                 }
 
                 if(key == "LOOPLENGTH")
                 {
-                    auto pt = parse_timeval(val, self->mFrequency);
+                    auto pt = ParseTimeval(val, self->mFrequency);
                     if(pt.index() == 1)
                         self->mLoopPts.second = self->mLoopPts.first + std::get<1>(pt);
                     continue;

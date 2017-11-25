@@ -303,7 +303,7 @@ alure::UniquePtr<alure::FileIOFactory> sFileFactory;
 namespace alure
 {
 
-std::variant<std::monostate,uint64_t> parse_timeval(StringView strval, double srate)
+std::variant<std::monostate,uint64_t> ParseTimeval(StringView strval, double srate)
 {
     size_t cpos = strval.find_first_of(':');
     if(cpos == StringView::npos)

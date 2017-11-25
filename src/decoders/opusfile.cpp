@@ -233,21 +233,21 @@ SharedPtr<Decoder> OpusFileDecoderFactory::createDecoder(UniquePtr<std::istream>
             // LOOP_END. We can recognize both.
             if(key == "LOOP_START" || key == "LOOPSTART")
             {
-                auto pt = parse_timeval(val, 48000.0);
+                auto pt = ParseTimeval(val, 48000.0);
                 if(pt.index() == 1) loop_points.first = std::get<1>(pt);
                 continue;
             }
 
             if(key == "LOOP_END")
             {
-                auto pt = parse_timeval(val, 48000.0);
+                auto pt = ParseTimeval(val, 48000.0);
                 if(pt.index() == 1) loop_points.second = std::get<1>(pt);
                 continue;
             }
 
             if(key == "LOOPLENGTH")
             {
-                auto pt = parse_timeval(val, 48000.0);
+                auto pt = ParseTimeval(val, 48000.0);
                 if(pt.index() == 1)
                     loop_points.second = loop_points.first + std::get<1>(pt);
                 continue;

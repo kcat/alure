@@ -223,21 +223,21 @@ SharedPtr<Decoder> VorbisFileDecoderFactory::createDecoder(UniquePtr<std::istrea
             // LOOP_END. We can recognize both.
             if(key == "LOOP_START" || key == "LOOPSTART")
             {
-                auto pt = parse_timeval(val, vorbisinfo->rate);
+                auto pt = ParseTimeval(val, vorbisinfo->rate);
                 if(pt.index() == 1) loop_points.first = std::get<1>(pt);
                 continue;
             }
 
             if(key == "LOOP_END")
             {
-                auto pt = parse_timeval(val, vorbisinfo->rate);
+                auto pt = ParseTimeval(val, vorbisinfo->rate);
                 if(pt.index() == 1) loop_points.second = std::get<1>(pt);
                 continue;
             }
 
             if(key == "LOOPLENGTH")
             {
-                auto pt = parse_timeval(val, vorbisinfo->rate);
+                auto pt = ParseTimeval(val, vorbisinfo->rate);
                 if(pt.index() == 1)
                     loop_points.second = loop_points.first + std::get<1>(pt);
                 continue;
