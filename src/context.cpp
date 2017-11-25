@@ -303,9 +303,6 @@ alure::UniquePtr<alure::FileIOFactory> sFileFactory;
 namespace alure
 {
 
-using Vector3Pair = std::pair<Vector3,Vector3>;
-
-
 std::variant<std::monostate,uint64_t> parse_timeval(StringView strval, double srate)
 {
     size_t cpos = strval.find_first_of(':');

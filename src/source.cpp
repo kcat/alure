@@ -18,14 +18,6 @@
 namespace alure
 {
 
-// Need to use these to avoid extraneous commas in macro parameter lists
-using UInt64NSecPair = std::pair<uint64_t,std::chrono::nanoseconds>;
-using SecondsPair = std::pair<Seconds,Seconds>;
-using ALfloatPair = std::pair<ALfloat,ALfloat>;
-using Vector3Pair = std::pair<Vector3,Vector3>;
-using BoolTriple = std::tuple<bool,bool,bool>;
-
-
 class ALBufferStream {
     SharedPtr<Decoder> mDecoder;
 
