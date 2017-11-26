@@ -1,3 +1,6 @@
+/* Define if we have wave file support */
+#cmakedefine HAVE_WAVE
+
 /* Define if we have vorbisfile support */
 #cmakedefine HAVE_VORBISFILE
 

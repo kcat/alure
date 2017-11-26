@@ -15,6 +15,9 @@
 
 #include "alc.h"
 
+#ifdef HAVE_WAVE
+#include "decoders/wave.hpp"
+#endif
 #ifdef HAVE_VORBISFILE
 #include "decoders/vorbisfile.hpp"
 #endif
@@ -30,7 +33,6 @@
 #ifdef HAVE_MPG123
 #include "decoders/mpg123.hpp"
 #endif
-#include "decoders/wave.hpp"
 
 #include "devicemanager.h"
 #include "device.h"
@@ -228,7 +230,9 @@ public:
 
 using DecoderEntryPair = std::pair<alure::String,alure::UniquePtr<alure::DecoderFactory>>;
 const DecoderEntryPair sDefaultDecoders[] = {
+#ifdef HAVE_WAVE
     { "_alure_int_wave", alure::MakeUnique<alure::WaveDecoderFactory>() },
+#endif
 
 #ifdef HAVE_VORBISFILE
     { "_alure_int_vorbis", alure::MakeUnique<alure::VorbisFileDecoderFactory>() },
