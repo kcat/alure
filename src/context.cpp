@@ -250,12 +250,12 @@ const DecoderEntryPair sDefaultDecoders[] = {
 alure::Vector<DecoderEntryPair> sDecoders;
 
 
-template<typename T>
-alure::DecoderOrExceptT GetDecoder(alure::UniquePtr<std::istream> &file, T start, T end)
+alure::DecoderOrExceptT GetDecoder(alure::UniquePtr<std::istream> &file,
+                                   alure::ArrayView<DecoderEntryPair> decoders)
 {
-    while(start != end)
+    while(!decoders.empty())
     {
-        alure::DecoderFactory *factory = start->second.get();
+        alure::DecoderFactory *factory = decoders.front().second.get();
         auto decoder = factory->createDecoder(file);
         if(decoder) return std::move(decoder);
 
@@ -264,7 +264,7 @@ alure::DecoderOrExceptT GetDecoder(alure::UniquePtr<std::istream> &file, T start
                 std::runtime_error("Failed to rewind file for the next decoder factory")
             );
 
-        ++start;
+        decoders = decoders.slice(1);
     }
 
     return alure::SharedPtr<alure::Decoder>(nullptr);
@@ -272,10 +272,10 @@ alure::DecoderOrExceptT GetDecoder(alure::UniquePtr<std::istream> &file, T start
 
 static alure::DecoderOrExceptT GetDecoder(alure::UniquePtr<std::istream> file)
 {
-    auto decoder = GetDecoder(file, sDecoders.begin(), sDecoders.end());
+    auto decoder = GetDecoder(file, sDecoders);
     if(std::holds_alternative<std::exception_ptr>(decoder)) return decoder;
     if(std::get<alure::SharedPtr<alure::Decoder>>(decoder)) return decoder;
-    decoder = GetDecoder(file, std::begin(sDefaultDecoders), std::end(sDefaultDecoders));
+    decoder = GetDecoder(file, sDefaultDecoders);
     if(std::holds_alternative<std::exception_ptr>(decoder)) return decoder;
     if(std::get<alure::SharedPtr<alure::Decoder>>(decoder)) return decoder;
     return (decoder = std::make_exception_ptr(std::runtime_error("No decoder found")));
