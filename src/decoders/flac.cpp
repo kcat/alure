@@ -239,7 +239,7 @@ class FlacDecoder final : public Decoder {
     }
 
 public:
-    FlacDecoder() noexcept = default;
+    FlacDecoder() noexcept { }
     ~FlacDecoder() override;
 
     bool open(UniquePtr<std::istream> &file) noexcept;
