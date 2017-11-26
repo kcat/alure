@@ -253,22 +253,21 @@ alure::Vector<DecoderEntryPair> sDecoders;
 template<typename T>
 alure::DecoderOrExceptT GetDecoder(alure::UniquePtr<std::istream> &file, T start, T end)
 {
-    alure::DecoderOrExceptT ret;
     while(start != end)
     {
         alure::DecoderFactory *factory = start->second.get();
         auto decoder = factory->createDecoder(file);
-        if(decoder) return (ret = std::move(decoder));
+        if(decoder) return std::move(decoder);
 
         if(!file || !(file->clear(),file->seekg(0)))
-            return (ret = std::make_exception_ptr(std::runtime_error(
-                "Failed to rewind file for the next decoder factory"
-            )));
+            return std::make_exception_ptr(
+                std::runtime_error("Failed to rewind file for the next decoder factory")
+            );
 
         ++start;
     }
 
-    return (ret = alure::SharedPtr<alure::Decoder>(nullptr));
+    return alure::SharedPtr<alure::Decoder>(nullptr);
 }
 
 static alure::DecoderOrExceptT GetDecoder(alure::UniquePtr<std::istream> file)
@@ -749,24 +748,22 @@ void ContextImpl::setAsyncWakeInterval(std::chrono::milliseconds interval)
 
 DecoderOrExceptT ContextImpl::findDecoder(StringView name)
 {
-    DecoderOrExceptT ret;
-
     String oldname = String(name);
     auto file = FileIOFactory::get().openFile(oldname);
-    if(file) return (ret = GetDecoder(std::move(file)));
-
-    // Resource not found. Try to find a substitute.
-    if(!mMessage.get())
-        return (ret = std::make_exception_ptr(std::runtime_error("Failed to open file")));
-    do {
-        String newname(mMessage->resourceNotFound(oldname));
-        if(newname.empty())
-            return (ret = std::make_exception_ptr(std::runtime_error("Failed to open file")));
-        file = FileIOFactory::get().openFile(newname);
-        oldname = std::move(newname);
-    } while(!file);
-
-    return (ret = GetDecoder(std::move(file)));
+    if(UNLIKELY(!file))
+    {
+        // Resource not found. Try to find a substitute.
+        if(!mMessage.get())
+            return std::make_exception_ptr(std::runtime_error("Failed to open file"));
+        do {
+            String newname(mMessage->resourceNotFound(oldname));
+            if(newname.empty())
+                return std::make_exception_ptr(std::runtime_error("Failed to open file"));
+            file = FileIOFactory::get().openFile(newname);
+            oldname = std::move(newname);
+        } while(!file);
+    }
+    return GetDecoder(std::move(file));
 }
 
 DECL_THUNK1(SharedPtr<Decoder>, Context, createDecoder,, StringView)
@@ -775,7 +772,7 @@ SharedPtr<Decoder> ContextImpl::createDecoder(StringView name)
     CheckContext(this);
     DecoderOrExceptT dec = findDecoder(name);
     if(SharedPtr<Decoder> *decoder = std::get_if<SharedPtr<Decoder>>(&dec))
-        return *decoder;
+        return std::move(*decoder);
     std::rethrow_exception(std::get<std::exception_ptr>(dec));
 }
 
@@ -816,7 +813,6 @@ ALsizei ContextImpl::getDefaultResamplerIndex() const
 
 BufferOrExceptT ContextImpl::doCreateBuffer(StringView name, Vector<UniquePtr<BufferImpl>>::iterator iter, SharedPtr<Decoder> decoder)
 {
-    BufferOrExceptT retval;
     ALuint srate = decoder->getFrequency();
     ChannelConfig chans = decoder->getChannelConfig();
     SampleType type = decoder->getSampleType();
@@ -825,7 +821,7 @@ BufferOrExceptT ContextImpl::doCreateBuffer(StringView name, Vector<UniquePtr<Bu
     Vector<ALbyte> data(FramesToBytes(frames, chans, type));
     frames = decoder->read(data.data(), frames);
     if(!frames)
-        return (retval = std::make_exception_ptr(std::runtime_error("No samples for buffer")));
+        return std::make_exception_ptr(std::runtime_error("No samples for buffer"));
     data.resize(FramesToBytes(frames, chans, type));
 
     std::pair<uint64_t,uint64_t> loop_pts = decoder->getLoopPoints();
@@ -847,7 +843,7 @@ BufferOrExceptT ContextImpl::doCreateBuffer(StringView name, Vector<UniquePtr<Bu
         str += ", ";
         str += GetChannelConfigName(chans);
         str += ")";
-        return (retval = std::make_exception_ptr(std::runtime_error(str)));
+        return std::make_exception_ptr(std::runtime_error(str));
     }
 
     if(mMessage.get())
@@ -866,23 +862,22 @@ BufferOrExceptT ContextImpl::doCreateBuffer(StringView name, Vector<UniquePtr<Bu
     if(err != AL_NO_ERROR)
     {
         alDeleteBuffers(1, &bid);
-        return (retval = std::make_exception_ptr(al_error(err, "Failed to buffer data")));
+        return std::make_exception_ptr(al_error(err, "Failed to buffer data"));
     }
 
-    return (retval = mBuffers.insert(iter,
+    return mBuffers.insert(iter,
         MakeUnique<BufferImpl>(this, bid, srate, chans, type, name)
-    )->get());
+    )->get();
 }
 
 BufferOrExceptT ContextImpl::doCreateBufferAsync(StringView name, Vector<UniquePtr<BufferImpl>>::iterator iter, SharedPtr<Decoder> decoder, Promise<Buffer> promise)
 {
-    BufferOrExceptT retval;
     ALuint srate = decoder->getFrequency();
     ChannelConfig chans = decoder->getChannelConfig();
     SampleType type = decoder->getSampleType();
     ALuint frames = decoder->getLength();
     if(!frames)
-        return (retval = std::make_exception_ptr(std::runtime_error("No samples for buffer")));
+        return std::make_exception_ptr(std::runtime_error("No samples for buffer"));
 
     ALenum format = GetFormat(chans, type);
     if(format == AL_NONE)
@@ -892,7 +887,7 @@ BufferOrExceptT ContextImpl::doCreateBufferAsync(StringView name, Vector<UniqueP
         str += ", ";
         str += GetChannelConfigName(chans);
         str += ")";
-        return (retval = std::make_exception_ptr(std::runtime_error(str)));
+        return std::make_exception_ptr(std::runtime_error(str));
     }
 
     alGetError();
@@ -900,7 +895,7 @@ BufferOrExceptT ContextImpl::doCreateBufferAsync(StringView name, Vector<UniqueP
     alGenBuffers(1, &bid);
     ALenum err = alGetError();
     if(err != AL_NO_ERROR)
-        return (retval = std::make_exception_ptr(al_error(err, "Failed to create buffer")));
+        return std::make_exception_ptr(al_error(err, "Failed to create buffer"));
 
     auto buffer = MakeUnique<BufferImpl>(this, bid, srate, chans, type, name);
 
@@ -924,7 +919,7 @@ BufferOrExceptT ContextImpl::doCreateBufferAsync(StringView name, Vector<UniqueP
     mPendingHead->mNext.store(pf, std::memory_order_release);
     mPendingHead = pf;
 
-    return (retval = mBuffers.insert(iter, std::move(buffer))->get());
+    return mBuffers.insert(iter, std::move(buffer))->get();
 }
 
 DECL_THUNK1(Buffer, Context, getBuffer,, StringView)
