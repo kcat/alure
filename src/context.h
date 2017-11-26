@@ -107,17 +107,17 @@ public:
     static ContextImpl *GetThreadCurrent() { return sThreadCurrentCtx; }
 
     static std::atomic<uint64_t> sContextSetCount;
-    mutable uint64_t mContextSetCounter;
+    mutable uint64_t mContextSetCounter{std::numeric_limits<uint64_t>::max()};
 
 private:
     ListenerImpl mListener;
-    ALCcontext *mContext;
+    ALCcontext *mContext{nullptr};
     Vector<ALuint> mSourceIds;
 
     struct PendingBuffer { BufferImpl *mBuffer;  SharedFuture<Buffer> mFuture; };
     struct PendingSource { SourceImpl *mSource;  SharedFuture<Buffer> mFuture; };
 
-    DeviceImpl *const mDevice;
+    DeviceImpl *const mDevice{nullptr};
     Vector<PendingBuffer> mFutureBuffers;
     Vector<UniquePtr<BufferImpl>> mBuffers;
     Vector<UniquePtr<SourceGroupImpl>> mSourceGroups;
@@ -132,7 +132,7 @@ private:
     Vector<SourceImpl*> mStreamingSources;
     std::mutex mSourceStreamMutex;
 
-    std::atomic<std::chrono::milliseconds> mWakeInterval;
+    std::atomic<std::chrono::milliseconds> mWakeInterval{std::chrono::milliseconds::zero()};
     std::mutex mWakeMutex;
     std::condition_variable mWakeThread;
 
@@ -154,15 +154,15 @@ private:
           , mPromise(std::move(promise)), mNext(nullptr)
         { }
     };
-    std::atomic<PendingPromise*> mPendingCurrent;
-    PendingPromise *mPendingTail;
-    PendingPromise *mPendingHead;
+    std::atomic<PendingPromise*> mPendingCurrent{nullptr};
+    PendingPromise *mPendingTail{nullptr};
+    PendingPromise *mPendingHead{nullptr};
 
-    std::atomic<bool> mQuitThread;
+    std::atomic<bool> mQuitThread{false};
     std::thread mThread;
     void backgroundProc();
 
-    size_t mRefs;
+    size_t mRefs{0};
 
     Vector<String> mResamplers;
 
@@ -188,45 +188,45 @@ public:
 
     bool hasExtension(AL ext) const { return mHasExt[static_cast<size_t>(ext)]; }
 
-    LPALGETSTRINGISOFT alGetStringiSOFT;
-    LPALGETSOURCEI64VSOFT alGetSourcei64vSOFT;
-    LPALGETSOURCEDVSOFT alGetSourcedvSOFT;
+    LPALGETSTRINGISOFT alGetStringiSOFT{nullptr};
+    LPALGETSOURCEI64VSOFT alGetSourcei64vSOFT{nullptr};
+    LPALGETSOURCEDVSOFT alGetSourcedvSOFT{nullptr};
 
-    LPALGENEFFECTS alGenEffects;
-    LPALDELETEEFFECTS alDeleteEffects;
-    LPALISEFFECT alIsEffect;
-    LPALEFFECTI alEffecti;
-    LPALEFFECTIV alEffectiv;
-    LPALEFFECTF alEffectf;
-    LPALEFFECTFV alEffectfv;
-    LPALGETEFFECTI alGetEffecti;
-    LPALGETEFFECTIV alGetEffectiv;
-    LPALGETEFFECTF alGetEffectf;
-    LPALGETEFFECTFV alGetEffectfv;
+    LPALGENEFFECTS alGenEffects{nullptr};
+    LPALDELETEEFFECTS alDeleteEffects{nullptr};
+    LPALISEFFECT alIsEffect{nullptr};
+    LPALEFFECTI alEffecti{nullptr};
+    LPALEFFECTIV alEffectiv{nullptr};
+    LPALEFFECTF alEffectf{nullptr};
+    LPALEFFECTFV alEffectfv{nullptr};
+    LPALGETEFFECTI alGetEffecti{nullptr};
+    LPALGETEFFECTIV alGetEffectiv{nullptr};
+    LPALGETEFFECTF alGetEffectf{nullptr};
+    LPALGETEFFECTFV alGetEffectfv{nullptr};
 
-    LPALGENFILTERS alGenFilters;
-    LPALDELETEFILTERS alDeleteFilters;
-    LPALISFILTER alIsFilter;
-    LPALFILTERI alFilteri;
-    LPALFILTERIV alFilteriv;
-    LPALFILTERF alFilterf;
-    LPALFILTERFV alFilterfv;
-    LPALGETFILTERI alGetFilteri;
-    LPALGETFILTERIV alGetFilteriv;
-    LPALGETFILTERF alGetFilterf;
-    LPALGETFILTERFV alGetFilterfv;
+    LPALGENFILTERS alGenFilters{nullptr};
+    LPALDELETEFILTERS alDeleteFilters{nullptr};
+    LPALISFILTER alIsFilter{nullptr};
+    LPALFILTERI alFilteri{nullptr};
+    LPALFILTERIV alFilteriv{nullptr};
+    LPALFILTERF alFilterf{nullptr};
+    LPALFILTERFV alFilterfv{nullptr};
+    LPALGETFILTERI alGetFilteri{nullptr};
+    LPALGETFILTERIV alGetFilteriv{nullptr};
+    LPALGETFILTERF alGetFilterf{nullptr};
+    LPALGETFILTERFV alGetFilterfv{nullptr};
 
-    LPALGENAUXILIARYEFFECTSLOTS alGenAuxiliaryEffectSlots;
-    LPALDELETEAUXILIARYEFFECTSLOTS alDeleteAuxiliaryEffectSlots;
-    LPALISAUXILIARYEFFECTSLOT alIsAuxiliaryEffectSlot;
-    LPALAUXILIARYEFFECTSLOTI alAuxiliaryEffectSloti;
-    LPALAUXILIARYEFFECTSLOTIV alAuxiliaryEffectSlotiv;
-    LPALAUXILIARYEFFECTSLOTF alAuxiliaryEffectSlotf;
-    LPALAUXILIARYEFFECTSLOTFV alAuxiliaryEffectSlotfv;
-    LPALGETAUXILIARYEFFECTSLOTI alGetAuxiliaryEffectSloti;
-    LPALGETAUXILIARYEFFECTSLOTIV alGetAuxiliaryEffectSlotiv;
-    LPALGETAUXILIARYEFFECTSLOTF alGetAuxiliaryEffectSlotf;
-    LPALGETAUXILIARYEFFECTSLOTFV alGetAuxiliaryEffectSlotfv;
+    LPALGENAUXILIARYEFFECTSLOTS alGenAuxiliaryEffectSlots{nullptr};
+    LPALDELETEAUXILIARYEFFECTSLOTS alDeleteAuxiliaryEffectSlots{nullptr};
+    LPALISAUXILIARYEFFECTSLOT alIsAuxiliaryEffectSlot{nullptr};
+    LPALAUXILIARYEFFECTSLOTI alAuxiliaryEffectSloti{nullptr};
+    LPALAUXILIARYEFFECTSLOTIV alAuxiliaryEffectSlotiv{nullptr};
+    LPALAUXILIARYEFFECTSLOTF alAuxiliaryEffectSlotf{nullptr};
+    LPALAUXILIARYEFFECTSLOTFV alAuxiliaryEffectSlotfv{nullptr};
+    LPALGETAUXILIARYEFFECTSLOTI alGetAuxiliaryEffectSloti{nullptr};
+    LPALGETAUXILIARYEFFECTSLOTIV alGetAuxiliaryEffectSlotiv{nullptr};
+    LPALGETAUXILIARYEFFECTSLOTF alGetAuxiliaryEffectSlotf{nullptr};
+    LPALGETAUXILIARYEFFECTSLOTFV alGetAuxiliaryEffectSlotfv{nullptr};
 
     ALuint getSourceId(ALuint maxprio);
     void insertSourceId(ALuint id) { mSourceIds.push_back(id); }

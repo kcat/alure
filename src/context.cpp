@@ -659,20 +659,7 @@ void ContextImpl::backgroundProc()
 
 
 ContextImpl::ContextImpl(ALCcontext *context, DeviceImpl *device)
-  : mContextSetCounter(std::numeric_limits<uint64_t>::max()),
-    mListener(this), mContext(context), mDevice(device),
-    mWakeInterval(std::chrono::milliseconds::zero()), mQuitThread(false),
-    mRefs(0), mIsConnected(true), mIsBatching(false),
-    alGetSourcei64vSOFT(0), alGetSourcedvSOFT(0),
-    alGenEffects(0), alDeleteEffects(0), alIsEffect(0),
-    alEffecti(0), alEffectiv(0), alEffectf(0), alEffectfv(0),
-    alGetEffecti(0), alGetEffectiv(0), alGetEffectf(0), alGetEffectfv(0),
-    alGenFilters(0), alDeleteFilters(0), alIsFilter(0),
-    alFilteri(0), alFilteriv(0), alFilterf(0), alFilterfv(0),
-    alGetFilteri(0), alGetFilteriv(0), alGetFilterf(0), alGetFilterfv(0),
-    alGenAuxiliaryEffectSlots(0), alDeleteAuxiliaryEffectSlots(0), alIsAuxiliaryEffectSlot(0),
-    alAuxiliaryEffectSloti(0), alAuxiliaryEffectSlotiv(0), alAuxiliaryEffectSlotf(0), alAuxiliaryEffectSlotfv(0),
-    alGetAuxiliaryEffectSloti(0), alGetAuxiliaryEffectSlotiv(0), alGetAuxiliaryEffectSlotf(0), alGetAuxiliaryEffectSlotfv(0)
+  : mListener(this), mContext(context), mDevice(device), mIsConnected(true), mIsBatching(false)
 {
     mHasExt.clear();
     mSourceIds.reserve(256);
