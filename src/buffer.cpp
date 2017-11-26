@@ -11,9 +11,6 @@
 namespace alure
 {
 
-using ALuintPair = std::pair<ALuint,ALuint>;
-
-
 void BufferImpl::cleanup()
 {
     alGetError();
@@ -197,33 +194,55 @@ ALURE_API const char *GetChannelConfigName(ChannelConfig cfg)
 
 ALURE_API ALuint FramesToBytes(ALuint frames, ChannelConfig chans, SampleType type)
 {
-    ALuint size = frames;
+    ALuint mult = 1;
     switch(chans)
     {
-        case ChannelConfig::Mono: size *= 1; break;
-        case ChannelConfig::Stereo: size *= 2; break;
-        case ChannelConfig::Rear: size *= 2; break;
-        case ChannelConfig::Quad: size *= 4; break;
-        case ChannelConfig::X51: size *= 6; break;
-        case ChannelConfig::X61: size *= 7; break;
-        case ChannelConfig::X71: size *= 8; break;
-        case ChannelConfig::BFormat2D: size *= 3; break;
-        case ChannelConfig::BFormat3D: size *= 4; break;
+        case ChannelConfig::Mono: mult *= 1; break;
+        case ChannelConfig::Stereo: mult *= 2; break;
+        case ChannelConfig::Rear: mult *= 2; break;
+        case ChannelConfig::Quad: mult *= 4; break;
+        case ChannelConfig::X51: mult *= 6; break;
+        case ChannelConfig::X61: mult *= 7; break;
+        case ChannelConfig::X71: mult *= 8; break;
+        case ChannelConfig::BFormat2D: mult *= 3; break;
+        case ChannelConfig::BFormat3D: mult *= 4; break;
     }
     switch(type)
     {
-        case SampleType::UInt8: size *= 1; break;
-        case SampleType::Int16: size *= 2; break;
-        case SampleType::Float32: size *= 4; break;
-        case SampleType::Mulaw: size *= 1; break;
+        case SampleType::UInt8: mult *= 1; break;
+        case SampleType::Int16: mult *= 2; break;
+        case SampleType::Float32: mult *= 4; break;
+        case SampleType::Mulaw: mult *= 1; break;
     }
 
-    return size;
+    if(frames > std::numeric_limits<ALuint>::max()/mult)
+        throw std::out_of_range("Byte size result too large");
+    return frames * mult;
 }
 
-ALURE_API ALuint BytesToFrames(ALuint bytes, ChannelConfig chans, SampleType type)
+ALURE_API ALuint BytesToFrames(ALuint bytes, ChannelConfig chans, SampleType type) noexcept
 {
-    return bytes / FramesToBytes(1, chans, type);
+    ALuint size = bytes;
+    switch(chans)
+    {
+        case ChannelConfig::Mono: size /= 1; break;
+        case ChannelConfig::Stereo: size /= 2; break;
+        case ChannelConfig::Rear: size /= 2; break;
+        case ChannelConfig::Quad: size /= 4; break;
+        case ChannelConfig::X51: size /= 6; break;
+        case ChannelConfig::X61: size /= 7; break;
+        case ChannelConfig::X71: size /= 8; break;
+        case ChannelConfig::BFormat2D: size /= 3; break;
+        case ChannelConfig::BFormat3D: size /= 4; break;
+    }
+    switch(type)
+    {
+        case SampleType::UInt8: size /= 1; break;
+        case SampleType::Int16: size /= 2; break;
+        case SampleType::Float32: size /= 4; break;
+        case SampleType::Mulaw: size /= 1; break;
+    }
+    return size;
 }
 
 

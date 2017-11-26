@@ -234,7 +234,7 @@ enum class ChannelConfig {
 ALURE_API const char *GetChannelConfigName(ChannelConfig cfg);
 
 ALURE_API ALuint FramesToBytes(ALuint frames, ChannelConfig chans, SampleType type);
-ALURE_API ALuint BytesToFrames(ALuint bytes, ChannelConfig chans, SampleType type);
+ALURE_API ALuint BytesToFrames(ALuint bytes, ChannelConfig chans, SampleType type) noexcept;
 
 
 /** Class for storing a major.minor version number. */

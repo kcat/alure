@@ -51,6 +51,7 @@ using Vector3Pair = std::pair<Vector3,Vector3>;
 using UInt64NSecPair = std::pair<uint64_t,std::chrono::nanoseconds>;
 using SecondsPair = std::pair<Seconds,Seconds>;
 using ALfloatPair = std::pair<ALfloat,ALfloat>;
+using ALuintPair = std::pair<ALuint,ALuint>;
 using BoolTriple = std::tuple<bool,bool,bool>;
 
 
