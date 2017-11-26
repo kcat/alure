@@ -80,15 +80,16 @@ class WaveDecoder final : public Decoder {
     ALuint mFrameSize{0};
 
     // In sample frames, relative to sample data start
-    std::pair<ALuint,ALuint> mLoopPts{0, 0};
+    std::pair<uint64_t,uint64_t> mLoopPts{0, 0};
 
     // In bytes from beginning of file
     std::istream::pos_type mStart{0}, mEnd{0};
     std::istream::pos_type mCurrentPos{0};
 
 public:
-    WaveDecoder(UniquePtr<std::istream> file, ChannelConfig channels, SampleType type, ALuint frequency, ALuint framesize,
-                std::istream::pos_type start, std::istream::pos_type end, ALuint loopstart, ALuint loopend) noexcept
+    WaveDecoder(UniquePtr<std::istream> file, ChannelConfig channels, SampleType type,
+                ALuint frequency, ALuint framesize, std::istream::pos_type start,
+                std::istream::pos_type end, uint64_t loopstart, uint64_t loopend) noexcept
       : mFile(std::move(file)), mChannelConfig(channels), mSampleType(type), mFrequency(frequency)
       , mFrameSize(framesize), mLoopPts{loopstart,loopend}, mStart(start), mEnd(end)
     { mCurrentPos = mFile->tellg(); }
@@ -112,25 +113,17 @@ WaveDecoder::~WaveDecoder()
 
 
 ALuint WaveDecoder::getFrequency() const noexcept
-{
-    return mFrequency;
-}
+{ return mFrequency; }
 
 ChannelConfig WaveDecoder::getChannelConfig() const noexcept
-{
-    return mChannelConfig;
-}
+{ return mChannelConfig; }
 
 SampleType WaveDecoder::getSampleType() const noexcept
-{
-    return mSampleType;
-}
+{ return mSampleType; }
 
 
 uint64_t WaveDecoder::getLength() const noexcept
-{
-    return (mEnd - mStart) / mFrameSize;
-}
+{ return (mEnd - mStart) / mFrameSize; }
 
 bool WaveDecoder::seek(uint64_t pos) noexcept
 {
@@ -217,7 +210,7 @@ SharedPtr<Decoder> WaveDecoderFactory::createDecoder(UniquePtr<std::istream> &fi
     SampleType type = SampleType::UInt8;
     ALuint frequency = 0;
     ALuint framesize = 0;
-    ALuint loop_pts[2]{0, 0};
+    uint64_t loop_pts[2]{0, 0};
     ALuint blockalign = 0;
     ALuint framealign = 0;
 
