@@ -101,7 +101,7 @@ std::mutex mGlobalCtxMutex;
 // that accepts UTF-8 paths and forwards to Unicode-aware I/O functions.
 class StreamBuf final : public std::streambuf {
     alure::Array<char_type,4096> mBuffer;
-    HANDLE mFile;
+    HANDLE mFile{INVALID_HANDLE_VALUE};
 
     int_type underflow() override
     {
@@ -109,9 +109,8 @@ class StreamBuf final : public std::streambuf {
         {
             // Read in the next chunk of data, and set the pointers on success
             DWORD got = 0;
-            if(!ReadFile(mFile, mBuffer.data(), mBuffer.size(), &got, NULL))
-                got = 0;
-            setg(mBuffer.data(), mBuffer.data(), mBuffer.data()+got);
+            if(ReadFile(mFile, mBuffer.data(), mBuffer.size(), &got, NULL))
+                setg(mBuffer.data(), mBuffer.data(), mBuffer.data()+got);
         }
         if(gptr() == egptr())
             return traits_type::eof();
@@ -200,10 +199,9 @@ public:
         return true;
     }
 
-    bool is_open() const { return mFile != INVALID_HANDLE_VALUE; }
+    bool is_open() const noexcept { return mFile != INVALID_HANDLE_VALUE; }
 
-    StreamBuf() : mFile(INVALID_HANDLE_VALUE)
-    { }
+    StreamBuf() = default;
     ~StreamBuf() override
     {
         if(mFile != INVALID_HANDLE_VALUE)
@@ -224,7 +222,7 @@ public:
     ~Stream() override
     { delete rdbuf(); }
 
-    bool is_open() const { return static_cast<StreamBuf*>(rdbuf())->is_open(); }
+    bool is_open() const noexcept { return static_cast<StreamBuf*>(rdbuf())->is_open(); }
 };
 #endif
 
@@ -233,7 +231,6 @@ const DecoderEntryPair sDefaultDecoders[] = {
 #ifdef HAVE_WAVE
     { "_alure_int_wave", alure::MakeUnique<alure::WaveDecoderFactory>() },
 #endif
-
 #ifdef HAVE_VORBISFILE
     { "_alure_int_vorbis", alure::MakeUnique<alure::VorbisFileDecoderFactory>() },
 #endif
