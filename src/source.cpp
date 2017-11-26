@@ -20,30 +20,27 @@ namespace alure
 class ALBufferStream {
     SharedPtr<Decoder> mDecoder;
 
-    ALuint mUpdateLen;
-    ALuint mNumUpdates;
+    ALuint mUpdateLen{0};
+    ALuint mNumUpdates{0};
 
-    ALenum mFormat;
-    ALuint mFrequency;
-    ALuint mFrameSize;
+    ALenum mFormat{AL_NONE};
+    ALuint mFrequency{0};
+    ALuint mFrameSize{0};
 
     Vector<ALbyte> mData;
-    ALbyte mSilence;
+    ALbyte mSilence{0};
 
     Vector<ALuint> mBufferIds;
-    ALuint mCurrentIdx;
+    ALuint mCurrentIdx{0};
 
-    uint64_t mSamplePos;
-    std::pair<uint64_t,uint64_t> mLoopPts;
-    bool mHasLooped;
-    std::atomic<bool> mDone;
+    uint64_t mSamplePos{0};
+    std::pair<uint64_t,uint64_t> mLoopPts{0,0};
+    bool mHasLooped{false};
+    std::atomic<bool> mDone{false};
 
 public:
     ALBufferStream(SharedPtr<Decoder> decoder, ALuint updatelen, ALuint numupdates)
-      : mDecoder(decoder), mUpdateLen(updatelen), mNumUpdates(numupdates),
-        mFormat(AL_NONE), mFrequency(0), mFrameSize(0), mSilence(0),
-        mCurrentIdx(0), mSamplePos(0), mLoopPts{0,0}, mHasLooped(false),
-        mDone(false)
+      : mDecoder(decoder), mUpdateLen(updatelen), mNumUpdates(numupdates)
     { }
     ~ALBufferStream()
     {
@@ -165,8 +162,8 @@ public:
 
 
 SourceImpl::SourceImpl(ContextImpl *context)
-  : mContext(context), mId(0), mBuffer(0), mGroup(nullptr), mIsAsync(false),
-    mDirectFilter(AL_FILTER_NULL)
+  : mContext(context), mId(0), mBuffer(0), mGroup(nullptr), mIsAsync(false)
+  , mDirectFilter(AL_FILTER_NULL)
 {
     resetProperties();
     mEffectSlots.reserve(mContext->getDevice().getMaxAuxiliarySends());

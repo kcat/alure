@@ -76,14 +76,14 @@ static sf_count_t tell(void *user_data)
 class SndFileDecoder final : public Decoder {
     UniquePtr<std::istream> mFile;
 
-    SNDFILE *mSndFile;
+    SNDFILE *mSndFile{nullptr};
     SF_INFO mSndInfo;
 
-    ChannelConfig mChannelConfig;
-    SampleType mSampleType;
+    ChannelConfig mChannelConfig{ChannelConfig::Mono};
+    SampleType mSampleType{SampleType::UInt8};
 
 public:
-    SndFileDecoder(UniquePtr<std::istream> file, SNDFILE *sndfile, const SF_INFO sndinfo, ChannelConfig sconfig, SampleType stype) noexcept
+    SndFileDecoder(UniquePtr<std::istream> file, SNDFILE *sndfile, const SF_INFO &sndinfo, ChannelConfig sconfig, SampleType stype) noexcept
       : mFile(std::move(file)), mSndFile(sndfile), mSndInfo(sndinfo)
       , mChannelConfig(sconfig), mSampleType(stype)
     { }

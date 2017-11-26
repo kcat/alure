@@ -16,18 +16,18 @@ namespace alure
 class FlacDecoder final : public Decoder {
     UniquePtr<std::istream> mFile;
 
-    FLAC__StreamDecoder *mFlacFile;
-    ChannelConfig mChannelConfig;
-    SampleType mSampleType;
-    ALuint mFrequency;
-    ALuint mFrameSize;
-    std::pair<uint64_t,uint64_t> mLoopPts;
+    FLAC__StreamDecoder *mFlacFile{nullptr};
+    ChannelConfig mChannelConfig{ChannelConfig::Mono};
+    SampleType mSampleType{SampleType::UInt8};
+    ALuint mFrequency{0};
+    ALuint mFrameSize{0};
+    std::pair<uint64_t,uint64_t> mLoopPts{0, 0};
 
     Vector<ALubyte> mData;
 
-    ALubyte *mOutBytes;
-    ALuint mOutMax;
-    ALuint mOutLen;
+    ALubyte *mOutBytes{nullptr};
+    ALuint mOutMax{0};
+    ALuint mOutLen{0};
 
     void CopySamples(ALubyte *output, ALuint todo, const FLAC__Frame *frame, const FLAC__int32 *const buffer[], ALuint offset)
     {
@@ -239,11 +239,7 @@ class FlacDecoder final : public Decoder {
     }
 
 public:
-    FlacDecoder() noexcept
-      : mFlacFile(nullptr), mChannelConfig(ChannelConfig::Mono), mSampleType(SampleType::Int16)
-      , mFrequency(0), mFrameSize(0), mLoopPts{0,std::numeric_limits<uint64_t>::max()}
-      , mOutBytes(nullptr), mOutMax(0), mOutLen(0)
-    { }
+    FlacDecoder() noexcept = default;
     ~FlacDecoder() override;
 
     bool open(UniquePtr<std::istream> &file) noexcept;

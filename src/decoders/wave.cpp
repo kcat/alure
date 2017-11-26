@@ -74,17 +74,17 @@ namespace alure
 class WaveDecoder final : public Decoder {
     UniquePtr<std::istream> mFile;
 
-    ChannelConfig mChannelConfig;
-    SampleType mSampleType;
-    ALuint mFrequency;
-    ALuint mFrameSize;
+    ChannelConfig mChannelConfig{ChannelConfig::Mono};
+    SampleType mSampleType{SampleType::UInt8};
+    ALuint mFrequency{0};
+    ALuint mFrameSize{0};
 
     // In sample frames, relative to sample data start
-    std::pair<ALuint,ALuint> mLoopPts;
+    std::pair<ALuint,ALuint> mLoopPts{0, 0};
 
     // In bytes from beginning of file
-    std::istream::pos_type mStart, mEnd;
-    std::istream::pos_type mCurrentPos;
+    std::istream::pos_type mStart{0}, mEnd{0};
+    std::istream::pos_type mCurrentPos{0};
 
 public:
     WaveDecoder(UniquePtr<std::istream> file, ChannelConfig channels, SampleType type, ALuint frequency, ALuint framesize,

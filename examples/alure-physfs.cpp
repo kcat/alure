@@ -22,7 +22,7 @@ namespace
 class StreamBuf final : public std::streambuf {
     using BufferArrayT = alure::Array<char_type,4096>;
     BufferArrayT mBuffer;
-    PHYSFS_File *mFile;
+    PHYSFS_File *mFile{nullptr};
 
     int_type underflow() override
     {
@@ -105,8 +105,7 @@ public:
         return true;
     }
 
-    StreamBuf() : mFile(nullptr)
-    { }
+    StreamBuf() = default;
     ~StreamBuf() override
     {
         PHYSFS_close(mFile);

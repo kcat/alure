@@ -54,12 +54,12 @@ class DumbDecoder final : public alure::Decoder {
     alure::UniquePtr<std::istream> mFile;
 
     alure::UniquePtr<DUMBFILE_SYSTEM> mDfs;
-    DUMBFILE *mDumbfile;
-    DUH *mDuh;
-    DUH_SIGRENDERER *mRenderer;
+    DUMBFILE *mDumbfile{nullptr};
+    DUH *mDuh{nullptr};
+    DUH_SIGRENDERER *mRenderer{nullptr};
 
-    alure::SampleType mSampleType;
-    ALuint mFrequency;
+    alure::SampleType mSampleType{alure::SampleType::UInt8};
+    ALuint mFrequency{0};
 
     alure::Vector<sample_t> mSampleBuf;
 

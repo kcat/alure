@@ -32,9 +32,9 @@ static off_t r_lseek(void *user_data, off_t offset, int whence)
 class Mpg123Decoder final : public Decoder {
     UniquePtr<std::istream> mFile;
 
-    mpg123_handle *mMpg123;
-    int mChannels;
-    long mSampleRate;
+    mpg123_handle *mMpg123{nullptr};
+    int mChannels{0};
+    long mSampleRate{0};
 
 public:
     Mpg123Decoder(UniquePtr<std::istream> file, mpg123_handle *mpg123, int chans, long srate) noexcept
@@ -142,10 +142,10 @@ SharedPtr<Decoder> Mpg123DecoderFactory::createDecoder(UniquePtr<std::istream> &
     if(!mIsInited)
         return nullptr;
 
-    mpg123_handle *mpg123 = mpg123_new(0, 0);
+    mpg123_handle *mpg123 = mpg123_new(nullptr, nullptr);
     if(mpg123)
     {
-        if(mpg123_replace_reader_handle(mpg123, r_read, r_lseek, 0) == MPG123_OK &&
+        if(mpg123_replace_reader_handle(mpg123, r_read, r_lseek, nullptr) == MPG123_OK &&
            mpg123_open_handle(mpg123, file.get()) == MPG123_OK)
         {
             int enc, channels;

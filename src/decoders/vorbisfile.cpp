@@ -54,19 +54,19 @@ class VorbisFileDecoder final : public Decoder {
     UniquePtr<std::istream> mFile;
 
     UniquePtr<OggVorbis_File> mOggFile;
-    vorbis_info *mVorbisInfo;
-    int mOggBitstream;
+    vorbis_info *mVorbisInfo{nullptr};
+    int mOggBitstream{0};
 
-    ChannelConfig mChannelConfig;
+    ChannelConfig mChannelConfig{ChannelConfig::Mono};
 
-    std::pair<uint64_t,uint64_t> mLoopPoints;
+    std::pair<uint64_t,uint64_t> mLoopPoints{0, 0};
 
 public:
     VorbisFileDecoder(UniquePtr<std::istream> file, UniquePtr<OggVorbis_File> oggfile,
                       vorbis_info *vorbisinfo, ChannelConfig sconfig,
                       std::pair<uint64_t,uint64_t> loop_points) noexcept
       : mFile(std::move(file)), mOggFile(std::move(oggfile)), mVorbisInfo(vorbisinfo)
-      , mOggBitstream(0), mChannelConfig(sconfig), mLoopPoints(loop_points)
+      , mChannelConfig(sconfig), mLoopPoints(loop_points)
     { }
     ~VorbisFileDecoder() override;
 
