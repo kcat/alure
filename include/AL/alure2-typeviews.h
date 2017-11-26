@@ -65,10 +65,10 @@ public:
     size_type size() const noexcept { return mNumElems; }
     bool empty() const noexcept { return mNumElems == 0; }
 
-    const value_type& operator[](size_t i) const { return mElems[i]; }
+    const value_type& operator[](size_t i) const noexcept { return mElems[i]; }
 
-    const value_type& front() const { return mElems[0]; }
-    const value_type& back() const { return mElems[mNumElems-1]; }
+    const value_type& front() const noexcept { return mElems[0]; }
+    const value_type& back() const noexcept { return mElems[mNumElems-1]; }
 
     const value_type& at(size_t i) const
     {
@@ -126,7 +126,7 @@ public:
 
     BasicStringView& operator=(const BasicStringView&) noexcept = default;
 
-    size_type length() const { return BaseT::size(); }
+    size_type length() const noexcept { return BaseT::size(); }
 
     template<typename Alloc>
     explicit operator BasicString<T,Tr,Alloc>() const
@@ -193,7 +193,7 @@ using StringView = BasicStringView<String::value_type>;
 // Inline operators to concat Strings with StringViews.
 template<typename T, typename Tr, typename Alloc>
 inline BasicString<T,Tr,Alloc> operator+(const BasicString<T,Tr,Alloc> &lhs, BasicStringView<T,Tr> rhs)
-{ return BasicString<T,Tr>(lhs).append(rhs.data(), rhs.size()); }
+{ return BasicString<T,Tr,Alloc>(lhs).append(rhs.data(), rhs.size()); }
 template<typename T, typename Tr, typename Alloc>
 inline BasicString<T,Tr,Alloc> operator+(BasicString<T,Tr,Alloc>&& lhs, BasicStringView<T,Tr> rhs)
 { return std::move(lhs.append(rhs.data(), rhs.size())); }
