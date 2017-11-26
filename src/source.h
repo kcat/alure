@@ -12,13 +12,12 @@ class ALBufferStream;
 
 struct SendProps {
     ALuint mSendIdx;
-    AuxiliaryEffectSlotImpl *mSlot;
-    ALuint mFilter;
+    AuxiliaryEffectSlotImpl *mSlot{nullptr};
+    ALuint mFilter{AL_FILTER_NULL};
 
-    SendProps(ALuint send, AuxiliaryEffectSlotImpl *slot)
-      : mSendIdx(send), mSlot(slot), mFilter(AL_FILTER_NULL)
+    SendProps(ALuint send, AuxiliaryEffectSlotImpl *slot) : mSendIdx(send), mSlot(slot)
     { }
-    SendProps(ALuint send, ALuint filter) : mSendIdx(send), mSlot(0), mFilter(filter)
+    SendProps(ALuint send, ALuint filter) : mSendIdx(send), mFilter(filter)
     { }
     SendProps(ALuint send, AuxiliaryEffectSlotImpl *slot, ALuint filter)
       : mSendIdx(send), mSlot(slot), mFilter(filter)
@@ -98,12 +97,12 @@ public:
 
     void checkPaused();
     void unsetPaused() { mPaused = false; }
-    void makeStopped(bool dolock=true);
 
     void play(Buffer buffer);
     void play(SharedPtr<Decoder>&& decoder, ALuint chunk_len, ALuint queue_size);
     void play(SharedFuture<Buffer>&& future_buffer);
     void stop();
+    void makeStopped(bool dolock=true);
     void fadeOutToStop(ALfloat gain, std::chrono::milliseconds duration);
     void pause();
     void resume();
@@ -218,3 +217,4 @@ struct SourceStreamUpdateEntry {
 } // namespace alure
 
 #endif /* SOURCE_H */
+

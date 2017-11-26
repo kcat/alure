@@ -423,6 +423,16 @@ void SourceImpl::play(SharedFuture<Buffer>&& future_buffer)
 }
 
 
+DECL_THUNK0(void, Source, stop,)
+void SourceImpl::stop()
+{
+    CheckContext(mContext);
+    mContext->removePendingSource(this);
+    mContext->removeFadingSource(this);
+    mContext->removePlayingSource(this);
+    makeStopped();
+}
+
 void SourceImpl::makeStopped(bool dolock)
 {
     if(mStream)
@@ -454,16 +464,6 @@ void SourceImpl::makeStopped(bool dolock)
     mBuffer = 0;
 
     mPaused.store(false, std::memory_order_release);
-}
-
-DECL_THUNK0(void, Source, stop,)
-void SourceImpl::stop()
-{
-    CheckContext(mContext);
-    mContext->removePendingSource(this);
-    mContext->removeFadingSource(this);
-    mContext->removePlayingSource(this);
-    makeStopped();
 }
 
 
