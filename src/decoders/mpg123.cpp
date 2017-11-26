@@ -33,11 +33,11 @@ class Mpg123Decoder final : public Decoder {
     UniquePtr<std::istream> mFile;
 
     mpg123_handle *mMpg123{nullptr};
-    int mChannels{0};
+    ChannelConfig mChannels{ChannelConfig::Mono};
     long mSampleRate{0};
 
 public:
-    Mpg123Decoder(UniquePtr<std::istream> file, mpg123_handle *mpg123, int chans, long srate) noexcept
+    Mpg123Decoder(UniquePtr<std::istream> file, mpg123_handle *mpg123, ChannelConfig chans, long srate) noexcept
       : mFile(std::move(file)), mMpg123(mpg123), mChannels(chans), mSampleRate(srate)
     { }
     ~Mpg123Decoder() override;
@@ -63,28 +63,19 @@ Mpg123Decoder::~Mpg123Decoder()
 
 
 ALuint Mpg123Decoder::getFrequency() const noexcept
-{
-    return mSampleRate;
-}
+{ return mSampleRate; }
 
 ChannelConfig Mpg123Decoder::getChannelConfig() const noexcept
-{
-    if(mChannels == 1)
-        return ChannelConfig::Mono;
-    /*if(mChannels == 2)*/
-        return ChannelConfig::Stereo;
-}
+{ return mChannels; }
 
 SampleType Mpg123Decoder::getSampleType() const noexcept
-{
-    return SampleType::Int16;
-}
+{ return SampleType::Int16; }
 
 
 uint64_t Mpg123Decoder::getLength() const noexcept
 {
     off_t len = mpg123_length(mMpg123);
-    return (ALuint)std::max<off_t>(len, 0);
+    return (uint64_t)std::max<off_t>(len, 0);
 }
 
 bool Mpg123Decoder::seek(uint64_t pos) noexcept
@@ -102,7 +93,7 @@ std::pair<uint64_t,uint64_t> Mpg123Decoder::getLoopPoints() const noexcept
 ALuint Mpg123Decoder::read(ALvoid *ptr, ALuint count) noexcept
 {
     unsigned char *dst = reinterpret_cast<unsigned char*>(ptr);
-    ALuint bytes = count * mChannels * 2;
+    ALuint bytes = FramesToBytes(count, mChannels, SampleType::Int16);
     ALuint total = 0;
     while(total < bytes)
     {
@@ -115,7 +106,7 @@ ALuint Mpg123Decoder::read(ALvoid *ptr, ALuint count) noexcept
         if(ret == MPG123_DONE)
             break;
     }
-    return total / mChannels / 2;
+    return BytesToFrames(total, mChannels, SampleType::Int16);
 }
 
 
@@ -158,7 +149,9 @@ SharedPtr<Decoder> Mpg123DecoderFactory::createDecoder(UniquePtr<std::istream> &
                    mpg123_format(mpg123, srate, channels, MPG123_ENC_SIGNED_16) == MPG123_OK)
                 {
                     // All OK
-                    return MakeShared<Mpg123Decoder>(std::move(file), mpg123, channels, srate);
+                    return MakeShared<Mpg123Decoder>(std::move(file), mpg123,
+                        (channels == 1) ? ChannelConfig::Mono : ChannelConfig::Stereo, srate
+                    );
                 }
             }
             mpg123_close(mpg123);
