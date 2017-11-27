@@ -669,7 +669,7 @@ ContextImpl::ContextImpl(DeviceImpl *device, ArrayView<AttributePair> attrs)
 
     mHasExt.clear();
     mSourceIds.reserve(256);
-    mPendingHead = new PendingPromise;
+    mPendingHead = new PendingPromise{nullptr, {}, AL_NONE, 0, {}, {nullptr}};
     mPendingCurrent.store(mPendingHead, std::memory_order_relaxed);
     mPendingTail = mPendingHead;
 }
