@@ -85,13 +85,10 @@ public:
         mFrequency = srate;
         mFrameSize = FramesToBytes(1, chans, type);
         mFormat = GetFormat(chans, type);
-        if(mFormat == AL_NONE)
+        if(UNLIKELY(mFormat == AL_NONE))
         {
-            String str("Unsupported format (");
-            str += GetSampleTypeName(type);
-            str += ", ";
-            str += GetChannelConfigName(chans);
-            str += ")";
+            auto str = String("Unsupported format (")+GetSampleTypeName(type)+", "+
+                       GetChannelConfigName(chans)+")";
             throw std::runtime_error(str);
         }
 

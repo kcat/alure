@@ -836,13 +836,10 @@ BufferOrExceptT ContextImpl::doCreateBuffer(StringView name, Vector<UniquePtr<Bu
     // Get the format before calling the bufferLoading message handler, to
     // ensure it's something OpenAL can handle.
     ALenum format = GetFormat(chans, type);
-    if(format == AL_NONE)
+    if(UNLIKELY(format == AL_NONE))
     {
-        String str("Unsupported format (");
-        str += GetSampleTypeName(type);
-        str += ", ";
-        str += GetChannelConfigName(chans);
-        str += ")";
+        auto str = String("Unsupported format (")+GetSampleTypeName(type)+", "+
+                   GetChannelConfigName(chans)+")";
         return std::make_exception_ptr(std::runtime_error(str));
     }
 
@@ -879,13 +876,10 @@ BufferOrExceptT ContextImpl::doCreateBufferAsync(StringView name, Vector<UniqueP
         return std::make_exception_ptr(std::runtime_error("No samples for buffer"));
 
     ALenum format = GetFormat(chans, type);
-    if(format == AL_NONE)
+    if(UNLIKELY(format == AL_NONE))
     {
-        String str("Unsupported format (");
-        str += GetSampleTypeName(type);
-        str += ", ";
-        str += GetChannelConfigName(chans);
-        str += ")";
+        auto str = String("Unsupported format (")+GetSampleTypeName(type)+", "+
+                   GetChannelConfigName(chans)+")";
         return std::make_exception_ptr(std::runtime_error(str));
     }
 
