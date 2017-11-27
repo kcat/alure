@@ -32,6 +32,9 @@ template<typename T, typename... Args>
 inline SharedPtr<T> MakeShared(Args&&... args)
 { return std::make_shared<T>(std::forward<Args>(args)...); }
 
+// A WeakPtr implementation, defaults to C++11's std::weak_ptr.
+template<typename... Args> using WeakPtr = std::weak_ptr<Args...>;
+
 // A UniquePtr implementation, defaults to C++11's std::unique_ptr.
 template<typename... Args> using UniquePtr = std::unique_ptr<Args...>;
 // Implement MakeUnique for single objects and arrays.
