@@ -8,8 +8,76 @@
 
 #include "context.h"
 
-namespace alure
-{
+namespace {
+
+using alure::ArrayView;
+using alure::ChannelConfig;
+using alure::SampleType;
+using alure::AL;
+
+struct FormatListEntry {
+    ChannelConfig mChannels;
+    AL mExt;
+    char mName[32];
+};
+// NOTE: ChannelConfig values must be present in an ascending order within a given array.
+constexpr FormatListEntry UInt8Formats[] = {
+    { ChannelConfig::Mono, AL::EXTENSION_MAX, "AL_FORMAT_MONO8" },
+    { ChannelConfig::Stereo, AL::EXTENSION_MAX, "AL_FORMAT_STEREO8" },
+    { ChannelConfig::Rear, AL::EXT_MCFORMATS, "AL_FORMAT_REAR8" },
+    { ChannelConfig::Quad, AL::EXT_MCFORMATS, "AL_FORMAT_QUAD8" },
+    { ChannelConfig::X51, AL::EXT_MCFORMATS, "AL_FORMAT_51CHN8" },
+    { ChannelConfig::X61, AL::EXT_MCFORMATS, "AL_FORMAT_61CHN8" },
+    { ChannelConfig::X71, AL::EXT_MCFORMATS, "AL_FORMAT_71CHN8" },
+    { ChannelConfig::BFormat2D, AL::EXT_BFORMAT, "AL_FORMAT_BFORMAT2D_8" },
+    { ChannelConfig::BFormat3D, AL::EXT_BFORMAT, "AL_FORMAT_BFORMAT3D_8" },
+}, Int16Formats[] = {
+    { ChannelConfig::Mono, AL::EXTENSION_MAX, "AL_FORMAT_MONO16" },
+    { ChannelConfig::Stereo, AL::EXTENSION_MAX, "AL_FORMAT_STEREO16" },
+    { ChannelConfig::Rear, AL::EXT_MCFORMATS, "AL_FORMAT_REAR16" },
+    { ChannelConfig::Quad, AL::EXT_MCFORMATS, "AL_FORMAT_QUAD16" },
+    { ChannelConfig::X51, AL::EXT_MCFORMATS, "AL_FORMAT_51CHN16" },
+    { ChannelConfig::X61, AL::EXT_MCFORMATS, "AL_FORMAT_61CHN16" },
+    { ChannelConfig::X71, AL::EXT_MCFORMATS, "AL_FORMAT_71CHN16" },
+    { ChannelConfig::BFormat2D, AL::EXT_BFORMAT, "AL_FORMAT_BFORMAT2D_16" },
+    { ChannelConfig::BFormat3D, AL::EXT_BFORMAT, "AL_FORMAT_BFORMAT3D_16" },
+}, FloatFormats[] = {
+    { ChannelConfig::Mono, AL::EXTENSION_MAX, "AL_FORMAT_MONO_FLOAT32" },
+    { ChannelConfig::Stereo, AL::EXTENSION_MAX, "AL_FORMAT_STEREO_FLOAT32" },
+    { ChannelConfig::Rear, AL::EXT_MCFORMATS, "AL_FORMAT_REAR32" },
+    { ChannelConfig::Quad, AL::EXT_MCFORMATS, "AL_FORMAT_QUAD32" },
+    { ChannelConfig::X51, AL::EXT_MCFORMATS, "AL_FORMAT_51CHN32" },
+    { ChannelConfig::X61, AL::EXT_MCFORMATS, "AL_FORMAT_61CHN32" },
+    { ChannelConfig::X71, AL::EXT_MCFORMATS, "AL_FORMAT_71CHN32" },
+    { ChannelConfig::BFormat2D, AL::EXT_BFORMAT, "AL_FORMAT_BFORMAT2D_FLOAT32" },
+    { ChannelConfig::BFormat3D, AL::EXT_BFORMAT, "AL_FORMAT_BFORMAT3D_FLOAT32" },
+}, MulawFormats[] = {
+    { ChannelConfig::Mono, AL::EXTENSION_MAX, "AL_FORMAT_MONO_MULAW" },
+    { ChannelConfig::Stereo, AL::EXTENSION_MAX, "AL_FORMAT_STEREO_MULAW" },
+    { ChannelConfig::Rear, AL::EXT_MCFORMATS, "AL_FORMAT_REAR_MULAW" },
+    { ChannelConfig::Quad, AL::EXT_MCFORMATS, "AL_FORMAT_QUAD_MULAW" },
+    { ChannelConfig::X51, AL::EXT_MCFORMATS, "AL_FORMAT_51CHN_MULAW" },
+    { ChannelConfig::X61, AL::EXT_MCFORMATS, "AL_FORMAT_61CHN_MULAW" },
+    { ChannelConfig::X71, AL::EXT_MCFORMATS, "AL_FORMAT_71CHN_MULAW" },
+    { ChannelConfig::BFormat2D, AL::EXT_BFORMAT, "AL_FORMAT_BFORMAT2D_MULAW" },
+    { ChannelConfig::BFormat3D, AL::EXT_BFORMAT, "AL_FORMAT_BFORMAT3D_MULAW" },
+};
+
+const struct {
+    SampleType mType;
+    AL mExt;
+    ArrayView<FormatListEntry> mFormats;
+} FormatLists[] = {
+    // NOTE: SampleType values must be present in an ascending order within the array.
+    { SampleType::UInt8, AL::EXTENSION_MAX, UInt8Formats },
+    { SampleType::Int16, AL::EXTENSION_MAX, Int16Formats },
+    { SampleType::Float32, AL::EXT_FLOAT32, FloatFormats },
+    { SampleType::Mulaw, AL::EXT_MULAW, MulawFormats },
+};
+
+} // namespace
+
+namespace alure {
 
 void BufferImpl::cleanup()
 {
@@ -249,86 +317,34 @@ ALURE_API ALuint BytesToFrames(ALuint bytes, ChannelConfig chans, SampleType typ
 ALenum GetFormat(ChannelConfig chans, SampleType type)
 {
     ContextImpl *ctx = ContextImpl::GetCurrent();
-#define RETURN_FMT(x) do {                \
-    ALenum fmt = alGetEnumValue(x);       \
-    if(fmt != AL_NONE && fmt != -1)       \
-        return fmt;                       \
-} while(0)
-    if(type == SampleType::UInt8)
+
+    auto fmtlist = std::lower_bound(std::begin(FormatLists), std::end(FormatLists), type,
+        [](decltype(FormatLists[0]) &lhs, SampleType rhs) -> bool
+        { return lhs.mType < rhs; }
+    );
+    for(;fmtlist != std::end(FormatLists) && fmtlist->mType == type;++fmtlist)
     {
-        if(chans == ChannelConfig::Mono) return AL_FORMAT_MONO8;
-        if(chans == ChannelConfig::Stereo) return AL_FORMAT_STEREO8;
-        if(ctx->hasExtension(AL::EXT_MCFORMATS))
+        if(fmtlist->mType != type)
+            continue;
+        if(fmtlist->mExt != AL::EXTENSION_MAX && !ctx->hasExtension(fmtlist->mExt))
+            continue;
+
+        auto iter = std::lower_bound(
+            fmtlist->mFormats.begin(), fmtlist->mFormats.end(), chans,
+            [](const FormatListEntry &lhs, ChannelConfig rhs) -> bool
+            { return lhs.mChannels < rhs; }
+        );
+        for(;iter != fmtlist->mFormats.end() && iter->mChannels == chans;++iter)
         {
-            if(chans == ChannelConfig::Rear) RETURN_FMT("AL_FORMAT_REAR8");
-            if(chans == ChannelConfig::Quad) RETURN_FMT("AL_FORMAT_QUAD8");
-            if(chans == ChannelConfig::X51) RETURN_FMT("AL_FORMAT_51CHN8");
-            if(chans == ChannelConfig::X61) RETURN_FMT("AL_FORMAT_61CHN8");
-            if(chans == ChannelConfig::X71) RETURN_FMT("AL_FORMAT_71CHN8");
-        }
-        if(ctx->hasExtension(AL::EXT_BFORMAT))
-        {
-            if(chans == ChannelConfig::BFormat2D) RETURN_FMT("AL_FORMAT_BFORMAT2D_8");
-            if(chans == ChannelConfig::BFormat3D) RETURN_FMT("AL_FORMAT_BFORMAT3D_8");
+            if(iter->mExt == AL::EXTENSION_MAX || ctx->hasExtension(iter->mExt))
+            {
+                ALenum e = alGetEnumValue(iter->mName);
+                if(e != AL_NONE && e != -1) return e;
+            }
         }
     }
-    else if(type == SampleType::Int16)
-    {
-        if(chans == ChannelConfig::Mono) return AL_FORMAT_MONO16;
-        if(chans == ChannelConfig::Stereo) return AL_FORMAT_STEREO16;
-        if(ctx->hasExtension(AL::EXT_MCFORMATS))
-        {
-            if(chans == ChannelConfig::Rear) RETURN_FMT("AL_FORMAT_REAR16");
-            if(chans == ChannelConfig::Quad) RETURN_FMT("AL_FORMAT_QUAD16");
-            if(chans == ChannelConfig::X51) RETURN_FMT("AL_FORMAT_51CHN16");
-            if(chans == ChannelConfig::X61) RETURN_FMT("AL_FORMAT_61CHN16");
-            if(chans == ChannelConfig::X71) RETURN_FMT("AL_FORMAT_71CHN16");
-        }
-        if(ctx->hasExtension(AL::EXT_BFORMAT))
-        {
-            if(chans == ChannelConfig::BFormat2D) RETURN_FMT("AL_FORMAT_BFORMAT2D_16");
-            if(chans == ChannelConfig::BFormat3D) RETURN_FMT("AL_FORMAT_BFORMAT3D_16");
-        }
-    }
-    else if(type == SampleType::Float32 && ctx->hasExtension(AL::EXT_FLOAT32))
-    {
-        if(chans == ChannelConfig::Mono) return AL_FORMAT_MONO_FLOAT32;
-        if(chans == ChannelConfig::Stereo) return AL_FORMAT_STEREO_FLOAT32;
-        if(ctx->hasExtension(AL::EXT_MCFORMATS))
-        {
-            if(chans == ChannelConfig::Rear) RETURN_FMT("AL_FORMAT_REAR32");
-            if(chans == ChannelConfig::Quad) RETURN_FMT("AL_FORMAT_QUAD32");
-            if(chans == ChannelConfig::X51) RETURN_FMT("AL_FORMAT_51CHN32");
-            if(chans == ChannelConfig::X61) RETURN_FMT("AL_FORMAT_61CHN32");
-            if(chans == ChannelConfig::X71) RETURN_FMT("AL_FORMAT_71CHN32");
-        }
-        if(ctx->hasExtension(AL::EXT_BFORMAT))
-        {
-            if(chans == ChannelConfig::BFormat2D) RETURN_FMT("AL_FORMAT_BFORMAT2D_FLOAT32");
-            if(chans == ChannelConfig::BFormat3D) RETURN_FMT("AL_FORMAT_BFORMAT3D_FLOAT32");
-        }
-    }
-    else if(type == SampleType::Mulaw && ctx->hasExtension(AL::EXT_MULAW))
-    {
-        if(chans == ChannelConfig::Mono) return AL_FORMAT_MONO_MULAW;
-        if(chans == ChannelConfig::Stereo) return AL_FORMAT_STEREO_MULAW;
-        if(ctx->hasExtension(AL::EXT_MULAW_MCFORMATS))
-        {
-            if(chans == ChannelConfig::Rear) RETURN_FMT("AL_FORMAT_REAR_MULAW");
-            if(chans == ChannelConfig::Quad) RETURN_FMT("AL_FORMAT_QUAD_MULAW");
-            if(chans == ChannelConfig::X51) RETURN_FMT("AL_FORMAT_51CHN_MULAW");
-            if(chans == ChannelConfig::X61) RETURN_FMT("AL_FORMAT_61CHN_MULAW");
-            if(chans == ChannelConfig::X71) RETURN_FMT("AL_FORMAT_71CHN_MULAW");
-        }
-        if(ctx->hasExtension(AL::EXT_MULAW_BFORMAT))
-        {
-            if(chans == ChannelConfig::BFormat2D) RETURN_FMT("AL_FORMAT_BFORMAT2D_MULAW");
-            if(chans == ChannelConfig::BFormat3D) RETURN_FMT("AL_FORMAT_BFORMAT3D_MULAW");
-        }
-    }
-#undef RETURN_FMT
 
     return AL_NONE;
 }
 
-}
+} // namespace alure
