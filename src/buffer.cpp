@@ -10,6 +10,7 @@
 
 namespace {
 
+using alure::Array;
 using alure::ArrayView;
 using alure::ChannelConfig;
 using alure::SampleType;
@@ -21,7 +22,7 @@ struct FormatListEntry {
     char mName[32];
 };
 // NOTE: ChannelConfig values must be present in an ascending order within a given array.
-constexpr FormatListEntry UInt8Formats[] = {
+constexpr Array<FormatListEntry,9> UInt8Formats{{
     { ChannelConfig::Mono, AL::EXTENSION_MAX, "AL_FORMAT_MONO8" },
     { ChannelConfig::Stereo, AL::EXTENSION_MAX, "AL_FORMAT_STEREO8" },
     { ChannelConfig::Rear, AL::EXT_MCFORMATS, "AL_FORMAT_REAR8" },
@@ -30,8 +31,8 @@ constexpr FormatListEntry UInt8Formats[] = {
     { ChannelConfig::X61, AL::EXT_MCFORMATS, "AL_FORMAT_61CHN8" },
     { ChannelConfig::X71, AL::EXT_MCFORMATS, "AL_FORMAT_71CHN8" },
     { ChannelConfig::BFormat2D, AL::EXT_BFORMAT, "AL_FORMAT_BFORMAT2D_8" },
-    { ChannelConfig::BFormat3D, AL::EXT_BFORMAT, "AL_FORMAT_BFORMAT3D_8" },
-}, Int16Formats[] = {
+    { ChannelConfig::BFormat3D, AL::EXT_BFORMAT, "AL_FORMAT_BFORMAT3D_8" }
+}}, Int16Formats{{
     { ChannelConfig::Mono, AL::EXTENSION_MAX, "AL_FORMAT_MONO16" },
     { ChannelConfig::Stereo, AL::EXTENSION_MAX, "AL_FORMAT_STEREO16" },
     { ChannelConfig::Rear, AL::EXT_MCFORMATS, "AL_FORMAT_REAR16" },
@@ -40,8 +41,8 @@ constexpr FormatListEntry UInt8Formats[] = {
     { ChannelConfig::X61, AL::EXT_MCFORMATS, "AL_FORMAT_61CHN16" },
     { ChannelConfig::X71, AL::EXT_MCFORMATS, "AL_FORMAT_71CHN16" },
     { ChannelConfig::BFormat2D, AL::EXT_BFORMAT, "AL_FORMAT_BFORMAT2D_16" },
-    { ChannelConfig::BFormat3D, AL::EXT_BFORMAT, "AL_FORMAT_BFORMAT3D_16" },
-}, FloatFormats[] = {
+    { ChannelConfig::BFormat3D, AL::EXT_BFORMAT, "AL_FORMAT_BFORMAT3D_16" }
+}}, FloatFormats{{
     { ChannelConfig::Mono, AL::EXTENSION_MAX, "AL_FORMAT_MONO_FLOAT32" },
     { ChannelConfig::Stereo, AL::EXTENSION_MAX, "AL_FORMAT_STEREO_FLOAT32" },
     { ChannelConfig::Rear, AL::EXT_MCFORMATS, "AL_FORMAT_REAR32" },
@@ -50,8 +51,8 @@ constexpr FormatListEntry UInt8Formats[] = {
     { ChannelConfig::X61, AL::EXT_MCFORMATS, "AL_FORMAT_61CHN32" },
     { ChannelConfig::X71, AL::EXT_MCFORMATS, "AL_FORMAT_71CHN32" },
     { ChannelConfig::BFormat2D, AL::EXT_BFORMAT, "AL_FORMAT_BFORMAT2D_FLOAT32" },
-    { ChannelConfig::BFormat3D, AL::EXT_BFORMAT, "AL_FORMAT_BFORMAT3D_FLOAT32" },
-}, MulawFormats[] = {
+    { ChannelConfig::BFormat3D, AL::EXT_BFORMAT, "AL_FORMAT_BFORMAT3D_FLOAT32" }
+}}, MulawFormats{{
     { ChannelConfig::Mono, AL::EXTENSION_MAX, "AL_FORMAT_MONO_MULAW" },
     { ChannelConfig::Stereo, AL::EXTENSION_MAX, "AL_FORMAT_STEREO_MULAW" },
     { ChannelConfig::Rear, AL::EXT_MCFORMATS, "AL_FORMAT_REAR_MULAW" },
@@ -60,8 +61,8 @@ constexpr FormatListEntry UInt8Formats[] = {
     { ChannelConfig::X61, AL::EXT_MCFORMATS, "AL_FORMAT_61CHN_MULAW" },
     { ChannelConfig::X71, AL::EXT_MCFORMATS, "AL_FORMAT_71CHN_MULAW" },
     { ChannelConfig::BFormat2D, AL::EXT_BFORMAT, "AL_FORMAT_BFORMAT2D_MULAW" },
-    { ChannelConfig::BFormat3D, AL::EXT_BFORMAT, "AL_FORMAT_BFORMAT3D_MULAW" },
-};
+    { ChannelConfig::BFormat3D, AL::EXT_BFORMAT, "AL_FORMAT_BFORMAT3D_MULAW" }
+}};
 
 const struct {
     SampleType mType;
