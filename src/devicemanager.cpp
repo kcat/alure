@@ -65,7 +65,7 @@ DeviceManagerImpl &DeviceManagerImpl::get()
 
 DeviceManagerImpl::DeviceManagerImpl()
 {
-    if(alcIsExtensionPresent(0, "ALC_EXT_thread_local_context"))
+    if(alcIsExtensionPresent(nullptr, "ALC_EXT_thread_local_context"))
         GetDeviceProc(SetThreadContext, nullptr, "alcSetThreadContext");
 }
 
@@ -116,17 +116,8 @@ Device DeviceManager::openPlayback(const char *name)
 { return pImpl.openPlayback(name); }
 Device DeviceManagerImpl::openPlayback(const char *name)
 {
-    ALCdevice *dev = alcOpenDevice(name);
-    if(!dev) throw alc_error(alcGetError(nullptr), "alcOpenDevice failed");
-
-    try {
-        mDevices.emplace_back(MakeUnique<DeviceImpl>(dev));
-        return Device(mDevices.back().get());
-    }
-    catch(...) {
-        alcCloseDevice(dev);
-        throw;
-    }
+    mDevices.emplace_back(MakeUnique<DeviceImpl>(name));
+    return Device(mDevices.back().get());
 }
 
 Device DeviceManager::openPlayback(const String &name, const std::nothrow_t &nt) noexcept

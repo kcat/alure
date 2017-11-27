@@ -13,27 +13,29 @@
 #include "buffer.h"
 
 
-namespace alure
-{
+namespace {
+
+using alure::DeviceImpl;
+using alure::ALC;
+
 
 template<typename T>
-static inline void LoadALCFunc(ALCdevice *device, T **func, const char *name)
+inline void LoadALCFunc(ALCdevice *device, T **func, const char *name)
 { *func = reinterpret_cast<T*>(alcGetProcAddress(device, name)); }
 
-
-static void LoadPauseDevice(DeviceImpl *device)
+void LoadPauseDevice(DeviceImpl *device)
 {
     LoadALCFunc(device->getALCdevice(), &device->alcDevicePauseSOFT, "alcDevicePauseSOFT");
     LoadALCFunc(device->getALCdevice(), &device->alcDeviceResumeSOFT, "alcDeviceResumeSOFT");
 }
 
-static void LoadHrtf(DeviceImpl *device)
+void LoadHrtf(DeviceImpl *device)
 {
     LoadALCFunc(device->getALCdevice(), &device->alcGetStringiSOFT, "alcGetStringiSOFT");
     LoadALCFunc(device->getALCdevice(), &device->alcResetDeviceSOFT, "alcResetDeviceSOFT");
 }
 
-static void LoadNothing(DeviceImpl*) { }
+void LoadNothing(DeviceImpl*) { }
 
 static const struct {
     enum ALC extension;
@@ -47,6 +49,9 @@ static const struct {
     { ALC::SOFT_HRTF, "ALC_SOFT_HRTF", LoadHrtf },
 };
 
+} // namespace
+
+namespace alure {
 
 void DeviceImpl::setupExts()
 {
@@ -61,14 +66,19 @@ void DeviceImpl::setupExts()
 }
 
 
-DeviceImpl::DeviceImpl(ALCdevice* device)
-  : mDevice(device), alcDevicePauseSOFT(nullptr), alcDeviceResumeSOFT(nullptr)
+DeviceImpl::DeviceImpl(const char *name)
 {
+    mDevice = alcOpenDevice(name);
+    if(!mDevice) throw alc_error(alcGetError(nullptr), "alcOpenDevice failed");
+
     setupExts();
 }
 
 DeviceImpl::~DeviceImpl()
 {
+    if(mDevice)
+        alcCloseDevice(mDevice);
+    mDevice = nullptr;
 }
 
 
@@ -226,10 +236,8 @@ void DeviceImpl::reset(ArrayView<AttributePair> attributes)
 DECL_THUNK1(Context, Device, createContext,, ArrayView<AttributePair>)
 Context DeviceImpl::createContext(ArrayView<AttributePair> attributes)
 {
-    ALCcontext *ctx = nullptr;
-    if(attributes.empty()) /* No explicit attributes. */
-        ctx = alcCreateContext(mDevice, nullptr);
-    else
+    Vector<AttributePair> attrs;
+    if(!attributes.empty())
     {
         auto attr_end = std::find_if(attributes.rbegin(), attributes.rend(),
             [](const AttributePair &attr) -> bool
@@ -240,25 +248,15 @@ Context DeviceImpl::createContext(ArrayView<AttributePair> attributes)
             /* Attribute list was not properly terminated. Copy the attribute
              * list and add the 0 sentinel.
              */
-            Vector<AttributePair> attrs;
             attrs.reserve(attributes.size() + 1);
             std::copy(attributes.begin(), attributes.end(), std::back_inserter(attrs));
             attrs.push_back(AttributesEnd());
-            ctx = alcCreateContext(mDevice, &std::get<0>(attrs.front()));
+            attributes = attrs;
         }
-        else
-            ctx = alcCreateContext(mDevice, &std::get<0>(attributes.front()));
     }
-    if(!ctx) throw alc_error(alcGetError(mDevice), "alcCreateContext failed");
 
-    try {
-        mContexts.emplace_back(MakeUnique<ContextImpl>(ctx, this));
-        return Context(mContexts.back().get());
-    }
-    catch(...) {
-        alcDestroyContext(ctx);
-        throw;
-    }
+    mContexts.emplace_back(MakeUnique<ContextImpl>(this, attributes));
+    return Context(mContexts.back().get());
 }
 Context Device::createContext(ArrayView<AttributePair> attrs, const std::nothrow_t&) noexcept
 {
@@ -314,4 +312,4 @@ void DeviceImpl::close()
     DeviceManagerImpl::get().removeDevice(this);
 }
 
-}
+} // namespace alure

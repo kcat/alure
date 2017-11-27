@@ -19,7 +19,7 @@ enum class ALC {
 };
 
 class DeviceImpl {
-    ALCdevice *mDevice;
+    ALCdevice *mDevice{nullptr};
 
     Vector<UniquePtr<ContextImpl>> mContexts;
 
@@ -29,18 +29,18 @@ class DeviceImpl {
     void setupExts();
 
 public:
-    DeviceImpl(ALCdevice *device);
+    DeviceImpl(const char *name);
     ~DeviceImpl();
 
     ALCdevice *getALCdevice() const { return mDevice; }
 
     bool hasExtension(ALC ext) const { return mHasExt[static_cast<size_t>(ext)]; }
 
-    LPALCDEVICEPAUSESOFT alcDevicePauseSOFT;
-    LPALCDEVICERESUMESOFT alcDeviceResumeSOFT;
+    LPALCDEVICEPAUSESOFT alcDevicePauseSOFT{nullptr};
+    LPALCDEVICERESUMESOFT alcDeviceResumeSOFT{nullptr};
 
-    LPALCGETSTRINGISOFT alcGetStringiSOFT;
-    LPALCRESETDEVICESOFT alcResetDeviceSOFT;
+    LPALCGETSTRINGISOFT alcGetStringiSOFT{nullptr};
+    LPALCRESETDEVICESOFT alcResetDeviceSOFT{nullptr};
 
     void removeContext(ContextImpl *ctx);
 

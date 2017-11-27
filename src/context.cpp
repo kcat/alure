@@ -657,9 +657,16 @@ void ContextImpl::backgroundProc()
 }
 
 
-ContextImpl::ContextImpl(ALCcontext *context, DeviceImpl *device)
-  : mListener(this), mContext(context), mDevice(device), mIsConnected(true), mIsBatching(false)
+ContextImpl::ContextImpl(DeviceImpl *device, ArrayView<AttributePair> attrs)
+  : mListener(this), mDevice(device), mIsConnected(true), mIsBatching(false)
 {
+    ALCdevice *alcdev = mDevice->getALCdevice();
+    if(attrs.empty()) /* No explicit attributes. */
+        mContext = alcCreateContext(alcdev, nullptr);
+    else
+        mContext = alcCreateContext(alcdev, &std::get<0>(attrs.front()));
+    if(!mContext) throw alc_error(alcGetError(alcdev), "alcCreateContext failed");
+
     mHasExt.clear();
     mSourceIds.reserve(256);
     mPendingHead = new PendingPromise;
@@ -679,6 +686,10 @@ ContextImpl::~ContextImpl()
     mPendingCurrent.store(nullptr, std::memory_order_relaxed);
     mPendingHead = nullptr;
     mPendingTail = nullptr;
+
+    if(mContext)
+        alcDestroyContext(mContext);
+    mContext = nullptr;
 }
 
 

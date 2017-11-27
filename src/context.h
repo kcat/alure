@@ -174,7 +174,7 @@ private:
     bool mIsBatching : 1;
 
 public:
-    ContextImpl(ALCcontext *context, DeviceImpl *device);
+    ContextImpl(DeviceImpl *device, ArrayView<AttributePair> attrs);
     ~ContextImpl();
 
     ALCcontext *getALCcontext() const { return mContext; }
