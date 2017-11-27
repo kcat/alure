@@ -121,6 +121,8 @@ private:
     Vector<PendingBuffer> mFutureBuffers;
     Vector<UniquePtr<BufferImpl>> mBuffers;
     Vector<UniquePtr<SourceGroupImpl>> mSourceGroups;
+    Vector<UniquePtr<AuxiliaryEffectSlotImpl>> mEffectSlots;
+    Vector<UniquePtr<EffectImpl>> mEffects;
     std::deque<SourceImpl> mAllSources;
     Vector<SourceImpl*> mFreeSources;
 
@@ -246,6 +248,8 @@ public:
 
     void freeSource(SourceImpl *source) { mFreeSources.push_back(source); }
     void freeSourceGroup(SourceGroupImpl *group);
+    void freeEffectSlot(AuxiliaryEffectSlotImpl *slot);
+    void freeEffect(EffectImpl *effect);
 
     Batcher getBatcher()
     {

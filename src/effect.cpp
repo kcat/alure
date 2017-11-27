@@ -96,7 +96,7 @@ void EffectImpl::destroy()
     throw_al_error("Effect failed to delete");
     mId = 0;
 
-    delete this;
+    mContext->freeEffect(this);
 }
 
 }

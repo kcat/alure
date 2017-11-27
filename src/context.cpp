@@ -1474,12 +1474,25 @@ AuxiliaryEffectSlot ContextImpl::createAuxiliaryEffectSlot()
     alGenAuxiliaryEffectSlots(1, &id);
     throw_al_error("Failed to create AuxiliaryEffectSlot");
     try {
-        return AuxiliaryEffectSlot(new AuxiliaryEffectSlotImpl(this, id));
+        auto slot = MakeUnique<AuxiliaryEffectSlotImpl>(this, id);
+        auto iter = std::lower_bound(mEffectSlots.begin(), mEffectSlots.end(), slot);
+        iter = mEffectSlots.insert(iter, std::move(slot));
+        return AuxiliaryEffectSlot(iter->get());
     }
     catch(...) {
         alDeleteAuxiliaryEffectSlots(1, &id);
         throw;
     }
+}
+
+void ContextImpl::freeEffectSlot(AuxiliaryEffectSlotImpl *slot)
+{
+    auto iter = std::lower_bound(mEffectSlots.begin(), mEffectSlots.end(), slot,
+        [](const UniquePtr<AuxiliaryEffectSlotImpl> &lhs, AuxiliaryEffectSlotImpl *rhs) -> bool
+        { return lhs.get() < rhs; }
+    );
+    if(iter != mEffectSlots.end() && iter->get() == slot)
+        mEffectSlots.erase(iter);
 }
 
 
@@ -1495,12 +1508,25 @@ Effect ContextImpl::createEffect()
     alGenEffects(1, &id);
     throw_al_error("Failed to create Effect");
     try {
-        return Effect(new EffectImpl(this, id));
+        auto effect = MakeUnique<EffectImpl>(this, id);
+        auto iter = std::lower_bound(mEffects.begin(), mEffects.end(), effect);
+        iter = mEffects.insert(iter, std::move(effect));
+        return Effect(iter->get());
     }
     catch(...) {
         alDeleteEffects(1, &id);
         throw;
     }
+}
+
+void ContextImpl::freeEffect(EffectImpl *effect)
+{
+    auto iter = std::lower_bound(mEffects.begin(), mEffects.end(), effect,
+        [](const UniquePtr<EffectImpl> &lhs, EffectImpl *rhs) -> bool
+        { return lhs.get() < rhs; }
+    );
+    if(iter != mEffects.end() && iter->get() == effect)
+        mEffects.erase(iter);
 }
 
 

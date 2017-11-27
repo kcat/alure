@@ -87,7 +87,7 @@ void AuxiliaryEffectSlotImpl::release()
     throw_al_error("AuxiliaryEffectSlot failed to delete");
     mId = 0;
 
-    delete this;
+    mContext->freeEffectSlot(this);
 }
 
 DECL_THUNK0(Vector<SourceSend>, AuxiliaryEffectSlot, getSourceSends, const)
