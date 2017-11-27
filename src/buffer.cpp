@@ -97,6 +97,7 @@ void BufferImpl::cleanup()
         }
         auto lock = mContext->getSourceStreamLock();
         alSourceRewindv(sourceids.size(), sourceids.data());
+        throw_al_error("Failed to stop sources");
         for(Source alsrc : sources)
         {
             SourceImpl *source = alsrc.getHandle();
@@ -106,12 +107,11 @@ void BufferImpl::cleanup()
             source->makeStopped(false);
             mContext->send(&MessageHandler::sourceForceStopped, source);
         }
+        alGetError();
     }
 
     alDeleteBuffers(1, &mId);
-    ALenum err = alGetError();
-    if(err != AL_NO_ERROR)
-        throw al_error(err, "Buffer failed to delete");
+    throw_al_error("Buffer failed to delete");
     mId = 0;
 }
 
@@ -161,12 +161,12 @@ ALuint BufferImpl::getLength() const
 {
     CheckContext(mContext);
 
+    alGetError();
     ALint size=-1, bits=-1, chans=-1;
     alGetBufferi(mId, AL_SIZE, &size);
     alGetBufferi(mId, AL_BITS, &bits);
     alGetBufferi(mId, AL_CHANNELS, &chans);
-    if(size < 0 || bits < 0 || chans < 0)
-        throw std::runtime_error("Buffer format error");
+    throw_al_error("Buffer format error");
     return size / chans * 8 / bits;
 }
 
@@ -175,10 +175,10 @@ ALuint BufferImpl::getSize() const
 {
     CheckContext(mContext);
 
+    alGetError();
     ALint size = -1;
     alGetBufferi(mId, AL_SIZE, &size);
-    if(size < 0)
-        throw std::runtime_error("Buffer size error");
+    throw_al_error("Buffer size error");
     return size;
 }
 
@@ -197,15 +197,13 @@ void BufferImpl::setLoopPoints(ALuint start, ALuint end)
         return;
     }
 
-    if(start >= end || end > length)
+    if(UNLIKELY(start >= end || end > length))
         throw std::out_of_range("Loop points out of range");
 
     alGetError();
     ALint pts[2]{(ALint)start, (ALint)end};
     alBufferiv(mId, AL_LOOP_POINTS_SOFT, pts);
-    ALenum err = alGetError();
-    if(err != AL_NO_ERROR)
-        throw al_error(err, "Failed to set loop points");
+    throw_al_error("Failed to set loop points");
 }
 
 DECL_THUNK0(ALuintPair, Buffer, getLoopPoints, const)
@@ -216,10 +214,10 @@ std::pair<ALuint,ALuint> BufferImpl::getLoopPoints() const
     if(!mContext->hasExtension(AL::SOFT_loop_points))
         return std::make_pair(0, getLength());
 
+    alGetError();
     ALint pts[2]{-1,-1};
     alGetBufferiv(mId, AL_LOOP_POINTS_SOFT, pts);
-    if(pts[0] == -1 || pts[1] == -1)
-        throw std::runtime_error("Failed to get loop points");
+    throw_al_error("Failed to get loop points");
 
     return std::make_pair(pts[0], pts[1]);
 }
@@ -284,7 +282,7 @@ ALURE_API ALuint FramesToBytes(ALuint frames, ChannelConfig chans, SampleType ty
         case SampleType::Mulaw: mult *= 1; break;
     }
 
-    if(frames > std::numeric_limits<ALuint>::max()/mult)
+    if(UNLIKELY(frames > std::numeric_limits<ALuint>::max()/mult))
         throw std::out_of_range("Byte size result too large");
     return frames * mult;
 }

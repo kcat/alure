@@ -858,8 +858,7 @@ BufferOrExceptT ContextImpl::doCreateBuffer(StringView name, Vector<UniquePtr<Bu
         ALint pts[2]{(ALint)loop_pts.first, (ALint)loop_pts.second};
         alBufferiv(bid, AL_LOOP_POINTS_SOFT, pts);
     }
-    ALenum err = alGetError();
-    if(err != AL_NO_ERROR)
+    if(ALenum err = alGetError())
     {
         alDeleteBuffers(1, &bid);
         return std::make_exception_ptr(al_error(err, "Failed to buffer data"));
@@ -893,8 +892,7 @@ BufferOrExceptT ContextImpl::doCreateBufferAsync(StringView name, Vector<UniqueP
     alGetError();
     ALuint bid = 0;
     alGenBuffers(1, &bid);
-    ALenum err = alGetError();
-    if(err != AL_NO_ERROR)
+    if(ALenum err = alGetError())
         return std::make_exception_ptr(al_error(err, "Failed to create buffer"));
 
     auto buffer = MakeUnique<BufferImpl>(this, bid, srate, chans, type, name);
@@ -1474,9 +1472,7 @@ AuxiliaryEffectSlot ContextImpl::createAuxiliaryEffectSlot()
     alGetError();
     ALuint id = 0;
     alGenAuxiliaryEffectSlots(1, &id);
-    ALenum err = alGetError();
-    if(err != AL_NO_ERROR)
-        throw al_error(err, "Failed to create AuxiliaryEffectSlot");
+    throw_al_error("Failed to create AuxiliaryEffectSlot");
     try {
         return AuxiliaryEffectSlot(new AuxiliaryEffectSlotImpl(this, id));
     }
@@ -1497,9 +1493,7 @@ Effect ContextImpl::createEffect()
     alGetError();
     ALuint id = 0;
     alGenEffects(1, &id);
-    ALenum err = alGetError();
-    if(err != AL_NO_ERROR)
-        throw al_error(err, "Failed to create Effect");
+    throw_al_error("Failed to create Effect");
     try {
         return Effect(new EffectImpl(this, id));
     }

@@ -84,9 +84,7 @@ void AuxiliaryEffectSlotImpl::release()
 
     alGetError();
     mContext->alDeleteAuxiliaryEffectSlots(1, &mId);
-    ALenum err = alGetError();
-    if(err != AL_NO_ERROR)
-        throw al_error(err, "AuxiliaryEffectSlot failed to delete");
+    throw_al_error("AuxiliaryEffectSlot failed to delete");
     mId = 0;
 
     delete this;

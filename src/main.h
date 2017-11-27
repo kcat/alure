@@ -121,6 +121,13 @@ inline std::system_error al_error(int code, T&& what)
 inline std::system_error al_error(int code)
 { return std::system_error(code, al_category::sSingleton); }
 
+inline void throw_al_error(const char *str)
+{
+    ALenum err = alGetError();
+    if(UNLIKELY(err != AL_NO_ERROR))
+        throw al_error(err, str);
+}
+
 } // namespace alure
 
 #endif /* ALURE_MAIN_H */

@@ -28,8 +28,7 @@ void EffectImpl::setReverbProperties(const EFXEAXREVERBPROPERTIES &props)
         else
         {
             mContext->alEffecti(mId, AL_EFFECT_TYPE, AL_EFFECT_REVERB);
-            if(alGetError() != AL_NO_ERROR)
-                throw std::runtime_error("Failed to set reverb type");
+            throw_al_error("Failed to set reverb type");
             mType = AL_EFFECT_REVERB;
         }
     }
@@ -94,8 +93,7 @@ void EffectImpl::destroy()
 
     alGetError();
     mContext->alDeleteEffects(1, &mId);
-    if(alGetError() != AL_NO_ERROR)
-        throw std::runtime_error("Effect failed to delete");
+    throw_al_error("Effect failed to delete");
     mId = 0;
 
     delete this;
