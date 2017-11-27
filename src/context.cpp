@@ -902,12 +902,13 @@ BufferOrExceptT ContextImpl::doCreateBufferAsync(StringView name, Vector<UniqueP
 
     PendingPromise *pf = nullptr;
     if(mPendingTail == mPendingCurrent.load(std::memory_order_acquire))
-        pf = new PendingPromise{buffer.get(), decoder, format, frames, std::move(promise)};
+        pf = new PendingPromise{buffer.get(), std::move(decoder), format, frames,
+                                std::move(promise), {nullptr}};
     else
     {
         pf = mPendingTail;
         pf->mBuffer = buffer.get();
-        pf->mDecoder = decoder;
+        pf->mDecoder = std::move(decoder);
         pf->mFormat = format;
         pf->mFrames = frames;
         pf->mPromise = std::move(promise);
