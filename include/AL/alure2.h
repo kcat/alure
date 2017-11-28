@@ -319,16 +319,28 @@ enum class DefaultDeviceType {
  * is a singleton, only one instance will exist in a process.
  */
 class ALURE_API DeviceManager {
-    DeviceManagerImpl &pImpl;
+    SharedPtr<DeviceManagerImpl> pImpl;
 
-    DeviceManager(DeviceManagerImpl &impl) noexcept : pImpl(impl) { }
+    DeviceManager(SharedPtr<DeviceManagerImpl>&& impl) noexcept : pImpl(std::move(impl)) { }
 
 public:
-    DeviceManager(const DeviceManager&) noexcept = default;
-    DeviceManager(DeviceManager&& rhs) noexcept : pImpl(rhs.pImpl) { }
+    /**
+     * Retrieves a reference-counted DeviceManager instance. When the last
+     * reference goes out of scope, the DeviceManager and any remaining managed
+     * resources are automatically cleaned up. Multiple calls will return the
+     * same instance as long as there is still a pre-existing reference to the
+     * instance, or else a new instance will be created.
+     */
+    static DeviceManager getInstance();
 
-    /** Retrieves the DeviceManager instance. */
-    static DeviceManager get();
+    DeviceManager() noexcept = default;
+    DeviceManager(const DeviceManager&) noexcept = default;
+    DeviceManager(DeviceManager&& rhs) noexcept = default;
+    ~DeviceManager();
+
+    DeviceManager& operator=(const DeviceManager&) noexcept = default;
+    DeviceManager& operator=(DeviceManager&&) noexcept = default;
+    DeviceManager& operator=(std::nullptr_t) noexcept { pImpl = nullptr; return *this; };
 
     /** Queries the existence of a non-device-specific ALC extension. */
     bool queryExtension(const String &name) const;

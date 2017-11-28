@@ -6,15 +6,17 @@
 namespace alure {
 
 class DeviceManagerImpl {
-    Vector<UniquePtr<DeviceImpl>> mDevices;
+    static WeakPtr<DeviceManagerImpl> sInstance;
 
-    DeviceManagerImpl();
-    ~DeviceManagerImpl();
+    Vector<UniquePtr<DeviceImpl>> mDevices;
 
 public:
     static ALCboolean (ALC_APIENTRY*SetThreadContext)(ALCcontext*);
 
-    static DeviceManagerImpl &get();
+    static SharedPtr<DeviceManagerImpl> getInstance();
+
+    DeviceManagerImpl();
+    ~DeviceManagerImpl();
 
     void removeDevice(DeviceImpl *dev);
 

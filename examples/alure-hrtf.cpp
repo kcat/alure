@@ -14,7 +14,7 @@
 
 int main(int argc, char *argv[])
 {
-    alure::DeviceManager devMgr = alure::DeviceManager::get();
+    alure::DeviceManager devMgr = alure::DeviceManager::getInstance();
 
     int fileidx = 1;
     alure::Device dev;

@@ -200,7 +200,7 @@ int main(int argc, char *argv[])
     // Alure will be used with our custom factory.
     alure::FileIOFactory::set(alure::MakeUnique<FileFactory>(argv[0]));
 
-    alure::DeviceManager devMgr = alure::DeviceManager::get();
+    alure::DeviceManager devMgr = alure::DeviceManager::getInstance();
 
     int fileidx = 1;
     alure::Device dev;

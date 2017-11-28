@@ -309,7 +309,7 @@ void DeviceImpl::close()
         throw alc_error(alcGetError(mDevice), "alcCloseDevice failed");
     mDevice = nullptr;
 
-    DeviceManagerImpl::get().removeDevice(this);
+    DeviceManagerImpl::getInstance()->removeDevice(this);
 }
 
 } // namespace alure

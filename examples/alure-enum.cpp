@@ -9,7 +9,7 @@
 
 int main(int argc, char *argv[])
 {
-    alure::DeviceManager devMgr = alure::DeviceManager::get();
+    alure::DeviceManager devMgr = alure::DeviceManager::getInstance();
     alure::Vector<alure::String> list;
     alure::String defname;
 

@@ -52,14 +52,22 @@ static inline void GetDeviceProc(T *&func, ALCdevice *device, const char *name)
 { func = reinterpret_cast<T*>(alcGetProcAddress(device, name)); }
 
 
+WeakPtr<DeviceManagerImpl> DeviceManagerImpl::sInstance;
 ALCboolean (ALC_APIENTRY*DeviceManagerImpl::SetThreadContext)(ALCcontext*);
 
-DeviceManager DeviceManager::get()
-{ return DeviceManager(DeviceManagerImpl::get()); }
-DeviceManagerImpl &DeviceManagerImpl::get()
+DeviceManager::~DeviceManager() { }
+
+DeviceManager DeviceManager::getInstance()
+{ return DeviceManager(DeviceManagerImpl::getInstance()); }
+SharedPtr<DeviceManagerImpl> DeviceManagerImpl::getInstance()
 {
-    static DeviceManagerImpl singleton;
-    return singleton;
+    SharedPtr<DeviceManagerImpl> ret = sInstance.lock();
+    if(!ret)
+    {
+        ret = MakeShared<DeviceManagerImpl>();
+        sInstance = ret;
+    }
+    return ret;
 }
 
 
@@ -75,16 +83,16 @@ DeviceManagerImpl::~DeviceManagerImpl()
 
 
 bool DeviceManager::queryExtension(const String &name) const
-{ return pImpl.queryExtension(name.c_str()); }
+{ return pImpl->queryExtension(name.c_str()); }
 bool DeviceManager::queryExtension(const char *name) const
-{ return pImpl.queryExtension(name); }
+{ return pImpl->queryExtension(name); }
 bool DeviceManagerImpl::queryExtension(const char *name) const
 {
     return alcIsExtensionPresent(nullptr, name);
 }
 
 Vector<String> DeviceManager::enumerate(DeviceEnumeration type) const
-{ return pImpl.enumerate(type); }
+{ return pImpl->enumerate(type); }
 Vector<String> DeviceManagerImpl::enumerate(DeviceEnumeration type) const
 {
     Vector<String> list;
@@ -100,7 +108,7 @@ Vector<String> DeviceManagerImpl::enumerate(DeviceEnumeration type) const
 }
 
 String DeviceManager::defaultDeviceName(DefaultDeviceType type) const
-{ return pImpl.defaultDeviceName(type); }
+{ return pImpl->defaultDeviceName(type); }
 String DeviceManagerImpl::defaultDeviceName(DefaultDeviceType type) const
 {
     if(type == DefaultDeviceType::Full && !alcIsExtensionPresent(nullptr, "ALC_ENUMERATE_ALL_EXT"))
@@ -111,9 +119,9 @@ String DeviceManagerImpl::defaultDeviceName(DefaultDeviceType type) const
 
 
 Device DeviceManager::openPlayback(const String &name)
-{ return pImpl.openPlayback(name.c_str()); }
+{ return pImpl->openPlayback(name.c_str()); }
 Device DeviceManager::openPlayback(const char *name)
-{ return pImpl.openPlayback(name); }
+{ return pImpl->openPlayback(name); }
 Device DeviceManagerImpl::openPlayback(const char *name)
 {
     mDevices.emplace_back(MakeUnique<DeviceImpl>(name));
@@ -121,11 +129,11 @@ Device DeviceManagerImpl::openPlayback(const char *name)
 }
 
 Device DeviceManager::openPlayback(const String &name, const std::nothrow_t &nt) noexcept
-{ return pImpl.openPlayback(name.c_str(), nt); }
+{ return pImpl->openPlayback(name.c_str(), nt); }
 Device DeviceManager::openPlayback(const std::nothrow_t&) noexcept
-{ return pImpl.openPlayback(nullptr, std::nothrow); }
+{ return pImpl->openPlayback(nullptr, std::nothrow); }
 Device DeviceManager::openPlayback(const char *name, const std::nothrow_t &nt) noexcept
-{ return pImpl.openPlayback(name, nt); }
+{ return pImpl->openPlayback(name, nt); }
 Device DeviceManagerImpl::openPlayback(const char *name, const std::nothrow_t&) noexcept
 {
     try {
