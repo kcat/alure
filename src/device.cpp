@@ -260,19 +260,13 @@ Context DeviceImpl::createContext(ArrayView<AttributePair> attributes)
     mContexts.emplace_back(MakeUnique<ContextImpl>(this, attributes));
     return Context(mContexts.back().get());
 }
+
+Context Device::createContext(const std::nothrow_t&) noexcept
+{ return createContext({}, std::nothrow); }
 Context Device::createContext(ArrayView<AttributePair> attrs, const std::nothrow_t&) noexcept
 {
     try {
         return pImpl->createContext(attrs);
-    }
-    catch(...) {
-    }
-    return Context();
-}
-Context Device::createContext(const std::nothrow_t&) noexcept
-{
-    try {
-        return pImpl->createContext({});
     }
     catch(...) {
     }
