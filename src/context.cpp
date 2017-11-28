@@ -676,6 +676,15 @@ ContextImpl::ContextImpl(DeviceImpl *device, ArrayView<AttributePair> attrs)
 
 ContextImpl::~ContextImpl()
 {
+    if(mThread.joinable())
+    {
+        std::unique_lock<std::mutex> lock(mWakeMutex);
+        mQuitThread.store(true, std::memory_order_relaxed);
+        lock.unlock();
+        mWakeThread.notify_all();
+        mThread.join();
+    }
+
     PendingPromise *pb = mPendingTail;
     while(pb)
     {
