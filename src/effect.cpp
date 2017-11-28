@@ -7,12 +7,33 @@
 
 #include "context.h"
 
-namespace alure
-{
+
+namespace {
 
 template<typename T>
-static inline T clamp(const T& val, const T& min, const T& max)
+inline T clamp(const T& val, const T& min, const T& max)
 { return std::min<T>(std::max<T>(val, min), max); }
+
+} // namespace
+
+namespace alure {
+
+EffectImpl::EffectImpl(ContextImpl *context) : mContext(context)
+{
+    alGetError();
+    mContext->alGenEffects(1, &mId);
+    throw_al_error("Failed to create Effect");
+}
+
+EffectImpl::~EffectImpl()
+{
+    if(UNLIKELY(mId != 0) && ContextImpl::GetCurrent() == mContext)
+    {
+        mContext->alDeleteEffects(1, &mId);
+        mId = 0;
+    }
+}
+
 
 DECL_THUNK1(void, Effect, setReverbProperties,, const EFXEAXREVERBPROPERTIES&)
 void EffectImpl::setReverbProperties(const EFXEAXREVERBPROPERTIES &props)

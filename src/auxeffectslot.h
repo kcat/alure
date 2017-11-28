@@ -8,15 +8,14 @@
 namespace alure {
 
 class AuxiliaryEffectSlotImpl {
-    ContextImpl *const mContext;
-    ALuint mId;
+    ContextImpl *const mContext{nullptr};
+    ALuint mId{0};
 
     Vector<SourceSend> mSourceSends;
 
 public:
-    AuxiliaryEffectSlotImpl(ContextImpl *context, ALuint id)
-      : mContext(context), mId(id)
-    { }
+    AuxiliaryEffectSlotImpl(ContextImpl *context);
+    ~AuxiliaryEffectSlotImpl();
 
     void addSourceSend(SourceSend source_send);
     void removeSourceSend(SourceSend source_send);

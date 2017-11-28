@@ -696,6 +696,9 @@ ContextImpl::~ContextImpl()
     mPendingHead = nullptr;
     mPendingTail = nullptr;
 
+    mEffectSlots.clear();
+    mEffects.clear();
+
     if(mContext)
         alcDestroyContext(mContext);
     mContext = nullptr;
@@ -1480,24 +1483,13 @@ void ContextImpl::removeStreamNoLock(SourceImpl *source)
 DECL_THUNK0(AuxiliaryEffectSlot, Context, createAuxiliaryEffectSlot,)
 AuxiliaryEffectSlot ContextImpl::createAuxiliaryEffectSlot()
 {
-    if(!hasExtension(AL::EXT_EFX) || !alGenAuxiliaryEffectSlots)
+    if(!hasExtension(AL::EXT_EFX))
         throw std::runtime_error("AuxiliaryEffectSlots not supported");
     CheckContext(this);
 
-    alGetError();
-    ALuint id = 0;
-    alGenAuxiliaryEffectSlots(1, &id);
-    throw_al_error("Failed to create AuxiliaryEffectSlot");
-    try {
-        auto slot = MakeUnique<AuxiliaryEffectSlotImpl>(this, id);
-        auto iter = std::lower_bound(mEffectSlots.begin(), mEffectSlots.end(), slot);
-        iter = mEffectSlots.insert(iter, std::move(slot));
-        return AuxiliaryEffectSlot(iter->get());
-    }
-    catch(...) {
-        alDeleteAuxiliaryEffectSlots(1, &id);
-        throw;
-    }
+    auto slot = MakeUnique<AuxiliaryEffectSlotImpl>(this);
+    auto iter = std::lower_bound(mEffectSlots.begin(), mEffectSlots.end(), slot);
+    return AuxiliaryEffectSlot(mEffectSlots.insert(iter, std::move(slot))->get());
 }
 
 void ContextImpl::freeEffectSlot(AuxiliaryEffectSlotImpl *slot)
@@ -1518,20 +1510,9 @@ Effect ContextImpl::createEffect()
         throw std::runtime_error("Effects not supported");
     CheckContext(this);
 
-    alGetError();
-    ALuint id = 0;
-    alGenEffects(1, &id);
-    throw_al_error("Failed to create Effect");
-    try {
-        auto effect = MakeUnique<EffectImpl>(this, id);
-        auto iter = std::lower_bound(mEffects.begin(), mEffects.end(), effect);
-        iter = mEffects.insert(iter, std::move(effect));
-        return Effect(iter->get());
-    }
-    catch(...) {
-        alDeleteEffects(1, &id);
-        throw;
-    }
+    auto effect = MakeUnique<EffectImpl>(this);
+    auto iter = std::lower_bound(mEffects.begin(), mEffects.end(), effect);
+    return Effect(mEffects.insert(iter, std::move(effect))->get());
 }
 
 void ContextImpl::freeEffect(EffectImpl *effect)

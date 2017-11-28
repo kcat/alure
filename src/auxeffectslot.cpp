@@ -8,8 +8,7 @@
 #include "context.h"
 #include "effect.h"
 
-namespace alure
-{
+namespace alure {
 
 static inline bool operator<(const SourceSend &lhs, const SourceSend &rhs)
 { return lhs.mSource < rhs.mSource || (lhs.mSource == rhs.mSource && lhs.mSend < rhs.mSend); }
@@ -17,6 +16,23 @@ static inline bool operator==(const SourceSend &lhs, const SourceSend &rhs)
 { return lhs.mSource == rhs.mSource && lhs.mSend == rhs.mSend; }
 static inline bool operator!=(const SourceSend &lhs, const SourceSend &rhs)
 { return !(lhs == rhs); }
+
+
+AuxiliaryEffectSlotImpl::AuxiliaryEffectSlotImpl(ContextImpl *context) : mContext(context)
+{
+    alGetError();
+    mContext->alGenAuxiliaryEffectSlots(1, &mId);
+    throw_al_error("Failed to create AuxiliaryEffectSlot");
+}
+
+AuxiliaryEffectSlotImpl::~AuxiliaryEffectSlotImpl()
+{
+    if(UNLIKELY(mId != 0) && ContextImpl::GetCurrent() == mContext)
+    {
+        mContext->alDeleteAuxiliaryEffectSlots(1, &mId);
+        mId = 0;
+    }
+}
 
 void AuxiliaryEffectSlotImpl::addSourceSend(SourceSend source_send)
 {
