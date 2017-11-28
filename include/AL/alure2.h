@@ -86,13 +86,13 @@ class SourceGroupImpl;
 class AuxiliaryEffectSlotImpl;
 class EffectImpl;
 
-/** Convert a value from decibels to linear gain.  */
+/** Convert a value from decibels to linear gain. */
 template<typename T, typename NonRefT=RemoveRefT<T>,
          typename=EnableIfT<std::is_floating_point<NonRefT>::value>>
 constexpr inline NonRefT dBToLinear(T&& value)
 { return std::pow(NonRefT(10.0), std::forward<T>(value) / NonRefT(20.0)); }
 
-/** Convert a value from linear gain to decibels.  */
+/** Convert a value from linear gain to decibels. */
 template<typename T, typename NonRefT=RemoveRefT<T>,
          typename=EnableIfT<std::is_floating_point<NonRefT>::value>>
 constexpr inline NonRefT LinearTodB(T&& value)
@@ -316,7 +316,7 @@ enum class DefaultDeviceType {
 
 /**
  * A class managing Device objects and other related functionality. This class
- * is a singleton, only one instance will exist in a process.
+ * is a singleton, only one instance will exist in a process at a time.
  */
 class ALURE_API DeviceManager {
     SharedPtr<DeviceManagerImpl> pImpl;
@@ -477,7 +477,7 @@ enum class DistanceModel {
     Inverse  = AL_INVERSE_DISTANCE,
     Linear   = AL_LINEAR_DISTANCE,
     Exponent = AL_EXPONENT_DISTANCE,
-    None  = AL_NONE,
+    None = AL_NONE,
 };
 
 class ALURE_API Context {
@@ -587,6 +587,9 @@ public:
      * actual Buffer when it's ready. The application must take care to handle
      * exceptions from the SharedFuture in case an unrecoverable error ocurred
      * during the load.
+     *
+     * If the Buffer is already fully loaded and cached, a SharedFuture is
+     * returned in a ready state containing it.
      */
     SharedFuture<Buffer> getBufferAsync(StringView name);
 
@@ -629,7 +632,7 @@ public:
 
     /**
      * Looks for a cached buffer using the given name and returns it. If the
-     * given name does not exist in the cache, and null buffer is returned.
+     * given name does not exist in the cache, a null buffer is returned.
      */
     Buffer findBuffer(StringView name);
 
@@ -638,18 +641,22 @@ public:
      * returns a SharedFuture for it. If the given name does not exist in the
      * cache, an invalid SharedFuture is returned (check with a call to
      * \c SharedFuture::valid).
+     *
+     * If the Buffer is already fully loaded and cached, a SharedFuture is
+     * returned in a ready state containing it.
      */
     SharedFuture<Buffer> findBufferAsync(StringView name);
 
     /**
      * Deletes the cached Buffer object for the given audio file or resource
-     * name. If a source is currently playing the buffer, it will be stopped
-     * first.
+     * name, invalidating all Buffer objects with this name. If a source is
+     * currently playing the buffer, it will be stopped first.
      */
     void removeBuffer(StringView name);
     /**
-     * Deletes the given cached buffer. If a source is currently playing the
-     * buffer, it will be stopped first.
+     * Deletes the given cached buffer, invalidating all other Buffer objects
+     * with the same name. Equivalent to calling
+     * removeBuffer(buffer.getName()).
      */
     void removeBuffer(Buffer buffer);
 
@@ -729,8 +736,8 @@ public:
 
     /**
      * Sets the number of meters per unit, used for various effects that rely
-     * on the distance in meters (including air absorption and initial reverb
-     * decay). If this is changed, it's strongly recommended to also set the
+     * on the distance in meters including air absorption and initial reverb
+     * decay. If this is changed, it's strongly recommended to also set the
      * speed of sound (e.g. context.setSpeedOfSound(343.3 / m_u) to maintain a
      * realistic 343.3m/s for sound propagation).
      */
