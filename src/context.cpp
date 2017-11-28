@@ -702,6 +702,18 @@ ContextImpl::~ContextImpl()
     if(mContext)
         alcDestroyContext(mContext);
     mContext = nullptr;
+
+    std::lock_guard<std::mutex> ctxlock(mGlobalCtxMutex);
+    if(sCurrentCtx == this)
+    {
+        sCurrentCtx = nullptr;
+        sContextSetCount.fetch_add(1, std::memory_order_release);
+    }
+    if(sThreadCurrentCtx == this)
+    {
+        sThreadCurrentCtx = nullptr;
+        sContextSetCount.fetch_add(1, std::memory_order_release);
+    }
 }
 
 
