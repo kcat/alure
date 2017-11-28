@@ -76,6 +76,8 @@ DeviceImpl::DeviceImpl(const char *name)
 
 DeviceImpl::~DeviceImpl()
 {
+    mContexts.clear();
+
     if(mDevice)
         alcCloseDevice(mDevice);
     mDevice = nullptr;
