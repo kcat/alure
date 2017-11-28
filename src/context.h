@@ -117,7 +117,7 @@ private:
     struct PendingBuffer { BufferImpl *mBuffer;  SharedFuture<Buffer> mFuture; };
     struct PendingSource { SourceImpl *mSource;  SharedFuture<Buffer> mFuture; };
 
-    DeviceImpl *const mDevice{nullptr};
+    DeviceImpl &mDevice;
     Vector<PendingBuffer> mFutureBuffers;
     Vector<UniquePtr<BufferImpl>> mBuffers;
     Vector<UniquePtr<SourceGroupImpl>> mSourceGroups;
@@ -174,7 +174,7 @@ private:
     bool mIsBatching : 1;
 
 public:
-    ContextImpl(DeviceImpl *device, ArrayView<AttributePair> attrs);
+    ContextImpl(DeviceImpl &device, ArrayView<AttributePair> attrs);
     ~ContextImpl();
 
     ALCcontext *getALCcontext() const { return mContext; }
@@ -259,7 +259,7 @@ public:
     void send(R MessageHandler::* func, Args&&... args)
     { if(mMessage.get()) (mMessage.get()->*func)(std::forward<Args>(args)...); }
 
-    Device getDevice() { return Device(mDevice); }
+    Device getDevice() { return Device(&mDevice); }
 
     void destroy();
 
@@ -309,20 +309,20 @@ public:
 };
 
 
-inline void CheckContext(const ContextImpl *ctx)
+inline void CheckContext(const ContextImpl &ctx)
 {
     auto count = ContextImpl::sContextSetCount.load(std::memory_order_acquire);
-    if(UNLIKELY(count != ctx->mContextSetCounter))
+    if(UNLIKELY(count != ctx.mContextSetCounter))
     {
-        if(UNLIKELY(ctx != ContextImpl::GetCurrent()))
+        if(UNLIKELY(&ctx != ContextImpl::GetCurrent()))
             throw std::runtime_error("Called context is not current");
-        ctx->mContextSetCounter = count;
+        ctx.mContextSetCounter = count;
     }
 }
 
-inline void CheckContexts(const ContextImpl *ctx0, const ContextImpl *ctx1)
+inline void CheckContexts(const ContextImpl &ctx0, const ContextImpl &ctx1)
 {
-    if(UNLIKELY(ctx0 != ctx1))
+    if(UNLIKELY(&ctx0 != &ctx1))
         throw std::runtime_error("Mismatched object contexts");
 }
 

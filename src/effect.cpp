@@ -18,18 +18,18 @@ inline T clamp(const T& val, const T& min, const T& max)
 
 namespace alure {
 
-EffectImpl::EffectImpl(ContextImpl *context) : mContext(context)
+EffectImpl::EffectImpl(ContextImpl &context) : mContext(context)
 {
     alGetError();
-    mContext->alGenEffects(1, &mId);
+    mContext.alGenEffects(1, &mId);
     throw_al_error("Failed to create Effect");
 }
 
 EffectImpl::~EffectImpl()
 {
-    if(UNLIKELY(mId != 0) && ContextImpl::GetCurrent() == mContext)
+    if(UNLIKELY(mId != 0) && ContextImpl::GetCurrent() == &mContext)
     {
-        mContext->alDeleteEffects(1, &mId);
+        mContext.alDeleteEffects(1, &mId);
         mId = 0;
     }
 }
@@ -43,12 +43,12 @@ void EffectImpl::setReverbProperties(const EFXEAXREVERBPROPERTIES &props)
     if(mType != AL_EFFECT_EAXREVERB && mType != AL_EFFECT_REVERB)
     {
         alGetError();
-        mContext->alEffecti(mId, AL_EFFECT_TYPE, AL_EFFECT_EAXREVERB);
+        mContext.alEffecti(mId, AL_EFFECT_TYPE, AL_EFFECT_EAXREVERB);
         if(alGetError() == AL_NO_ERROR)
             mType = AL_EFFECT_EAXREVERB;
         else
         {
-            mContext->alEffecti(mId, AL_EFFECT_TYPE, AL_EFFECT_REVERB);
+            mContext.alEffecti(mId, AL_EFFECT_TYPE, AL_EFFECT_REVERB);
             throw_al_error("Failed to set reverb type");
             mType = AL_EFFECT_REVERB;
         }
@@ -56,7 +56,7 @@ void EffectImpl::setReverbProperties(const EFXEAXREVERBPROPERTIES &props)
 
     if(mType == AL_EFFECT_EAXREVERB)
     {
-#define SETPARAM(e,t,v) mContext->alEffectf((e), AL_EAXREVERB_##t, clamp((v), AL_EAXREVERB_MIN_##t, AL_EAXREVERB_MAX_##t))
+#define SETPARAM(e,t,v) mContext.alEffectf((e), AL_EAXREVERB_##t, clamp((v), AL_EAXREVERB_MIN_##t, AL_EAXREVERB_MAX_##t))
         SETPARAM(mId, DENSITY, props.flDensity);
         SETPARAM(mId, DIFFUSION, props.flDiffusion);
         SETPARAM(mId, GAIN, props.flGain);
@@ -67,10 +67,10 @@ void EffectImpl::setReverbProperties(const EFXEAXREVERBPROPERTIES &props)
         SETPARAM(mId, DECAY_LFRATIO, props.flDecayLFRatio);
         SETPARAM(mId, REFLECTIONS_GAIN, props.flReflectionsGain);
         SETPARAM(mId, REFLECTIONS_DELAY, props.flReflectionsDelay);
-        mContext->alEffectfv(mId, AL_EAXREVERB_REFLECTIONS_PAN, props.flReflectionsPan);
+        mContext.alEffectfv(mId, AL_EAXREVERB_REFLECTIONS_PAN, props.flReflectionsPan);
         SETPARAM(mId, LATE_REVERB_GAIN, props.flLateReverbGain);
         SETPARAM(mId, LATE_REVERB_DELAY, props.flLateReverbDelay);
-        mContext->alEffectfv(mId, AL_EAXREVERB_LATE_REVERB_PAN, props.flLateReverbPan);
+        mContext.alEffectfv(mId, AL_EAXREVERB_LATE_REVERB_PAN, props.flLateReverbPan);
         SETPARAM(mId, ECHO_TIME, props.flEchoTime);
         SETPARAM(mId, ECHO_DEPTH, props.flEchoDepth);
         SETPARAM(mId, MODULATION_TIME, props.flModulationTime);
@@ -79,12 +79,12 @@ void EffectImpl::setReverbProperties(const EFXEAXREVERBPROPERTIES &props)
         SETPARAM(mId, HFREFERENCE, props.flHFReference);
         SETPARAM(mId, LFREFERENCE, props.flLFReference);
         SETPARAM(mId, ROOM_ROLLOFF_FACTOR, props.flRoomRolloffFactor);
-        mContext->alEffecti(mId, AL_EAXREVERB_DECAY_HFLIMIT, (props.iDecayHFLimit ? AL_TRUE : AL_FALSE));
+        mContext.alEffecti(mId, AL_EAXREVERB_DECAY_HFLIMIT, (props.iDecayHFLimit ? AL_TRUE : AL_FALSE));
 #undef SETPARAM
     }
     else if(mType == AL_EFFECT_REVERB)
     {
-#define SETPARAM(e,t,v) mContext->alEffectf((e), AL_REVERB_##t, clamp((v), AL_REVERB_MIN_##t, AL_REVERB_MAX_##t))
+#define SETPARAM(e,t,v) mContext.alEffectf((e), AL_REVERB_##t, clamp((v), AL_REVERB_MIN_##t, AL_REVERB_MAX_##t))
         SETPARAM(mId, DENSITY, props.flDensity);
         SETPARAM(mId, DIFFUSION, props.flDiffusion);
         SETPARAM(mId, GAIN, props.flGain);
@@ -97,7 +97,7 @@ void EffectImpl::setReverbProperties(const EFXEAXREVERBPROPERTIES &props)
         SETPARAM(mId, LATE_REVERB_DELAY, props.flLateReverbDelay);
         SETPARAM(mId, AIR_ABSORPTION_GAINHF, props.flAirAbsorptionGainHF);
         SETPARAM(mId, ROOM_ROLLOFF_FACTOR, props.flRoomRolloffFactor);
-        mContext->alEffecti(mId, AL_REVERB_DECAY_HFLIMIT, (props.iDecayHFLimit ? AL_TRUE : AL_FALSE));
+        mContext.alEffecti(mId, AL_REVERB_DECAY_HFLIMIT, (props.iDecayHFLimit ? AL_TRUE : AL_FALSE));
 #undef SETPARAM
     }
 }
@@ -113,11 +113,11 @@ void EffectImpl::destroy()
     CheckContext(mContext);
 
     alGetError();
-    mContext->alDeleteEffects(1, &mId);
+    mContext.alDeleteEffects(1, &mId);
     throw_al_error("Effect failed to delete");
     mId = 0;
 
-    mContext->freeEffect(this);
+    mContext.freeEffect(this);
 }
 
 }

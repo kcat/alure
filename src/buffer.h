@@ -10,7 +10,7 @@ namespace alure {
 ALenum GetFormat(ChannelConfig chans, SampleType type);
 
 class BufferImpl {
-    ContextImpl *const mContext;
+    ContextImpl &mContext;
     ALuint mId;
 
     ALuint mFrequency;
@@ -22,14 +22,14 @@ class BufferImpl {
     const String mName;
 
 public:
-    BufferImpl(ContextImpl *context, ALuint id, ALuint freq, ChannelConfig config, SampleType type, StringView name)
+    BufferImpl(ContextImpl &context, ALuint id, ALuint freq, ChannelConfig config, SampleType type, StringView name)
       : mContext(context), mId(id), mFrequency(freq), mChannelConfig(config), mSampleType(type)
       , mName(String(name))
     { }
 
     void cleanup();
 
-    ContextImpl *getContext() { return mContext; }
+    ContextImpl &getContext() { return mContext; }
     ALuint getId() const { return mId; }
 
     void addSource(Source source) { mSources.push_back(source); }

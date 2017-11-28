@@ -15,7 +15,7 @@ struct SourceGroupProps {
 };
 
 class SourceGroupImpl : SourceGroupProps {
-    ContextImpl *const mContext;
+    ContextImpl &mContext;
 
     Vector<SourceImpl*> mSources;
     Vector<SourceGroupImpl*> mSubGroups;
@@ -42,7 +42,7 @@ class SourceGroupImpl : SourceGroupProps {
     void updateStoppedStatus() const;
 
 public:
-    SourceGroupImpl(ContextImpl *context) : mContext(context), mParent(nullptr) { }
+    SourceGroupImpl(ContextImpl &context) : mContext(context), mParent(nullptr) { }
 
     ALfloat getAppliedGain() const { return mGain * mParentProps.mGain; }
     ALfloat getAppliedPitch() const { return mPitch * mParentProps.mPitch; }

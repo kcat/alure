@@ -87,8 +87,7 @@ struct hash<alure::StringView> {
 
 }
 
-namespace
-{
+namespace {
 
 // Global mutex to protect global context changes
 std::mutex mGlobalCtxMutex;
@@ -301,6 +300,17 @@ alure::UniquePtr<alure::FileIOFactory> sFileFactory;
 
 namespace alure
 {
+
+static inline void CheckContext(const ContextImpl *ctx)
+{
+    auto count = ContextImpl::sContextSetCount.load(std::memory_order_acquire);
+    if(UNLIKELY(count != ctx->mContextSetCounter))
+    {
+        if(UNLIKELY(ctx != ContextImpl::GetCurrent()))
+            throw std::runtime_error("Called context is not current");
+        ctx->mContextSetCounter = count;
+    }
+}
 
 std::variant<std::monostate,uint64_t> ParseTimeval(StringView strval, double srate) noexcept
 {
@@ -577,7 +587,7 @@ void ContextImpl::MakeThreadCurrent(ContextImpl *context)
 
 void ContextImpl::setupExts()
 {
-    ALCdevice *device = mDevice->getALCdevice();
+    ALCdevice *device = mDevice.getALCdevice();
     mHasExt.clear();
     for(const auto &entry : ALExtensionList)
     {
@@ -593,7 +603,7 @@ void ContextImpl::setupExts()
 
 void ContextImpl::backgroundProc()
 {
-    if(DeviceManagerImpl::SetThreadContext && mDevice->hasExtension(ALC::EXT_thread_local_context))
+    if(DeviceManagerImpl::SetThreadContext && mDevice.hasExtension(ALC::EXT_thread_local_context))
         DeviceManagerImpl::SetThreadContext(getALCcontext());
 
     std::chrono::steady_clock::time_point basetime = std::chrono::steady_clock::now();
@@ -657,10 +667,10 @@ void ContextImpl::backgroundProc()
 }
 
 
-ContextImpl::ContextImpl(DeviceImpl *device, ArrayView<AttributePair> attrs)
+ContextImpl::ContextImpl(DeviceImpl &device, ArrayView<AttributePair> attrs)
   : mListener(this), mDevice(device), mIsConnected(true), mIsBatching(false)
 {
-    ALCdevice *alcdev = mDevice->getALCdevice();
+    ALCdevice *alcdev = mDevice.getALCdevice();
     if(attrs.empty()) /* No explicit attributes. */
         mContext = alcCreateContext(alcdev, nullptr);
     else
@@ -742,7 +752,7 @@ void ContextImpl::destroy()
     alcDestroyContext(mContext);
     mContext = nullptr;
 
-    mDevice->removeContext(this);
+    mDevice.removeContext(this);
 }
 
 
@@ -897,7 +907,7 @@ BufferOrExceptT ContextImpl::doCreateBuffer(StringView name, Vector<UniquePtr<Bu
     }
 
     return mBuffers.insert(iter,
-        MakeUnique<BufferImpl>(this, bid, srate, chans, type, name)
+        MakeUnique<BufferImpl>(*this, bid, srate, chans, type, name)
     )->get();
 }
 
@@ -924,7 +934,7 @@ BufferOrExceptT ContextImpl::doCreateBufferAsync(StringView name, Vector<UniqueP
     if(ALenum err = alGetError())
         return std::make_exception_ptr(al_error(err, "Failed to create buffer"));
 
-    auto buffer = MakeUnique<BufferImpl>(this, bid, srate, chans, type, name);
+    auto buffer = MakeUnique<BufferImpl>(*this, bid, srate, chans, type, name);
 
     if(mThread.get_id() == std::thread::id())
         mThread = std::thread(std::mem_fn(&ContextImpl::backgroundProc), this);
@@ -1370,7 +1380,7 @@ Source ContextImpl::createSource()
     }
     else
     {
-        mAllSources.emplace_back(this);
+        mAllSources.emplace_back(*this);
         source = &mAllSources.back();
     }
     return Source(source);
@@ -1499,7 +1509,7 @@ AuxiliaryEffectSlot ContextImpl::createAuxiliaryEffectSlot()
         throw std::runtime_error("AuxiliaryEffectSlots not supported");
     CheckContext(this);
 
-    auto slot = MakeUnique<AuxiliaryEffectSlotImpl>(this);
+    auto slot = MakeUnique<AuxiliaryEffectSlotImpl>(*this);
     auto iter = std::lower_bound(mEffectSlots.begin(), mEffectSlots.end(), slot);
     return AuxiliaryEffectSlot(mEffectSlots.insert(iter, std::move(slot))->get());
 }
@@ -1522,7 +1532,7 @@ Effect ContextImpl::createEffect()
         throw std::runtime_error("Effects not supported");
     CheckContext(this);
 
-    auto effect = MakeUnique<EffectImpl>(this);
+    auto effect = MakeUnique<EffectImpl>(*this);
     auto iter = std::lower_bound(mEffects.begin(), mEffects.end(), effect);
     return Effect(mEffects.insert(iter, std::move(effect))->get());
 }
@@ -1541,7 +1551,7 @@ void ContextImpl::freeEffect(EffectImpl *effect)
 DECL_THUNK0(SourceGroup, Context, createSourceGroup,)
 SourceGroup ContextImpl::createSourceGroup()
 {
-    auto srcgroup = MakeUnique<SourceGroupImpl>(this);
+    auto srcgroup = MakeUnique<SourceGroupImpl>(*this);
     auto iter = std::lower_bound(mSourceGroups.begin(), mSourceGroups.end(), srcgroup);
 
     iter = mSourceGroups.insert(iter, std::move(srcgroup));
@@ -1631,9 +1641,9 @@ void ContextImpl::update()
     if(hasExtension(AL::EXT_disconnect) && mIsConnected)
     {
         ALCint connected;
-        alcGetIntegerv(mDevice->getALCdevice(), ALC_CONNECTED, 1, &connected);
+        alcGetIntegerv(mDevice.getALCdevice(), ALC_CONNECTED, 1, &connected);
         mIsConnected = connected;
-        if(!connected && mMessage.get()) mMessage->deviceDisconnected(Device(mDevice));
+        if(!connected && mMessage.get()) mMessage->deviceDisconnected(Device(&mDevice));
     }
 }
 

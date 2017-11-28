@@ -95,17 +95,17 @@ void BufferImpl::cleanup()
             if(ALuint id = alsrc.getHandle()->getId())
                 sourceids.push_back(id);
         }
-        auto lock = mContext->getSourceStreamLock();
+        auto lock = mContext.getSourceStreamLock();
         alSourceRewindv(sourceids.size(), sourceids.data());
         throw_al_error("Failed to stop sources");
         for(Source alsrc : sources)
         {
             SourceImpl *source = alsrc.getHandle();
-            mContext->removePendingSource(source);
-            mContext->removeFadingSource(source);
-            mContext->removePlayingSource(source);
+            mContext.removePendingSource(source);
+            mContext.removeFadingSource(source);
+            mContext.removePlayingSource(source);
             source->makeStopped(false);
-            mContext->send(&MessageHandler::sourceForceStopped, source);
+            mContext.send(&MessageHandler::sourceForceStopped, source);
         }
         alGetError();
     }
@@ -190,7 +190,7 @@ void BufferImpl::setLoopPoints(ALuint start, ALuint end)
     if(UNLIKELY(!mSources.empty()))
         throw std::runtime_error("Buffer is in use");
 
-    if(!mContext->hasExtension(AL::SOFT_loop_points))
+    if(!mContext.hasExtension(AL::SOFT_loop_points))
     {
         if(start != 0 || end != length)
             throw std::runtime_error("Loop points not supported");
@@ -211,7 +211,7 @@ std::pair<ALuint,ALuint> BufferImpl::getLoopPoints() const
 {
     CheckContext(mContext);
 
-    if(!mContext->hasExtension(AL::SOFT_loop_points))
+    if(!mContext.hasExtension(AL::SOFT_loop_points))
         return std::make_pair(0, getLength());
 
     alGetError();

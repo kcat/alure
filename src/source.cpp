@@ -158,12 +158,12 @@ public:
 };
 
 
-SourceImpl::SourceImpl(ContextImpl *context)
+SourceImpl::SourceImpl(ContextImpl &context)
   : mContext(context), mId(0), mBuffer(0), mGroup(nullptr), mIsAsync(false)
   , mDirectFilter(AL_FILTER_NULL)
 {
     resetProperties();
-    mEffectSlots.reserve(mContext->getDevice().getMaxAuxiliarySends());
+    mEffectSlots.reserve(mContext.getDevice().getMaxAuxiliarySends());
 }
 
 SourceImpl::~SourceImpl()
@@ -207,7 +207,7 @@ void SourceImpl::resetProperties()
     mStereoAngles[0] =  F_PI / 6.0f;
     mStereoAngles[1] = -F_PI / 6.0f;
     mSpatialize = Spatialize::Auto;
-    mResampler = mContext->hasExtension(AL::SOFT_source_resampler) ?
+    mResampler = mContext.hasExtension(AL::SOFT_source_resampler) ?
                  alGetInteger(AL_DEFAULT_RESAMPLER_SOFT) : 0;
     mLooping = false;
     mRelative = false;
@@ -215,14 +215,14 @@ void SourceImpl::resetProperties()
     mWetGainAuto = true;
     mWetGainHFAuto = true;
     if(mDirectFilter)
-        mContext->alDeleteFilters(1, &mDirectFilter);
+        mContext.alDeleteFilters(1, &mDirectFilter);
     mDirectFilter = 0;
     for(auto &i : mEffectSlots)
     {
         if(i.mSlot)
             i.mSlot->removeSourceSend({Source(this), i.mSendIdx});
         if(i.mFilter)
-            mContext->alDeleteFilters(1, &i.mFilter);
+            mContext.alDeleteFilters(1, &i.mFilter);
     }
     mEffectSlots.clear();
 
@@ -242,23 +242,23 @@ void SourceImpl::applyProperties(bool looping, ALuint offset) const
     alSourcefv(mId, AL_POSITION, mPosition.getPtr());
     alSourcefv(mId, AL_VELOCITY, mVelocity.getPtr());
     alSourcefv(mId, AL_DIRECTION, mDirection.getPtr());
-    if(mContext->hasExtension(AL::EXT_BFORMAT))
+    if(mContext.hasExtension(AL::EXT_BFORMAT))
         alSourcefv(mId, AL_ORIENTATION, &mOrientation[0][0]);
     alSourcef(mId, AL_CONE_INNER_ANGLE, mConeInnerAngle);
     alSourcef(mId, AL_CONE_OUTER_ANGLE, mConeOuterAngle);
     alSourcef(mId, AL_CONE_OUTER_GAIN, mConeOuterGain);
     alSourcef(mId, AL_ROLLOFF_FACTOR, mRolloffFactor);
     alSourcef(mId, AL_DOPPLER_FACTOR, mDopplerFactor);
-    if(mContext->hasExtension(AL::EXT_SOURCE_RADIUS))
+    if(mContext.hasExtension(AL::EXT_SOURCE_RADIUS))
         alSourcef(mId, AL_SOURCE_RADIUS, mRadius);
-    if(mContext->hasExtension(AL::EXT_STEREO_ANGLES))
+    if(mContext.hasExtension(AL::EXT_STEREO_ANGLES))
         alSourcefv(mId, AL_STEREO_ANGLES, mStereoAngles);
-    if(mContext->hasExtension(AL::SOFT_source_spatialize))
+    if(mContext.hasExtension(AL::SOFT_source_spatialize))
         alSourcei(mId, AL_SOURCE_SPATIALIZE_SOFT, (ALint)mSpatialize);
-    if(mContext->hasExtension(AL::SOFT_source_resampler))
+    if(mContext.hasExtension(AL::SOFT_source_resampler))
         alSourcei(mId, AL_SOURCE_RESAMPLER_SOFT, mResampler);
     alSourcei(mId, AL_SOURCE_RELATIVE, mRelative ? AL_TRUE : AL_FALSE);
-    if(mContext->hasExtension(AL::EXT_EFX))
+    if(mContext.hasExtension(AL::EXT_EFX))
     {
         alSourcef(mId, AL_CONE_OUTER_GAINHF, mConeOuterGainHF);
         alSourcef(mId, AL_ROOM_ROLLOFF_FACTOR, mRoomRolloffFactor);
@@ -303,7 +303,7 @@ void SourceImpl::play(Buffer buffer)
     CheckContext(mContext);
 
     if(mStream)
-        mContext->removeStream(this);
+        mContext.removeStream(this);
     mIsAsync.store(false, std::memory_order_release);
 
     mFadeGainTarget = mFadeGain = 1.0f;
@@ -311,13 +311,13 @@ void SourceImpl::play(Buffer buffer)
 
     if(mId == 0)
     {
-        mId = mContext->getSourceId(mPriority);
+        mId = mContext.getSourceId(mPriority);
         applyProperties(mLooping, (ALuint)std::min<uint64_t>(mOffset, std::numeric_limits<ALint>::max()));
     }
     else
     {
-        mContext->removeFadingSource(this);
-        mContext->removePlayingSource(this);
+        mContext.removeFadingSource(this);
+        mContext.removePlayingSource(this);
         alSourceRewind(mId);
         alSourcei(mId, AL_BUFFER, 0);
         alSourcei(mId, AL_LOOPING, mLooping ? AL_TRUE : AL_FALSE);
@@ -334,8 +334,8 @@ void SourceImpl::play(Buffer buffer)
     alSourcei(mId, AL_BUFFER, mBuffer->getId());
     alSourcePlay(mId);
     mPaused.store(false, std::memory_order_release);
-    mContext->removePendingSource(this);
-    mContext->addPlayingSource(this, mId);
+    mContext.removePendingSource(this);
+    mContext.addPlayingSource(this, mId);
 }
 
 DECL_THUNK3(void, Source, play,, SharedPtr<Decoder>, ALuint, ALuint)
@@ -351,7 +351,7 @@ void SourceImpl::play(SharedPtr<Decoder>&& decoder, ALuint chunk_len, ALuint que
     stream->prepare();
 
     if(mStream)
-        mContext->removeStream(this);
+        mContext.removeStream(this);
     mIsAsync.store(false, std::memory_order_release);
 
     mFadeGainTarget = mFadeGain = 1.0f;
@@ -359,13 +359,13 @@ void SourceImpl::play(SharedPtr<Decoder>&& decoder, ALuint chunk_len, ALuint que
 
     if(mId == 0)
     {
-        mId = mContext->getSourceId(mPriority);
+        mId = mContext.getSourceId(mPriority);
         applyProperties(false, 0);
     }
     else
     {
-        mContext->removeFadingSource(this);
-        mContext->removePlayingSource(this);
+        mContext.removeFadingSource(this);
+        mContext.removePlayingSource(this);
         alSourceRewind(mId);
         alSourcei(mId, AL_BUFFER, 0);
         alSourcei(mId, AL_LOOPING, AL_FALSE);
@@ -390,10 +390,10 @@ void SourceImpl::play(SharedPtr<Decoder>&& decoder, ALuint chunk_len, ALuint que
     alSourcePlay(mId);
     mPaused.store(false, std::memory_order_release);
 
-    mContext->addStream(this);
+    mContext.addStream(this);
     mIsAsync.store(true, std::memory_order_release);
-    mContext->removePendingSource(this);
-    mContext->addPlayingSource(this);
+    mContext.removePendingSource(this);
+    mContext.addPlayingSource(this);
 }
 
 DECL_THUNK1(void, Source, play,, SharedFuture<Buffer>)
@@ -409,14 +409,14 @@ void SourceImpl::play(SharedFuture<Buffer>&& future_buffer)
 
     CheckContext(mContext);
 
-    mContext->removeFadingSource(this);
-    mContext->removePlayingSource(this);
+    mContext.removeFadingSource(this);
+    mContext.removePlayingSource(this);
     makeStopped(true);
 
     mFadeGainTarget = mFadeGain = 1.0f;
     mFadeTimeTarget = mLastFadeTime = std::chrono::nanoseconds::zero();
 
-    mContext->addPendingSource(this, std::move(future_buffer));
+    mContext.addPendingSource(this, std::move(future_buffer));
 }
 
 
@@ -424,9 +424,9 @@ DECL_THUNK0(void, Source, stop,)
 void SourceImpl::stop()
 {
     CheckContext(mContext);
-    mContext->removePendingSource(this);
-    mContext->removeFadingSource(this);
-    mContext->removePlayingSource(this);
+    mContext.removePendingSource(this);
+    mContext.removeFadingSource(this);
+    mContext.removePlayingSource(this);
     makeStopped();
 }
 
@@ -435,9 +435,9 @@ void SourceImpl::makeStopped(bool dolock)
     if(mStream)
     {
         if(dolock)
-            mContext->removeStream(this);
+            mContext.removeStream(this);
         else
-            mContext->removeStreamNoLock(this);
+            mContext.removeStreamNoLock(this);
     }
     mIsAsync.store(false, std::memory_order_release);
 
@@ -445,13 +445,13 @@ void SourceImpl::makeStopped(bool dolock)
     {
         alSourceRewind(mId);
         alSourcei(mId, AL_BUFFER, 0);
-        if(mContext->hasExtension(AL::EXT_EFX))
+        if(mContext.hasExtension(AL::EXT_EFX))
         {
             alSourcei(mId, AL_DIRECT_FILTER, AL_FILTER_NULL);
             for(auto &i : mEffectSlots)
                 alSource3i(mId, AL_AUXILIARY_SEND_FILTER, 0, i.mSendIdx, AL_FILTER_NULL);
         }
-        mContext->insertSourceId(mId);
+        mContext.insertSourceId(mId);
         mId = 0;
     }
 
@@ -477,7 +477,7 @@ void SourceImpl::fadeOutToStop(ALfloat gain, std::chrono::milliseconds duration)
     mLastFadeTime = std::chrono::steady_clock::now().time_since_epoch();
     mFadeTimeTarget = mLastFadeTime + duration;
 
-    mContext->addFadingSource(this);
+    mContext.addFadingSource(this);
 }
 
 
@@ -529,7 +529,7 @@ DECL_THUNK0(bool, Source, isPending, const)
 bool SourceImpl::isPending() const
 {
     CheckContext(mContext);
-    return mContext->isPendingSource(this);
+    return mContext.isPendingSource(this);
 }
 
 DECL_THUNK0(bool, Source, isPlaying, const)
@@ -592,12 +592,12 @@ bool SourceImpl::checkPending(SharedFuture<Buffer> &future)
         return true;
 
     BufferImpl *buffer = future.get().getHandle();
-    if(UNLIKELY(!buffer || buffer->getContext() != mContext))
+    if(UNLIKELY(!buffer || &(buffer->getContext()) != &mContext))
         return false;
 
     if(mId == 0)
     {
-        mId = mContext->getSourceId(mPriority);
+        mId = mContext.getSourceId(mPriority);
         applyProperties(mLooping, (ALuint)std::min<uint64_t>(mOffset, std::numeric_limits<ALint>::max()));
     }
     else
@@ -615,7 +615,7 @@ bool SourceImpl::checkPending(SharedFuture<Buffer> &future)
     alSourcei(mId, AL_BUFFER, mBuffer->getId());
     alSourcePlay(mId);
     mPaused.store(false, std::memory_order_release);
-    mContext->addPlayingSource(this, mId);
+    mContext.addPlayingSource(this, mId);
     return false;
 }
 
@@ -631,8 +631,8 @@ bool SourceImpl::fadeUpdate(std::chrono::nanoseconds cur_fade_time)
                 alSourcef(mId, AL_GAIN, mGain * mGroupGain);
             return false;
         }
-        mContext->removePendingSource(this);
-        mContext->removePlayingSource(this);
+        mContext.removePendingSource(this);
+        mContext.removePlayingSource(this);
         makeStopped(true);
         return false;
     }
@@ -666,7 +666,7 @@ bool SourceImpl::playUpdate(ALuint id)
         return true;
 
     makeStopped();
-    mContext->send(&MessageHandler::sourceStopped, Source(this));
+    mContext.send(&MessageHandler::sourceStopped, Source(this));
     return false;
 }
 
@@ -676,7 +676,7 @@ bool SourceImpl::playUpdate()
         return true;
 
     makeStopped();
-    mContext->send(&MessageHandler::sourceStopped, Source(this));
+    mContext.send(&MessageHandler::sourceStopped, Source(this));
     return false;
 }
 
@@ -784,10 +784,10 @@ std::pair<uint64_t,std::chrono::nanoseconds> SourceImpl::getSampleOffsetLatency(
         ALint queued = 0, state = -1, srcpos = 0;
 
         alGetSourcei(mId, AL_BUFFERS_QUEUED, &queued);
-        if(mContext->hasExtension(AL::SOFT_source_latency))
+        if(mContext.hasExtension(AL::SOFT_source_latency))
         {
             ALint64SOFT val[2];
-            mContext->alGetSourcei64vSOFT(mId, AL_SAMPLE_OFFSET_LATENCY_SOFT, val);
+            mContext.alGetSourcei64vSOFT(mId, AL_SAMPLE_OFFSET_LATENCY_SOFT, val);
             srcpos = val[0]>>32;
             ret.second = std::chrono::nanoseconds(val[1]);
         }
@@ -820,10 +820,10 @@ std::pair<uint64_t,std::chrono::nanoseconds> SourceImpl::getSampleOffsetLatency(
     }
 
     ALint srcpos = 0;
-    if(mContext->hasExtension(AL::SOFT_source_latency))
+    if(mContext.hasExtension(AL::SOFT_source_latency))
     {
         ALint64SOFT val[2];
-        mContext->alGetSourcei64vSOFT(mId, AL_SAMPLE_OFFSET_LATENCY_SOFT, val);
+        mContext.alGetSourcei64vSOFT(mId, AL_SAMPLE_OFFSET_LATENCY_SOFT, val);
         srcpos = val[0]>>32;
         ret.second = std::chrono::nanoseconds(val[1]);
     }
@@ -847,10 +847,10 @@ std::pair<Seconds,Seconds> SourceImpl::getSecOffsetLatency() const
         ALdouble srcpos = 0;
 
         alGetSourcei(mId, AL_BUFFERS_QUEUED, &queued);
-        if(mContext->hasExtension(AL::SOFT_source_latency))
+        if(mContext.hasExtension(AL::SOFT_source_latency))
         {
             ALdouble val[2];
-            mContext->alGetSourcedvSOFT(mId, AL_SEC_OFFSET_LATENCY_SOFT, val);
+            mContext.alGetSourcedvSOFT(mId, AL_SEC_OFFSET_LATENCY_SOFT, val);
             srcpos = val[0];
             ret.second = Seconds(val[1]);
         }
@@ -890,10 +890,10 @@ std::pair<Seconds,Seconds> SourceImpl::getSecOffsetLatency() const
         return ret;
     }
 
-    if(mContext->hasExtension(AL::SOFT_source_latency))
+    if(mContext.hasExtension(AL::SOFT_source_latency))
     {
         ALdouble val[2];
-        mContext->alGetSourcedvSOFT(mId, AL_SEC_OFFSET_LATENCY_SOFT, val);
+        mContext.alGetSourcedvSOFT(mId, AL_SEC_OFFSET_LATENCY_SOFT, val);
         ret.first = Seconds(val[0]);
         ret.second = Seconds(val[1]);
     }
@@ -979,7 +979,7 @@ void SourceImpl::set3DParameters(const Vector3 &position, const Vector3 &velocit
     CheckContext(mContext);
     if(mId != 0)
     {
-        Batcher batcher = mContext->getBatcher();
+        Batcher batcher = mContext.getBatcher();
         alSourcefv(mId, AL_POSITION, position.getPtr());
         alSourcefv(mId, AL_VELOCITY, velocity.getPtr());
         alSourcefv(mId, AL_DIRECTION, direction.getPtr());
@@ -996,10 +996,10 @@ void SourceImpl::set3DParameters(const Vector3 &position, const Vector3 &velocit
     CheckContext(mContext);
     if(mId != 0)
     {
-        Batcher batcher = mContext->getBatcher();
+        Batcher batcher = mContext.getBatcher();
         alSourcefv(mId, AL_POSITION, position.getPtr());
         alSourcefv(mId, AL_VELOCITY, velocity.getPtr());
-        if(mContext->hasExtension(AL::EXT_BFORMAT))
+        if(mContext.hasExtension(AL::EXT_BFORMAT))
             alSourcefv(mId, AL_ORIENTATION, orientation.first.getPtr());
         alSourcefv(mId, AL_DIRECTION, orientation.first.getPtr());
     }
@@ -1076,7 +1076,7 @@ void SourceImpl::setOrientation(const std::pair<Vector3,Vector3> &orientation)
     CheckContext(mContext);
     if(mId != 0)
     {
-        if(mContext->hasExtension(AL::EXT_BFORMAT))
+        if(mContext.hasExtension(AL::EXT_BFORMAT))
             alSourcefv(mId, AL_ORIENTATION, orientation.first.getPtr());
         alSourcefv(mId, AL_DIRECTION, orientation.first.getPtr());
     }
@@ -1091,7 +1091,7 @@ void SourceImpl::setOrientation(const ALfloat *at, const ALfloat *up)
     if(mId != 0)
     {
         ALfloat ori[6] = { at[0], at[1], at[2], up[0], up[1], up[2] };
-        if(mContext->hasExtension(AL::EXT_BFORMAT))
+        if(mContext.hasExtension(AL::EXT_BFORMAT))
             alSourcefv(mId, AL_ORIENTATION, ori);
         alSourcefv(mId, AL_DIRECTION, ori);
     }
@@ -1109,7 +1109,7 @@ void SourceImpl::setOrientation(const ALfloat *ori)
     CheckContext(mContext);
     if(mId != 0)
     {
-        if(mContext->hasExtension(AL::EXT_BFORMAT))
+        if(mContext.hasExtension(AL::EXT_BFORMAT))
             alSourcefv(mId, AL_ORIENTATION, ori);
         alSourcefv(mId, AL_DIRECTION, ori);
     }
@@ -1146,7 +1146,7 @@ void SourceImpl::setOuterConeGains(ALfloat gain, ALfloat gainhf)
     if(mId != 0)
     {
         alSourcef(mId, AL_CONE_OUTER_GAIN, gain);
-        if(mContext->hasExtension(AL::EXT_EFX))
+        if(mContext.hasExtension(AL::EXT_EFX))
             alSourcef(mId, AL_CONE_OUTER_GAINHF, gainhf);
     }
     mConeOuterGain = gain;
@@ -1163,7 +1163,7 @@ void SourceImpl::setRolloffFactors(ALfloat factor, ALfloat roomfactor)
     if(mId != 0)
     {
         alSourcef(mId, AL_ROLLOFF_FACTOR, factor);
-        if(mContext->hasExtension(AL::EXT_EFX))
+        if(mContext.hasExtension(AL::EXT_EFX))
             alSourcef(mId, AL_ROOM_ROLLOFF_FACTOR, roomfactor);
     }
     mRolloffFactor = factor;
@@ -1196,7 +1196,7 @@ void SourceImpl::setRadius(ALfloat radius)
     if(!(mRadius >= 0.0f))
         throw std::out_of_range("Radius out of range");
     CheckContext(mContext);
-    if(mId != 0 && mContext->hasExtension(AL::EXT_SOURCE_RADIUS))
+    if(mId != 0 && mContext.hasExtension(AL::EXT_SOURCE_RADIUS))
         alSourcef(mId, AL_SOURCE_RADIUS, radius);
     mRadius = radius;
 }
@@ -1205,7 +1205,7 @@ DECL_THUNK2(void, Source, setStereoAngles,, ALfloat, ALfloat)
 void SourceImpl::setStereoAngles(ALfloat leftAngle, ALfloat rightAngle)
 {
     CheckContext(mContext);
-    if(mId != 0 && mContext->hasExtension(AL::EXT_STEREO_ANGLES))
+    if(mId != 0 && mContext.hasExtension(AL::EXT_STEREO_ANGLES))
     {
         ALfloat angles[2] = { leftAngle, rightAngle };
         alSourcefv(mId, AL_STEREO_ANGLES, angles);
@@ -1218,7 +1218,7 @@ DECL_THUNK1(void, Source, set3DSpatialize,, Spatialize)
 void SourceImpl::set3DSpatialize(Spatialize spatialize)
 {
     CheckContext(mContext);
-    if(mId != 0 && mContext->hasExtension(AL::SOFT_source_spatialize))
+    if(mId != 0 && mContext.hasExtension(AL::SOFT_source_spatialize))
         alSourcei(mId, AL_SOURCE_SPATIALIZE_SOFT, (ALint)spatialize);
     mSpatialize = spatialize;
 }
@@ -1228,8 +1228,8 @@ void SourceImpl::setResamplerIndex(ALsizei index)
 {
     if(index < 0)
         throw std::out_of_range("Resampler index out of range");
-    index = std::min<ALsizei>(index, mContext->getAvailableResamplers().size());
-    if(mId != 0 && mContext->hasExtension(AL::SOFT_source_resampler))
+    index = std::min<ALsizei>(index, mContext.getAvailableResamplers().size());
+    if(mId != 0 && mContext.hasExtension(AL::SOFT_source_resampler))
         alSourcei(mId, AL_SOURCE_RESAMPLER_SOFT, index);
     mResampler = index;
 }
@@ -1240,7 +1240,7 @@ void SourceImpl::setAirAbsorptionFactor(ALfloat factor)
     if(!(factor >= 0.0f && factor <= 10.0f))
         throw std::out_of_range("Absorption factor out of range");
     CheckContext(mContext);
-    if(mId != 0 && mContext->hasExtension(AL::EXT_EFX))
+    if(mId != 0 && mContext.hasExtension(AL::EXT_EFX))
         alSourcef(mId, AL_AIR_ABSORPTION_FACTOR, factor);
     mAirAbsorptionFactor = factor;
 }
@@ -1249,7 +1249,7 @@ DECL_THUNK3(void, Source, setGainAuto,, bool, bool, bool)
 void SourceImpl::setGainAuto(bool directhf, bool send, bool sendhf)
 {
     CheckContext(mContext);
-    if(mId != 0 && mContext->hasExtension(AL::EXT_EFX))
+    if(mId != 0 && mContext.hasExtension(AL::EXT_EFX))
     {
         alSourcei(mId, AL_DIRECT_FILTER_GAINHF_AUTO, directhf ? AL_TRUE : AL_FALSE);
         alSourcei(mId, AL_AUXILIARY_SEND_FILTER_GAIN_AUTO, send ? AL_TRUE : AL_FALSE);
@@ -1263,51 +1263,51 @@ void SourceImpl::setGainAuto(bool directhf, bool send, bool sendhf)
 
 void SourceImpl::setFilterParams(ALuint &filterid, const FilterParams &params)
 {
-    if(!mContext->hasExtension(AL::EXT_EFX))
+    if(!mContext.hasExtension(AL::EXT_EFX))
         return;
 
     if(!(params.mGain < 1.0f || params.mGainHF < 1.0f || params.mGainLF < 1.0f))
     {
         if(filterid)
-            mContext->alFilteri(filterid, AL_FILTER_TYPE, AL_FILTER_NULL);
+            mContext.alFilteri(filterid, AL_FILTER_TYPE, AL_FILTER_NULL);
         return;
     }
 
     alGetError();
     if(!filterid)
     {
-        mContext->alGenFilters(1, &filterid);
+        mContext.alGenFilters(1, &filterid);
         throw_al_error("Failed to create Filter");
     }
     bool filterset = false;
     if(params.mGainHF < 1.0f && params.mGainLF < 1.0f)
     {
-        mContext->alFilteri(filterid, AL_FILTER_TYPE, AL_FILTER_BANDPASS);
+        mContext.alFilteri(filterid, AL_FILTER_TYPE, AL_FILTER_BANDPASS);
         if(alGetError() == AL_NO_ERROR)
         {
-            mContext->alFilterf(filterid, AL_BANDPASS_GAIN, std::min(params.mGain, 1.0f));
-            mContext->alFilterf(filterid, AL_BANDPASS_GAINHF, std::min(params.mGainHF, 1.0f));
-            mContext->alFilterf(filterid, AL_BANDPASS_GAINLF, std::min(params.mGainLF, 1.0f));
+            mContext.alFilterf(filterid, AL_BANDPASS_GAIN, std::min(params.mGain, 1.0f));
+            mContext.alFilterf(filterid, AL_BANDPASS_GAINHF, std::min(params.mGainHF, 1.0f));
+            mContext.alFilterf(filterid, AL_BANDPASS_GAINLF, std::min(params.mGainLF, 1.0f));
             filterset = true;
         }
     }
     if(!filterset && !(params.mGainHF < 1.0f) && params.mGainLF < 1.0f)
     {
-        mContext->alFilteri(filterid, AL_FILTER_TYPE, AL_FILTER_HIGHPASS);
+        mContext.alFilteri(filterid, AL_FILTER_TYPE, AL_FILTER_HIGHPASS);
         if(alGetError() == AL_NO_ERROR)
         {
-            mContext->alFilterf(filterid, AL_HIGHPASS_GAIN, std::min(params.mGain, 1.0f));
-            mContext->alFilterf(filterid, AL_HIGHPASS_GAINLF, std::min(params.mGainLF, 1.0f));
+            mContext.alFilterf(filterid, AL_HIGHPASS_GAIN, std::min(params.mGain, 1.0f));
+            mContext.alFilterf(filterid, AL_HIGHPASS_GAINLF, std::min(params.mGainLF, 1.0f));
             filterset = true;
         }
     }
     if(!filterset)
     {
-        mContext->alFilteri(filterid, AL_FILTER_TYPE, AL_FILTER_LOWPASS);
+        mContext.alFilteri(filterid, AL_FILTER_TYPE, AL_FILTER_LOWPASS);
         if(alGetError() == AL_NO_ERROR)
         {
-            mContext->alFilterf(filterid, AL_LOWPASS_GAIN, std::min(params.mGain, 1.0f));
-            mContext->alFilterf(filterid, AL_LOWPASS_GAINHF, std::min(params.mGainHF, 1.0f));
+            mContext.alFilterf(filterid, AL_LOWPASS_GAIN, std::min(params.mGain, 1.0f));
+            mContext.alFilterf(filterid, AL_LOWPASS_GAINHF, std::min(params.mGainHF, 1.0f));
             filterset = true;
         }
     }
@@ -1443,7 +1443,7 @@ void SourceImpl::release()
     stop();
 
     resetProperties();
-    mContext->freeSource(this);
+    mContext.freeSource(this);
 }
 
 

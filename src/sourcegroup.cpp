@@ -92,7 +92,7 @@ void SourceGroupImpl::setParentGroup(SourceGroup group)
 
         parent->insertSubGroup(this);
 
-        Batcher batcher = mContext->getBatcher();
+        Batcher batcher = mContext.getBatcher();
         if(mParent)
             mParent->eraseSubGroup(this);
         mParent = parent;
@@ -131,7 +131,7 @@ void SourceGroupImpl::setGain(ALfloat gain)
     mGain = gain;
     gain *= mParentProps.mGain;
     ALfloat pitch = mPitch * mParentProps.mPitch;
-    Batcher batcher = mContext->getBatcher();
+    Batcher batcher = mContext.getBatcher();
     for(SourceImpl *alsrc : mSources)
         alsrc->groupPropUpdate(gain, pitch);
     for(SourceGroupImpl *group : mSubGroups)
@@ -147,7 +147,7 @@ void SourceGroupImpl::setPitch(ALfloat pitch)
     mPitch = pitch;
     ALfloat gain = mGain * mParentProps.mGain;
     pitch *= mParentProps.mPitch;
-    Batcher batcher = mContext->getBatcher();
+    Batcher batcher = mContext.getBatcher();
     for(SourceImpl *alsrc : mSources)
         alsrc->groupPropUpdate(gain, pitch);
     for(SourceGroupImpl *group : mSubGroups)
@@ -178,7 +178,7 @@ DECL_THUNK0(void, SourceGroup, pauseAll, const)
 void SourceGroupImpl::pauseAll() const
 {
     CheckContext(mContext);
-    auto lock = mContext->getSourceStreamLock();
+    auto lock = mContext.getSourceStreamLock();
 
     Vector<ALuint> sourceids;
     sourceids.reserve(16);
@@ -215,7 +215,7 @@ DECL_THUNK0(void, SourceGroup, resumeAll, const)
 void SourceGroupImpl::resumeAll() const
 {
     CheckContext(mContext);
-    auto lock = mContext->getSourceStreamLock();
+    auto lock = mContext.getSourceStreamLock();
 
     Vector<ALuint> sourceids;
     sourceids.reserve(16);
@@ -244,11 +244,11 @@ void SourceGroupImpl::updateStoppedStatus() const
 {
     for(SourceImpl *alsrc : mSources)
     {
-        mContext->removePendingSource(alsrc);
-        mContext->removeFadingSource(alsrc);
-        mContext->removePlayingSource(alsrc);
+        mContext.removePendingSource(alsrc);
+        mContext.removeFadingSource(alsrc);
+        mContext.removePlayingSource(alsrc);
         alsrc->makeStopped(false);
-        mContext->send(&MessageHandler::sourceForceStopped, alsrc);
+        mContext.send(&MessageHandler::sourceForceStopped, alsrc);
     }
     for(SourceGroupImpl *group : mSubGroups)
         group->updateStoppedStatus();
@@ -264,7 +264,7 @@ void SourceGroupImpl::stopAll() const
     collectSourceIds(sourceids);
     if(!sourceids.empty())
     {
-        auto lock = mContext->getSourceStreamLock();
+        auto lock = mContext.getSourceStreamLock();
         alSourceRewindv(sourceids.size(), sourceids.data());
         updateStoppedStatus();
     }
@@ -280,7 +280,7 @@ void SourceGroup::release()
 void SourceGroupImpl::release()
 {
     CheckContext(mContext);
-    Batcher batcher = mContext->getBatcher();
+    Batcher batcher = mContext.getBatcher();
     for(SourceImpl *source : mSources)
         source->unsetGroup();
     mSources.clear();
@@ -291,7 +291,7 @@ void SourceGroupImpl::release()
         mParent->eraseSubGroup(this);
     mParent = nullptr;
 
-    mContext->freeSourceGroup(this);
+    mContext.freeSourceGroup(this);
 }
 
 

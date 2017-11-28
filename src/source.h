@@ -25,7 +25,7 @@ struct SendProps {
 };
 
 class SourceImpl {
-    ContextImpl *const mContext;
+    ContextImpl &mContext;
     ALuint mId;
 
     BufferImpl *mBuffer;
@@ -81,7 +81,7 @@ class SourceImpl {
     void setFilterParams(ALuint &filterid, const FilterParams &params);
 
 public:
-    SourceImpl(ContextImpl *context);
+    SourceImpl(ContextImpl &context);
     ~SourceImpl();
 
     ALuint getId() const { return mId; }

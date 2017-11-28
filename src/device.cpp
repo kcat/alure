@@ -257,7 +257,7 @@ Context DeviceImpl::createContext(ArrayView<AttributePair> attributes)
         }
     }
 
-    mContexts.emplace_back(MakeUnique<ContextImpl>(this, attributes));
+    mContexts.emplace_back(MakeUnique<ContextImpl>(*this, attributes));
     return Context(mContexts.back().get());
 }
 
