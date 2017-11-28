@@ -102,6 +102,29 @@ void EffectImpl::setReverbProperties(const EFXEAXREVERBPROPERTIES &props)
     }
 }
 
+DECL_THUNK1(void, Effect, setChorusProperties,, const EFXCHORUSPROPERTIES&)
+void EffectImpl::setChorusProperties(const EFXCHORUSPROPERTIES &props)
+{
+    CheckContext(mContext);
+
+    if(mType != AL_EFFECT_CHORUS)
+    {
+        alGetError();
+        mContext.alEffecti(mId, AL_EFFECT_TYPE, AL_EFFECT_CHORUS);
+        throw_al_error("Failed to set chorus type");
+        mType = AL_EFFECT_REVERB;
+    }
+
+#define SETPARAM(t,v) AL_CHORUS_##t, clamp((v), AL_CHORUS_MIN_##t, AL_CHORUS_MAX_##t)
+    mContext.alEffecti(mId, SETPARAM(WAVEFORM, props.iWaveform));
+    mContext.alEffecti(mId, SETPARAM(PHASE, props.iPhase));
+    mContext.alEffectf(mId, SETPARAM(RATE, props.flRate));
+    mContext.alEffectf(mId, SETPARAM(DEPTH, props.flDepth));
+    mContext.alEffectf(mId, SETPARAM(FEEDBACK, props.flFeedback));
+    mContext.alEffectf(mId, SETPARAM(DELAY, props.flDelay));
+#undef SETPARAM
+}
+
 void Effect::destroy()
 {
     EffectImpl *i = pImpl;

@@ -59,6 +59,18 @@ typedef struct {
 } EFXEAXREVERBPROPERTIES, *LPEFXEAXREVERBPROPERTIES;
 #endif
 
+#ifndef EFXCHORUSPROPERTIES_DEFINED
+#define EFXCHORUSPROPERTIES_DEFINED
+typedef struct {
+    int iWaveform;
+    int iPhase;
+    float flRate;
+    float flDepth;
+    float flFeedback;
+    float flDelay;
+} EFXCHORUSPROPERTIES, *LPEFXCHORUSPROPERTIES;
+#endif
+
 namespace alure {
 
 // Available class interfaces.
@@ -1276,6 +1288,12 @@ public:
      * downgrade to the Standard Reverb effect.
      */
     void setReverbProperties(const EFXEAXREVERBPROPERTIES &props);
+
+    /**
+     * Updates the effect with the specified chorus properties. If the chorus
+     * effect is not supported, an exception will be thrown.
+     */
+    void setChorusProperties(const EFXCHORUSPROPERTIES &props);
 
     void destroy();
 };

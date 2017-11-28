@@ -15,6 +15,7 @@ public:
     ~EffectImpl();
 
     void setReverbProperties(const EFXEAXREVERBPROPERTIES &props);
+    void setChorusProperties(const EFXCHORUSPROPERTIES &props);
 
     void destroy();
 
