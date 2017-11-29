@@ -29,6 +29,13 @@
   #define ALURE_API
  #endif
 #endif /* ALURE_API */
+#ifndef ALURE_TEMPLATE
+ #ifndef ALURE_STATIC_LIB
+  #define ALURE_TEMPLATE extern template
+ #else
+  #define ALURE_TEMPLATE template
+ #endif
+#endif /* ALURE_TEMPLATE */
 
 #ifndef EFXEAXREVERBPROPERTIES_DEFINED
 #define EFXEAXREVERBPROPERTIES_DEFINED
@@ -85,6 +92,7 @@ class AuxiliaryEffectSlot;
 class Effect;
 class Decoder;
 class DecoderFactory;
+class FileIOFactory;
 class MessageHandler;
 
 // Opaque class implementations.
@@ -97,6 +105,16 @@ class SourceImpl;
 class SourceGroupImpl;
 class AuxiliaryEffectSlotImpl;
 class EffectImpl;
+
+}
+
+#ifndef ALURE_STATIC_LIB
+/****** Explicitly instantiate templates used by the lib ******/
+ALURE_TEMPLATE class ALURE_API ALURE_SHARED_PTR_TYPE<alure::DeviceManagerImpl>;
+/******/
+#endif
+
+namespace alure {
 
 /** Convert a value from decibels to linear gain. */
 template<typename T, typename NonRefT=RemoveRefT<T>,

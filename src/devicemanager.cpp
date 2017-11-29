@@ -12,8 +12,8 @@
 #include "alc.h"
 #include "al.h"
 
-namespace alure
-{
+
+namespace alure {
 
 std::string alc_category::message(int condition) const
 {

@@ -23,11 +23,17 @@ template<typename T> using RemoveRefT = typename std::remove_reference<T>::type;
 template<bool B> using EnableIfT = typename std::enable_if<B>::type;
 
 
+// NOTE: Need to define this as a macro since we can't use the aliased type
+// names for explicit template instantiation, and the whole purpose of these
+// aliases is to avoid respecifying the desired implementation.
+#define ALURE_SHARED_PTR_TYPE std::shared_ptr
+
+
 // Duration in seconds, using double precision
 using Seconds = std::chrono::duration<double>;
 
 // A SharedPtr implementation, defaults to C++11's std::shared_ptr.
-template<typename... Args> using SharedPtr = std::shared_ptr<Args...>;
+template<typename... Args> using SharedPtr = ALURE_SHARED_PTR_TYPE<Args...>;
 template<typename T, typename... Args>
 inline SharedPtr<T> MakeShared(Args&&... args)
 { return std::make_shared<T>(std::forward<Args>(args)...); }
