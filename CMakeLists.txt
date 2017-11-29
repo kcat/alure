@@ -71,7 +71,9 @@ endif()
 
 
 set(LINKER_OPTS )
-if(NOT MSVC)
+if(MSVC)
+    set(LINKER_OPTS ${LINKER_OPTS} "/SAFESEH:NO")
+else()
     option(ALURE_STATIC_GCCRT "Static-link libgcc and libstdc++ runtimes" OFF)
     if(ALURE_STATIC_GCCRT)
         set(OLD_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES})
