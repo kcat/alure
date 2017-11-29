@@ -6,6 +6,7 @@
 #include <iostream>
 #include <iomanip>
 #include <cstring>
+#include <cctype>
 #include <thread>
 #include <chrono>
 
@@ -14,7 +15,7 @@
 #include "efx-presets.h"
 
 // Not UTF-8 aware!
-int ci_compare(alure::StringView lhs, alure::StringView rhs)
+static int ci_compare(alure::StringView lhs, alure::StringView rhs)
 {
     using traits = alure::StringView::traits_type;
 
