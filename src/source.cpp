@@ -114,7 +114,7 @@ public:
         ALuint frames;
         ALuint len = mUpdateLen;
         if(loop && mSamplePos <= mLoopPts.second)
-            len = std::min<uint64_t>(len, mLoopPts.second - mSamplePos);
+            len = static_cast<ALuint>(std::min<uint64_t>(len, mLoopPts.second - mSamplePos));
         else
             loop = false;
 
@@ -135,7 +135,9 @@ public:
                 mSamplePos = mLoopPts.first;
                 mHasLooped = true;
 
-                len = std::min<uint64_t>(mUpdateLen-frames, mLoopPts.second-mLoopPts.first);
+                len = static_cast<ALuint>(
+                    std::min<uint64_t>(mUpdateLen-frames, mLoopPts.second-mLoopPts.first)
+                );
                 ALuint got = mDecoder->read(&mData[frames*mFrameSize], len);
                 if(got == 0) break;
                 mSamplePos += got;

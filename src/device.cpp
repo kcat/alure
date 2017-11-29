@@ -38,7 +38,7 @@ void LoadHrtf(DeviceImpl *device)
 void LoadNothing(DeviceImpl*) { }
 
 static const struct {
-    enum ALC extension;
+    ALC extension;
     const char name[32];
     void (&loader)(DeviceImpl*);
 } ALCExtensionList[] = {
@@ -111,7 +111,7 @@ bool Device::queryExtension(const String &name) const
 DECL_THUNK1(bool, Device, queryExtension, const, const char*)
 bool DeviceImpl::queryExtension(const char *name) const
 {
-    return alcIsExtensionPresent(mDevice, name);
+    return static_cast<bool>(alcIsExtensionPresent(mDevice, name));
 }
 
 DECL_THUNK0(Version, Device, getALCVersion, const)
@@ -207,7 +207,7 @@ void DeviceImpl::reset(ArrayView<AttributePair> attributes)
 {
     if(!hasExtension(ALC::SOFT_HRTF))
         return;
-    bool success = false;
+    ALCboolean success = ALC_FALSE;
     if(attributes.end()) /* No explicit attributes. */
         success = alcResetDeviceSOFT(mDevice, nullptr);
     else

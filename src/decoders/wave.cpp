@@ -147,7 +147,9 @@ ALuint WaveDecoder::read(ALvoid *ptr, ALuint count) noexcept
     ALuint total = 0;
     if(mCurrentPos < mEnd)
     {
-        size_t len = std::min<std::istream::pos_type>(count*mFrameSize, mEnd-mCurrentPos);
+        ALuint len = static_cast<ALuint>(
+            std::min<std::istream::pos_type>(count*mFrameSize, mEnd-mCurrentPos)
+        );
 #ifdef __BIG_ENDIAN__
         switch(mSampleType)
         {
@@ -155,12 +157,12 @@ ALuint WaveDecoder::read(ALvoid *ptr, ALuint count) noexcept
                 while(total < len && mFile->good() && !mFile->eof())
                 {
                     char temp[256];
-                    size_t todo = std::min(len-total, sizeof(temp));
+                    ALuint todo = std::min<ALuint>(len-total, sizeof(temp));
 
                     mFile->read(temp, todo);
-                    std::streamsize got = mFile->gcount();
+                    ALuint got = static_cast<ALuint>(mFile->gcount());
 
-                    for(std::streamsize i = 0;i < got;++i)
+                    for(ALuint i = 0;i < got;++i)
                         reinterpret_cast<char*>(ptr)[total+i] = temp[i^3];
 
                     mCurrentPos += got;
@@ -173,12 +175,12 @@ ALuint WaveDecoder::read(ALvoid *ptr, ALuint count) noexcept
                 while(total < len && mFile->good() && !mFile->eof())
                 {
                     char temp[256];
-                    size_t todo = std::min(len-total, sizeof(temp));
+                    ALuint todo = std::min<ALuint>(len-total, sizeof(temp));
 
                     mFile->read(temp, todo);
-                    std::streamsize got = mFile->gcount();
+                    ALuint got = static_cast<ALuint>(mFile->gcount());
 
-                    for(std::streamsize i = 0;i < got;++i)
+                    for(ALuint i = 0;i < got;++i)
                         reinterpret_cast<char*>(ptr)[total+i] = temp[i^1];
 
                     mCurrentPos += got;
@@ -193,7 +195,7 @@ ALuint WaveDecoder::read(ALvoid *ptr, ALuint count) noexcept
         {
 #endif
                 mFile->read(reinterpret_cast<char*>(ptr), len);
-                std::streamsize got = mFile->gcount();
+                ALuint got = static_cast<ALuint>(mFile->gcount());
 
                 mCurrentPos += got;
                 total = got / mFrameSize;

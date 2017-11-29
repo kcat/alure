@@ -298,8 +298,7 @@ alure::UniquePtr<alure::FileIOFactory> sFileFactory;
 
 }
 
-namespace alure
-{
+namespace alure {
 
 static inline void CheckContext(const ContextImpl *ctx)
 {
@@ -511,7 +510,7 @@ static void LoadSourceLatency(ContextImpl *ctx)
 }
 
 static const struct {
-    enum AL extension;
+    AL extension;
     const char name[32];
     void (&loader)(ContextImpl*);
 } ALExtensionList[] = {
@@ -861,7 +860,9 @@ BufferOrExceptT ContextImpl::doCreateBuffer(StringView name, Vector<UniquePtr<Bu
     ALuint srate = decoder->getFrequency();
     ChannelConfig chans = decoder->getChannelConfig();
     SampleType type = decoder->getSampleType();
-    ALuint frames = decoder->getLength();
+    ALuint frames = static_cast<ALuint>(
+        std::min<uint64_t>(decoder->getLength(), std::numeric_limits<ALuint>::max())
+    );
 
     Vector<ALbyte> data(FramesToBytes(frames, chans, type));
     frames = decoder->read(data.data(), frames);
@@ -916,7 +917,9 @@ BufferOrExceptT ContextImpl::doCreateBufferAsync(StringView name, Vector<UniqueP
     ALuint srate = decoder->getFrequency();
     ChannelConfig chans = decoder->getChannelConfig();
     SampleType type = decoder->getSampleType();
-    ALuint frames = decoder->getLength();
+    ALuint frames = static_cast<ALuint>(
+        std::min<uint64_t>(decoder->getLength(), std::numeric_limits<ALuint>::max())
+    );
     if(!frames)
         return std::make_exception_ptr(std::runtime_error("No samples for buffer"));
 
@@ -1642,8 +1645,8 @@ void ContextImpl::update()
     {
         ALCint connected;
         alcGetIntegerv(mDevice.getALCdevice(), ALC_CONNECTED, 1, &connected);
-        mIsConnected = connected;
-        if(!connected && mMessage.get()) mMessage->deviceDisconnected(Device(&mDevice));
+        mIsConnected = static_cast<bool>(connected);
+        if(!mIsConnected && mMessage.get()) mMessage->deviceDisconnected(Device(&mDevice));
     }
 }
 

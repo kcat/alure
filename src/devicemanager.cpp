@@ -87,7 +87,7 @@ bool DeviceManager::queryExtension(const String &name) const
 DECL_THUNK1(bool, DeviceManager, queryExtension, const, const char*)
 bool DeviceManagerImpl::queryExtension(const char *name) const
 {
-    return alcIsExtensionPresent(nullptr, name);
+    return static_cast<bool>(alcIsExtensionPresent(nullptr, name));
 }
 
 DECL_THUNK1(Vector<String>, DeviceManager, enumerate, const, DeviceEnumeration)
