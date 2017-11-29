@@ -3,6 +3,12 @@ image:
 
 build_script:
 - cmd: >-
+    wget 'http://openal-soft.org/openal-binaries/openal-soft-1.18.2-bin.zip'
+
+    7z x openal-soft-1.18.2-bin.zip
+
+    set OPENALDIR=C:\projects\alure\openal-soft-1.18.2-bin
+
     mkdir build
 
     cd build
