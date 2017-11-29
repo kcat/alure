@@ -246,19 +246,4 @@ if(ALURE_BUILD_EXAMPLES)
         target_compile_options(alure-dumb PRIVATE ${CXX_FLAGS})
         target_link_libraries(alure-dumb PRIVATE alure2 ${DUMB_LIBRARIES} ${LINKER_OPTS})
     endif()
-
-    find_package(SDL2)
-    find_package(OpenGL)
-    if(SDL2_FOUND AND OPENGL_FOUND)
-        add_executable(demo demo/audioenv.cpp
-                            demo/common.cpp
-                            demo/object.cpp
-                            demo/obstruct.cpp
-                            demo/textout.cpp
-                            demo/main.cpp
-        )
-        target_include_directories(demo PRIVATE ${SDL2_INCLUDE_DIRS} ${OPENGL_INCLUDE_DIRS})
-        target_compile_options(demo PRIVATE ${CXX_FLAGS})
-        target_link_libraries(demo PRIVATE alure2 ${SDL2_LIBRARIES} ${OPENGL_LIBRARIES} ${LINKER_OPTS})
-    endif()
 endif()
