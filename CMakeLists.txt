@@ -182,7 +182,8 @@ CONFIGURE_FILE(
 
 add_library(alure2 SHARED ${alure_srcs})
 if(EXPORT_DECL)
-    target_compile_definitions(alure2 PRIVATE ALURE_API=${EXPORT_DECL} NOMINMAX)
+    target_compile_definitions(alure2 PRIVATE ALURE_API=${EXPORT_DECL} ALURE_TEMPLATE=template
+                                              NOMINMAX)
 endif()
 target_include_directories(alure2
     PUBLIC ${alure_SOURCE_DIR}/include/AL ${OPENAL_INCLUDE_DIR}
