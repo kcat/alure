@@ -321,7 +321,8 @@ SharedPtr<Decoder> WaveDecoderFactory::createDecoder(UniquePtr<std::istream> &fi
                 char subtype[16];
                 ALushort validbits = read_le16(*file); size -= 2;
                 ALuint chanmask = read_le32(*file); size -= 4;
-                file->read(subtype, 16); size -= file->gcount();
+                file->read(subtype, 16);
+                size -= static_cast<ALuint>(file->gcount());
 
                 /* Padded bit depths not supported */
                 if(validbits != bitdepth)
