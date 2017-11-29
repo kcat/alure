@@ -72,7 +72,7 @@ endif()
 
 set(LINKER_OPTS )
 if(MSVC)
-    set(LINKER_OPTS ${LINKER_OPTS} "/SAFESEH:NO")
+    set(LINKER_OPTS ${LINKER_OPTS} "-SAFESEH:NO")
 else()
     option(ALURE_STATIC_GCCRT "Static-link libgcc and libstdc++ runtimes" OFF)
     if(ALURE_STATIC_GCCRT)
