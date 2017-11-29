@@ -55,6 +55,10 @@ static inline void GetDeviceProc(T *&func, ALCdevice *device, const char *name)
 WeakPtr<DeviceManagerImpl> DeviceManagerImpl::sInstance;
 ALCboolean (ALC_APIENTRY*DeviceManagerImpl::SetThreadContext)(ALCcontext*);
 
+DeviceManager::DeviceManager(SharedPtr<DeviceManagerImpl>&& impl) noexcept
+  : pImpl(std::move(impl))
+{ }
+
 DeviceManager::~DeviceManager() { }
 
 DeviceManager DeviceManager::getInstance()

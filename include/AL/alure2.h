@@ -333,7 +333,7 @@ enum class DefaultDeviceType {
 class ALURE_API DeviceManager {
     SharedPtr<DeviceManagerImpl> pImpl;
 
-    DeviceManager(SharedPtr<DeviceManagerImpl>&& impl) noexcept : pImpl(std::move(impl)) { }
+    DeviceManager(SharedPtr<DeviceManagerImpl>&& impl) noexcept;
 
 public:
     /**
