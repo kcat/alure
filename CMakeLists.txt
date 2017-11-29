@@ -71,7 +71,11 @@ endif()
 
 
 set(LINKER_OPTS )
-if(NOT MSVC)
+if(MSVC)
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /SAFESEH:NO")
+    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} /SAFESEH:NO")
+    set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} /SAFESEH:NO")
+else()
     option(ALURE_STATIC_GCCRT "Static-link libgcc and libstdc++ runtimes" OFF)
     if(ALURE_STATIC_GCCRT)
         set(OLD_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES})
@@ -186,10 +190,7 @@ target_include_directories(alure2
             ${decoder_incls}
 )
 target_compile_options(alure2 PRIVATE ${CXX_FLAGS} ${VISIBILITY_FLAGS})
-target_link_libraries(alure2
-    PUBLIC ${alure_libs} "$<$<CXX_COMPILER_ID:MSVC>:-SAFESEH:NO>"
-    PRIVATE ${LINKER_OPTS}
-)
+target_link_libraries(alure2 PUBLIC ${alure_libs} PRIVATE ${LINKER_OPTS})
 
 add_library(alure2_s STATIC ${alure_srcs})
 target_compile_definitions(alure2_s PUBLIC ALURE_STATIC_LIB PRIVATE NOMINMAX)
