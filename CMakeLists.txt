@@ -16,30 +16,31 @@ include(CheckCXXSourceCompiles)
 
 find_package(OpenAL REQUIRED)
 
-option(ALURE_STATIC_GCCRT "Static-link libgcc and libstdc++ runtimes" OFF)
-
 set(CXX_FLAGS )
-check_cxx_compiler_flag(-std=c++11 HAVE_STD_CXX11)
-if(HAVE_STD_CXX11)
-    set(CXX_FLAGS -std=c++11 ${CXX_FLAGS})
-endif()
 
-check_cxx_compiler_flag(-Wall HAVE_WALL_SWITCH)
-if(HAVE_WALL_SWITCH)
-    set(CXX_FLAGS ${CXX_FLAGS} -Wall)
-endif()
-check_cxx_compiler_flag(-Wextra HAVE_WEXTRA_SWITCH)
-if(HAVE_WEXTRA_SWITCH)
-    set(CXX_FLAGS ${CXX_FLAGS} -Wextra)
-endif()
-
-check_cxx_compiler_flag(-fno-rtti HAVE_NO_RTTI_SWITCH)
-if(HAVE_NO_RTTI_SWITCH)
-    set(CXX_FLAGS ${CXX_FLAGS} -fno-rtti)
-else()
+if(MSVC)
     check_cxx_compiler_flag(/GR- HAVE_GRX_SWITCH)
     if(HAVE_GRX_SWITCH)
         set(CXX_FLAGS ${CXX_FLAGS} /GR-)
+    endif()
+else()
+    check_cxx_compiler_flag(-std=c++11 HAVE_STD_CXX11)
+    if(HAVE_STD_CXX11)
+        set(CXX_FLAGS -std=c++11 ${CXX_FLAGS})
+    endif()
+
+    check_cxx_compiler_flag(-Wall HAVE_WALL_SWITCH)
+    if(HAVE_WALL_SWITCH)
+        set(CXX_FLAGS ${CXX_FLAGS} -Wall)
+    endif()
+    check_cxx_compiler_flag(-Wextra HAVE_WEXTRA_SWITCH)
+    if(HAVE_WEXTRA_SWITCH)
+        set(CXX_FLAGS ${CXX_FLAGS} -Wextra)
+    endif()
+
+    check_cxx_compiler_flag(-fno-rtti HAVE_NO_RTTI_SWITCH)
+    if(HAVE_NO_RTTI_SWITCH)
+        set(CXX_FLAGS ${CXX_FLAGS} -fno-rtti)
     endif()
 endif()
 
@@ -70,23 +71,26 @@ endif()
 
 
 set(LINKER_OPTS )
-if(ALURE_STATIC_GCCRT)
-    set(OLD_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES})
-    set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES} -static-libgcc -static-libstdc++)
-    check_cxx_source_compiles(
+if(NOT MSVC)
+    option(ALURE_STATIC_GCCRT "Static-link libgcc and libstdc++ runtimes" OFF)
+    if(ALURE_STATIC_GCCRT)
+        set(OLD_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES})
+        set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES} -static-libgcc -static-libstdc++)
+        check_cxx_source_compiles(
 "#include <vector>
 int main()
 {
     std::vector<int> test;
     return test.size();
 }"
-        HAVE_STATIC_GCCRT_SWITCHES
-    )
-    if(HAVE_STATIC_GCCRT_SWITCHES)
-        set(LINKER_OPTS ${LINKER_OPTS} -static-libgcc -static-libstdc++)
+            HAVE_STATIC_GCCRT_SWITCHES
+        )
+        if(HAVE_STATIC_GCCRT_SWITCHES)
+            set(LINKER_OPTS ${LINKER_OPTS} -static-libgcc -static-libstdc++)
+        endif()
+        set(CMAKE_REQUIRED_LIBRARIES ${OLD_REQUIRED_LIBRARIES})
+        unset(OLD_REQUIRED_LIBRARIES)
     endif()
-    set(CMAKE_REQUIRED_LIBRARIES ${OLD_REQUIRED_LIBRARIES})
-    unset(OLD_REQUIRED_LIBRARIES)
 endif()
 
 
@@ -241,5 +245,20 @@ if(ALURE_BUILD_EXAMPLES)
         target_include_directories(alure-dumb PRIVATE ${DUMB_INCLUDE_DIRS})
         target_compile_options(alure-dumb PRIVATE ${CXX_FLAGS})
         target_link_libraries(alure-dumb PRIVATE alure2 ${DUMB_LIBRARIES} ${LINKER_OPTS})
+    endif()
+
+    find_package(SDL2)
+    find_package(OpenGL)
+    if(SDL2_FOUND AND OPENGL_FOUND)
+        add_executable(demo demo/audioenv.cpp
+                            demo/common.cpp
+                            demo/object.cpp
+                            demo/obstruct.cpp
+                            demo/textout.cpp
+                            demo/main.cpp
+        )
+        target_include_directories(demo PRIVATE ${SDL2_INCLUDE_DIRS} ${OPENGL_INCLUDE_DIRS})
+        target_compile_options(demo PRIVATE ${CXX_FLAGS})
+        target_link_libraries(demo PRIVATE alure2 ${SDL2_LIBRARIES} ${OPENGL_LIBRARIES} ${LINKER_OPTS})
     endif()
 endif()
