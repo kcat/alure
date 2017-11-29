@@ -1,6 +1,11 @@
 image:
   - Visual Studio 2015
 
+install:
+    # Remove the VS Xamarin targets to reduce AppVeyor specific noise in build
+    # logs. See: http://help.appveyor.com/discussions/problems/4569
+    - del "C:\Program Files (x86)\MSBuild\14.0\Microsoft.Common.targets\ImportAfter\Xamarin.Common.targets"
+
 build_script:
 - cmd: >-
     curl "http://openal-soft.org/openal-binaries/openal-soft-1.18.2-bin.zip" -o openal-soft-1.18.2-bin.zip
