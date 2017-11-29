@@ -47,8 +47,7 @@
 #include <windows.h>
 #endif
 
-namespace std
-{
+namespace std {
 
 // Implements a FNV-1a hash for StringView. NOTE: This is *NOT* guaranteed
 // compatible with std::hash<String>! The standard does not give any specific
@@ -90,7 +89,7 @@ struct hash<alure::StringView> {
 namespace {
 
 // Global mutex to protect global context changes
-std::mutex mGlobalCtxMutex;
+std::mutex gGlobalCtxMutex;
 
 #ifdef _WIN32
 // Windows' std::ifstream fails with non-ANSI paths since the standard only
@@ -543,7 +542,7 @@ std::atomic<uint64_t> ContextImpl::sContextSetCount{0};
 
 void ContextImpl::MakeCurrent(ContextImpl *context)
 {
-    std::unique_lock<std::mutex> ctxlock(mGlobalCtxMutex);
+    std::unique_lock<std::mutex> ctxlock(gGlobalCtxMutex);
 
     if(alcMakeContextCurrent(context ? context->getALCcontext() : nullptr) == ALC_FALSE)
         throw std::runtime_error("Call to alcMakeContextCurrent failed");
@@ -607,7 +606,7 @@ void ContextImpl::backgroundProc()
 
     std::chrono::steady_clock::time_point basetime = std::chrono::steady_clock::now();
     std::chrono::milliseconds waketime(0);
-    std::unique_lock<std::mutex> ctxlock(mGlobalCtxMutex);
+    std::unique_lock<std::mutex> ctxlock(gGlobalCtxMutex);
     while(!mQuitThread.load(std::memory_order_acquire))
     {
         {
@@ -712,7 +711,7 @@ ContextImpl::~ContextImpl()
         alcDestroyContext(mContext);
     mContext = nullptr;
 
-    std::lock_guard<std::mutex> ctxlock(mGlobalCtxMutex);
+    std::lock_guard<std::mutex> ctxlock(gGlobalCtxMutex);
     if(sCurrentCtx == this)
     {
         sCurrentCtx = nullptr;
@@ -773,7 +772,7 @@ void ContextImpl::endBatch()
 DECL_THUNK1(SharedPtr<MessageHandler>, Context, setMessageHandler,, SharedPtr<MessageHandler>)
 SharedPtr<MessageHandler> ContextImpl::setMessageHandler(SharedPtr<MessageHandler>&& handler)
 {
-    std::lock_guard<std::mutex> lock(mGlobalCtxMutex);
+    std::lock_guard<std::mutex> lock(gGlobalCtxMutex);
     mMessage.swap(handler);
     return handler;
 }
