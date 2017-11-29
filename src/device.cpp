@@ -55,7 +55,6 @@ namespace alure {
 
 void DeviceImpl::setupExts()
 {
-    mHasExt.clear();
     for(const auto &entry : ALCExtensionList)
     {
         if(!alcIsExtensionPresent(mDevice, entry.name))

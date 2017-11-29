@@ -586,7 +586,6 @@ void ContextImpl::MakeThreadCurrent(ContextImpl *context)
 void ContextImpl::setupExts()
 {
     ALCdevice *device = mDevice.getALCdevice();
-    mHasExt.clear();
     for(const auto &entry : ALExtensionList)
     {
         if((strncmp(entry.name, "ALC", 3) == 0) ? alcIsExtensionPresent(device, entry.name) :
@@ -675,7 +674,6 @@ ContextImpl::ContextImpl(DeviceImpl &device, ArrayView<AttributePair> attrs)
         mContext = alcCreateContext(alcdev, &std::get<0>(attrs.front()));
     if(!mContext) throw alc_error(alcGetError(alcdev), "alcCreateContext failed");
 
-    mHasExt.clear();
     mSourceIds.reserve(256);
     mPendingHead = new PendingPromise{nullptr, {}, AL_NONE, 0, {}, {nullptr}};
     mPendingCurrent.store(mPendingHead, std::memory_order_relaxed);

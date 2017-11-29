@@ -65,14 +65,15 @@ std::variant<std::monostate,uint64_t> ParseTimeval(StringView strval, double sra
 template<size_t N>
 struct Bitfield {
 private:
-    std::array<uint8_t,(N+7)/8> mElems;
+    Array<uint8_t,(N+7)/8> mElems;
 
 public:
+    Bitfield() { std::fill(mElems.begin(), mElems.end(), 0); }
+
     bool operator[](size_t i) const noexcept
     { return static_cast<bool>(mElems[i/8] & (1<<(i%8))); }
 
-    void clear() { std::fill(mElems.begin(), mElems.end(), 0); }
-    void set(size_t i) { mElems[i/8] |= 1<<(i%8); }
+    void set(size_t i) noexcept { mElems[i/8] |= 1<<(i%8); }
 };
 
 
