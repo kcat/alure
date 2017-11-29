@@ -178,7 +178,7 @@ CONFIGURE_FILE(
 
 add_library(alure2 SHARED ${alure_srcs})
 if(EXPORT_DECL)
-    target_compile_definitions(alure2 PRIVATE ALURE_API=${EXPORT_DECL})
+    target_compile_definitions(alure2 PRIVATE ALURE_API=${EXPORT_DECL} NOMINMAX)
 endif()
 target_include_directories(alure2
     PUBLIC ${alure_SOURCE_DIR}/include/AL ${OPENAL_INCLUDE_DIR}
@@ -189,7 +189,7 @@ target_compile_options(alure2 PRIVATE ${CXX_FLAGS} ${VISIBILITY_FLAGS})
 target_link_libraries(alure2 PUBLIC ${alure_libs} PRIVATE ${LINKER_OPTS})
 
 add_library(alure2_s STATIC ${alure_srcs})
-target_compile_definitions(alure2_s PUBLIC ALURE_STATIC_LIB)
+target_compile_definitions(alure2_s PUBLIC ALURE_STATIC_LIB PRIVATE NOMINMAX)
 target_include_directories(alure2_s
     PUBLIC ${alure_SOURCE_DIR}/include/AL ${OPENAL_INCLUDE_DIR}
     PRIVATE ${alure_SOURCE_DIR}/include ${alure_SOURCE_DIR}/src ${alure_BINARY_DIR}
