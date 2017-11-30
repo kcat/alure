@@ -51,7 +51,6 @@ public:
         }
     }
 
-    uint64_t getLength() const { return mDecoder->getLength(); }
     uint64_t getPosition() const { return mSamplePos; }
 
     ALuint getNumUpdates() const { return mNumUpdates; }
@@ -111,14 +110,13 @@ public:
         if(mDone.load(std::memory_order_acquire))
             return false;
 
-        ALuint frames;
         ALuint len = mUpdateLen;
         if(loop && mSamplePos <= mLoopPts.second)
             len = static_cast<ALuint>(std::min<uint64_t>(len, mLoopPts.second - mSamplePos));
         else
             loop = false;
 
-        frames = mDecoder->read(mData.data(), len);
+        ALuint frames = mDecoder->read(mData.data(), len);
         mSamplePos += frames;
         if(frames < mUpdateLen && loop && mSamplePos > 0)
         {
