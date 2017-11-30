@@ -18,7 +18,7 @@
 namespace {
 
 // Inherit from std::streambuf to handle custom I/O (PhysFS for this example)
-class StreamBuf final : public std::streambuf {
+class PhysFSBuf final : public std::streambuf {
     alure::Array<char_type,4096> mBuffer;
     PHYSFS_File *mFile{nullptr};
 
@@ -92,7 +92,7 @@ class StreamBuf final : public std::streambuf {
         }
         // Clear read pointers so underflow() gets called on the next read
         // attempt.
-        setg(0, 0, 0);
+        setg(nullptr, nullptr, nullptr);
         return offset;
     }
 
@@ -104,7 +104,7 @@ class StreamBuf final : public std::streambuf {
 
         if(PHYSFS_seek(mFile, pos) == 0)
             return traits_type::eof();
-        setg(0, 0, 0);
+        setg(nullptr, nullptr, nullptr);
         return pos;
     }
 
@@ -116,8 +116,8 @@ public:
         return true;
     }
 
-    StreamBuf() = default;
-    ~StreamBuf() override
+    PhysFSBuf() = default;
+    ~PhysFSBuf() override
     {
         PHYSFS_close(mFile);
         mFile = nullptr;
@@ -126,15 +126,16 @@ public:
 
 // Inherit from std::istream to use our custom streambuf
 class Stream final : public std::istream {
+    PhysFSBuf mStreamBuf;
+
 public:
-    Stream(const char *filename) : std::istream(new StreamBuf())
+    Stream(const char *filename)
     {
+        init(&mStreamBuf);
+
         // Set the failbit if the file failed to open.
-        if(!(static_cast<StreamBuf*>(rdbuf())->open(filename)))
-            clear(failbit);
+        if(!mStreamBuf.open(filename)) clear(failbit);
     }
-    ~Stream() override
-    { delete rdbuf(); }
 };
 
 // Inherit from alure::FileIOFactory to use our custom istream

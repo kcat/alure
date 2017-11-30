@@ -160,7 +160,7 @@ class StreamBuf final : public std::streambuf {
             default:
                 return traits_type::eof();
         }
-        setg(0, 0, 0);
+        setg(nullptr, nullptr, nullptr);
         return fpos.QuadPart;
     }
 
@@ -175,7 +175,7 @@ class StreamBuf final : public std::streambuf {
         if(!SetFilePointerEx(mFile, fpos, &fpos, FILE_BEGIN))
             return traits_type::eof();
 
-        setg(0, 0, 0);
+        setg(nullptr, nullptr, nullptr);
         return fpos.QuadPart;
     }
 
@@ -210,17 +210,18 @@ public:
 
 // Inherit from std::istream to use our custom streambuf
 class Stream final : public std::istream {
-public:
-    Stream(const char *filename) : std::istream(new StreamBuf())
-    {
-        // Set the failbit if the file failed to open.
-        if(!(static_cast<StreamBuf*>(rdbuf())->open(filename)))
-            clear(failbit);
-    }
-    ~Stream() override
-    { delete rdbuf(); }
+    StreamBuf mStreamBuf;
 
-    bool is_open() const noexcept { return static_cast<StreamBuf*>(rdbuf())->is_open(); }
+public:
+    Stream(const char *filename)
+    {
+        init(&mStreamBuf);
+
+        // Set the failbit if the file failed to open.
+        if(!mStreamBuf.open(filename)) clear(failbit);
+    }
+
+    bool is_open() const noexcept { return mStreamBuf.is_open(); }
 };
 #endif
 
