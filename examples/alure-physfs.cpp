@@ -129,7 +129,7 @@ class Stream final : public std::istream {
     PhysFSBuf mStreamBuf;
 
 public:
-    Stream(const char *filename)
+    Stream(const char *filename) : std::istream(nullptr)
     {
         init(&mStreamBuf);
 
