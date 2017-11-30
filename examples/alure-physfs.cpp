@@ -15,13 +15,11 @@
 
 #include "alure2.h"
 
-namespace
-{
+namespace {
 
 // Inherit from std::streambuf to handle custom I/O (PhysFS for this example)
 class StreamBuf final : public std::streambuf {
-    using BufferArrayT = alure::Array<char_type,4096>;
-    BufferArrayT mBuffer;
+    alure::Array<char_type,4096> mBuffer;
     PHYSFS_File *mFile{nullptr};
 
     int_type underflow() override
@@ -54,11 +52,18 @@ class StreamBuf final : public std::streambuf {
                 break;
 
             case std::ios_base::cur:
-                // Need to offset for the read pointers with std::ios_base::cur
-                // regardless
+                // Need to offset for the file offset being at egptr() while
+                // the requested offset is relative to gptr().
                 offset -= off_type(egptr()-gptr());
                 if((fpos=PHYSFS_tell(mFile)) == -1)
                     return traits_type::eof();
+                // If the offset remains in the current buffer range, just
+                // update the pointer.
+                if(offset < 0 && -offset <= off_type(egptr()-eback()))
+                {
+                    setg(eback(), egptr()+offset, egptr());
+                    return fpos + offset;
+                }
                 offset += fpos;
                 break;
 
@@ -71,12 +76,20 @@ class StreamBuf final : public std::streambuf {
             default:
                 return traits_type::eof();
         }
-        // Range check - absolute offsets cannot be less than 0, nor be greater
-        // than PhysFS's offset type.
-        if(offset < 0 || offset >= std::numeric_limits<PHYSFS_sint64>::max())
-            return traits_type::eof();
-        if(PHYSFS_seek(mFile, PHYSFS_sint64(offset)) == 0)
-            return traits_type::eof();
+
+        if(offset < 0) return traits_type::eof();
+        if(PHYSFS_seek(mFile, offset) == 0)
+        {
+            // HACK: Workaround a bug in PhysFS. Certain archive types error
+            // when trying to seek to the end of the file. So if seeking to the
+            // end of the file fails, instead try seeking to the last byte and
+            // read it.
+            if(offset != PHYSFS_fileLength(mFile))
+                return traits_type::eof();
+            if(PHYSFS_seek(mFile, offset-1) == 0)
+                return traits_type::eof();
+            PHYSFS_read(mFile, mBuffer.data(), 1, 1);
+        }
         // Clear read pointers so underflow() gets called on the next read
         // attempt.
         setg(0, 0, 0);
@@ -89,9 +102,7 @@ class StreamBuf final : public std::streambuf {
         if(!mFile || (mode&std::ios_base::out) || !(mode&std::ios_base::in))
             return traits_type::eof();
 
-        if(pos < 0 || pos >= std::numeric_limits<PHYSFS_sint64>::max())
-            return traits_type::eof();
-        if(PHYSFS_seek(mFile, PHYSFS_sint64(pos)) == 0)
+        if(PHYSFS_seek(mFile, pos) == 0)
             return traits_type::eof();
         setg(0, 0, 0);
         return pos;
