@@ -178,8 +178,8 @@ public:
     ~ContextImpl();
 
     ALCcontext *getALCcontext() const { return mContext; }
-    long addRef() { return ++mRefs; }
-    long decRef() { return --mRefs; }
+    size_t addRef() { return ++mRefs; }
+    size_t decRef() { return --mRefs; }
 
     bool hasExtension(AL ext) const { return mHasExt[static_cast<size_t>(ext)]; }
 
