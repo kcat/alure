@@ -20,8 +20,8 @@ namespace alure {
 // acceptable.
 template<typename T> struct IsContiguousTag : std::false_type {};
 template<typename T, size_t N> struct IsContiguousTag<Array<T,N>> : std::true_type {};
-template<typename T> struct IsContiguousTag<Vector<T>> : std::true_type {};
-template<typename T> struct IsContiguousTag<BasicString<T>> : std::true_type {};
+template<typename... Args> struct IsContiguousTag<Vector<Args...>> : std::true_type {};
+template<typename... Args> struct IsContiguousTag<BasicString<Args...>> : std::true_type {};
 
 // A rather simple ArrayView container. This allows accepting various array
 // types (Array, Vector, a static-sized array, a dynamic array + size) without
@@ -120,7 +120,7 @@ public:
     template<typename Alloc>
     BasicStringView(const BasicString<T,Tr,Alloc> &rhs) noexcept : ArrayView<T>(rhs) { }
 #if __cplusplus >= 201703L
-    BasicStringView(const std::basic_string_view<T> &rhs) noexcept
+    BasicStringView(const std::basic_string_view<T,Tr> &rhs) noexcept
       : ArrayView<T>(rhs.data(), rhs.length()) { }
 #endif
 
@@ -221,7 +221,7 @@ ALURE_DECL_STROP(>)
 
 // Inline operator to write out a StringView to an ostream
 template<typename T, typename Tr>
-inline std::basic_ostream<T>& operator<<(std::basic_ostream<T,Tr> &lhs, BasicStringView<T,Tr> rhs)
+inline std::basic_ostream<T,Tr>& operator<<(std::basic_ostream<T,Tr> &lhs, BasicStringView<T,Tr> rhs)
 {
     for(auto ch : rhs)
         lhs << ch;
