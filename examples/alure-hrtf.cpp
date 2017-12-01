@@ -46,14 +46,16 @@ int main(int argc, char *argv[])
     if(argc-fileidx > 1 && alure::StringView("-hrtf") == argv[fileidx])
     {
         // Find the given HRTF and add it to the attributes list
-        const char *hrtf_name = argv[fileidx+1];
+        alure::StringView hrtf_name = argv[fileidx+1];
         fileidx += 2;
 
-        auto iter = std::find(hrtf_names.begin(), hrtf_names.end(), hrtf_name);
-        if(iter == hrtf_names.end())
+        size_t idx = std::distance(
+            hrtf_names.begin(), std::find(hrtf_names.begin(), hrtf_names.end(), hrtf_name)
+        );
+        if(idx == hrtf_names.size())
             std::cerr<< "HRTF \""<<hrtf_name<<"\" not found" <<std::endl;
         else
-            attrs.push_back({ALC_HRTF_ID_SOFT, std::distance(hrtf_names.begin(), iter)});
+            attrs.push_back({ALC_HRTF_ID_SOFT, static_cast<ALint>(idx)});
     }
     attrs.push_back(alure::AttributesEnd());
     alure::Context ctx = dev.createContext(attrs);
@@ -69,14 +71,17 @@ int main(int argc, char *argv[])
         if(argc-i > 1 && alure::StringView("-hrtf") == argv[i])
         {
             // Find the given HRTF and reset the device using it
-            auto iter = std::find(hrtf_names.begin(), hrtf_names.end(), argv[i+1]);
-            if(iter == hrtf_names.end())
-                std::cerr<< "HRTF \""<<argv[i+1]<<"\" not found" <<std::endl;
+            alure::StringView hrtf_name = argv[i+1];
+            size_t idx = std::distance(
+                hrtf_names.begin(), std::find(hrtf_names.begin(), hrtf_names.end(), hrtf_name)
+            );
+            if(idx == hrtf_names.size())
+                std::cerr<< "HRTF \""<<hrtf_name<<"\" not found" <<std::endl;
             else
             {
                 alure::Array<alure::AttributePair,3> attrs{{
                     {ALC_HRTF_SOFT, ALC_TRUE},
-                    {ALC_HRTF_ID_SOFT, std::distance(hrtf_names.begin(), iter)},
+                    {ALC_HRTF_ID_SOFT, static_cast<ALint>(idx)},
                     alure::AttributesEnd()
                 }};
                 dev.reset(attrs);
