@@ -111,14 +111,14 @@ public:
             return false;
 
         ALsizei len = mUpdateLen;
-        if(loop && mSamplePos <= mLoopPts.second)
+        if(loop && mSamplePos < mLoopPts.second)
             len = static_cast<ALsizei>(std::min<uint64_t>(len, mLoopPts.second - mSamplePos));
         else
             loop = false;
 
         ALsizei frames = mDecoder->read(mData.data(), len);
         mSamplePos += frames;
-        if(frames < mUpdateLen && loop && mSamplePos > 0)
+        if(loop && ((frames < mUpdateLen && mSamplePos > 0) || (mSamplePos == mLoopPts.second)))
         {
             if(mSamplePos < mLoopPts.second)
             {
@@ -129,13 +129,23 @@ public:
 
             do {
                 if(!mDecoder->seek(mLoopPts.first))
+                {
+                    len = mUpdateLen-frames;
+                    if(len > 0)
+                    {
+                        ALuint got = mDecoder->read(&mData[frames*mFrameSize], len);
+                        mSamplePos += got;
+                        frames += got;
+                    }
                     break;
+                }
                 mSamplePos = mLoopPts.first;
                 mHasLooped = true;
 
                 len = static_cast<ALsizei>(
                     std::min<uint64_t>(mUpdateLen-frames, mLoopPts.second-mLoopPts.first)
                 );
+                if(len == 0) break;
                 ALuint got = mDecoder->read(&mData[frames*mFrameSize], len);
                 if(got == 0) break;
                 mSamplePos += got;
