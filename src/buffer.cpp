@@ -96,7 +96,7 @@ void BufferImpl::cleanup()
                 sourceids.push_back(id);
         }
         auto lock = mContext.getSourceStreamLock();
-        alSourceRewindv(sourceids.size(), sourceids.data());
+        alSourceRewindv(static_cast<ALsizei>(sourceids.size()), sourceids.data());
         throw_al_error("Failed to stop sources");
         for(Source alsrc : sources)
         {
@@ -147,7 +147,7 @@ void BufferImpl::load(ALuint frames, ALenum format, SharedPtr<Decoder> decoder, 
         mName, mChannelConfig, mSampleType, mFrequency, data
     );
 
-    alBufferData(mId, format, data.data(), data.size(), mFrequency);
+    alBufferData(mId, format, data.data(), static_cast<ALsizei>(data.size()), mFrequency);
     if(ctx->hasExtension(AL::SOFT_loop_points))
     {
         ALint pts[2]{(ALint)loop_pts.first, (ALint)loop_pts.second};

@@ -6,8 +6,7 @@
 #include "source.h"
 #include "context.h"
 
-namespace alure
-{
+namespace alure {
 
 void SourceGroupImpl::insertSubGroup(SourceGroupImpl *group)
 {
@@ -185,7 +184,7 @@ void SourceGroupImpl::pauseAll() const
     collectPlayingSourceIds(sourceids);
     if(!sourceids.empty())
     {
-        alSourcePausev(sourceids.size(), sourceids.data());
+        alSourcePausev(static_cast<ALsizei>(sourceids.size()), sourceids.data());
         updatePausedStatus();
     }
     lock.unlock();
@@ -222,7 +221,7 @@ void SourceGroupImpl::resumeAll() const
     collectPausedSourceIds(sourceids);
     if(!sourceids.empty())
     {
-        alSourcePlayv(sourceids.size(), sourceids.data());
+        alSourcePlayv(static_cast<ALsizei>(sourceids.size()), sourceids.data());
         updatePlayingStatus();
     }
     lock.unlock();
@@ -265,7 +264,7 @@ void SourceGroupImpl::stopAll() const
     if(!sourceids.empty())
     {
         auto lock = mContext.getSourceStreamLock();
-        alSourceRewindv(sourceids.size(), sourceids.data());
+        alSourceRewindv(static_cast<ALsizei>(sourceids.size()), sourceids.data());
         updateStoppedStatus();
     }
 }

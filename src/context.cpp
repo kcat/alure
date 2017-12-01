@@ -107,7 +107,7 @@ class StreamBuf final : public std::streambuf {
         {
             // Read in the next chunk of data, and set the pointers on success
             DWORD got = 0;
-            if(ReadFile(mFile, mBuffer.data(), mBuffer.size(), &got, NULL))
+            if(ReadFile(mFile, mBuffer.data(), (DWORD)mBuffer.size(), &got, NULL))
                 setg(mBuffer.data(), mBuffer.data(), mBuffer.data()+got);
         }
         if(gptr() == egptr())
@@ -893,7 +893,7 @@ BufferOrExceptT ContextImpl::doCreateBuffer(StringView name, Vector<UniquePtr<Bu
     alGetError();
     ALuint bid = 0;
     alGenBuffers(1, &bid);
-    alBufferData(bid, format, data.data(), data.size(), srate);
+    alBufferData(bid, format, data.data(), static_cast<ALsizei>(data.size()), srate);
     if(hasExtension(AL::SOFT_loop_points))
     {
         ALint pts[2]{(ALint)loop_pts.first, (ALint)loop_pts.second};
