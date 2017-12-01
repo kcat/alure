@@ -92,9 +92,9 @@ public:
         }
 
         mData.resize(mUpdateLen * mFrameSize);
-        if(type == SampleType::UInt8) mSilence = 0x80;
-        else if(type == SampleType::Mulaw) mSilence = 0x7f;
-        else mSilence = 0x00;
+        if(type == SampleType::UInt8) mSilence = -128;
+        else if(type == SampleType::Mulaw) mSilence = 127;
+        else mSilence = 0;
 
         mBufferIds.assign(mNumUpdates, 0);
         alGenBuffers(mNumUpdates, mBufferIds.data());

@@ -129,8 +129,8 @@ void BufferImpl::load(ALuint frames, ALenum format, SharedPtr<Decoder> decoder, 
     else
     {
         ALbyte silence = 0;
-        if(mSampleType == SampleType::UInt8) silence = 0x80;
-        else if(mSampleType == SampleType::Mulaw) silence = 0x7f;
+        if(mSampleType == SampleType::UInt8) silence = -128;
+        else if(mSampleType == SampleType::Mulaw) silence = 127;
         std::fill(data.begin(), data.end(), silence);
     }
 
