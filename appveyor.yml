@@ -21,6 +21,6 @@ build_script:
 
     cd build
 
-    cmake -G%GEN% ..
+    cmake -G"%GEN%" ..
 
     cmake --build . --config %CFG% --clean-first
