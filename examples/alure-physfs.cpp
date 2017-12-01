@@ -148,9 +148,9 @@ public:
             throw std::runtime_error(alure::String("Failed to initialize PhysFS: ") +
                                      PHYSFS_getLastError());
 
-        std::cout<< "Initialized PhysFS, supported archive formats:" <<std::endl;
+        std::cout<< "Initialized PhysFS, supported archive formats:";
         for(const PHYSFS_ArchiveInfo **i = PHYSFS_supportedArchiveTypes();*i != NULL;i++)
-            std::cout<< "  "<<(*i)->extension<<": "<<(*i)->description <<std::endl;
+            std::cout<< "\n  "<<(*i)->extension<<": "<<(*i)->description;
         std::cout<<std::endl;
     }
     ~FileFactory() override
