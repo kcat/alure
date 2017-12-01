@@ -20,8 +20,8 @@ namespace alure
 class ALBufferStream {
     SharedPtr<Decoder> mDecoder;
 
-    ALuint mUpdateLen{0};
-    ALuint mNumUpdates{0};
+    ALsizei mUpdateLen{0};
+    ALsizei mNumUpdates{0};
 
     ALenum mFormat{AL_NONE};
     ALuint mFrequency{0};
@@ -39,22 +39,22 @@ class ALBufferStream {
     std::atomic<bool> mDone{false};
 
 public:
-    ALBufferStream(SharedPtr<Decoder> decoder, ALuint updatelen, ALuint numupdates)
+    ALBufferStream(SharedPtr<Decoder> decoder, ALsizei updatelen, ALsizei numupdates)
       : mDecoder(decoder), mUpdateLen(updatelen), mNumUpdates(numupdates)
     { }
     ~ALBufferStream()
     {
         if(!mBufferIds.empty())
         {
-            alDeleteBuffers(mBufferIds.size(), mBufferIds.data());
+            alDeleteBuffers(static_cast<ALsizei>(mBufferIds.size()), mBufferIds.data());
             mBufferIds.clear();
         }
     }
 
     uint64_t getPosition() const { return mSamplePos; }
 
-    ALuint getNumUpdates() const { return mNumUpdates; }
-    ALuint getUpdateLength() const { return mUpdateLen; }
+    ALsizei getNumUpdates() const { return mNumUpdates; }
+    ALsizei getUpdateLength() const { return mUpdateLen; }
 
     ALuint getFrequency() const { return mFrequency; }
 
@@ -97,7 +97,7 @@ public:
         else mSilence = 0x00;
 
         mBufferIds.assign(mNumUpdates, 0);
-        alGenBuffers(mBufferIds.size(), mBufferIds.data());
+        alGenBuffers(mNumUpdates, mBufferIds.data());
     }
 
     int64_t getLoopStart() const { return mLoopPts.first; }
@@ -110,13 +110,13 @@ public:
         if(mDone.load(std::memory_order_acquire))
             return false;
 
-        ALuint len = mUpdateLen;
+        ALsizei len = mUpdateLen;
         if(loop && mSamplePos <= mLoopPts.second)
-            len = static_cast<ALuint>(std::min<uint64_t>(len, mLoopPts.second - mSamplePos));
+            len = static_cast<ALsizei>(std::min<uint64_t>(len, mLoopPts.second - mSamplePos));
         else
             loop = false;
 
-        ALuint frames = mDecoder->read(mData.data(), len);
+        ALsizei frames = mDecoder->read(mData.data(), len);
         mSamplePos += frames;
         if(frames < mUpdateLen && loop && mSamplePos > 0)
         {
@@ -133,7 +133,7 @@ public:
                 mSamplePos = mLoopPts.first;
                 mHasLooped = true;
 
-                len = static_cast<ALuint>(
+                len = static_cast<ALsizei>(
                     std::min<uint64_t>(mUpdateLen-frames, mLoopPts.second-mLoopPts.first)
                 );
                 ALuint got = mDecoder->read(&mData[frames*mFrameSize], len);
@@ -150,7 +150,9 @@ public:
             std::fill(mData.begin() + frames*mFrameSize, mData.end(), mSilence);
         }
 
-        alBufferData(mBufferIds[mCurrentIdx], mFormat, mData.data(), mData.size(), mFrequency);
+        alBufferData(mBufferIds[mCurrentIdx],
+            mFormat, mData.data(), static_cast<ALsizei>(mData.size()), mFrequency
+        );
         alSourceQueueBuffers(srcid, 1, &mBufferIds[mCurrentIdx]);
         mCurrentIdx = (mCurrentIdx+1) % mBufferIds.size();
         return true;
@@ -338,8 +340,8 @@ void SourceImpl::play(Buffer buffer)
     mContext.addPlayingSource(this, mId);
 }
 
-DECL_THUNK3(void, Source, play,, SharedPtr<Decoder>, ALuint, ALuint)
-void SourceImpl::play(SharedPtr<Decoder>&& decoder, ALuint chunk_len, ALuint queue_size)
+DECL_THUNK3(void, Source, play,, SharedPtr<Decoder>, ALsizei, ALsizei)
+void SourceImpl::play(SharedPtr<Decoder>&& decoder, ALsizei chunk_len, ALsizei queue_size)
 {
     if(chunk_len < 64)
         throw std::out_of_range("Update length out of range");
@@ -382,7 +384,7 @@ void SourceImpl::play(SharedPtr<Decoder>&& decoder, ALuint chunk_len, ALuint que
     mStream->seek(mOffset);
     mOffset = 0;
 
-    for(ALuint i = 0;i < mStream->getNumUpdates();i++)
+    for(ALsizei i = 0;i < mStream->getNumUpdates();i++)
     {
         if(!mStream->streamMoreData(mId, mLooping))
             break;
@@ -694,7 +696,7 @@ ALint SourceImpl::refillBufferStream()
 
     ALint queued;
     alGetSourcei(mId, AL_BUFFERS_QUEUED, &queued);
-    for(;(ALuint)queued < mStream->getNumUpdates();queued++)
+    for(;queued < mStream->getNumUpdates();queued++)
     {
         if(!mStream->streamMoreData(mId, mLooping))
             break;
@@ -1228,9 +1230,10 @@ void SourceImpl::setResamplerIndex(ALsizei index)
 {
     if(index < 0)
         throw std::out_of_range("Resampler index out of range");
-    index = std::min<ALsizei>(index, mContext.getAvailableResamplers().size());
     if(mId != 0 && mContext.hasExtension(AL::SOFT_source_resampler))
-        alSourcei(mId, AL_SOURCE_RESAMPLER_SOFT, index);
+        alSourcei(mId, AL_SOURCE_RESAMPLER_SOFT,
+            std::min(index, static_cast<ALsizei>(mContext.getAvailableResamplers().size()))
+        );
     mResampler = index;
 }
 

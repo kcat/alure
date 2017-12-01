@@ -99,7 +99,7 @@ public:
     void unsetPaused() { mPaused = false; }
 
     void play(Buffer buffer);
-    void play(SharedPtr<Decoder>&& decoder, ALuint chunk_len, ALuint queue_size);
+    void play(SharedPtr<Decoder>&& decoder, ALsizei chunk_len, ALsizei queue_size);
     void play(SharedFuture<Buffer>&& future_buffer);
     void stop();
     void makeStopped(bool dolock=true);

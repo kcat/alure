@@ -862,7 +862,7 @@ public:
      *        Smaller values use less memory while larger values improve
      *        protection against underruns.
      */
-    void play(SharedPtr<Decoder> decoder, ALuint chunk_len, ALuint queue_size);
+    void play(SharedPtr<Decoder> decoder, ALsizei chunk_len, ALsizei queue_size);
 
     /**
      * Prepares to play a source using a future buffer. The method will return
