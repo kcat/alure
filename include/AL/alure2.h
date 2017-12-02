@@ -117,16 +117,13 @@ ALURE_TEMPLATE class ALURE_API ALURE_SHARED_PTR_TYPE<alure::DeviceManagerImpl>;
 namespace alure {
 
 /** Convert a value from decibels to linear gain. */
-template<typename T, typename NonRefT=RemoveRefT<T>,
-         typename=EnableIfT<std::is_floating_point<NonRefT>::value>>
-constexpr inline NonRefT dBToLinear(T&& value)
-{ return std::pow(NonRefT(10.0), std::forward<T>(value) / NonRefT(20.0)); }
+inline float dBToLinear(float value) { return std::pow(10.0f, value / 20.0f); }
+inline double dBToLinear(double value) { return std::pow(10.0, value / 20.0); }
+inline double dBToLinear(int value) { return dBToLinear(double(value)); }
 
 /** Convert a value from linear gain to decibels. */
-template<typename T, typename NonRefT=RemoveRefT<T>,
-         typename=EnableIfT<std::is_floating_point<NonRefT>::value>>
-constexpr inline NonRefT LinearTodB(T&& value)
-{ return std::log10(std::forward<T>(value)) * NonRefT(20.0); }
+inline float LinearTodB(float value) { return std::log10(value) * 20.0f; }
+inline double LinearTodB(double value) { return std::log10(value) * 20.0; }
 
 /**
  * An attribute pair, for passing attributes to Device::createContext and
