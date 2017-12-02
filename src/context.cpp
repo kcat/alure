@@ -1426,7 +1426,7 @@ void ContextImpl::addFadingSource(SourceImpl *source, std::chrono::nanoseconds d
     if(iter == mFadingSources.end() || iter->mSource != source)
     {
         auto now = std::chrono::steady_clock::now().time_since_epoch();
-        mFadingSources.emplace(iter, SourceFadeUpdateEntry{source, now, now+duration, gain});
+        mFadingSources.emplace(iter, SourceFadeUpdateEntry{source, now, now+duration, true, gain});
     }
 }
 

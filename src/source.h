@@ -35,9 +35,10 @@ struct SourceStreamUpdateEntry {
 struct SourceFadeUpdateEntry {
     SourceImpl *mSource;
 
-    std::chrono::nanoseconds mLastFadeTime;
+    std::chrono::nanoseconds mFadeTimeStart;
     std::chrono::nanoseconds mFadeTimeTarget;
-    ALfloat mFadeGainTarget;
+    bool mIsFadeOut;
+    ALfloat mFadeGainMult;
 };
 
 
