@@ -886,8 +886,13 @@ public:
      * must be greater than 0 and less than 1. The duration must also be
      * greater than 0.
      *
+     * The fading is logarithmic. As a result, the initial drop-off may happen
+     * faster than expected but the fading is more perceptually consistant over
+     * the given duration. It will take just as much time to go from -6dB to
+     * -12dB as it will to go from -40dB to -46dB, for example.
+     *
      * Pending playback from a future buffer is not immediately canceled, but
-     * the fading starts with this call. If the future buffer then becomes
+     * the fade timer starts with this call. If the future buffer then becomes
      * ready, it will start mid-fade. Pending playback will be canceled if the
      * fade out completes before the future buffer becomes ready.
      *
