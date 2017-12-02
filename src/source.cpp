@@ -191,7 +191,6 @@ void SourceImpl::resetProperties()
     mGroupPitch = 1.0f;
     mGroupGain = 1.0f;
 
-    mFadeGainTarget = 1.0f;
     mFadeGain = 1.0f;
 
     mPaused.store(false, std::memory_order_release);
@@ -318,9 +317,6 @@ void SourceImpl::play(Buffer buffer)
         mContext.removeStream(this);
     mIsAsync.store(false, std::memory_order_release);
 
-    mFadeGainTarget = mFadeGain = 1.0f;
-    mFadeTimeTarget = mLastFadeTime = std::chrono::nanoseconds::zero();
-
     if(mId == 0)
     {
         mId = mContext.getSourceId(mPriority);
@@ -365,9 +361,6 @@ void SourceImpl::play(SharedPtr<Decoder>&& decoder, ALsizei chunk_len, ALsizei q
     if(mStream)
         mContext.removeStream(this);
     mIsAsync.store(false, std::memory_order_release);
-
-    mFadeGainTarget = mFadeGain = 1.0f;
-    mFadeTimeTarget = mLastFadeTime = std::chrono::nanoseconds::zero();
 
     if(mId == 0)
     {
@@ -424,9 +417,6 @@ void SourceImpl::play(SharedFuture<Buffer>&& future_buffer)
     mContext.removeFadingSource(this);
     mContext.removePlayingSource(this);
     makeStopped(true);
-
-    mFadeGainTarget = mFadeGain = 1.0f;
-    mFadeTimeTarget = mLastFadeTime = std::chrono::nanoseconds::zero();
 
     mContext.addPendingSource(this, std::move(future_buffer));
 }
@@ -485,11 +475,7 @@ void SourceImpl::fadeOutToStop(ALfloat gain, std::chrono::milliseconds duration)
         throw std::out_of_range("Fade duration out of range");
     CheckContext(mContext);
 
-    mFadeGainTarget = std::max<ALfloat>(gain, 0.0001f);
-    mLastFadeTime = std::chrono::steady_clock::now().time_since_epoch();
-    mFadeTimeTarget = mLastFadeTime + duration;
-
-    mContext.addFadingSource(this);
+    mContext.addFadingSource(this, duration, std::max<ALfloat>(gain, 0.0001f));
 }
 
 
@@ -631,13 +617,13 @@ bool SourceImpl::checkPending(SharedFuture<Buffer> &future)
     return false;
 }
 
-bool SourceImpl::fadeUpdate(std::chrono::nanoseconds cur_fade_time)
+bool SourceImpl::fadeUpdate(std::chrono::nanoseconds cur_fade_time, SourceFadeUpdateEntry &fade)
 {
-    if((cur_fade_time - mFadeTimeTarget).count() >= 0)
+    if((cur_fade_time - fade.mFadeTimeTarget).count() >= 0)
     {
-        mLastFadeTime = mFadeTimeTarget;
+        fade.mLastFadeTime = fade.mFadeTimeTarget;
         mFadeGain = 1.0f;
-        if(mFadeGainTarget >= 1.0f)
+        if(fade.mFadeGainTarget >= 1.0f)
         {
             if(mId != 0)
                 alSourcef(mId, AL_GAIN, mGain * mGroupGain);
@@ -649,19 +635,19 @@ bool SourceImpl::fadeUpdate(std::chrono::nanoseconds cur_fade_time)
         return false;
     }
 
-    float mult = std::pow(mFadeGainTarget/mFadeGain,
-        float(1.0/Seconds(mFadeTimeTarget-mLastFadeTime).count())
+    float mult = std::pow(fade.mFadeGainTarget/mFadeGain,
+        float(1.0/Seconds(fade.mFadeTimeTarget-fade.mLastFadeTime).count())
     );
 
-    std::chrono::nanoseconds duration = cur_fade_time - mLastFadeTime;
-    mLastFadeTime = cur_fade_time;
+    std::chrono::nanoseconds duration = cur_fade_time - fade.mLastFadeTime;
+    fade.mLastFadeTime = cur_fade_time;
 
     float gain = mFadeGain * std::pow(mult, (float)Seconds(duration).count());
     if(UNLIKELY(gain == mFadeGain))
     {
         // Ensure the gain keeps moving toward its target, in case precision
         // loss results in no change with small steps.
-        gain = std::nextafter(gain, mFadeGainTarget);
+        gain = std::nextafter(gain, fade.mFadeGainTarget);
     }
     mFadeGain = gain;
 

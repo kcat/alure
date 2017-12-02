@@ -1417,23 +1417,26 @@ bool ContextImpl::isPendingSource(const SourceImpl *source) const
     return (iter != mPendingSources.end() && iter->mSource == source);
 }
 
-void ContextImpl::addFadingSource(SourceImpl *source)
+void ContextImpl::addFadingSource(SourceImpl *source, std::chrono::nanoseconds duration, ALfloat gain)
 {
     auto iter = std::lower_bound(mFadingSources.begin(), mFadingSources.end(), source,
-        [](SourceImpl *lhs, SourceImpl *rhs) -> bool
-        { return lhs < rhs; }
+        [](const SourceFadeUpdateEntry &lhs, SourceImpl *rhs) -> bool
+        { return lhs.mSource < rhs; }
     );
-    if(iter == mFadingSources.end() || *iter != source)
-        mFadingSources.insert(iter, source);
+    if(iter == mFadingSources.end() || iter->mSource != source)
+    {
+        auto now = std::chrono::steady_clock::now().time_since_epoch();
+        mFadingSources.emplace(iter, SourceFadeUpdateEntry{source, now, now+duration, gain});
+    }
 }
 
 void ContextImpl::removeFadingSource(SourceImpl *source)
 {
     auto iter = std::lower_bound(mFadingSources.begin(), mFadingSources.end(), source,
-        [](SourceImpl *lhs, SourceImpl *rhs) -> bool
-        { return lhs < rhs; }
+        [](const SourceFadeUpdateEntry &lhs, SourceImpl *rhs) -> bool
+        { return lhs.mSource < rhs; }
     );
-    if(iter != mFadingSources.end() && *iter == source)
+    if(iter != mFadingSources.end() && iter->mSource == source)
         mFadingSources.erase(iter);
 }
 
@@ -1613,8 +1616,8 @@ void ContextImpl::update()
         auto cur_time = std::chrono::steady_clock::now().time_since_epoch();
         mFadingSources.erase(
             std::remove_if(mFadingSources.begin(), mFadingSources.end(),
-                [cur_time](SourceImpl *source) -> bool
-                { return !source->fadeUpdate(cur_time); }
+                [cur_time](SourceFadeUpdateEntry &entry) -> bool
+                { return !entry.mSource->fadeUpdate(cur_time, entry); }
             ), mFadingSources.end()
         );
     }

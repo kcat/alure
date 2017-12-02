@@ -24,6 +24,23 @@ struct SendProps {
     { }
 };
 
+struct SourceBufferUpdateEntry {
+    SourceImpl *mSource;
+    ALuint mId;
+};
+struct SourceStreamUpdateEntry {
+    SourceImpl *mSource;
+};
+
+struct SourceFadeUpdateEntry {
+    SourceImpl *mSource;
+
+    std::chrono::nanoseconds mLastFadeTime;
+    std::chrono::nanoseconds mFadeTimeTarget;
+    ALfloat mFadeGainTarget;
+};
+
+
 class SourceImpl {
     ContextImpl &mContext;
     ALuint mId;
@@ -35,9 +52,6 @@ class SourceImpl {
     ALfloat mGroupPitch;
     ALfloat mGroupGain;
 
-    std::chrono::nanoseconds mLastFadeTime;
-    std::chrono::nanoseconds mFadeTimeTarget;
-    ALfloat mFadeGainTarget;
     ALfloat mFadeGain;
 
     mutable std::mutex mMutex;
@@ -87,7 +101,7 @@ public:
     ALuint getId() const { return mId; }
 
     bool checkPending(SharedFuture<Buffer> &future);
-    bool fadeUpdate(std::chrono::nanoseconds cur_fade_time);
+    bool fadeUpdate(std::chrono::nanoseconds cur_fade_time, SourceFadeUpdateEntry &fade);
     bool playUpdate(ALuint id);
     bool playUpdate();
     bool updateAsync();
@@ -203,15 +217,6 @@ public:
     void setAuxiliarySendFilter(AuxiliaryEffectSlot slot, ALuint send, const FilterParams &filter);
 
     void release();
-};
-
-
-struct SourceBufferUpdateEntry {
-    SourceImpl *mSource;
-    ALuint mId;
-};
-struct SourceStreamUpdateEntry {
-    SourceImpl *mSource;
 };
 
 } // namespace alure

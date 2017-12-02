@@ -127,7 +127,7 @@ private:
     Vector<SourceImpl*> mFreeSources;
 
     Vector<PendingSource> mPendingSources;
-    Vector<SourceImpl*> mFadingSources;
+    Vector<SourceFadeUpdateEntry> mFadingSources;
     Vector<SourceBufferUpdateEntry> mPlaySources;
     Vector<SourceStreamUpdateEntry> mStreamSources;
 
@@ -229,7 +229,7 @@ public:
     void addPendingSource(SourceImpl *source, SharedFuture<Buffer> future);
     void removePendingSource(SourceImpl *source);
     bool isPendingSource(const SourceImpl *source) const;
-    void addFadingSource(SourceImpl *source);
+    void addFadingSource(SourceImpl *source, std::chrono::nanoseconds duration, ALfloat gain);
     void removeFadingSource(SourceImpl *source);
     void addPlayingSource(SourceImpl *source, ALuint id);
     void addPlayingSource(SourceImpl *source);
