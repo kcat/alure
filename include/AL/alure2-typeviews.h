@@ -8,6 +8,7 @@
 #ifndef AL_ALURE2_TYPEVIEWS_H
 #define AL_ALURE2_TYPEVIEWS_H
 
+#include <stdexcept>
 #include <iostream>
 #include <cstring>
 
@@ -42,79 +43,79 @@ public:
     static constexpr size_type npos = static_cast<size_type>(-1);
 
 private:
-    const value_type *mElems;
-    size_t mNumElems;
+    const value_type *mStart;
+    const value_type *mEnd;
 
 public:
-    ArrayView() noexcept : mElems(nullptr), mNumElems(0) { }
+    ArrayView() noexcept : mStart(nullptr), mEnd(nullptr) { }
     ArrayView(const ArrayView&) noexcept = default;
     ArrayView(ArrayView&&) noexcept = default;
     ArrayView(const value_type *elems, size_type num_elems) noexcept
-      : mElems(elems), mNumElems(num_elems) { }
+      : mStart(elems), mEnd(elems+num_elems) { }
+    // TODO: Allow this? As a function parameter, making a view to a temporary
+    // is fine since the temporary will exist for the duration of the call.
+    // It's just a problem when done as a local variable.
     template<typename OtherT> ArrayView(RemoveRefT<OtherT>&&) = delete;
     template<typename OtherT,
              typename = EnableIfT<IsContiguousTag<RemoveRefT<OtherT>>::value>>
-    ArrayView(const OtherT &rhs) noexcept : mElems(rhs.data()), mNumElems(rhs.size()) { }
+    ArrayView(const OtherT &rhs) noexcept : mStart(rhs.data()), mEnd(rhs.data()+rhs.size()) { }
     template<size_t N>
-    ArrayView(const value_type (&elems)[N]) noexcept : mElems(elems), mNumElems(N) { }
+    ArrayView(const value_type (&elems)[N]) noexcept : mStart(elems), mEnd(elems+N) { }
 
     ArrayView& operator=(const ArrayView&) noexcept = default;
 
-    const value_type *data() const noexcept { return mElems; }
+    const value_type *data() const noexcept { return mStart; }
 
-    size_type size() const noexcept { return mNumElems; }
-    bool empty() const noexcept { return mNumElems == 0; }
+    size_type size() const noexcept { return mEnd - mStart; }
+    bool empty() const noexcept { return mStart == mEnd; }
 
-    const value_type& operator[](size_t i) const noexcept { return mElems[i]; }
+    const value_type& operator[](size_t i) const noexcept { return mStart[i]; }
 
-    const value_type& front() const noexcept { return mElems[0]; }
-    const value_type& back() const noexcept { return mElems[mNumElems-1]; }
+    const value_type& front() const noexcept { return *mStart; }
+    const value_type& back() const noexcept { return *(mEnd - 1); }
 
     const value_type& at(size_t i) const
     {
-        if(i >= mNumElems)
+        if(i >= size())
             throw std::out_of_range("alure::ArrayView::at: element out of range");
-        return mElems[i];
+        return mStart[i];
     }
 
-    const_iterator begin() const noexcept { return mElems; }
-    const_iterator cbegin() const noexcept { return mElems; }
+    const_iterator begin() const noexcept { return mStart; }
+    const_iterator cbegin() const noexcept { return mStart; }
 
-    const_iterator end() const noexcept { return mElems + mNumElems; }
-    const_iterator cend() const noexcept { return mElems + mNumElems; }
+    const_iterator end() const noexcept { return mEnd; }
+    const_iterator cend() const noexcept { return mEnd; }
 
     const_reverse_iterator rbegin() const noexcept { return reverse_iterator(end()); }
-    const_reverse_iterator rend() const noexcept { return reverse_iterator(begin()); }
-
     const_reverse_iterator crbegin() const noexcept { return const_reverse_iterator(cend()); }
+
+    const_reverse_iterator rend() const noexcept { return reverse_iterator(begin()); }
     const_reverse_iterator crend() const noexcept { return const_reverse_iterator(cbegin()); }
 
-    ArrayView slice(size_type pos, size_type len = npos) const noexcept
+    ArrayView slice(size_type pos, size_type len = npos) const
     {
-        if(pos >= size())
-            return ArrayView(data()+size(), 0);
-        if(len == npos || size()-pos < len)
-            return ArrayView(data()+pos, size()-pos);
+        if(pos > size())
+            throw std::out_of_range("alure::ArrayView::slice: pos out of range");
+        if(size()-pos < len) return ArrayView(data()+pos, size()-pos);
         return ArrayView(data()+pos, len);
     }
 };
 
 template<typename T, typename Tr=std::char_traits<T>>
 class BasicStringView : public ArrayView<T> {
-    using BaseT = ArrayView<T>;
-
 public:
-    using typename BaseT::value_type;
-    using typename BaseT::size_type;
-    using BaseT::npos;
     using char_type = T;
     using traits_type = Tr;
+    using size_type = size_t;
+
+    static constexpr size_type npos = static_cast<size_type>(-1);
 
     BasicStringView() noexcept = default;
     BasicStringView(const BasicStringView&) noexcept = default;
-    BasicStringView(const value_type *elems, size_type num_elems) noexcept
+    BasicStringView(const char_type *elems, size_type num_elems) noexcept
       : ArrayView<T>(elems, num_elems) { }
-    BasicStringView(const value_type *elems) : ArrayView<T>(elems, traits_type::length(elems)) { }
+    BasicStringView(const char_type *elems) : ArrayView<T>(elems, traits_type::length(elems)) { }
     template<typename Alloc>
     BasicStringView(BasicString<T,Tr,Alloc>&&) = delete;
     template<typename Alloc>
@@ -126,14 +127,14 @@ public:
 
     BasicStringView& operator=(const BasicStringView&) noexcept = default;
 
-    size_type length() const noexcept { return BaseT::size(); }
+    size_type length() const noexcept { return this->size(); }
 
     template<typename Alloc>
     explicit operator BasicString<T,Tr,Alloc>() const
-    { return BasicString<T,Tr,Alloc>(BaseT::data(), length()); }
+    { return BasicString<T,Tr,Alloc>(this->data(), length()); }
 #if __cplusplus >= 201703L
     operator std::basic_string_view<T,Tr>() const noexcept
-    { return std::basic_string_view<T,Tr>(BaseT::data(), length()); }
+    { return std::basic_string_view<T,Tr>(this->data(), length()); }
 #endif
 
     template<typename Alloc>
@@ -147,7 +148,7 @@ public:
     int compare(BasicStringView other) const noexcept
     {
         int ret = traits_type::compare(
-            BaseT::data(), other.data(), std::min<size_t>(length(), other.length())
+            this->data(), other.data(), std::min<size_t>(length(), other.length())
         );
         if(ret == 0)
         {
@@ -164,20 +165,19 @@ public:
     bool operator<(BasicStringView rhs) const noexcept { return compare(rhs) < 0; }
     bool operator>(BasicStringView rhs) const noexcept { return compare(rhs) > 0; }
 
-    BasicStringView substr(size_type pos, size_type len = npos) const noexcept
+    BasicStringView substr(size_type pos, size_type len = npos) const
     {
-        if(pos >= length())
-            return BasicStringView(BaseT::data()+length(), 0);
-        if(len == npos || length()-pos < len)
-            return BasicStringView(BaseT::data()+pos, length()-pos);
-        return BasicStringView(BaseT::data()+pos, len);
+        if(pos > length())
+            throw std::out_of_range("alure::BasicStringView::substr: pos out of range");
+        if(length()-pos < len) return BasicStringView(this->data()+pos, length()-pos);
+        return BasicStringView(this->data()+pos, len);
     }
 
     size_type find_first_of(char_type ch, size_type pos = 0) const noexcept
     {
         if(pos >= length()) return npos;
-        const char_type *chpos = traits_type::find(BaseT::data()+pos, length()-pos, ch);
-        if(chpos) return chpos - BaseT::data();
+        const char_type *chpos = traits_type::find(this->data()+pos, length()-pos, ch);
+        if(chpos) return chpos - this->data();
         return npos;
     }
     size_type find_first_of(BasicStringView other, size_type pos = 0) const noexcept
