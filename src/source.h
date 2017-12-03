@@ -125,6 +125,7 @@ public:
     bool isPending() const;
     bool isPlaying() const;
     bool isPaused() const;
+    bool isPlayingOrPending() const;
 
     void setGroup(SourceGroup group);
     SourceGroup getGroup() const { return SourceGroup(mGroup); }

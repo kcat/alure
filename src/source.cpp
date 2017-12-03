@@ -556,6 +556,26 @@ bool SourceImpl::isPaused() const
     return mId != 0 && mPaused.load(std::memory_order_acquire);
 }
 
+DECL_THUNK0(bool, Source, isPlayingOrPending, const)
+bool SourceImpl::isPlayingOrPending() const
+{
+    CheckContext(mContext);
+
+    bool playing = false;
+    if(mId != 0)
+    {
+        ALint state = -1;
+        alGetSourcei(mId, AL_SOURCE_STATE, &state);
+        if(state == -1)
+            throw std::runtime_error("Source state error");
+
+        playing = (state == AL_PLAYING) ||
+                  (!mPaused.load(std::memory_order_acquire) &&
+                   mStream && mStream->hasMoreData());
+    }
+    return playing || mContext.isPendingSource(this);
+}
+
 
 DECL_THUNK1(void, Source, setGroup,, SourceGroup)
 void SourceImpl::setGroup(SourceGroup group)

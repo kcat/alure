@@ -918,6 +918,12 @@ public:
     bool isPaused() const;
 
     /**
+     * Specifies if the source is currently playing or waiting to play a future
+     * buffer.
+     */
+    bool isPlayingOrPending() const;
+
+    /**
      * Sets this source as a child of the given source group. The given source
      * group's parameters will influence this and all other sources that belong
      * to it. A source can only be the child of one source group at a time,
