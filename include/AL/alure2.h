@@ -490,6 +490,17 @@ public:
     void resumeDSP();
 
     /**
+     * Retrieves the current clock time for the device. This starts relative to
+     * the device being opened, and does not increment while there are no
+     * contexts nor while processing is paused. This is currently based on
+     * std::chrono::steady_clock, and so may not exactly match the rate that
+     * sources play at. In the future it may utilize an OpenAL extension to
+     * retrieve the audio device's real clock which may tic at a subtly
+     * different rate than the main clock(s).
+     */
+    std::chrono::nanoseconds getClockTime();
+
+    /**
      * Closes and frees the device. All previously-created contexts must first
      * be destroyed.
      */

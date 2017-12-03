@@ -21,6 +21,9 @@ enum class ALC {
 class DeviceImpl {
     ALCdevice *mDevice{nullptr};
 
+    std::chrono::nanoseconds mTimeBase, mPauseTime;
+    bool mIsPaused{false};
+
     Vector<UniquePtr<ContextImpl>> mContexts;
 
     Bitfield<static_cast<size_t>(ALC::EXTENSION_MAX)> mHasExt;
@@ -63,6 +66,8 @@ public:
 
     void pauseDSP();
     void resumeDSP();
+
+    std::chrono::nanoseconds getClockTime();
 
     void close();
 };

@@ -71,6 +71,7 @@ DeviceImpl::DeviceImpl(const char *name)
     if(!mDevice) throw alc_error(alcGetError(nullptr), "alcOpenDevice failed");
 
     setupExts();
+    mPauseTime = mTimeBase = std::chrono::steady_clock::now().time_since_epoch();
 }
 
 DeviceImpl::~DeviceImpl()
@@ -90,6 +91,8 @@ void DeviceImpl::removeContext(ContextImpl *ctx)
         { return entry.get() == ctx; }
     );
     if(iter != mContexts.end()) mContexts.erase(iter);
+    if(mContexts.empty() && mPauseTime == mPauseTime.zero())
+        mPauseTime = std::chrono::steady_clock::now().time_since_epoch();
 }
 
 
@@ -237,6 +240,7 @@ void DeviceImpl::reset(ArrayView<AttributePair> attributes)
 DECL_THUNK1(Context, Device, createContext,, ArrayView<AttributePair>)
 Context DeviceImpl::createContext(ArrayView<AttributePair> attributes)
 {
+    auto cur_time = std::chrono::steady_clock::now().time_since_epoch();
     Vector<AttributePair> attrs;
     if(!attributes.empty())
     {
@@ -257,6 +261,11 @@ Context DeviceImpl::createContext(ArrayView<AttributePair> attributes)
     }
 
     mContexts.emplace_back(MakeUnique<ContextImpl>(*this, attributes));
+    if(!mIsPaused && mPauseTime != mPauseTime.zero())
+    {
+        mTimeBase += cur_time - mPauseTime;
+        mPauseTime = mPauseTime.zero();
+    }
     return Context(mContexts.back().get());
 }
 
@@ -279,13 +288,37 @@ void DeviceImpl::pauseDSP()
     if(!hasExtension(ALC::SOFT_device_pause))
         throw std::runtime_error("ALC_SOFT_pause_device not supported");
     alcDevicePauseSOFT(mDevice);
+    if(!mIsPaused && mPauseTime == mPauseTime.zero())
+        mPauseTime = std::chrono::steady_clock::now().time_since_epoch();
+    mIsPaused = true;
 }
 
 DECL_THUNK0(void, Device, resumeDSP,)
 void DeviceImpl::resumeDSP()
 {
+    auto cur_time = std::chrono::steady_clock::now().time_since_epoch();
     if(hasExtension(ALC::SOFT_device_pause))
         alcDeviceResumeSOFT(mDevice);
+    if(!mContexts.empty() && mPauseTime != mPauseTime.zero())
+    {
+        mTimeBase += cur_time - mPauseTime;
+        mPauseTime = mPauseTime.zero();
+    }
+    mIsPaused = false;
+}
+
+DECL_THUNK0(std::chrono::nanoseconds, Device, getClockTime,)
+std::chrono::nanoseconds DeviceImpl::getClockTime()
+{
+    std::chrono::nanoseconds cur_time = std::chrono::steady_clock::now().time_since_epoch();
+    if(UNLIKELY(mPauseTime != mPauseTime.zero()))
+    {
+        auto diff = cur_time - mPauseTime;
+        mTimeBase += diff;
+        mPauseTime += diff;
+        cur_time = mPauseTime;
+    }
+    return cur_time - mTimeBase;
 }
 
 
