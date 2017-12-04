@@ -8,15 +8,14 @@
 #include "buffer.h"
 
 
-namespace
-{
+namespace {
 
 struct IDType {
     alure::Array<ALubyte,16> mGuid;
-    using char16 = char[16];
+    using ubyte16 = ALubyte[16];
 };
 
-inline bool operator==(const IDType::char16 &lhs, const IDType &rhs)
+inline bool operator==(const IDType::ubyte16 &lhs, const IDType &rhs)
 {
     static_assert(sizeof(lhs) == sizeof(rhs.mGuid), "Invalid ID size");
     return std::equal(std::begin(lhs), std::end(lhs), rhs.mGuid.begin());
@@ -318,10 +317,10 @@ SharedPtr<Decoder> WaveDecoderFactory::createDecoder(UniquePtr<std::istream> &fi
                 if(size < 22)
                     goto next_chunk;
 
-                char subtype[16];
+                ALubyte subtype[16];
                 ALushort validbits = read_le16(*file); size -= 2;
                 ALuint chanmask = read_le32(*file); size -= 4;
-                file->read(subtype, 16);
+                file->read(reinterpret_cast<char*>(subtype), 16);
                 size -= static_cast<ALuint>(file->gcount());
 
                 /* Padded bit depths not supported */
