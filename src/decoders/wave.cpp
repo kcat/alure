@@ -393,7 +393,7 @@ SharedPtr<Decoder> WaveDecoderFactory::createDecoder(UniquePtr<std::istream> &fi
                 size -= 24;
 
                 /* Only handle indefinite forward loops. */
-                if(type == 0 || numloops == 0)
+                if(type == 0 && numloops == 0)
                 {
                     loop_pts[0] = loopstart;
                     loop_pts[1] = loopend;
