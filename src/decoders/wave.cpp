@@ -10,9 +10,14 @@
 
 namespace {
 
+constexpr int FORMAT_TYPE_PCM        = 0x0001;
+constexpr int FORMAT_TYPE_FLOAT      = 0x0003;
+constexpr int FORMAT_TYPE_MULAW      = 0x0007;
+constexpr int FORMAT_TYPE_EXTENSIBLE = 0xFFFE;
+
 struct IDType {
-    alure::Array<ALubyte,16> mGuid;
     using ubyte16 = ALubyte[16];
+    alure::Array<ALubyte,16> mGuid;
 };
 
 inline bool operator==(const IDType::ubyte16 &lhs, const IDType &rhs)
@@ -48,7 +53,7 @@ constexpr int CHANNELS_6DOT1      = 0x01 | 0x02 | 0x04 | 0x08               | 0x
 constexpr int CHANNELS_7DOT1      = 0x01 | 0x02 | 0x04 | 0x08 | 0x10 | 0x20 | 0x200         | 0x400;
 
 
-static ALuint read_le32(std::istream &stream)
+ALuint read_le32(std::istream &stream)
 {
     char buf[4];
     if(!stream.read(buf, sizeof(buf)) || stream.gcount() != sizeof(buf))
@@ -57,7 +62,7 @@ static ALuint read_le32(std::istream &stream)
             (ALuint(buf[2]<<16)&0x00ff0000) | (ALuint(buf[3]<<24)&0xff000000));
 }
 
-static ALushort read_le16(std::istream &stream)
+ALushort read_le16(std::istream &stream)
 {
     char buf[2];
     if(!stream.read(buf, sizeof(buf)) || stream.gcount() != sizeof(buf))
@@ -65,10 +70,9 @@ static ALushort read_le16(std::istream &stream)
     return ((ALushort(buf[0]   )&0x00ff) | (ALushort(buf[1]<<8)&0xff00));
 }
 
-}
+} // namespace
 
-namespace alure
-{
+namespace alure {
 
 class WaveDecoder final : public Decoder {
     UniquePtr<std::istream> mFile;
@@ -92,7 +96,7 @@ public:
       : mFile(std::move(file)), mChannelConfig(channels), mSampleType(type), mFrequency(frequency)
       , mFrameSize(framesize), mLoopPts{loopstart,loopend}, mStart(start), mEnd(end)
     { mCurrentPos = mFile->tellg(); }
-    ~WaveDecoder() override;
+    ~WaveDecoder() override { }
 
     ALuint getFrequency() const noexcept override;
     ChannelConfig getChannelConfig() const noexcept override;
@@ -106,20 +110,9 @@ public:
     ALuint read(ALvoid *ptr, ALuint count) noexcept override;
 };
 
-WaveDecoder::~WaveDecoder()
-{
-}
-
-
-ALuint WaveDecoder::getFrequency() const noexcept
-{ return mFrequency; }
-
-ChannelConfig WaveDecoder::getChannelConfig() const noexcept
-{ return mChannelConfig; }
-
-SampleType WaveDecoder::getSampleType() const noexcept
-{ return mSampleType; }
-
+ALuint WaveDecoder::getFrequency() const noexcept { return mFrequency; }
+ChannelConfig WaveDecoder::getChannelConfig() const noexcept { return mChannelConfig; }
+SampleType WaveDecoder::getSampleType() const noexcept { return mSampleType; }
 
 uint64_t WaveDecoder::getLength() const noexcept
 { return (mEnd - mStart) / mFrameSize; }
@@ -134,10 +127,7 @@ bool WaveDecoder::seek(uint64_t pos) noexcept
     return true;
 }
 
-std::pair<uint64_t,uint64_t> WaveDecoder::getLoopPoints() const noexcept
-{
-    return mLoopPts;
-}
+std::pair<uint64_t,uint64_t> WaveDecoder::getLoopPoints() const noexcept { return mLoopPts; }
 
 ALuint WaveDecoder::read(ALvoid *ptr, ALuint count) noexcept
 {
@@ -215,45 +205,38 @@ SharedPtr<Decoder> WaveDecoderFactory::createDecoder(UniquePtr<std::istream> &fi
     ALuint blockalign = 0;
     ALuint framealign = 0;
 
-    char tag[4]{};
-    if(!file->read(tag, 4) || file->gcount() != 4 || memcmp(tag, "RIFF", 4) != 0)
+    char tag_[4]{};
+    if(!file->read(tag_, 4) || file->gcount() != 4 || memcmp(tag_, "RIFF", 4) != 0)
         return nullptr;
     ALuint totalsize = read_le32(*file) & ~1u;
-    if(!file->read(tag, 4) || file->gcount() != 4 || memcmp(tag, "WAVE", 4) != 0)
+    if(!file->read(tag_, 4) || file->gcount() != 4 || memcmp(tag_, "WAVE", 4) != 0)
         return nullptr;
 
     while(file->good() && !file->eof() && totalsize > 8)
     {
-        if(!file->read(tag, 4) || file->gcount() != 4)
+        if(!file->read(tag_, 4) || file->gcount() != 4)
             return nullptr;
         ALuint size = read_le32(*file);
         if(size < 2) return nullptr;
         totalsize -= 8;
 
+        StringView tag(tag_, 4);
         size = std::min((size+1) & ~1u, totalsize);
         totalsize -= size;
 
-        if(memcmp(tag, "fmt ", 4) == 0)
+        if(tag == "fmt ")
         {
             /* 'fmt ' tag needs at least 16 bytes. */
             if(size < 16) goto next_chunk;
 
-            /* format type */
-            ALushort fmttype = read_le16(*file); size -= 2;
-
-            /* mono or stereo data */
+            int fmttype = read_le16(*file); size -= 2;
             int chancount = read_le16(*file); size -= 2;
-
-            /* sample frequency */
             frequency = read_le32(*file); size -= 4;
 
             /* skip average bytes per second */
             read_le32(*file); size -= 4;
 
-            /* bytes per block */
             blockalign = read_le16(*file); size -= 2;
-
-            /* bits per sample */
             int bitdepth = read_le16(*file); size -= 2;
 
             /* Look for any extra data and try to find the format */
@@ -265,10 +248,7 @@ SharedPtr<Decoder> WaveDecoderFactory::createDecoder(UniquePtr<std::istream> &fi
             }
             extrabytes = std::min<ALuint>(extrabytes, size);
 
-            /* Format type should be 0x0001 for integer PCM data, 0x0003 for
-             * float PCM data, 0x0007 for muLaw, and 0xFFFE extensible data.
-             */
-            if(fmttype == 0x0001)
+            if(fmttype == FORMAT_TYPE_PCM)
             {
                 if(chancount == 1)
                     channels = ChannelConfig::Mono;
@@ -284,7 +264,7 @@ SharedPtr<Decoder> WaveDecoderFactory::createDecoder(UniquePtr<std::istream> &fi
                 else
                     goto next_chunk;
             }
-            else if(fmttype == 0x0003)
+            else if(fmttype == FORMAT_TYPE_FLOAT)
             {
                 if(chancount == 1)
                     channels = ChannelConfig::Mono;
@@ -298,7 +278,7 @@ SharedPtr<Decoder> WaveDecoderFactory::createDecoder(UniquePtr<std::istream> &fi
                 else
                     goto next_chunk;
             }
-            else if(fmttype == 0x0007)
+            else if(fmttype == FORMAT_TYPE_MULAW)
             {
                 if(chancount == 1)
                     channels = ChannelConfig::Mono;
@@ -312,10 +292,9 @@ SharedPtr<Decoder> WaveDecoderFactory::createDecoder(UniquePtr<std::istream> &fi
                 else
                     goto next_chunk;
             }
-            else if(fmttype == 0xFFFE)
+            else if(fmttype == FORMAT_TYPE_EXTENSIBLE)
             {
-                if(size < 22)
-                    goto next_chunk;
+                if(size < 22) goto next_chunk;
 
                 ALubyte subtype[16];
                 ALushort validbits = read_le16(*file); size -= 2;
@@ -385,7 +364,7 @@ SharedPtr<Decoder> WaveDecoderFactory::createDecoder(UniquePtr<std::istream> &fi
              * consideration). */
             framealign = blockalign / framesize;
         }
-        else if(memcmp(tag, "smpl", 4) == 0)
+        else if(tag == "smpl")
         {
             /* sampler data needs at least 36 bytes */
             if(size < 36) goto next_chunk;
@@ -422,7 +401,7 @@ SharedPtr<Decoder> WaveDecoderFactory::createDecoder(UniquePtr<std::istream> &fi
                 }
             }
         }
-        else if(memcmp(tag, "data", 4) == 0)
+        else if(tag == "data")
         {
             if(framesize == 0 || !Context::GetCurrent().isSupported(channels, type))
                 goto next_chunk;
@@ -450,4 +429,4 @@ SharedPtr<Decoder> WaveDecoderFactory::createDecoder(UniquePtr<std::istream> &fi
     return nullptr;
 }
 
-}
+} // namespace alure
