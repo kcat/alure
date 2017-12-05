@@ -156,6 +156,7 @@ ALuint WaveDecoder::read(ALvoid *ptr, ALuint count) noexcept
 
                     mCurrentPos += got;
                     total += got;
+                    if(got < todo) break;
                 }
                 total /= mFrameSize;
                 break;
@@ -174,6 +175,7 @@ ALuint WaveDecoder::read(ALvoid *ptr, ALuint count) noexcept
 
                     mCurrentPos += got;
                     total += got;
+                    if(got < todo) break;
                 }
                 total /= mFrameSize;
                 break;
