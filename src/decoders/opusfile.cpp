@@ -190,8 +190,8 @@ std::pair<uint64_t,uint64_t> OpusFileDecoder::getLoopPoints() const noexcept
 ALuint OpusFileDecoder::read(ALvoid *ptr, ALuint count) noexcept
 {
     if(mSampleType == SampleType::Float32)
-        return do_read<float>(reinterpret_cast<float*>(ptr), count);
-    return do_read<ogg_int16_t>(reinterpret_cast<ogg_int16_t*>(ptr), count);
+        return do_read(reinterpret_cast<float*>(ptr), count);
+    return do_read(reinterpret_cast<ogg_int16_t*>(ptr), count);
 }
 
 
