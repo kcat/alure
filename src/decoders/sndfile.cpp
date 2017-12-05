@@ -6,8 +6,7 @@
 
 #include "sndfile.h"
 
-namespace
-{
+namespace {
 
 constexpr alure::Array<int,1> CHANNELS_MONO      {{SF_CHANNEL_MAP_MONO}};
 constexpr alure::Array<int,2> CHANNELS_STEREO    {{SF_CHANNEL_MAP_LEFT, SF_CHANNEL_MAP_RIGHT}};
@@ -20,17 +19,13 @@ constexpr alure::Array<int,8> CHANNELS_7DOT1     {{SF_CHANNEL_MAP_LEFT, SF_CHANN
 constexpr alure::Array<int,3> CHANNELS_BFORMAT2D {{SF_CHANNEL_MAP_AMBISONIC_B_W, SF_CHANNEL_MAP_AMBISONIC_B_X, SF_CHANNEL_MAP_AMBISONIC_B_Y}};
 constexpr alure::Array<int,4> CHANNELS_BFORMAT3D {{SF_CHANNEL_MAP_AMBISONIC_B_W, SF_CHANNEL_MAP_AMBISONIC_B_X, SF_CHANNEL_MAP_AMBISONIC_B_Y, SF_CHANNEL_MAP_AMBISONIC_B_Z}};
 
-}
 
-namespace alure
-{
-
-static sf_count_t get_filelen(void *user_data)
+sf_count_t istream_get_filelen(void *user_data)
 {
     std::istream *file = reinterpret_cast<std::istream*>(user_data);
-    sf_count_t len = -1;
-
     file->clear();
+
+    sf_count_t len = -1;
     std::streampos pos = file->tellg();
     if(pos != -1 && file->seekg(0, std::ios::end))
     {
@@ -40,54 +35,64 @@ static sf_count_t get_filelen(void *user_data)
     return len;
 }
 
-static sf_count_t seek(sf_count_t offset, int whence, void *user_data)
+sf_count_t istream_seek(sf_count_t offset, int whence, void *user_data)
 {
     std::istream *file = reinterpret_cast<std::istream*>(user_data);
-
     file->clear();
+
     if(!file->seekg(offset, std::ios::seekdir(whence)))
         return -1;
     return file->tellg();
 }
 
-static sf_count_t read(void *ptr, sf_count_t count, void *user_data)
+sf_count_t istream_read(void *ptr, sf_count_t count, void *user_data)
 {
     std::istream *file = reinterpret_cast<std::istream*>(user_data);
-
     file->clear();
+
     file->read(reinterpret_cast<char*>(ptr), count);
     return file->gcount();
 }
 
-static sf_count_t write(const void*, sf_count_t, void*)
+sf_count_t istream_write(const void*, sf_count_t, void*)
 {
     return -1;
 }
 
-static sf_count_t tell(void *user_data)
+sf_count_t istream_tell(void *user_data)
 {
     std::istream *file = reinterpret_cast<std::istream*>(user_data);
-
     file->clear();
+
     return file->tellg();
 }
 
 
+struct SndfileDeleter {
+    void operator()(SNDFILE *ptr) const { sf_close(ptr); }
+};
+using SndfilePtr = alure::UniquePtr<SNDFILE,SndfileDeleter>;
+
+} // namespace
+
+namespace alure {
+
 class SndFileDecoder final : public Decoder {
     UniquePtr<std::istream> mFile;
 
-    SNDFILE *mSndFile{nullptr};
+    SndfilePtr mSndFile;
     SF_INFO mSndInfo;
 
     ChannelConfig mChannelConfig{ChannelConfig::Mono};
     SampleType mSampleType{SampleType::UInt8};
 
 public:
-    SndFileDecoder(UniquePtr<std::istream> file, SNDFILE *sndfile, const SF_INFO &sndinfo, ChannelConfig sconfig, SampleType stype) noexcept
-      : mFile(std::move(file)), mSndFile(sndfile), mSndInfo(sndinfo)
+    SndFileDecoder(UniquePtr<std::istream> file, SndfilePtr sndfile, const SF_INFO &sndinfo,
+                   ChannelConfig sconfig, SampleType stype) noexcept
+      : mFile(std::move(file)), mSndFile(std::move(sndfile)), mSndInfo(sndinfo)
       , mChannelConfig(sconfig), mSampleType(stype)
     { }
-    ~SndFileDecoder() override;
+    ~SndFileDecoder() override { }
 
     ALuint getFrequency() const noexcept override;
     ChannelConfig getChannelConfig() const noexcept override;
@@ -101,28 +106,9 @@ public:
     ALuint read(ALvoid *ptr, ALuint count) noexcept override;
 };
 
-SndFileDecoder::~SndFileDecoder()
-{
-    sf_close(mSndFile);
-    mSndFile = 0;
-}
-
-
-ALuint SndFileDecoder::getFrequency() const noexcept
-{
-    return mSndInfo.samplerate;
-}
-
-ChannelConfig SndFileDecoder::getChannelConfig() const noexcept
-{
-    return mChannelConfig;
-}
-
-SampleType SndFileDecoder::getSampleType() const noexcept
-{
-    return mSampleType;
-}
-
+ALuint SndFileDecoder::getFrequency() const noexcept { return mSndInfo.samplerate; }
+ChannelConfig SndFileDecoder::getChannelConfig() const noexcept { return mChannelConfig; }
+SampleType SndFileDecoder::getSampleType() const noexcept { return mSampleType; }
 
 uint64_t SndFileDecoder::getLength() const noexcept
 {
@@ -131,23 +117,23 @@ uint64_t SndFileDecoder::getLength() const noexcept
 
 bool SndFileDecoder::seek(uint64_t pos) noexcept
 {
-    sf_count_t newpos = sf_seek(mSndFile, pos, SEEK_SET);
+    sf_count_t newpos = sf_seek(mSndFile.get(), pos, SEEK_SET);
     if(newpos < 0) return false;
     return true;
 }
 
 std::pair<uint64_t,uint64_t> SndFileDecoder::getLoopPoints() const noexcept
 {
-    return std::make_pair(0, 0);
+    return std::make_pair(0, std::numeric_limits<uint64_t>::max());
 }
 
 ALuint SndFileDecoder::read(ALvoid *ptr, ALuint count) noexcept
 {
     sf_count_t got = 0;
     if(mSampleType == SampleType::Int16)
-        got = sf_readf_short(mSndFile, static_cast<short*>(ptr), count);
+        got = sf_readf_short(mSndFile.get(), static_cast<short*>(ptr), count);
     else if(mSampleType == SampleType::Float32)
-        got = sf_readf_float(mSndFile, static_cast<float*>(ptr), count);
+        got = sf_readf_float(mSndFile.get(), static_cast<float*>(ptr), count);
     return (ALuint)std::max<sf_count_t>(got, 0);
 }
 
@@ -155,22 +141,21 @@ ALuint SndFileDecoder::read(ALvoid *ptr, ALuint count) noexcept
 SharedPtr<Decoder> SndFileDecoderFactory::createDecoder(UniquePtr<std::istream> &file) noexcept
 {
     SF_VIRTUAL_IO vio = {
-        get_filelen, seek,
-        read, write, tell
+        istream_get_filelen, istream_seek,
+        istream_read, istream_write, istream_tell
     };
     SF_INFO sndinfo;
-    SNDFILE *sndfile = sf_open_virtual(&vio, SFM_READ, &sndinfo, file.get());
+    SndfilePtr sndfile(sf_open_virtual(&vio, SFM_READ, &sndinfo, file.get()));
     if(!sndfile) return nullptr;
 
     ChannelConfig sconfig;
     Vector<int> chanmap(sndinfo.channels);
-    if(sf_command(sndfile, SFC_GET_CHANNEL_MAP_INFO, chanmap.data(), chanmap.size()*sizeof(int)) == SF_TRUE)
+    if(sf_command(sndfile.get(), SFC_GET_CHANNEL_MAP_INFO, chanmap.data(), chanmap.size()*sizeof(int)) == SF_TRUE)
     {
         auto matches = [](const Vector<int> &first, ArrayView<int> second) -> bool
         {
-            if(first.size() != second.size())
-                return false;
-            return std::equal(first.begin(), first.end(), second.begin());
+            return (first.size() == second.size()) &&
+                   std::equal(first.begin(), first.end(), second.begin());
         };
 
         if(matches(chanmap, CHANNELS_MONO))
@@ -192,32 +177,23 @@ SharedPtr<Decoder> SndFileDecoderFactory::createDecoder(UniquePtr<std::istream> 
         else if(matches(chanmap, CHANNELS_BFORMAT3D))
             sconfig = ChannelConfig::BFormat3D;
         else
-        {
-            sf_close(sndfile);
             return nullptr;
-        }
     }
-    else if(sf_command(sndfile, SFC_WAVEX_GET_AMBISONIC, nullptr, 0) == SF_AMBISONIC_B_FORMAT)
+    else if(sf_command(sndfile.get(), SFC_WAVEX_GET_AMBISONIC, nullptr, 0) == SF_AMBISONIC_B_FORMAT)
     {
         if(sndinfo.channels == 3)
             sconfig = ChannelConfig::BFormat2D;
         else if(sndinfo.channels == 4)
             sconfig = ChannelConfig::BFormat3D;
         else
-        {
-            sf_close(sndfile);
             return nullptr;
-        }
     }
     else if(sndinfo.channels == 1)
         sconfig = ChannelConfig::Mono;
     else if(sndinfo.channels == 2)
         sconfig = ChannelConfig::Stereo;
     else
-    {
-        sf_close(sndfile);
         return nullptr;
-    }
 
     SampleType stype = SampleType::Int16;
     switch(sndinfo.format&SF_FORMAT_SUBMASK)
@@ -236,7 +212,7 @@ SharedPtr<Decoder> SndFileDecoderFactory::createDecoder(UniquePtr<std::istream> 
             break;
     }
 
-    return MakeShared<SndFileDecoder>(std::move(file), sndfile, sndinfo, sconfig, stype);
+    return MakeShared<SndFileDecoder>(std::move(file), std::move(sndfile), sndinfo, sconfig, stype);
 }
 
-}
+} // namespace alure

@@ -9,10 +9,9 @@
 
 #include "opusfile.h"
 
-namespace alure
-{
+namespace {
 
-static int read(void *user_data, unsigned char *ptr, int size)
+int istream_read(void *user_data, unsigned char *ptr, int size)
 {
     std::istream *stream = static_cast<std::istream*>(user_data);
     stream->clear();
@@ -22,7 +21,7 @@ static int read(void *user_data, unsigned char *ptr, int size)
     return stream->gcount();
 }
 
-static int seek(void *user_data, opus_int64 offset, int whence)
+int istream_seek(void *user_data, opus_int64 offset, int whence)
 {
     std::istream *stream = static_cast<std::istream*>(user_data);
     stream->clear();
@@ -39,7 +38,7 @@ static int seek(void *user_data, opus_int64 offset, int whence)
     return stream->good() ? 0 : -1;
 }
 
-static opus_int64 tell(void *user_data)
+opus_int64 istream_tell(void *user_data)
 {
     std::istream *stream = static_cast<std::istream*>(user_data);
     stream->clear();
@@ -49,24 +48,32 @@ static opus_int64 tell(void *user_data)
 
 template<typename T> struct OggTypeInfo { };
 template<>
-struct OggTypeInfo<ogg_int16_t>
-{
+struct OggTypeInfo<ogg_int16_t> {
     template<typename ...Args>
     static int read(Args&& ...args)
     { return op_read(std::forward<Args>(args)...); }
 };
 template<>
-struct OggTypeInfo<float>
-{
+struct OggTypeInfo<float> {
     template<typename ...Args>
     static int read(Args&& ...args)
     { return op_read_float(std::forward<Args>(args)...); }
 };
 
+
+struct OggOpusFileDeleter {
+    void operator()(OggOpusFile *ptr) const { op_free(ptr); }
+};
+using OggOpusFilePtr = alure::UniquePtr<OggOpusFile,OggOpusFileDeleter>;
+
+} // namespace
+
+namespace alure {
+
 class OpusFileDecoder final : public Decoder {
     UniquePtr<std::istream> mFile;
 
-    OggOpusFile *mOggFile{nullptr};
+    OggOpusFilePtr mOggFile;
     int mOggBitstream{0};
 
     ChannelConfig mChannelConfig{ChannelConfig::Mono};
@@ -82,11 +89,11 @@ class OpusFileDecoder final : public Decoder {
         int num_chans = FramesToBytes(1, mChannelConfig, SampleType::UInt8);
         while(total < count)
         {
-            if(num_chans != op_head(mOggFile, -1)->channel_count)
+            if(num_chans != op_head(mOggFile.get(), -1)->channel_count)
                 break;
             int len = (count-total) * num_chans;
 
-            long got = OggTypeInfo<T>::read(mOggFile, samples, len, &mOggBitstream);
+            long got = OggTypeInfo<T>::read(mOggFile.get(), samples, len, &mOggBitstream);
             if(got <= 0) break;
 
             samples += got*num_chans;
@@ -140,12 +147,12 @@ class OpusFileDecoder final : public Decoder {
     }
 
 public:
-    OpusFileDecoder(UniquePtr<std::istream> file, OggOpusFile *oggfile, ChannelConfig sconfig,
+    OpusFileDecoder(UniquePtr<std::istream> file, OggOpusFilePtr oggfile, ChannelConfig sconfig,
                     SampleType stype, const std::pair<uint64_t,uint64_t> &loop_points) noexcept
-      : mFile(std::move(file)), mOggFile(oggfile), mChannelConfig(sconfig), mSampleType(stype)
-      , mLoopPts(loop_points)
+      : mFile(std::move(file)), mOggFile(std::move(oggfile)), mChannelConfig(sconfig)
+      , mSampleType(stype), mLoopPts(loop_points)
     { }
-    ~OpusFileDecoder() override;
+    ~OpusFileDecoder() override { }
 
     ALuint getFrequency() const noexcept override;
     ChannelConfig getChannelConfig() const noexcept override;
@@ -159,38 +166,20 @@ public:
     ALuint read(ALvoid *ptr, ALuint count) noexcept override;
 };
 
-OpusFileDecoder::~OpusFileDecoder()
-{
-    op_free(mOggFile);
-}
-
-
-ALuint OpusFileDecoder::getFrequency() const noexcept
-{
-    // libopusfile always decodes to 48khz.
-    return 48000;
-}
-
-ChannelConfig OpusFileDecoder::getChannelConfig() const noexcept
-{
-    return mChannelConfig;
-}
-
-SampleType OpusFileDecoder::getSampleType() const noexcept
-{
-    return mSampleType;
-}
-
+// libopusfile always decodes to 48khz.
+ALuint OpusFileDecoder::getFrequency() const noexcept { return 48000; }
+ChannelConfig OpusFileDecoder::getChannelConfig() const noexcept { return mChannelConfig; }
+SampleType OpusFileDecoder::getSampleType() const noexcept { return mSampleType; }
 
 uint64_t OpusFileDecoder::getLength() const noexcept
 {
-    ogg_int64_t len = op_pcm_total(mOggFile, -1);
+    ogg_int64_t len = op_pcm_total(mOggFile.get(), -1);
     return std::max<ogg_int64_t>(len, 0);
 }
 
 bool OpusFileDecoder::seek(uint64_t pos) noexcept
 {
-    return op_pcm_seek(mOggFile, pos) == 0;
+    return op_pcm_seek(mOggFile.get(), pos) == 0;
 }
 
 std::pair<uint64_t,uint64_t> OpusFileDecoder::getLoopPoints() const noexcept
@@ -209,14 +198,14 @@ ALuint OpusFileDecoder::read(ALvoid *ptr, ALuint count) noexcept
 SharedPtr<Decoder> OpusFileDecoderFactory::createDecoder(UniquePtr<std::istream> &file) noexcept
 {
     static const OpusFileCallbacks streamIO = {
-        read, seek, tell, nullptr
+        istream_read, istream_seek, istream_tell, nullptr
     };
 
-    OggOpusFile *oggfile = op_open_callbacks(file.get(), &streamIO, nullptr, 0, nullptr);
+    OggOpusFilePtr oggfile(op_open_callbacks(file.get(), &streamIO, nullptr, 0, nullptr));
     if(!oggfile) return nullptr;
 
     std::pair<uint64_t,uint64_t> loop_points = { 0, std::numeric_limits<uint64_t>::max() };
-    if(const OpusTags *tags = op_tags(oggfile, -1))
+    if(const OpusTags *tags = op_tags(oggfile.get(), -1))
     {
         for(int i = 0;i < tags->comments;i++)
         {
@@ -255,7 +244,7 @@ SharedPtr<Decoder> OpusFileDecoderFactory::createDecoder(UniquePtr<std::istream>
         }
     }
 
-    int num_chans = op_head(oggfile, -1)->channel_count;
+    int num_chans = op_head(oggfile.get(), -1)->channel_count;
     ChannelConfig channels = ChannelConfig::Mono;
     if(num_chans == 1)
         channels = ChannelConfig::Mono;
@@ -270,16 +259,13 @@ SharedPtr<Decoder> OpusFileDecoderFactory::createDecoder(UniquePtr<std::istream>
     else if(num_chans == 8)
         channels = ChannelConfig::X71;
     else
-    {
-        op_free(oggfile);
         return nullptr;
-    }
 
     if(Context::GetCurrent().isSupported(channels, SampleType::Float32))
-        return MakeShared<OpusFileDecoder>(std::move(file), oggfile, channels, SampleType::Float32,
-                                           loop_points);
-    return MakeShared<OpusFileDecoder>(std::move(file), oggfile, channels, SampleType::Int16,
-                                       loop_points);
+        return MakeShared<OpusFileDecoder>(std::move(file), std::move(oggfile), channels,
+                                           SampleType::Float32, loop_points);
+    return MakeShared<OpusFileDecoder>(std::move(file), std::move(oggfile), channels,
+                                       SampleType::Int16, loop_points);
 }
 
-}
+} // namespace alure

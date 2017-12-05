@@ -7,10 +7,9 @@
 
 #include "vorbis/vorbisfile.h"
 
-namespace alure
-{
+namespace {
 
-static int seek(void *user_data, ogg_int64_t offset, int whence)
+int istream_seek(void *user_data, ogg_int64_t offset, int whence)
 {
     std::istream *stream = static_cast<std::istream*>(user_data);
     stream->clear();
@@ -27,7 +26,7 @@ static int seek(void *user_data, ogg_int64_t offset, int whence)
     return stream->tellg();
 }
 
-static size_t read(void *ptr, size_t size, size_t nmemb, void *user_data)
+size_t istream_read(void *ptr, size_t size, size_t nmemb, void *user_data)
 {
     std::istream *stream = static_cast<std::istream*>(user_data);
     stream->clear();
@@ -37,23 +36,30 @@ static size_t read(void *ptr, size_t size, size_t nmemb, void *user_data)
     return ret/size;
 }
 
-static long tell(void *user_data)
+long istream_tell(void *user_data)
 {
     std::istream *stream = static_cast<std::istream*>(user_data);
     stream->clear();
     return stream->tellg();
 }
 
-static int close(void*)
-{
-    return 0;
-}
+int istream_close(void*) { return 0; }
 
+
+struct OggVorbisfileHolder : public OggVorbis_File {
+    OggVorbisfileHolder() { this->datasource = nullptr; }
+    ~OggVorbisfileHolder() { if(this->datasource) ov_clear(this); }
+};
+using OggVorbisfilePtr = alure::UniquePtr<OggVorbisfileHolder>;
+
+} // namespace
+
+namespace alure {
 
 class VorbisFileDecoder final : public Decoder {
     UniquePtr<std::istream> mFile;
 
-    UniquePtr<OggVorbis_File> mOggFile;
+    OggVorbisfilePtr mOggFile;
     vorbis_info *mVorbisInfo{nullptr};
     int mOggBitstream{0};
 
@@ -62,13 +68,13 @@ class VorbisFileDecoder final : public Decoder {
     std::pair<uint64_t,uint64_t> mLoopPoints{0, 0};
 
 public:
-    VorbisFileDecoder(UniquePtr<std::istream> file, UniquePtr<OggVorbis_File> oggfile,
+    VorbisFileDecoder(UniquePtr<std::istream> file, OggVorbisfilePtr oggfile,
                       vorbis_info *vorbisinfo, ChannelConfig sconfig,
                       std::pair<uint64_t,uint64_t> loop_points) noexcept
       : mFile(std::move(file)), mOggFile(std::move(oggfile)), mVorbisInfo(vorbisinfo)
       , mChannelConfig(sconfig), mLoopPoints(loop_points)
     { }
-    ~VorbisFileDecoder() override;
+    ~VorbisFileDecoder() override { }
 
     ALuint getFrequency() const noexcept override;
     ChannelConfig getChannelConfig() const noexcept override;
@@ -82,27 +88,9 @@ public:
     ALuint read(ALvoid *ptr, ALuint count) noexcept override;
 };
 
-VorbisFileDecoder::~VorbisFileDecoder()
-{
-    ov_clear(mOggFile.get());
-}
-
-
-ALuint VorbisFileDecoder::getFrequency() const noexcept
-{
-    return mVorbisInfo->rate;
-}
-
-ChannelConfig VorbisFileDecoder::getChannelConfig() const noexcept
-{
-    return mChannelConfig;
-}
-
-SampleType VorbisFileDecoder::getSampleType() const noexcept
-{
-    return SampleType::Int16;
-}
-
+ALuint VorbisFileDecoder::getFrequency() const noexcept { return mVorbisInfo->rate; }
+ChannelConfig VorbisFileDecoder::getChannelConfig() const noexcept { return mChannelConfig; }
+SampleType VorbisFileDecoder::getSampleType() const noexcept { return SampleType::Int16; }
 
 uint64_t VorbisFileDecoder::getLength() const noexcept
 {
@@ -190,20 +178,15 @@ ALuint VorbisFileDecoder::read(ALvoid *ptr, ALuint count) noexcept
 SharedPtr<Decoder> VorbisFileDecoderFactory::createDecoder(UniquePtr<std::istream> &file) noexcept
 {
     static const ov_callbacks streamIO = {
-        read, seek, close, tell
+        istream_read, istream_seek, istream_close, istream_tell
     };
 
-    vorbis_info *vorbisinfo = nullptr;
-    auto oggfile = MakeUnique<OggVorbis_File>();
+    auto oggfile = MakeUnique<OggVorbisfilePtr::element_type>();
     if(ov_open_callbacks(file.get(), oggfile.get(), NULL, 0, streamIO) != 0)
         return nullptr;
 
-    vorbisinfo = ov_info(oggfile.get(), -1);
-    if(!vorbisinfo)
-    {
-        ov_clear(oggfile.get());
-        return nullptr;
-    }
+    vorbis_info *vorbisinfo = ov_info(oggfile.get(), -1);
+    if(!vorbisinfo) return nullptr;
 
     std::pair<uint64_t,uint64_t> loop_points = { 0, std::numeric_limits<uint64_t>::max() };
     if(vorbis_comment *vc = ov_comment(oggfile.get(), -1))
@@ -259,14 +242,11 @@ SharedPtr<Decoder> VorbisFileDecoderFactory::createDecoder(UniquePtr<std::istrea
     else if(vorbisinfo->channels == 8)
         channels = ChannelConfig::X71;
     else
-    {
-        ov_clear(oggfile.get());
         return nullptr;
-    }
 
     return MakeShared<VorbisFileDecoder>(
         std::move(file), std::move(oggfile), vorbisinfo, channels, loop_points
     );
 }
 
-}
+} // namespace alure
