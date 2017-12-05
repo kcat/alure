@@ -12,8 +12,8 @@ install:
     # logs. See: http://help.appveyor.com/discussions/problems/4569
     - del "C:\Program Files (x86)\MSBuild\14.0\Microsoft.Common.targets\ImportAfter\Xamarin.Common.targets"
     - curl "http://openal-soft.org/openal-binaries/openal-soft-1.18.2-bin.zip" -o openal-soft-1.18.2-bin.zip
-    - 7z x openal-soft-1.18.2-bin.zip
-    - set OPENALDIR=%APPVEYOR_BUILD_FOLDER%\openal-soft-1.18.2-bin
+    - 7z x -o%APPVEYOR_BUILD_FOLDER%\.. openal-soft-1.18.2-bin.zip
+    - set OPENALDIR=%APPVEYOR_BUILD_FOLDER%\..\openal-soft-1.18.2-bin
 
 build_script:
 - cmd: >-
