@@ -663,7 +663,7 @@ bool SourceImpl::fadeUpdate(std::chrono::nanoseconds cur_fade_time, SourceFadeUp
     }
 
     if(!fade.mIsFadeOut) duration = dur_total - duration;
-    mFadeGain = std::pow(fade.mFadeGainMult, Seconds(duration).count());
+    mFadeGain = std::pow(fade.mFadeGainMult, float(Seconds(duration).count()));
 
     if(mId != 0)
         alSourcef(mId, AL_GAIN, mGain * mGroupGain * mFadeGain);
