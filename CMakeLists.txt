@@ -13,6 +13,7 @@ set(CMAKE_MODULE_PATH "${alure_SOURCE_DIR}/cmake")
 
 include(CheckCXXCompilerFlag)
 include(CheckCXXSourceCompiles)
+include(GNUInstallDirs)
 
 find_package(OpenAL REQUIRED)
 
@@ -186,7 +187,7 @@ if(EXPORT_DECL)
                                               NOMINMAX)
 endif()
 target_include_directories(alure2
-    PUBLIC ${alure_SOURCE_DIR}/include/AL ${OPENAL_INCLUDE_DIR}
+    PUBLIC $<BUILD_INTERFACE:${alure_SOURCE_DIR}/include/AL> ${OPENAL_INCLUDE_DIR}
     PRIVATE ${alure_SOURCE_DIR}/include ${alure_SOURCE_DIR}/src ${alure_BINARY_DIR}
             ${decoder_incls}
 )
@@ -196,21 +197,38 @@ target_link_libraries(alure2 PUBLIC ${alure_libs} PRIVATE ${LINKER_OPTS})
 add_library(alure2_s STATIC ${alure_srcs})
 target_compile_definitions(alure2_s PUBLIC ALURE_STATIC_LIB PRIVATE NOMINMAX)
 target_include_directories(alure2_s
-    PUBLIC ${alure_SOURCE_DIR}/include/AL ${OPENAL_INCLUDE_DIR}
+    PUBLIC $<BUILD_INTERFACE:${alure_SOURCE_DIR}/include/AL> ${OPENAL_INCLUDE_DIR}
     PRIVATE ${alure_SOURCE_DIR}/include ${alure_SOURCE_DIR}/src ${alure_BINARY_DIR}
             ${decoder_incls}
 )
 target_compile_options(alure2_s PRIVATE ${CXX_FLAGS} ${VISIBILITY_FLAGS})
 target_link_libraries(alure2_s PUBLIC ${alure_libs})
 
-if(NOT DEFINED LIB_SUFFIX)
-    set(LIB_SUFFIX "")
-endif()
-
-install(TARGETS alure2 alure2_s
-        RUNTIME DESTINATION bin
-        LIBRARY DESTINATION "lib${LIB_SUFFIX}"
-        ARCHIVE DESTINATION "lib${LIB_SUFFIX}"
+install(TARGETS alure2 alure2_s EXPORT alure2
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR} ${CMAKE_INSTALL_INCLUDEDIR}/AL
+)
+export(
+    TARGETS alure2 alure2_s
+    NAMESPACE Alure2::
+    FILE Alure2Config.cmake
+)
+install(
+    EXPORT alure2
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/Alure2
+    NAMESPACE Alure2::
+    FILE Alure2Config.cmake
+)
+install(FILES
+    include/AL/alure2.h
+    include/AL/alure2-aliases.h
+    include/AL/alure2-typeviews.h
+    include/AL/alure2-alext.h
+    include/AL/efx.h
+    include/AL/efx-presets.h
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/AL
 )
 
 
