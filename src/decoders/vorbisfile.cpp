@@ -193,13 +193,12 @@ SharedPtr<Decoder> VorbisFileDecoderFactory::createDecoder(UniquePtr<std::istrea
     {
         for(int i = 0;i < vc->comments;i++)
         {
-            auto seppos = StringView(
-                vc->user_comments[i], vc->comment_lengths[i]
-            ).find_first_of('=');
+            StringView val(vc->user_comments[i], vc->comment_lengths[i]);
+            auto seppos = val.find_first_of('=');
             if(seppos == StringView::npos) continue;
 
-            StringView key(vc->user_comments[i], seppos);
-            StringView val(vc->user_comments[i]+seppos+1, vc->comment_lengths[i]-(seppos+1));
+            StringView key = val.substr(0, seppos);
+            val = val.substr(seppos+1);
 
             // RPG Maker seems to recognize LOOPSTART and LOOPLENGTH for loop
             // points in a Vorbis comment. ZDoom recognizes LOOP_START and
