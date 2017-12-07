@@ -100,6 +100,21 @@ public:
         if(size()-pos < len) return ArrayView(data()+pos, size()-pos);
         return ArrayView(data()+pos, len);
     }
+
+    template<typename U>
+    ArrayView<U> reinterpret_as() const
+    {
+        // Make sure the current view is properly aligned to be interpreted as
+        // the new type.
+        if((reinterpret_cast<std::intptr_t>(mStart) & (alignof(U)-1)) != 0)
+            throw std::runtime_error(
+                "alure::ArrayView::reinterpret_as: invalid alignment for type");
+
+        size_t new_length =
+            (reinterpret_cast<const char*>(mEnd) - reinterpret_cast<const char*>(mStart)) /
+            sizeof(U);
+        return ArrayView<U>(reinterpret_cast<const U*>(mStart), new_length);
+    }
 };
 
 template<typename T, typename Tr=std::char_traits<T>>
