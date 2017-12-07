@@ -40,12 +40,9 @@ int main(int argc, char *argv[])
                                              <<alure::GetChannelConfigName(buffer.getChannelConfig())<<", "
                                              <<buffer.getFrequency()<<"hz)" <<std::endl;
 
-        float invfreq = 1.0f / buffer.getFrequency();
         while(source.isPlaying())
         {
-            std::cout<< "\r "<<std::fixed<<std::setprecision(2)<<
-                        source.getSecOffset().count()<<" / "<<(buffer.getLength()*invfreq);
-            std::cout.flush();
+            std::cout<< "\r "<<source.getSampleOffset()<<" / "<<buffer.getLength() <<std::flush;
             std::this_thread::sleep_for(std::chrono::milliseconds(25));
             ctx.update();
         }

@@ -12,6 +12,41 @@
 
 #include "alure2.h"
 
+
+namespace {
+
+// Helper class+method to print the time with human-readable formatting.
+struct PrettyTime {
+    alure::Seconds mTime;
+};
+inline std::ostream &operator<<(std::ostream &os, const PrettyTime &rhs)
+{
+    using hours = std::chrono::hours;
+    using minutes = std::chrono::minutes;
+    using seconds = std::chrono::seconds;
+    using centiseconds = std::chrono::duration<int64_t, std::ratio<1, 100>>;
+    using std::chrono::duration_cast;
+
+    centiseconds t = duration_cast<centiseconds>(rhs.mTime);
+    if(t.count() < 0)
+    {
+        os << '-';
+        t *= -1;
+    }
+
+    // Only handle up to hour formatting
+    if(t >= hours(1))
+        os << duration_cast<hours>(t).count() << 'h' << std::setfill('0') << std::setw(2)
+           << duration_cast<minutes>(t).count() << 'm';
+    else
+        os << duration_cast<minutes>(t).count() << 'm' << std::setfill('0');
+    os << std::setw(2) << (duration_cast<seconds>(t).count() % 60) << '.' << std::setw(2)
+       << (t.count() % 100) << 's' << std::setw(0) << std::setfill(' ');
+    return os;
+}
+
+} // namespace
+
 int main(int argc, char *argv[])
 {
     alure::DeviceManager devMgr = alure::DeviceManager::getInstance();
@@ -103,11 +138,11 @@ int main(int argc, char *argv[])
                                              <<alure::GetChannelConfigName(decoder->getChannelConfig())<<", "
                                              <<decoder->getFrequency()<<"hz)" <<std::endl;
 
-        float invfreq = 1.0f / decoder->getFrequency();
+        double invfreq = 1.0 / decoder->getFrequency();
         while(source.isPlaying())
         {
-            std::cout<< "\r "<<std::fixed<<std::setprecision(2)<<
-                        source.getSecOffset().count()<<" / "<<(decoder->getLength()*invfreq);
+            std::cout<< "\r "<<PrettyTime{source.getSecOffset()}<<" / "<<
+                PrettyTime{alure::Seconds(decoder->getLength()*invfreq)};
             std::cout.flush();
             std::this_thread::sleep_for(std::chrono::milliseconds(25));
             ctx.update();
