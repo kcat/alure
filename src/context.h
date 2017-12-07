@@ -116,10 +116,12 @@ private:
 
     struct PendingBuffer { BufferImpl *mBuffer;  SharedFuture<Buffer> mFuture; };
     struct PendingSource { SourceImpl *mSource;  SharedFuture<Buffer> mFuture; };
+    using BufferListT = Vector<UniquePtr<BufferImpl>>;
+    using FutureBufferListT = Vector<PendingBuffer>;
 
     DeviceImpl &mDevice;
-    Vector<PendingBuffer> mFutureBuffers;
-    Vector<UniquePtr<BufferImpl>> mBuffers;
+    FutureBufferListT mFutureBuffers;
+    BufferListT mBuffers;
     Vector<UniquePtr<SourceGroupImpl>> mSourceGroups;
     Vector<UniquePtr<AuxiliaryEffectSlotImpl>> mEffectSlots;
     Vector<UniquePtr<EffectImpl>> mEffects;
@@ -167,8 +169,8 @@ private:
     void setupExts();
 
     DecoderOrExceptT findDecoder(StringView name);
-    BufferOrExceptT doCreateBuffer(StringView name, Vector<UniquePtr<BufferImpl>>::iterator iter, SharedPtr<Decoder> decoder);
-    BufferOrExceptT doCreateBufferAsync(StringView name, Vector<UniquePtr<BufferImpl>>::iterator iter, SharedPtr<Decoder> decoder, Promise<Buffer> promise);
+    BufferOrExceptT doCreateBuffer(StringView name, size_t name_hash, BufferListT::const_iterator iter, SharedPtr<Decoder> decoder);
+    BufferOrExceptT doCreateBufferAsync(StringView name, size_t name_hash, BufferListT::const_iterator iter, SharedPtr<Decoder> decoder, Promise<Buffer> promise);
 
     bool mIsConnected : 1;
     bool mIsBatching : 1;
@@ -222,6 +224,9 @@ public:
     LPALGETAUXILIARYEFFECTSLOTIV alGetAuxiliaryEffectSlotiv{nullptr};
     LPALGETAUXILIARYEFFECTSLOTF alGetAuxiliaryEffectSlotf{nullptr};
     LPALGETAUXILIARYEFFECTSLOTFV alGetAuxiliaryEffectSlotfv{nullptr};
+
+    FutureBufferListT::const_iterator findFutureBufferName(StringView name, size_t name_hash) const;
+    BufferListT::const_iterator findBufferName(StringView name, size_t name_hash) const;
 
     ALuint getSourceId(ALuint maxprio);
     void insertSourceId(ALuint id) { mSourceIds.push_back(id); }

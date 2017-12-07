@@ -853,7 +853,31 @@ ALsizei ContextImpl::getDefaultResamplerIndex() const
 }
 
 
-BufferOrExceptT ContextImpl::doCreateBuffer(StringView name, Vector<UniquePtr<BufferImpl>>::iterator iter, SharedPtr<Decoder> decoder)
+ContextImpl::FutureBufferListT::const_iterator ContextImpl::findFutureBufferName(StringView name, size_t name_hash) const
+{
+    auto iter = std::lower_bound(mFutureBuffers.begin(), mFutureBuffers.end(), name_hash,
+        [](const PendingBuffer &lhs, size_t rhs) -> bool
+        { return lhs.mBuffer->getNameHash() < rhs; }
+    );
+    while(iter != mFutureBuffers.end() && iter->mBuffer->getNameHash() == name_hash &&
+          iter->mBuffer->getName() != name)
+        ++iter;
+    return iter;
+}
+
+ContextImpl::BufferListT::const_iterator ContextImpl::findBufferName(StringView name, size_t name_hash) const
+{
+    auto iter = std::lower_bound(mBuffers.begin(), mBuffers.end(), name_hash,
+        [](const UniquePtr<BufferImpl> &lhs, size_t rhs) -> bool
+        { return lhs->getNameHash() < rhs; }
+    );
+    while(iter != mBuffers.end() && (*iter)->getNameHash() == name_hash &&
+          (*iter)->getName() != name)
+        ++iter;
+    return iter;
+}
+
+BufferOrExceptT ContextImpl::doCreateBuffer(StringView name, size_t name_hash, BufferListT::const_iterator iter, SharedPtr<Decoder> decoder)
 {
     ALuint srate = decoder->getFrequency();
     ChannelConfig chans = decoder->getChannelConfig();
@@ -906,11 +930,11 @@ BufferOrExceptT ContextImpl::doCreateBuffer(StringView name, Vector<UniquePtr<Bu
     }
 
     return mBuffers.insert(iter,
-        MakeUnique<BufferImpl>(*this, bid, srate, chans, type, name)
+        MakeUnique<BufferImpl>(*this, bid, srate, chans, type, name, name_hash)
     )->get();
 }
 
-BufferOrExceptT ContextImpl::doCreateBufferAsync(StringView name, Vector<UniquePtr<BufferImpl>>::iterator iter, SharedPtr<Decoder> decoder, Promise<Buffer> promise)
+BufferOrExceptT ContextImpl::doCreateBufferAsync(StringView name, size_t name_hash, BufferListT::const_iterator iter, SharedPtr<Decoder> decoder, Promise<Buffer> promise)
 {
     ALuint srate = decoder->getFrequency();
     ChannelConfig chans = decoder->getChannelConfig();
@@ -935,7 +959,7 @@ BufferOrExceptT ContextImpl::doCreateBufferAsync(StringView name, Vector<UniqueP
     if(ALenum err = alGetError())
         return std::make_exception_ptr(al_error(err, "Failed to create buffer"));
 
-    auto buffer = MakeUnique<BufferImpl>(*this, bid, srate, chans, type, name);
+    auto buffer = MakeUnique<BufferImpl>(*this, bid, srate, chans, type, name, name_hash);
 
     if(mThread.get_id() == std::thread::id())
         mThread = std::thread(std::mem_fn(&ContextImpl::backgroundProc), this);
@@ -967,16 +991,14 @@ Buffer ContextImpl::getBuffer(StringView name)
     CheckContext(this);
 
     auto hasher = std::hash<StringView>();
+    size_t name_hash = hasher(name);
     if(UNLIKELY(!mFutureBuffers.empty()))
     {
         Buffer buffer;
 
         // If the buffer is already pending for the future, wait for it
-        auto iter = std::lower_bound(mFutureBuffers.begin(), mFutureBuffers.end(), hasher(name),
-            [hasher](const PendingBuffer &lhs, size_t rhs) -> bool
-            { return hasher(lhs.mBuffer->getName()) < rhs; }
-        );
-        if(iter != mFutureBuffers.end() && iter->mBuffer->getName() == name)
+        auto iter = findFutureBufferName(name, name_hash);
+        if(iter != mFutureBuffers.end() && iter->mBuffer->getNameHash() == name_hash)
         {
             buffer = iter->mFuture.get();
             mFutureBuffers.erase(iter);
@@ -994,14 +1016,11 @@ Buffer ContextImpl::getBuffer(StringView name)
         if(buffer) return buffer;
     }
 
-    auto iter = std::lower_bound(mBuffers.begin(), mBuffers.end(), hasher(name),
-        [hasher](const UniquePtr<BufferImpl> &lhs, size_t rhs) -> bool
-        { return hasher(lhs->getName()) < rhs; }
-    );
-    if(iter != mBuffers.end() && (*iter)->getName() == name)
+    auto iter = findBufferName(name, name_hash);
+    if(iter != mBuffers.end() && (*iter)->getNameHash() == name_hash)
         return Buffer(iter->get());
 
-    BufferOrExceptT ret = doCreateBuffer(name, iter, createDecoder(name));
+    BufferOrExceptT ret = doCreateBuffer(name, name_hash, iter, createDecoder(name));
     Buffer *buffer = std::get_if<Buffer>(&ret);
     if(UNLIKELY(!buffer))
         std::rethrow_exception(std::get<std::exception_ptr>(ret));
@@ -1015,14 +1034,12 @@ SharedFuture<Buffer> ContextImpl::getBufferAsync(StringView name)
     CheckContext(this);
 
     auto hasher = std::hash<StringView>();
+    size_t name_hash = hasher(name);
     if(UNLIKELY(!mFutureBuffers.empty()))
     {
         // Check if the future that's being created already exists
-        auto iter = std::lower_bound(mFutureBuffers.begin(), mFutureBuffers.end(), hasher(name),
-            [hasher](const PendingBuffer &lhs, size_t rhs) -> bool
-            { return hasher(lhs.mBuffer->getName()) < rhs; }
-        );
-        if(iter != mFutureBuffers.end() && iter->mBuffer->getName() == name)
+        auto iter = findFutureBufferName(name, name_hash);
+        if(iter != mFutureBuffers.end() && iter->mBuffer->getNameHash() == name_hash)
         {
             future = iter->mFuture;
             if(GetFutureState(future) == std::future_status::ready)
@@ -1039,11 +1056,8 @@ SharedFuture<Buffer> ContextImpl::getBufferAsync(StringView name)
         );
     }
 
-    auto iter = std::lower_bound(mBuffers.begin(), mBuffers.end(), hasher(name),
-        [hasher](const UniquePtr<BufferImpl> &lhs, size_t rhs) -> bool
-        { return hasher(lhs->getName()) < rhs; }
-    );
-    if(iter != mBuffers.end() && (*iter)->getName() == name)
+    auto iter = findBufferName(name, name_hash);
+    if(iter != mBuffers.end() && (*iter)->getNameHash() == name_hash)
     {
         // User asked to create a future buffer that's already loaded. Just
         // construct a promise, fulfill the promise immediately, then return a
@@ -1057,7 +1071,7 @@ SharedFuture<Buffer> ContextImpl::getBufferAsync(StringView name)
     Promise<Buffer> promise;
     future = promise.get_future().share();
 
-    BufferOrExceptT ret = doCreateBufferAsync(name, iter, createDecoder(name), std::move(promise));
+    BufferOrExceptT ret = doCreateBufferAsync(name, name_hash, iter, createDecoder(name), std::move(promise));
     Buffer *buffer = std::get_if<Buffer>(&ret);
     if(UNLIKELY(!buffer))
         std::rethrow_exception(std::get<std::exception_ptr>(ret));
@@ -1065,9 +1079,9 @@ SharedFuture<Buffer> ContextImpl::getBufferAsync(StringView name)
     mWakeThread.notify_all();
 
     mFutureBuffers.insert(
-        std::lower_bound(mFutureBuffers.begin(), mFutureBuffers.end(), hasher(name),
-            [hasher](const PendingBuffer &lhs, size_t rhs) -> bool
-            { return hasher(lhs.mBuffer->getName()) < rhs; }
+        std::lower_bound(mFutureBuffers.begin(), mFutureBuffers.end(), name_hash,
+            [](const PendingBuffer &lhs, size_t rhs) -> bool
+            { return lhs.mBuffer->getNameHash() < rhs; }
         ), { buffer->getHandle(), future }
     );
 
@@ -1093,12 +1107,11 @@ void ContextImpl::precacheBuffersAsync(ArrayView<StringView> names)
     auto hasher = std::hash<StringView>();
     for(const StringView name : names)
     {
+        size_t name_hash = hasher(name);
+
         // Check if the buffer that's being created already exists
-        auto iter = std::lower_bound(mBuffers.begin(), mBuffers.end(), hasher(name),
-            [hasher](const UniquePtr<BufferImpl> &lhs, size_t rhs) -> bool
-            { return hasher(lhs->getName()) < rhs; }
-        );
-        if(iter != mBuffers.end() && (*iter)->getName() == name)
+        auto iter = findBufferName(name, name_hash);
+        if(iter != mBuffers.end() && (*iter)->getNameHash() == name_hash)
             continue;
 
         DecoderOrExceptT dec = findDecoder(name);
@@ -1108,15 +1121,15 @@ void ContextImpl::precacheBuffersAsync(ArrayView<StringView> names)
         Promise<Buffer> promise;
         SharedFuture<Buffer> future = promise.get_future().share();
 
-        BufferOrExceptT buf = doCreateBufferAsync(name, iter, std::move(*decoder),
+        BufferOrExceptT buf = doCreateBufferAsync(name, name_hash, iter, std::move(*decoder),
                                                   std::move(promise));
         Buffer *buffer = std::get_if<Buffer>(&buf);
         if(UNLIKELY(!buffer)) continue;
 
         mFutureBuffers.insert(
-            std::lower_bound(mFutureBuffers.begin(), mFutureBuffers.end(), hasher(name),
-                [hasher](const PendingBuffer &lhs, size_t rhs) -> bool
-                { return hasher(lhs.mBuffer->getName()) < rhs; }
+            std::lower_bound(mFutureBuffers.begin(), mFutureBuffers.end(), name_hash,
+                [](const PendingBuffer &lhs, size_t rhs) -> bool
+                { return lhs.mBuffer->getNameHash() < rhs; }
             ), { buffer->getHandle(), future }
         );
     }
@@ -1130,14 +1143,12 @@ Buffer ContextImpl::createBufferFrom(StringView name, SharedPtr<Decoder>&& decod
     CheckContext(this);
 
     auto hasher = std::hash<StringView>();
-    auto iter = std::lower_bound(mBuffers.begin(), mBuffers.end(), hasher(name),
-        [hasher](const UniquePtr<BufferImpl> &lhs, size_t rhs) -> bool
-        { return hasher(lhs->getName()) < rhs; }
-    );
-    if(iter != mBuffers.end() && (*iter)->getName() == name)
+    size_t name_hash = hasher(name);
+    auto iter = findBufferName(name, name_hash);
+    if(iter != mBuffers.end() && (*iter)->getNameHash() == name_hash)
         throw std::runtime_error("Buffer already exists");
 
-    BufferOrExceptT ret = doCreateBuffer(name, iter, std::move(decoder));
+    BufferOrExceptT ret = doCreateBuffer(name, name_hash, iter, std::move(decoder));
     Buffer *buffer = std::get_if<Buffer>(&ret);
     if(UNLIKELY(!buffer))
         std::rethrow_exception(std::get<std::exception_ptr>(ret));
@@ -1162,17 +1173,15 @@ SharedFuture<Buffer> ContextImpl::createBufferAsyncFrom(StringView name, SharedP
     }
 
     auto hasher = std::hash<StringView>();
-    auto iter = std::lower_bound(mBuffers.begin(), mBuffers.end(), hasher(name),
-        [hasher](const UniquePtr<BufferImpl> &lhs, size_t rhs) -> bool
-        { return hasher(lhs->getName()) < rhs; }
-    );
-    if(iter != mBuffers.end() && (*iter)->getName() == name)
+    size_t name_hash = hasher(name);
+    auto iter = findBufferName(name, name_hash);
+    if(iter != mBuffers.end() && (*iter)->getNameHash() == name_hash)
         throw std::runtime_error("Buffer already exists");
 
     Promise<Buffer> promise;
     future = promise.get_future().share();
 
-    BufferOrExceptT ret = doCreateBufferAsync(name, iter, std::move(decoder), std::move(promise));
+    BufferOrExceptT ret = doCreateBufferAsync(name, name_hash, iter, std::move(decoder), std::move(promise));
     Buffer *buffer = std::get_if<Buffer>(&ret);
     if(UNLIKELY(!buffer))
         std::rethrow_exception(std::get<std::exception_ptr>(ret));
@@ -1180,9 +1189,9 @@ SharedFuture<Buffer> ContextImpl::createBufferAsyncFrom(StringView name, SharedP
     mWakeThread.notify_all();
 
     mFutureBuffers.insert(
-        std::lower_bound(mFutureBuffers.begin(), mFutureBuffers.end(), hasher(name),
-            [hasher](const PendingBuffer &lhs, size_t rhs) -> bool
-            { return hasher(lhs.mBuffer->getName()) < rhs; }
+        std::lower_bound(mFutureBuffers.begin(), mFutureBuffers.end(), name_hash,
+            [](const PendingBuffer &lhs, size_t rhs) -> bool
+            { return lhs.mBuffer->getNameHash() < rhs; }
         ), { buffer->getHandle(), future }
     );
 
@@ -1197,14 +1206,12 @@ Buffer ContextImpl::findBuffer(StringView name)
     CheckContext(this);
 
     auto hasher = std::hash<StringView>();
+    size_t name_hash = hasher(name);
     if(UNLIKELY(!mFutureBuffers.empty()))
     {
         // If the buffer is already pending for the future, wait for it
-        auto iter = std::lower_bound(mFutureBuffers.begin(), mFutureBuffers.end(), hasher(name),
-            [hasher](const PendingBuffer &lhs, size_t rhs) -> bool
-            { return hasher(lhs.mBuffer->getName()) < rhs; }
-        );
-        if(iter != mFutureBuffers.end() && iter->mBuffer->getName() == name)
+        auto iter = findFutureBufferName(name, name_hash);
+        if(iter != mFutureBuffers.end() && iter->mBuffer->getNameHash() == name_hash)
         {
             buffer = iter->mFuture.get();
             mFutureBuffers.erase(iter);
@@ -1221,11 +1228,8 @@ Buffer ContextImpl::findBuffer(StringView name)
 
     if(LIKELY(!buffer))
     {
-        auto iter = std::lower_bound(mBuffers.begin(), mBuffers.end(), hasher(name),
-            [hasher](const UniquePtr<BufferImpl> &lhs, size_t rhs) -> bool
-            { return hasher(lhs->getName()) < rhs; }
-        );
-        if(iter != mBuffers.end() && (*iter)->getName() == name)
+        auto iter = findBufferName(name, name_hash);
+        if(iter != mBuffers.end() && (*iter)->getNameHash() == name_hash)
             buffer = Buffer(iter->get());
     }
     return buffer;
@@ -1238,14 +1242,12 @@ SharedFuture<Buffer> ContextImpl::findBufferAsync(StringView name)
     CheckContext(this);
 
     auto hasher = std::hash<StringView>();
+    size_t name_hash = hasher(name);
     if(UNLIKELY(!mFutureBuffers.empty()))
     {
         // Check if the future that's being created already exists
-        auto iter = std::lower_bound(mFutureBuffers.begin(), mFutureBuffers.end(), hasher(name),
-            [hasher](const PendingBuffer &lhs, size_t rhs) -> bool
-            { return hasher(lhs.mBuffer->getName()) < rhs; }
-        );
-        if(iter != mFutureBuffers.end() && iter->mBuffer->getName() == name)
+        auto iter = findFutureBufferName(name, name_hash);
+        if(iter != mFutureBuffers.end() && iter->mBuffer->getNameHash() == name_hash)
         {
             future = iter->mFuture;
             if(GetFutureState(future) == std::future_status::ready)
@@ -1262,11 +1264,8 @@ SharedFuture<Buffer> ContextImpl::findBufferAsync(StringView name)
         );
     }
 
-    auto iter = std::lower_bound(mBuffers.begin(), mBuffers.end(), hasher(name),
-        [hasher](const UniquePtr<BufferImpl> &lhs, size_t rhs) -> bool
-        { return hasher(lhs->getName()) < rhs; }
-    );
-    if(iter != mBuffers.end() && (*iter)->getName() == name)
+    auto iter = findBufferName(name, name_hash);
+    if(iter != mBuffers.end() && (*iter)->getNameHash() == name_hash)
     {
         // User asked to create a future buffer that's already loaded. Just
         // construct a promise, fulfill the promise immediately, then return a
@@ -1286,15 +1285,13 @@ void ContextImpl::removeBuffer(StringView name)
     CheckContext(this);
 
     auto hasher = std::hash<StringView>();
+    size_t name_hash = hasher(name);
     if(UNLIKELY(!mFutureBuffers.empty()))
     {
         // If the buffer is already pending for the future, wait for it to
         // finish before continuing.
-        auto iter = std::lower_bound(mFutureBuffers.begin(), mFutureBuffers.end(), hasher(name),
-            [hasher](const PendingBuffer &lhs, size_t rhs) -> bool
-            { return hasher(lhs.mBuffer->getName()) < rhs; }
-        );
-        if(iter != mFutureBuffers.end() && iter->mBuffer->getName() == name)
+        auto iter = findFutureBufferName(name, name_hash);
+        if(iter != mFutureBuffers.end() && iter->mBuffer->getNameHash() == name_hash)
         {
             iter->mFuture.wait();
             mFutureBuffers.erase(iter);
@@ -1309,19 +1306,17 @@ void ContextImpl::removeBuffer(StringView name)
         );
     }
 
-    auto iter = std::lower_bound(mBuffers.begin(), mBuffers.end(), hasher(name),
-        [hasher](const UniquePtr<BufferImpl> &lhs, size_t rhs) -> bool
-        { return hasher(lhs->getName()) < rhs; }
-    );
-    if(iter != mBuffers.end() && (*iter)->getName() == name)
+    auto iter = findBufferName(name, name_hash);
+    if(iter != mBuffers.end() && (*iter)->getNameHash() == name_hash)
     {
         // Remove pending sources whose future was waiting for this buffer.
+        BufferImpl *buffer = iter->get();
         mPendingSources.erase(
             std::remove_if(mPendingSources.begin(), mPendingSources.end(),
-                [iter](PendingSource &entry) -> bool
+                [buffer](PendingSource &entry) -> bool
                 {
                     return (GetFutureState(entry.mFuture) == std::future_status::ready &&
-                            entry.mFuture.get().getHandle() == iter->get());
+                            entry.mFuture.get().getHandle() == buffer);
                 }
             ), mPendingSources.end()
         );

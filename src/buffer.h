@@ -20,11 +20,13 @@ class BufferImpl {
     Vector<Source> mSources;
 
     const String mName;
+    size_t mNameHash;
 
 public:
-    BufferImpl(ContextImpl &context, ALuint id, ALuint freq, ChannelConfig config, SampleType type, StringView name)
+    BufferImpl(ContextImpl &context, ALuint id, ALuint freq, ChannelConfig config, SampleType type,
+               StringView name, size_t name_hash)
       : mContext(context), mId(id), mFrequency(freq), mChannelConfig(config), mSampleType(type)
-      , mName(String(name))
+      , mName(String(name)), mNameHash(name_hash)
     { }
 
     void cleanup();
@@ -57,6 +59,8 @@ public:
     StringView getName() const { return mName; }
 
     size_t getSourceCount() const { return mSources.size(); }
+
+    size_t getNameHash() const { return mNameHash; }
 };
 
 } // namespace alure
