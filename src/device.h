@@ -12,8 +12,8 @@ enum class ALC {
     ENUMERATE_ALL_EXT,
     EXT_EFX,
     EXT_thread_local_context,
-    SOFT_device_pause,
     SOFT_HRTF,
+    SOFT_pause_device,
 
     EXTENSION_MAX
 };

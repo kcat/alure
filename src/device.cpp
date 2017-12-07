@@ -23,16 +23,16 @@ template<typename T>
 inline void LoadALCFunc(ALCdevice *device, T **func, const char *name)
 { *func = reinterpret_cast<T*>(alcGetProcAddress(device, name)); }
 
-void LoadPauseDevice(DeviceImpl *device)
-{
-    LoadALCFunc(device->getALCdevice(), &device->alcDevicePauseSOFT, "alcDevicePauseSOFT");
-    LoadALCFunc(device->getALCdevice(), &device->alcDeviceResumeSOFT, "alcDeviceResumeSOFT");
-}
-
 void LoadHrtf(DeviceImpl *device)
 {
     LoadALCFunc(device->getALCdevice(), &device->alcGetStringiSOFT, "alcGetStringiSOFT");
     LoadALCFunc(device->getALCdevice(), &device->alcResetDeviceSOFT, "alcResetDeviceSOFT");
+}
+
+void LoadPauseDevice(DeviceImpl *device)
+{
+    LoadALCFunc(device->getALCdevice(), &device->alcDevicePauseSOFT, "alcDevicePauseSOFT");
+    LoadALCFunc(device->getALCdevice(), &device->alcDeviceResumeSOFT, "alcDeviceResumeSOFT");
 }
 
 void LoadNothing(DeviceImpl*) { }
@@ -45,8 +45,8 @@ static const struct {
     { ALC::ENUMERATE_ALL_EXT, "ALC_ENUMERATE_ALL_EXT", LoadNothing },
     { ALC::EXT_EFX, "ALC_EXT_EFX", LoadNothing },
     { ALC::EXT_thread_local_context, "ALC_EXT_thread_local_context", LoadNothing },
-    { ALC::SOFT_device_pause, "ALC_SOFT_pause_device", LoadPauseDevice },
     { ALC::SOFT_HRTF, "ALC_SOFT_HRTF", LoadHrtf },
+    { ALC::SOFT_pause_device, "ALC_SOFT_pause_device", LoadPauseDevice },
 };
 
 } // namespace
@@ -285,7 +285,7 @@ Context Device::createContext(ArrayView<AttributePair> attrs, const std::nothrow
 DECL_THUNK0(void, Device, pauseDSP,)
 void DeviceImpl::pauseDSP()
 {
-    if(!hasExtension(ALC::SOFT_device_pause))
+    if(!hasExtension(ALC::SOFT_pause_device))
         throw std::runtime_error("ALC_SOFT_pause_device not supported");
     alcDevicePauseSOFT(mDevice);
     if(!mIsPaused && mPauseTime == mPauseTime.zero())
@@ -297,7 +297,7 @@ DECL_THUNK0(void, Device, resumeDSP,)
 void DeviceImpl::resumeDSP()
 {
     auto cur_time = std::chrono::steady_clock::now().time_since_epoch();
-    if(hasExtension(ALC::SOFT_device_pause))
+    if(hasExtension(ALC::SOFT_pause_device))
         alcDeviceResumeSOFT(mDevice);
     if(!mContexts.empty() && mPauseTime != mPauseTime.zero())
     {
