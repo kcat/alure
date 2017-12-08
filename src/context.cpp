@@ -676,7 +676,7 @@ ContextImpl::ContextImpl(DeviceImpl &device, ArrayView<AttributePair> attrs)
     if(!mContext) throw alc_error(alcGetError(alcdev), "alcCreateContext failed");
 
     mSourceIds.reserve(256);
-    mPendingHead = new PendingPromise{nullptr, {}, AL_NONE, 0, {}, {nullptr}};
+    mPendingHead = new PendingPromise();
     mPendingCurrent.store(mPendingHead, std::memory_order_relaxed);
     mPendingTail = mPendingHead;
 }
@@ -966,8 +966,8 @@ BufferOrExceptT ContextImpl::doCreateBufferAsync(StringView name, size_t name_ha
 
     PendingPromise *pf = nullptr;
     if(mPendingTail == mPendingCurrent.load(std::memory_order_acquire))
-        pf = new PendingPromise{buffer.get(), std::move(decoder), format, frames,
-                                std::move(promise), {nullptr}};
+        pf = new PendingPromise(buffer.get(), std::move(decoder), format, frames,
+                                std::move(promise));
     else
     {
         pf = mPendingTail;
