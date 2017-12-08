@@ -109,9 +109,15 @@ public:
     static std::atomic<uint64_t> sContextSetCount;
     mutable uint64_t mContextSetCounter{std::numeric_limits<uint64_t>::max()};
 
+    struct ContextDeleter {
+        void operator()(ALCcontext *ptr) const { alcDestroyContext(ptr); }
+    };
+    using ContextPtr = UniquePtr<ALCcontext,ContextDeleter>;
+
 private:
     ListenerImpl mListener;
-    ALCcontext *mContext{nullptr};
+
+    ContextPtr mContext;
     Vector<ALuint> mSourceIds;
 
     struct PendingBuffer { BufferImpl *mBuffer;  SharedFuture<Buffer> mFuture; };
@@ -186,7 +192,7 @@ public:
     ContextImpl(DeviceImpl &device, ArrayView<AttributePair> attrs);
     ~ContextImpl();
 
-    ALCcontext *getALCcontext() const { return mContext; }
+    ALCcontext *getALCcontext() const { return mContext.get(); }
     size_t addRef() { return ++mRefs; }
     size_t decRef() { return --mRefs; }
 
@@ -260,8 +266,8 @@ public:
     {
         if(mIsBatching)
             return Batcher(nullptr);
-        alcSuspendContext(mContext);
-        return Batcher(mContext);
+        alcSuspendContext(mContext.get());
+        return Batcher(mContext.get());
     }
 
     std::unique_lock<std::mutex> getSourceStreamLock()

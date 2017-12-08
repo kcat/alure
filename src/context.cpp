@@ -670,22 +670,14 @@ ContextImpl::ContextImpl(DeviceImpl &device, ArrayView<AttributePair> attrs)
 {
     ALCdevice *alcdev = mDevice.getALCdevice();
     if(attrs.empty()) /* No explicit attributes. */
-        mContext = alcCreateContext(alcdev, nullptr);
+        mContext.reset(alcCreateContext(alcdev, nullptr));
     else
-        mContext = alcCreateContext(alcdev, &std::get<0>(attrs.front()));
+        mContext.reset(alcCreateContext(alcdev, &std::get<0>(attrs.front())));
     if(!mContext) throw alc_error(alcGetError(alcdev), "alcCreateContext failed");
 
-    try {
-        mSourceIds.reserve(256);
-        mPendingHead = new PendingPromise();
-        mPendingCurrent.store(mPendingHead, std::memory_order_relaxed);
-        mPendingTail = mPendingHead;
-    }
-    catch(...) {
-        alcDestroyContext(mContext);
-        mContext = nullptr;
-        throw;
-    }
+    mSourceIds.reserve(256);
+    mPendingTail = mPendingHead = new PendingPromise();
+    mPendingCurrent.store(mPendingHead, std::memory_order_relaxed);
 }
 
 ContextImpl::~ContextImpl()
@@ -707,15 +699,10 @@ ContextImpl::~ContextImpl()
         pb = next;
     }
     mPendingCurrent.store(nullptr, std::memory_order_relaxed);
-    mPendingHead = nullptr;
-    mPendingTail = nullptr;
+    mPendingTail = mPendingHead = nullptr;
 
     mEffectSlots.clear();
     mEffects.clear();
-
-    if(mContext)
-        alcDestroyContext(mContext);
-    mContext = nullptr;
 
     std::lock_guard<std::mutex> ctxlock(gGlobalCtxMutex);
     if(sCurrentCtx == this)
@@ -753,7 +740,6 @@ void ContextImpl::destroy()
         mThread.join();
     }
 
-    alcDestroyContext(mContext);
     mContext = nullptr;
 
     mDevice.removeContext(this);
@@ -763,14 +749,14 @@ void ContextImpl::destroy()
 DECL_THUNK0(void, Context, startBatch,)
 void ContextImpl::startBatch()
 {
-    alcSuspendContext(mContext);
+    alcSuspendContext(mContext.get());
     mIsBatching = true;
 }
 
 DECL_THUNK0(void, Context, endBatch,)
 void ContextImpl::endBatch()
 {
-    alcProcessContext(mContext);
+    alcProcessContext(mContext.get());
     mIsBatching = false;
 }
 
