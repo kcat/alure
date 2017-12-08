@@ -675,10 +675,17 @@ ContextImpl::ContextImpl(DeviceImpl &device, ArrayView<AttributePair> attrs)
         mContext = alcCreateContext(alcdev, &std::get<0>(attrs.front()));
     if(!mContext) throw alc_error(alcGetError(alcdev), "alcCreateContext failed");
 
-    mSourceIds.reserve(256);
-    mPendingHead = new PendingPromise();
-    mPendingCurrent.store(mPendingHead, std::memory_order_relaxed);
-    mPendingTail = mPendingHead;
+    try {
+        mSourceIds.reserve(256);
+        mPendingHead = new PendingPromise();
+        mPendingCurrent.store(mPendingHead, std::memory_order_relaxed);
+        mPendingTail = mPendingHead;
+    }
+    catch(...) {
+        alcDestroyContext(mContext);
+        mContext = nullptr;
+        throw;
+    }
 }
 
 ContextImpl::~ContextImpl()
