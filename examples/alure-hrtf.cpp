@@ -49,19 +49,25 @@ inline std::ostream &operator<<(std::ostream &os, const PrettyTime &rhs)
 
 int main(int argc, char *argv[])
 {
+    alure::ArrayView<const char*> args(argv, argc);
+
+    if(args.size() < 2)
+    {
+        std::cerr<< "Usage: "<<args.front()<<" [-device \"device name\"] [-hrtf \"HRTF name\"] files..." <<std::endl;
+        return 1;
+    }
+    args = args.slice(1);
+
     alure::DeviceManager devMgr = alure::DeviceManager::getInstance();
 
-    int fileidx = 1;
     alure::Device dev;
-    if(argc > 3 && strcmp(argv[1], "-device") == 0)
+    if(args.size() > 2 && args[0] == alure::StringView("-device"))
     {
-        fileidx = 3;
-        dev = devMgr.openPlayback(argv[2], std::nothrow);
-        if(!dev)
-            std::cerr<< "Failed to open \""<<argv[2]<<"\" - trying default" <<std::endl;
+        dev = devMgr.openPlayback(args[1], std::nothrow);
+        if(!dev) std::cerr<< "Failed to open \""<<args[1]<<"\" - trying default" <<std::endl;
+        args = args.slice(2);
     }
-    if(!dev)
-        dev = devMgr.openPlayback();
+    if(!dev) dev = devMgr.openPlayback();
     std::cout<< "Opened \""<<dev.getName()<<"\"" <<std::endl;
 
     // Enumerate (and display) the available HRTFs
@@ -78,11 +84,11 @@ int main(int argc, char *argv[])
 
     alure::Vector<alure::AttributePair> attrs;
     attrs.push_back({ALC_HRTF_SOFT, ALC_TRUE});
-    if(argc-fileidx > 1 && alure::StringView("-hrtf") == argv[fileidx])
+    if(args.size() > 1 && alure::StringView("-hrtf") == args[0])
     {
         // Find the given HRTF and add it to the attributes list
-        alure::StringView hrtf_name = argv[fileidx+1];
-        fileidx += 2;
+        alure::StringView hrtf_name = args[1];
+        args = args.slice(2);
 
         size_t idx = std::distance(
             hrtf_names.begin(), std::find(hrtf_names.begin(), hrtf_names.end(), hrtf_name)
@@ -101,12 +107,12 @@ int main(int argc, char *argv[])
     else
         std::cout<< "HRTF not enabled!" <<std::endl;
 
-    for(int i = fileidx;i < argc;i++)
+    for(;!args.empty();args = args.slice(1))
     {
-        if(argc-i > 1 && alure::StringView("-hrtf") == argv[i])
+        if(args.size() > 1 && alure::StringView("-hrtf") == args[0])
         {
             // Find the given HRTF and reset the device using it
-            alure::StringView hrtf_name = argv[i+1];
+            alure::StringView hrtf_name = args[1];
             size_t idx = std::distance(
                 hrtf_names.begin(), std::find(hrtf_names.begin(), hrtf_names.end(), hrtf_name)
             );
@@ -126,17 +132,18 @@ int main(int argc, char *argv[])
                     std::cout<< "HRTF not enabled!" <<std::endl;
             }
 
-            ++i;
+            args = args.slice(1);
             continue;
         }
 
-        alure::SharedPtr<alure::Decoder> decoder(ctx.createDecoder(argv[i]));
+        alure::SharedPtr<alure::Decoder> decoder = ctx.createDecoder(args.front());
         alure::Source source = ctx.createSource();
 
         source.play(decoder, 12000, 4);
-        std::cout<< "Playing "<<argv[i]<<" ("<<alure::GetSampleTypeName(decoder->getSampleType())<<", "
-                                             <<alure::GetChannelConfigName(decoder->getChannelConfig())<<", "
-                                             <<decoder->getFrequency()<<"hz)" <<std::endl;
+        std::cout<< "Playing "<<args.front()<<" ("
+                 << alure::GetSampleTypeName(decoder->getSampleType())<<", "
+                 << alure::GetChannelConfigName(decoder->getChannelConfig())<<", "
+                 << decoder->getFrequency()<<"hz)" <<std::endl;
 
         double invfreq = 1.0 / decoder->getFrequency();
         while(source.isPlaying())

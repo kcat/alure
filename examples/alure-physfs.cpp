@@ -232,52 +232,54 @@ inline std::ostream &operator<<(std::ostream &os, const PrettyTime &rhs)
 
 int main(int argc, char *argv[])
 {
-    if(argc < 2)
+    alure::ArrayView<const char*> args(argv, argc);
+
+    if(args.size() < 2)
     {
-        std::cerr<< "Usage: "<<argv[0]<<" [-device <device name>]"
-                    " -add <directory | archive> file_entries ..." <<std::endl;
+        std::cerr<< "Usage: "<<args.size()<<" [-device <device name>] "
+                    "-add <directory | archive> file_entries ..." <<std::endl;
         return 1;
     }
 
     // Set our custom factory for file IO. From now on, all filenames given to
     // Alure will be used with our custom factory.
-    alure::FileIOFactory::set(alure::MakeUnique<FileFactory>(argv[0]));
+    alure::FileIOFactory::set(alure::MakeUnique<FileFactory>(args.front()));
+    args = args.slice(1);
 
     alure::DeviceManager devMgr = alure::DeviceManager::getInstance();
 
-    int fileidx = 1;
     alure::Device dev;
-    if(argc > 3 && strcmp(argv[1], "-device") == 0)
+    if(args.size() > 2 && args[0] == alure::StringView("-device"))
     {
-        fileidx = 3;
-        dev = devMgr.openPlayback(argv[2], std::nothrow);
-        if(!dev)
-            std::cerr<< "Failed to open \""<<argv[2]<<"\" - trying default" <<std::endl;
+        dev = devMgr.openPlayback(args[1], std::nothrow);
+        if(!dev) std::cerr<< "Failed to open \""<<args[1]<<"\" - trying default" <<std::endl;
+        args = args.slice(2);
     }
-    if(!dev)
-        dev = devMgr.openPlayback();
+    if(!dev) dev = devMgr.openPlayback();
     std::cout<< "Opened \""<<dev.getName()<<"\"" <<std::endl;
 
     alure::Context ctx = dev.createContext();
     alure::Context::MakeCurrent(ctx);
 
-    for(int i = fileidx;i < argc;i++)
+    for(;!args.empty();args = args.slice(1))
     {
-        if(alure::StringView("-add") == argv[i] && argc-i > 1)
+        if(args.size() > 1 && alure::StringView("-add") == args[0])
         {
-            FileFactory::Mount(argv[++i]);
+            args = args.slice(1);
+            FileFactory::Mount(args.front());
             std::cout<<"Available files:\n";
             FileFactory::ListDirectory("/");
             std::cout.flush();
             continue;
         }
 
-        alure::SharedPtr<alure::Decoder> decoder(ctx.createDecoder(argv[i]));
+        alure::SharedPtr<alure::Decoder> decoder = ctx.createDecoder(args.front());
         alure::Source source = ctx.createSource();
         source.play(decoder, 12000, 4);
-        std::cout<< "Playing "<<argv[i]<<" ("<<alure::GetSampleTypeName(decoder->getSampleType())<<", "
-                                             <<alure::GetChannelConfigName(decoder->getChannelConfig())<<", "
-                                             <<decoder->getFrequency()<<"hz)" <<std::endl;
+        std::cout<< "Playing "<<args.front()<<" ("
+                 << alure::GetSampleTypeName(decoder->getSampleType())<<", "
+                 << alure::GetChannelConfigName(decoder->getChannelConfig())<<", "
+                 << decoder->getFrequency()<<"hz)" <<std::endl;
 
         double invfreq = 1.0 / decoder->getFrequency();
         while(source.isPlaying())

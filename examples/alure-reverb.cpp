@@ -203,31 +203,37 @@ inline std::ostream &operator<<(std::ostream &os, const PrettyTime &rhs)
 
 int main(int argc, char *argv[])
 {
+    alure::ArrayView<const char*> args(argv, argc);
+
+    if(args.size() < 2)
+    {
+        std::cerr<< "Usage: "<<args.front()<<" [-device \"device name\"] [-preset \"reverb preset\"] files..." <<std::endl;
+        return 1;
+    }
+    args = args.slice(1);
+
     alure::DeviceManager devMgr = alure::DeviceManager::getInstance();
 
-    int fileidx = 1;
     alure::Device dev;
-    if(argc > 3 && strcmp(argv[1], "-device") == 0)
+    if(args.size() > 2 && args[0] == alure::StringView("-device"))
     {
-        fileidx = 3;
-        dev = devMgr.openPlayback(argv[2], std::nothrow);
-        if(!dev)
-            std::cerr<< "Failed to open \""<<argv[2]<<"\" - trying default" <<std::endl;
+        dev = devMgr.openPlayback(args[1], std::nothrow);
+        if(!dev) std::cerr<< "Failed to open \""<<args[1]<<"\" - trying default" <<std::endl;
+        args = args.slice(2);
     }
-    if(!dev)
-        dev = devMgr.openPlayback();
+    if(!dev) dev = devMgr.openPlayback();
     std::cout<< "Opened \""<<dev.getName()<<"\"" <<std::endl;
 
     alure::Context ctx = dev.createContext();
     alure::Context::MakeCurrent(ctx);
 
-    bool gotreverb = false;
     alure::Effect effect = ctx.createEffect();
+    effect.setReverbProperties(EFX_REVERB_PRESET_GENERIC);
 
-    if(argc-fileidx >= 2 && alure::StringView("-preset") == argv[fileidx])
+    if(args.size() > 1 && alure::StringView("-preset") == args[0])
     {
-        const char *reverb_name = argv[fileidx+1];
-        fileidx += 2;
+        alure::StringView reverb_name = args[1];
+        args = args.slice(2);
 
         auto iter = std::find_if(std::begin(reverblist), std::end(reverblist),
             [reverb_name](const ReverbEntry &entry) -> bool
@@ -237,29 +243,28 @@ int main(int argc, char *argv[])
         {
             std::cout<< "Loading preset "<<iter->name <<std::endl;
             effect.setReverbProperties(iter->props);
-            gotreverb = true;
         }
+        else
+            std::cout<< "Failed to find preset "<<reverb_name <<std::endl;
     }
-    if(!gotreverb)
-    {
-        std::cout<< "Loading generic preset" <<std::endl;
-        effect.setReverbProperties(EFX_REVERB_PRESET_GENERIC);
-    }
+    else
+        std::cout<< "Using generic reverb preset" <<std::endl;
 
     alure::AuxiliaryEffectSlot auxslot = ctx.createAuxiliaryEffectSlot();
     auxslot.applyEffect(effect);
 
-    for(int i = fileidx;i < argc;i++)
+    for(;!args.empty();args = args.slice(1))
     {
-        alure::SharedPtr<alure::Decoder> decoder(ctx.createDecoder(argv[i]));
+        alure::SharedPtr<alure::Decoder> decoder = ctx.createDecoder(args.front());
         alure::Source source = ctx.createSource();
 
         source.setAuxiliarySend(auxslot, 0);
 
         source.play(decoder, 12000, 4);
-        std::cout<< "Playing "<<argv[i]<<" ("<<alure::GetSampleTypeName(decoder->getSampleType())<<", "
-                                             <<alure::GetChannelConfigName(decoder->getChannelConfig())<<", "
-                                             <<decoder->getFrequency()<<"hz)" <<std::endl;
+        std::cout<< "Playing "<<args.front()<<" ("
+                 << alure::GetSampleTypeName(decoder->getSampleType())<<", "
+                 << alure::GetChannelConfigName(decoder->getChannelConfig())<<", "
+                 << decoder->getFrequency()<<"hz)" <<std::endl;
 
         double invfreq = 1.0 / decoder->getFrequency();
         while(source.isPlaying())

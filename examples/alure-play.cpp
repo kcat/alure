@@ -13,32 +13,39 @@
 
 int main(int argc, char *argv[])
 {
+    alure::ArrayView<const char*> args(argv, argc);
+
+    if(args.size() < 2)
+    {
+        std::cerr<< "Usage: "<<args.front()<<" [-device \"device name\"] files..." <<std::endl;
+        return 1;
+    }
+    args = args.slice(1);
+
     alure::DeviceManager devMgr = alure::DeviceManager::getInstance();
 
-    int fileidx = 1;
     alure::Device dev;
-    if(argc > 3 && strcmp(argv[1], "-device") == 0)
+    if(args.size() > 2 && args[0] == alure::StringView("-device"))
     {
-        fileidx = 3;
-        dev = devMgr.openPlayback(argv[2], std::nothrow);
-        if(!dev)
-            std::cerr<< "Failed to open \""<<argv[2]<<"\" - trying default" <<std::endl;
+        dev = devMgr.openPlayback(args[1], std::nothrow);
+        if(!dev) std::cerr<< "Failed to open \""<<args[1]<<"\" - trying default" <<std::endl;
+        args = args.slice(2);
     }
-    if(!dev)
-        dev = devMgr.openPlayback();
+    if(!dev) dev = devMgr.openPlayback();
     std::cout<< "Opened \""<<dev.getName()<<"\"" <<std::endl;
 
     alure::Context ctx = dev.createContext();
     alure::Context::MakeCurrent(ctx);
 
-    for(int i = fileidx;i < argc;i++)
+    for(;!args.empty();args = args.slice(1))
     {
-        alure::Buffer buffer = ctx.getBuffer(argv[i]);
+        alure::Buffer buffer = ctx.getBuffer(args.front());
         alure::Source source = ctx.createSource();
         source.play(buffer);
-        std::cout<< "Playing "<<argv[i]<<" ("<<alure::GetSampleTypeName(buffer.getSampleType())<<", "
-                                             <<alure::GetChannelConfigName(buffer.getChannelConfig())<<", "
-                                             <<buffer.getFrequency()<<"hz)" <<std::endl;
+        std::cout<< "Playing "<<args.front()<<" ("
+                 << alure::GetSampleTypeName(buffer.getSampleType())<<", "
+                 << alure::GetChannelConfigName(buffer.getChannelConfig())<<", "
+                 << buffer.getFrequency()<<"hz)" <<std::endl;
 
         while(source.isPlaying())
         {
