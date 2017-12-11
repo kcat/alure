@@ -728,8 +728,6 @@ void ContextImpl::destroy()
 {
     if(mRefs != 0)
         throw std::runtime_error("Context is in use");
-    if(!mBuffers.empty())
-        throw std::runtime_error("Trying to destroy a context with buffers");
 
     if(mThread.joinable())
     {
@@ -739,6 +737,37 @@ void ContextImpl::destroy()
         mWakeThread.notify_all();
         mThread.join();
     }
+
+    std::unique_lock<std::mutex> lock(gGlobalCtxMutex);
+    if(UNLIKELY(alcMakeContextCurrent(getALCcontext()) == ALC_FALSE))
+        std::cerr<< "Failed to cleanup context!" <<std::endl;
+    else
+    {
+        if(!mSourceIds.empty())
+            alDeleteSources(mSourceIds.size(), mSourceIds.data());
+        mSourceIds.clear();
+
+        for(auto &bufptr : mBuffers)
+        {
+            ALuint id = bufptr->getId();
+            alDeleteBuffers(1, &id);
+        }
+        mBuffers.clear();
+
+        ALCcontext *alctx = sCurrentCtx ? sCurrentCtx->getALCcontext() : nullptr;
+        if(UNLIKELY(alcMakeContextCurrent(alctx) == ALC_FALSE))
+            std::cerr<< "Failed to reset global context!" <<std::endl;
+        ContextImpl *thrd_ctx = sThreadCurrentCtx;
+        if(thrd_ctx)
+        {
+            // alcMakeContextCurrent sets the calling thread's context to null,
+            // set it back to what it was.
+            alctx = thrd_ctx->getALCcontext();
+            if(UNLIKELY(DeviceManagerImpl::SetThreadContext(alctx) == ALC_FALSE))
+                std::cerr<< "Failed to reset thread context!" <<std::endl;
+        }
+    }
+    lock.unlock();
 
     mContext = nullptr;
 
