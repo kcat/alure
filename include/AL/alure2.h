@@ -823,10 +823,7 @@ public:
     /** Retrieves the current loop points as a [start,end) pair. */
     std::pair<ALuint,ALuint> getLoopPoints() const;
 
-    /**
-     * Retrieves the Source objects currently playing the buffer. Stopping the
-     * returned sources will allow the buffer to be removed from the context.
-     */
+    /** Retrieves the Source objects currently playing the buffer. */
     Vector<Source> getSources() const;
 
     /** Retrieves the name the buffer was created with. */
@@ -1302,8 +1299,7 @@ public:
 
     /**
      * Retrieves each Source object and its pairing send this effect slot is
-     * set on. Setting a different (or null) effect slot on each source's given
-     * send will allow the effect slot to be released.
+     * set on.
      */
     Vector<SourceSend> getSourceSends() const;
 
