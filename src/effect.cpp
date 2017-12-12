@@ -27,7 +27,7 @@ EffectImpl::EffectImpl(ContextImpl &context) : mContext(context)
 
 EffectImpl::~EffectImpl()
 {
-    if(UNLIKELY(mId != 0) && ContextImpl::GetCurrent() == &mContext)
+    if(UNLIKELY(mId != 0) && alcGetCurrentContext() == mContext.getALCcontext())
     {
         mContext.alDeleteEffects(1, &mId);
         mId = 0;

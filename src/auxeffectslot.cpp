@@ -27,7 +27,7 @@ AuxiliaryEffectSlotImpl::AuxiliaryEffectSlotImpl(ContextImpl &context) : mContex
 
 AuxiliaryEffectSlotImpl::~AuxiliaryEffectSlotImpl()
 {
-    if(UNLIKELY(mId != 0) && ContextImpl::GetCurrent() == &mContext)
+    if(UNLIKELY(mId != 0) && alcGetCurrentContext() == mContext.getALCcontext())
     {
         mContext.alDeleteAuxiliaryEffectSlots(1, &mId);
         mId = 0;

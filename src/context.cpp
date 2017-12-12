@@ -743,6 +743,10 @@ void ContextImpl::destroy()
         std::cerr<< "Failed to cleanup context!" <<std::endl;
     else
     {
+        mSourceGroups.clear();
+        mFreeSources.clear();
+        mAllSources.clear();
+
         if(!mSourceIds.empty())
             alDeleteSources(mSourceIds.size(), mSourceIds.data());
         mSourceIds.clear();
@@ -753,6 +757,9 @@ void ContextImpl::destroy()
             alDeleteBuffers(1, &id);
         }
         mBuffers.clear();
+
+        mEffectSlots.clear();
+        mEffects.clear();
 
         ALCcontext *alctx = sCurrentCtx ? sCurrentCtx->getALCcontext() : nullptr;
         if(UNLIKELY(alcMakeContextCurrent(alctx) == ALC_FALSE))
@@ -768,8 +775,6 @@ void ContextImpl::destroy()
         }
     }
     lock.unlock();
-
-    mContext = nullptr;
 
     mDevice.removeContext(this);
 }

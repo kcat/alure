@@ -180,6 +180,21 @@ SourceImpl::SourceImpl(ContextImpl &context)
 
 SourceImpl::~SourceImpl()
 {
+    if(alcGetCurrentContext() == mContext.getALCcontext())
+    {
+        if(mDirectFilter)
+            mContext.alDeleteFilters(1, &mDirectFilter);
+        mDirectFilter = AL_FILTER_NULL;
+        for(auto &i : mEffectSlots)
+        {
+            if(i.mFilter)
+                mContext.alDeleteFilters(1, &i.mFilter);
+            i.mFilter = AL_FILTER_NULL;
+        }
+    }
+    if(mId)
+        mContext.insertSourceId(mId);
+    mId = 0;
 }
 
 
