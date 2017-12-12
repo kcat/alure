@@ -3,15 +3,12 @@
 
 #include "alure2.h"
 
+#include <system_error>
 #if __cplusplus >= 201703L
 #include <variant>
 #else
 #include "mpark/variant.hpp"
-#endif
-#include <system_error>
 
-
-#if !(__cplusplus >= 201703L)
 namespace std {
 using mpark::variant;
 using mpark::monostate;
