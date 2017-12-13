@@ -20,7 +20,7 @@ namespace alure {
 
 // Convenience aliases
 template<typename T> using RemoveRefT = typename std::remove_reference<T>::type;
-template<bool B> using EnableIfT = typename std::enable_if<B>::type;
+template<bool B, typename T=void> using EnableIfT = typename std::enable_if<B,T>::type;
 
 
 // NOTE: Need to define this as a macro since we can't use the aliased type
