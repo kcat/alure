@@ -700,7 +700,7 @@ public:
 
     /**
      * Creates a new Source for playing audio. There is no practical limit to
-     * the number of sources you may create. You must call Source::release when
+     * the number of sources you may create. You must call Source::destroy when
      * the source is no longer needed.
      */
     Source createSource();
@@ -1201,11 +1201,8 @@ public:
      */
     void setAuxiliarySendFilter(AuxiliaryEffectSlot slot, ALuint send, const FilterParams &filter);
 
-    /**
-     * Releases the source, stopping playback, releasing resources, and
-     * returning it to the system.
-     */
-    void release();
+    /** Destroys the source, stopping playback and releasing resources. */
+    void destroy();
 };
 
 
@@ -1260,10 +1257,10 @@ public:
     void stopAll() const;
 
     /**
-     * Releases the source group, removing all sources from it before being
+     * Destroys the source group, removing all sources from it before being
      * freed.
      */
-    void release();
+    void destroy();
 };
 
 
@@ -1292,10 +1289,10 @@ public:
     void applyEffect(Effect effect);
 
     /**
-     * Releases the effect slot, returning it to the system. If the effect slot
+     * Destroys the effect slot, returning it to the system. If the effect slot
      * is currently set on a source send, it will be removed first.
      */
-    void release();
+    void destroy();
 
     /**
      * Retrieves each Source object and its pairing send this effect slot is

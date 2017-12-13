@@ -270,13 +270,13 @@ void SourceGroupImpl::stopAll() const
 }
 
 
-void SourceGroup::release()
+void SourceGroup::destroy()
 {
     SourceGroupImpl *i = pImpl;
     pImpl = nullptr;
-    i->release();
+    i->destroy();
 }
-void SourceGroupImpl::release()
+void SourceGroupImpl::destroy()
 {
     CheckContext(mContext);
     Batcher batcher = mContext.getBatcher();

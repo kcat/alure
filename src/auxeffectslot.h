@@ -28,7 +28,7 @@ public:
 
     void applyEffect(Effect effect);
 
-    void release();
+    void destroy();
 
     Vector<SourceSend> getSourceSends() const { return mSourceSends; }
 

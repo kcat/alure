@@ -68,7 +68,7 @@ public:
 
     void stopAll() const;
 
-    void release();
+    void destroy();
 };
 
 } // namespace alure2

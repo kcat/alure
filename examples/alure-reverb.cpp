@@ -277,11 +277,11 @@ int main(int argc, char *argv[])
         }
         std::cout<<std::endl;
 
-        source.release();
+        source.destroy();
         decoder.reset();
     }
 
-    auxslot.release();
+    auxslot.destroy();
     effect.destroy();
 
     alure::Context::MakeCurrent(nullptr);

@@ -218,7 +218,7 @@ public:
     void setAuxiliarySend(AuxiliaryEffectSlot slot, ALuint send);
     void setAuxiliarySendFilter(AuxiliaryEffectSlot slot, ALuint send, const FilterParams &filter);
 
-    void release();
+    void destroy();
 };
 
 } // namespace alure

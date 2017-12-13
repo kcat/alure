@@ -78,13 +78,13 @@ void AuxiliaryEffectSlotImpl::applyEffect(Effect effect)
 }
 
 
-void AuxiliaryEffectSlot::release()
+void AuxiliaryEffectSlot::destroy()
 {
     AuxiliaryEffectSlotImpl *i = pImpl;
     pImpl = nullptr;
-    i->release();
+    i->destroy();
 }
-void AuxiliaryEffectSlotImpl::release()
+void AuxiliaryEffectSlotImpl::destroy()
 {
     CheckContext(mContext);
 

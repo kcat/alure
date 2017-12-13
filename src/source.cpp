@@ -1460,13 +1460,13 @@ void SourceImpl::setAuxiliarySendFilter(AuxiliaryEffectSlot auxslot, ALuint send
 }
 
 
-void Source::release()
+void Source::destroy()
 {
     SourceImpl *i = pImpl;
     pImpl = nullptr;
-    i->release();
+    i->destroy();
 }
-void SourceImpl::release()
+void SourceImpl::destroy()
 {
     stop();
 

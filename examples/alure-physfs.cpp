@@ -292,7 +292,7 @@ int main(int argc, char *argv[])
         }
         std::cout<<std::endl;
 
-        source.release();
+        source.destroy();
         decoder.reset();
     }
 
