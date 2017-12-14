@@ -727,7 +727,14 @@ void Context::destroy()
 void ContextImpl::destroy()
 {
     if(mRefs != 0)
-        throw std::runtime_error("Context is in use");
+    {
+        std::lock_guard<std::mutex> ctxlock(gGlobalCtxMutex);
+        if(!(mRefs == 1 && sCurrentCtx == this))
+            throw std::runtime_error("Context is in use");
+        decRef();
+        sCurrentCtx = nullptr;
+        sContextSetCount.fetch_add(1, std::memory_order_release);
+    }
 
     if(mThread.joinable())
     {
@@ -764,8 +771,7 @@ void ContextImpl::destroy()
         ALCcontext *alctx = sCurrentCtx ? sCurrentCtx->getALCcontext() : nullptr;
         if(UNLIKELY(alcMakeContextCurrent(alctx) == ALC_FALSE))
             std::cerr<< "Failed to reset global context!" <<std::endl;
-        ContextImpl *thrd_ctx = sThreadCurrentCtx;
-        if(thrd_ctx)
+        if(ContextImpl *thrd_ctx = sThreadCurrentCtx)
         {
             // alcMakeContextCurrent sets the calling thread's context to null,
             // set it back to what it was.
