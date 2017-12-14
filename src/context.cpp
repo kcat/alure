@@ -755,7 +755,7 @@ void ContextImpl::destroy()
         mAllSources.clear();
 
         if(!mSourceIds.empty())
-            alDeleteSources(mSourceIds.size(), mSourceIds.data());
+            alDeleteSources(static_cast<ALsizei>(mSourceIds.size()), mSourceIds.data());
         mSourceIds.clear();
 
         for(auto &bufptr : mBuffers)
