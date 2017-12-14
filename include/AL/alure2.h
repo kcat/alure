@@ -294,6 +294,83 @@ public:
 };
 
 
+// Tag type to disctate which types are allowed in AutoObj.
+template<typename T> struct IsAutoable : std::false_type { };
+template<> struct IsAutoable<Context> : std::true_type { };
+template<> struct IsAutoable<Source> : std::true_type { };
+template<> struct IsAutoable<SourceGroup> : std::true_type { };
+template<> struct IsAutoable<AuxiliaryEffectSlot> : std::true_type { };
+template<> struct IsAutoable<Effect> : std::true_type { };
+
+/**
+ * A local storage container to manage objects in a non-copyable, movable, and
+ * auto-destructed manner. Any contained object will have its destroy() method
+ * invoked prior to being overwritten or when going out of scope. The purpose
+ * of this is to optionally provide RAII semantics to Alure's resources, such
+ * as contexts, sources, and effects.
+ *
+ * Be aware that destruction order is important, as contexts ultimately "own"
+ * the resources created from them. Said resources automatically become invalid
+ * when their owning context is destroyed. Any AutoObjs containing sources,
+ * effects, etc, should already be destroyed or cleared prior to the context
+ * being destroyed.
+ *
+ * Also, it is possible for resource destruction to fail if the destroy()
+ * method is called incorrectly (e.g. destroying a source when a different
+ * context is current). This normally results in an exception, but because
+ * destructors aren't allowed to let exceptions leave the function body,
+ * std::terminate will be called as a fatal error instead.
+ */
+template<typename T>
+class AutoObj {
+    static_assert(IsAutoable<T>::value, "Invalid type for AutoObj");
+
+    T mObj;
+
+public:
+    using element_type = T;
+
+    AutoObj() noexcept = default;
+    AutoObj(const AutoObj&) = delete;
+    AutoObj(AutoObj &&rhs) noexcept : mObj(rhs.mObj) { rhs.mObj = nullptr; }
+    AutoObj(std::nullptr_t) noexcept : mObj(nullptr) { }
+    explicit AutoObj(const element_type &rhs) noexcept : mObj(rhs) { }
+    ~AutoObj() { if(mObj) mObj.destroy(); }
+
+    AutoObj& operator=(const AutoObj&) = delete;
+    AutoObj& operator=(AutoObj &&rhs)
+    {
+        if(mObj) mObj.destroy();
+        mObj = rhs.mObj;
+        rhs.mObj = nullptr;
+        return *this;
+    }
+
+    AutoObj& reset(const element_type &obj)
+    {
+        if(mObj) mObj.destroy();
+        mObj = obj;
+        return *this;
+    }
+
+    element_type release() noexcept
+    {
+        element_type ret = mObj;
+        mObj = nullptr;
+        return ret;
+    }
+
+    element_type& get() noexcept { return mObj; }
+
+    element_type& operator*() noexcept { return mObj; }
+    element_type* operator->() noexcept { return &mObj; }
+};
+
+/** Creates an AutoObj for the given input object type. */
+template<typename T>
+inline AutoObj<T> MakeAuto(const T &obj) { return AutoObj<T>(obj); }
+
+
 enum class DeviceEnumeration {
     Basic = ALC_DEVICE_SPECIFIER,
     Full = ALC_ALL_DEVICES_SPECIFIER,
