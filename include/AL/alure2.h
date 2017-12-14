@@ -293,41 +293,6 @@ public:
     constexpr bool isZero() const noexcept { return *this == Version{0,0}; }
 };
 
-#define MAKE_PIMPL(BaseT, ImplT)                                              \
-private:                                                                      \
-    ImplT *pImpl;                                                             \
-                                                                              \
-public:                                                                       \
-    using handle_type = ImplT*;                                               \
-                                                                              \
-    BaseT() noexcept : pImpl(nullptr) { }                                     \
-    BaseT(ImplT *impl) noexcept : pImpl(impl) { }                             \
-    BaseT(const BaseT&) noexcept = default;                                   \
-    BaseT(BaseT&& rhs) noexcept : pImpl(rhs.pImpl) { rhs.pImpl = nullptr; }   \
-                                                                              \
-    BaseT& operator=(const BaseT&) noexcept = default;                        \
-    BaseT& operator=(BaseT&& rhs) noexcept                                    \
-    {                                                                         \
-        pImpl = rhs.pImpl; rhs.pImpl = nullptr;                               \
-        return *this;                                                         \
-    }                                                                         \
-                                                                              \
-    bool operator==(const BaseT &rhs) const noexcept                          \
-    { return pImpl == rhs.pImpl; }                                            \
-    bool operator!=(const BaseT &rhs) const noexcept                          \
-    { return pImpl != rhs.pImpl; }                                            \
-    bool operator<=(const BaseT &rhs) const noexcept                          \
-    { return pImpl <= rhs.pImpl; }                                            \
-    bool operator>=(const BaseT &rhs) const noexcept                          \
-    { return pImpl >= rhs.pImpl; }                                            \
-    bool operator<(const BaseT &rhs) const noexcept                           \
-    { return pImpl < rhs.pImpl; }                                             \
-    bool operator>(const BaseT &rhs) const noexcept                           \
-    { return pImpl > rhs.pImpl; }                                             \
-                                                                              \
-    operator bool() const noexcept { return !!pImpl; }                        \
-                                                                              \
-    handle_type getHandle() const noexcept { return pImpl; }
 
 enum class DeviceEnumeration {
     Basic = ALC_DEVICE_SPECIFIER,
@@ -369,6 +334,8 @@ public:
     DeviceManager& operator=(DeviceManager&&) noexcept = default;
     DeviceManager& operator=(std::nullptr_t) noexcept { pImpl = nullptr; return *this; };
 
+    operator bool() const noexcept { return pImpl != nullptr; }
+
     /** Queries the existence of a non-device-specific ALC extension. */
     bool queryExtension(const String &name) const;
     bool queryExtension(const char *name) const;
@@ -396,6 +363,42 @@ public:
     Device openPlayback(const std::nothrow_t&) noexcept;
 };
 
+
+#define MAKE_PIMPL(BaseT, ImplT)                                              \
+private:                                                                      \
+    ImplT *pImpl;                                                             \
+                                                                              \
+public:                                                                       \
+    using handle_type = ImplT*;                                               \
+                                                                              \
+    BaseT() noexcept : pImpl(nullptr) { }                                     \
+    BaseT(ImplT *impl) noexcept : pImpl(impl) { }                             \
+    BaseT(const BaseT&) noexcept = default;                                   \
+    BaseT(BaseT&& rhs) noexcept : pImpl(rhs.pImpl) { rhs.pImpl = nullptr; }   \
+                                                                              \
+    BaseT& operator=(const BaseT&) noexcept = default;                        \
+    BaseT& operator=(BaseT&& rhs) noexcept                                    \
+    {                                                                         \
+        pImpl = rhs.pImpl; rhs.pImpl = nullptr;                               \
+        return *this;                                                         \
+    }                                                                         \
+                                                                              \
+    bool operator==(const BaseT &rhs) const noexcept                          \
+    { return pImpl == rhs.pImpl; }                                            \
+    bool operator!=(const BaseT &rhs) const noexcept                          \
+    { return pImpl != rhs.pImpl; }                                            \
+    bool operator<=(const BaseT &rhs) const noexcept                          \
+    { return pImpl <= rhs.pImpl; }                                            \
+    bool operator>=(const BaseT &rhs) const noexcept                          \
+    { return pImpl >= rhs.pImpl; }                                            \
+    bool operator<(const BaseT &rhs) const noexcept                           \
+    { return pImpl < rhs.pImpl; }                                             \
+    bool operator>(const BaseT &rhs) const noexcept                           \
+    { return pImpl > rhs.pImpl; }                                             \
+                                                                              \
+    operator bool() const noexcept { return !!pImpl; }                        \
+                                                                              \
+    handle_type getHandle() const noexcept { return pImpl; }
 
 enum class PlaybackName {
     Basic = ALC_DEVICE_SPECIFIER,
