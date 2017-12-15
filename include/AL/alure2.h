@@ -364,6 +364,8 @@ public:
 
     element_type& operator*() noexcept { return mObj; }
     element_type* operator->() noexcept { return &mObj; }
+
+    operator bool() const noexcept { return static_cast<bool>(mObj); }
 };
 
 /** Creates an AutoObj for the given input object type. */
