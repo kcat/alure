@@ -296,6 +296,7 @@ public:
 
 // Tag type to disctate which types are allowed in AutoObj.
 template<typename T> struct IsAutoable : std::false_type { };
+template<> struct IsAutoable<Device> : std::true_type { };
 template<> struct IsAutoable<Context> : std::true_type { };
 template<> struct IsAutoable<Source> : std::true_type { };
 template<> struct IsAutoable<SourceGroup> : std::true_type { };
@@ -327,6 +328,21 @@ class AutoObj {
 
     T mObj;
 
+    template<typename U=T>
+    EnableIfT<!std::is_same<U,Device>::value,AutoObj&> do_reset(const U &obj={})
+    {
+        if(mObj) mObj.destroy();
+        mObj = obj;
+        return *this;
+    }
+    template<typename U=T>
+    EnableIfT<std::is_same<U,Device>::value,AutoObj&> do_reset(const U &obj={})
+    {
+        if(mObj) mObj.close();
+        mObj = obj;
+        return *this;
+    }
+
 public:
     using element_type = T;
 
@@ -335,23 +351,17 @@ public:
     AutoObj(AutoObj &&rhs) noexcept : mObj(rhs.mObj) { rhs.mObj = nullptr; }
     AutoObj(std::nullptr_t) noexcept : mObj(nullptr) { }
     explicit AutoObj(const element_type &rhs) noexcept : mObj(rhs) { }
-    ~AutoObj() { if(mObj) mObj.destroy(); }
+    ~AutoObj() { do_reset(); }
 
     AutoObj& operator=(const AutoObj&) = delete;
     AutoObj& operator=(AutoObj &&rhs)
     {
-        if(mObj) mObj.destroy();
-        mObj = rhs.mObj;
+        do_reset(rhs.mObj);
         rhs.mObj = nullptr;
         return *this;
     }
 
-    AutoObj& reset(const element_type &obj)
-    {
-        if(mObj) mObj.destroy();
-        mObj = obj;
-        return *this;
-    }
+    AutoObj& reset(const element_type &obj) { return do_reset(obj); }
 
     element_type release() noexcept
     {
