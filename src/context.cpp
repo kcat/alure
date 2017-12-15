@@ -1422,7 +1422,12 @@ void ContextImpl::addPendingSource(SourceImpl *source, SharedFuture<Buffer> futu
         [](const PendingSource &lhs, SourceImpl *rhs) -> bool
         { return lhs.mSource < rhs; }
     );
-    if(iter == mPendingSources.end() || iter->mSource != source)
+    if(iter != mPendingSources.end())
+    {
+        if(iter->mSource == source) iter->mFuture = std::move(future);
+        else mPendingSources.insert(iter, {source, std::move(future)});
+    }
+    else if(iter->mSource != source)
         mPendingSources.insert(iter, {source, std::move(future)});
 }
 
