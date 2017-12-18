@@ -112,7 +112,7 @@ void EffectImpl::setChorusProperties(const EFXCHORUSPROPERTIES &props)
         alGetError();
         mContext.alEffecti(mId, AL_EFFECT_TYPE, AL_EFFECT_CHORUS);
         throw_al_error("Failed to set chorus type");
-        mType = AL_EFFECT_REVERB;
+        mType = AL_EFFECT_CHORUS;
     }
 
 #define SETPARAM(t,v) AL_CHORUS_##t, clamp((v), AL_CHORUS_MIN_##t, AL_CHORUS_MAX_##t)
