@@ -39,8 +39,9 @@ Building
 Before even building, Alure requires the OpenAL development files installed, for example, through 
 Creative's OpenAL SDK (available from openal.org) or from OpenAL Soft. 
 
-Additional 
-dependencies are required for native playback of audio files:
+These following dependencies are only needed to automatically support the formats they handle; a plain wav file 
+decoder is built-in to automatically handle basic wav files, and app-provided custom decoders are allowed, 
+so they aren't strictly required to handle audio files in general. 
 
 * ogg : ogg playback
 * vorbis : ogg vorbis playback
@@ -49,12 +50,14 @@ dependencies are required for native playback of audio files:
 * SndFile : [see here](http://www.mega-nerd.com/libsndfile/)
 * mpg123 : mpeg audio playback
 
-And for two examples require these dependencies to be built  
+Two of the packaged examples require the following dependencies to be built.  
 
 * PhysFS : alure-physfs
 * dumb : alure-dumb
 
-If you fail to meet the requirements for building the examples, compilation will simply be skipped. 
+If you fail to meet the requirements for building the examples compilation will simply be skipped. 
+This goes for all dependencies excluding OpenAL itself as well. For example, if any of the decoder libraries 
+aren't found, that given decoder will be skipped.
 
 Additionally you will need a C++11 compliant or above compiler to be able to build Alure
 
@@ -64,13 +67,14 @@ If your are using MinGW-w64, the easiest way to get all of the dependencies abov
 up-to-date binaries for all of the optional and required dependencies above 
 (so you don't need to build each from scratch).  
 
-follow the MSYS2 installation guide and then look for each dependency on msys package repo and pacman -S [packagename]
+follow the MSYS2 installation guide and then look for each dependency on MSYS2 package repo and pacman -S [packagename]
 each package to acquire all dependencies.
 
-After acquiring all dependencies, you will need to make sure that the includes, libraries, and binaries for each file are in your path.
-For most dependencies this isn't a big deal, if you are using msys these directories are simply `msys/mingw64/bin`, `msys/mingw64/lib` and `msys/mingw64/include`.
-However the cmake file for Alure requires you to use the direct directory where OpenAL soft headers are located 
-(so instead of `msys/mingw64/include`, its `msys/mingw64/include/AL`)
+After acquiring all dependencies, you will need to make sure that the includes, libraries, and binaries for each file 
+are in your path.For most dependencies this isn't a big deal, if you are using msys these directories are simply 
+`msys/mingw64/bin`, `msys/mingw64/lib` and `msys/mingw64/include`. However the cmake file for Alure requires you to 
+use the direct directory where OpenAL soft headers are located (so instead of `msys/mingw64/include`, 
+its `msys/mingw64/include/AL`)
 
 After cmake generation you should have something that looks like the following output if you have every single dependency:
 
@@ -97,10 +101,11 @@ After cmake generation you should have something that looks like the following o
 Use `make install` to install Alure library in `C:\Program Files (x86)` for it to be available on your system.  
 Otherwise simply run `make` to build the library and if the cmake option was chosen, all the examples. 
 Note if you use mingw (or mingw-w64, the name is the same for both) you may need to use  `mingw32-make.exe`
-instead of `make`, and make sure that file is located in your path.  Note you may need to run `make install` as admin
+instead of `make`, and make sure that file is located in your path.  Note you may need to run `make install` as admin.
 
-When building you may have many warnings, this is mostly due to the backwards compatibility features included to have C++17 functionality work for C++11/14 compilers.
-As long as you the build was successful you should be fine.  If you run an example and nothing shows up, make sure you've added the bin (not just the library/lib) directory to the path.
+When building you may have many warnings, this is mostly due to the backwards compatibility features included to have 
+C++17 functionality work for C++11/14 compilers. As long as you the build was successful you should be fine.  
+If you run an example and nothing shows up, make sure you've added the bin (not just the library/lib) directory to the path.
 
 #### - Linux - 
 
