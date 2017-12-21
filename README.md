@@ -31,3 +31,75 @@ reader is also available, supporting basic PCM formats. Application-defined
 decoders are also supported in case the default set are insufficient.
 
 And much more...
+
+Building
+--------
+Before even building, Alure requires the OpenAL soft library (libopenal.dll, 
+libopenal.a, libopenal.dll.a) to be available and on the path of your system.  Additional 
+optional dependencies are used for playback of files, which include:
+
+* ogg: libogg.dll.a  
+* vorbis: libvorbisfile.dll.a  
+* flac: libFLAC.dll.a  
+* opusfile: libopusfile.dll.a  
+* SndFile: libsndfile.dll.a  
+* mpg123: libmpg123.dll.a  
+* PhysFS: libphysfs.dll.a  
+* dumb: libdumb.dll.a  
+
+Some of the optional files are required for building the examples provided.  You can disable building 
+these examples if you wish by setting the cmake variable `ALURE_BUILD_EXAMPLES` to `OFF` or un-checking it in the cmake gui
+
+After installation, you will want to run make install in your cmake build directory 
+in order to install OpenAL on your system
+
+Additionally you will need a C++11 compliant or above compiler to be able to build alure
+
+#### - Windows - 
+
+If your are using MinGW-w64, the easiest way to get all of the dependencies above is to use MSYS2, which has 
+up-to-date binaries for all of the optional and required dependencies above 
+(so you don't need to build each from scratch).  
+
+follow the MSYS2 installation guide and then look for each dependency on msys package repo and pacman -S [packagename]
+each package to acquire all dependencies.
+
+After acquiring all dependencies, you will need to make sure that the includes, libraries, and binaries for each file are in your path.
+For most dependencies this isn't a big deal, if you are using msys these directories are simply `msys/mingw64/bin`, `msys/mingw64/lib` and `msys/mingw64/include`.
+However the cmake file for alure requires you to use the direct directory where OpenAL soft headers are located 
+(so instead of msys/mingw64/include, its msys/mingw64/include/AL)
+
+After cmake generation you should have something that looks like the following output if you have every single dependency:
+
+    -- Found OpenAL: C:/msys64/mingw64/lib/libopenal.dll.a  
+    -- Performing Test HAVE_STD_CXX11
+    -- Performing Test HAVE_STD_CXX11 - Success
+    -- Performing Test HAVE_WALL_SWITCH
+    -- Performing Test HAVE_WALL_SWITCH - Success
+    -- Performing Test HAVE_WEXTRA_SWITCH
+    -- Performing Test HAVE_WEXTRA_SWITCH - Success
+    -- Found OGG: C:/msys64/mingw64/lib/libogg.dll.a  
+    -- Found VORBIS: C:/msys64/mingw64/lib/libvorbisfile.dll.a  
+    -- Found FLAC: C:/msys64/mingw64/lib/libFLAC.dll.a  
+    -- Found OPUS: C:/msys64/mingw64/lib/libopusfile.dll.a  
+    -- Found SndFile: C:/msys64/mingw64/lib/libsndfile.dll.a  
+    -- Found MPG123: C:/msys64/mingw64/lib/libmpg123.dll.a  
+    -- Found PhysFS: C:/msys64/mingw64/lib/libphysfs.dll.a  
+    -- Found DUMB: C:/msys64/mingw64/lib/libdumb.dll.a  
+    -- Configuring done
+    -- Generating done
+    -- Build files have been written to: .../alure/cmake-build-debug
+
+
+Use `make install` to install alure library in `C:\Program Files (x86)` for it to be available on your system.  
+Otherwise simply run `make` to build the library and if the cmake option was chosen, all the examples. 
+Note if you use mingw (or mingw-w64, the name is the same for both) you may need to use  `mingw32-make.exe`
+instead of `make`, and make sure that file is located in your path.  Note you may need to run `make install` as admin
+
+When building you may have many warnings, this is mostly due to the backwards compatibility features included to have C++17 functionality work for C++11/14 compilers.
+As long as you the build was successful you should be fine.  If you run an example and nothing shows up, make sure you've added the bin (not just the library/lib) directory to the path.
+
+#### - Linux - 
+
+TODO
+
