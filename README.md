@@ -58,7 +58,7 @@ If any dependency isn't found at build time the relevant target(s) will be disab
 
 #### - Windows - 
 
-If your are using MinGW-w64, the easiest way to get all of the dependencies above is to use MSYS2, which has 
+If your are using [MinGW-w64](https://mingw-w64.org/doku.php), the easiest way to get all of the dependencies above is to use [MSYS2](http://www.msys2.org/), which has 
 up-to-date binaries for all of the optional and required dependencies above 
 (so you don't need to build each from scratch).  
 
