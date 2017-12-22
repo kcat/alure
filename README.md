@@ -39,16 +39,14 @@ Building
 Before even building, Alure requires the OpenAL development files installed, for example, through 
 Creative's OpenAL SDK (available from openal.org) or from OpenAL Soft. 
 
-These following dependencies are only needed to automatically support the formats they handle; a plain wav file 
-decoder is built-in to automatically handle basic wav files, and app-provided custom decoders are allowed, 
-so they aren't strictly required to handle audio files in general. 
+These following dependencies are only needed to *automatically* support the formats they handle;
 
-* ogg : ogg playback
-* vorbis : ogg vorbis playback
-* flac : flac playback
-* opusfile : opus playback
-* SndFile : [see here](http://www.mega-nerd.com/libsndfile/)
-* mpg123 : mpeg audio playback
+* [ogg](https://xiph.org/ogg/) : ogg playback
+* [vorbis](https://xiph.org/vorbis/) : ogg vorbis playback
+* [flac](https://xiph.org/flac/) : flac playback
+* [opusfile](http://opus-codec.org/release/dev/2017/08/03/opusfile-0_9.html) : opus playback
+* [SndFile](http://www.mega-nerd.com/libsndfile/) : various multi-format playback
+* [mpg123](https://www.mpg123.de/) : mpeg audio playback
 
 Two of the packaged examples require the following dependencies to be built.  
 
