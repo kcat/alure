@@ -51,8 +51,8 @@ These following dependencies are only needed to *automatically* support the form
 
 Two of the packaged examples require the following dependencies to be built.  
 
-* PhysFS : alure-physfs
-* dumb : alure-dumb
+* [PhysFS](https://icculus.org/physfs/) : alure-physfs
+* [dumb](https://github.com/kode54/dumb) : alure-dumb
 
 If any dependency isn't found at build time the relevant target(s) will be disabled and skipped during build. 
 
