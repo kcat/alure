@@ -98,10 +98,6 @@ Otherwise simply run `make` to build the library and if the cmake option was cho
 Note if you use mingw (or mingw-w64, the name is the same for both) you may need to use  `mingw32-make.exe`
 instead of `make`, and make sure that file is located in your path.  Note you may need to run `make install` as admin.
 
-When building you may have many warnings, this is mostly due to the backwards compatibility features included to have 
-C++17 functionality work for C++11/14 compilers. As long as you the build was successful you should be fine.  
-If you run an example and nothing shows up, make sure you've added the bin (not just the library/lib) directory to the path.
-
 #### - Linux - 
 
 TODO
