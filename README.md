@@ -37,7 +37,8 @@ Building
 
 #### - Dependencies -
 Before even building, Alure requires the OpenAL development files installed, for example, through 
-Creative's OpenAL SDK (available from openal.org) or from OpenAL Soft. 
+Creative's OpenAL SDK (available from openal.org) or from OpenAL Soft. Additionally you will need a 
+C++11 or above compliant compiler to be able to build Alure.
 
 These following dependencies are only needed to *automatically* support the formats they handle;
 
@@ -53,11 +54,7 @@ Two of the packaged examples require the following dependencies to be built.
 * PhysFS : alure-physfs
 * dumb : alure-dumb
 
-If you fail to meet the requirements for building the examples compilation will simply be skipped. 
-This goes for all dependencies excluding OpenAL itself as well. For example, if any of the decoder libraries 
-aren't found, that given decoder will be skipped.
-
-Additionally you will need a C++11 compliant or above compiler to be able to build Alure
+If any dependency isn't found at build time the relevant target(s) will be disabled and skipped during build. 
 
 #### - Windows - 
 
