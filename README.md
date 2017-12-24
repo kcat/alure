@@ -66,7 +66,7 @@ follow the MSYS2 installation guide and then look for each dependency on MSYS2 p
 each package to acquire all dependencies.
 
 After acquiring all dependencies, you will need to make sure that the includes, libraries, and binaries for each file 
-are in your path.For most dependencies this isn't a big deal, if you are using msys these directories are simply 
+are in your path. For most dependencies this isn't a big deal, if you are using msys these directories are simply 
 `msys/mingw64/bin`, `msys/mingw64/lib` and `msys/mingw64/include`. However the cmake file for Alure requires you to 
 use the direct directory where OpenAL soft headers are located (so instead of `msys/mingw64/include`, 
 its `msys/mingw64/include/AL`)
@@ -100,10 +100,9 @@ instead of `make`, and make sure that file is located in your path.  Note you ma
 
 #### - Linux - 
 
-If you are using Ubuntu, many of the pre-requisites may be installed.  
-What you may find is that many of the header files cannot be found,
-Here are the packages that must be installed (in pairs of packages 
-containing libraries and packages containing headers):
+If you are using Ubuntu, many of the pre-requisites may be installed. What you may find 
+is that many of the header files cannot be found, Here are the packages that must be installed 
+(in pairs of packages containing libraries and packages containing headers):
 
 * openal-soft : libopenal1, libopenal-dev
 * ogg : libogg0, libogg-dev
