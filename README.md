@@ -100,14 +100,16 @@ instead of `make`, and make sure that file is located in your path.  Note you ma
 
 #### - Linux - 
 
-If you are using Ubuntu, many of the pre-requisites may be installed. What you may find 
-is that many of the header files cannot be found, Here are the packages that must be installed 
-(in pairs of packages containing libraries and packages containing headers):
+If you are using Ubuntu, many of the pre-requisites may be installed, however you may find 
+that many of the header files are not.  Here is the full list of packages that must be installed.  
+The list is in the format:
+
+>[dependency name]: [library package name], [header package name]
 
 * openal-soft : libopenal1, libopenal-dev
 * ogg : libogg0, libogg-dev
 * vorbis : libvorbis0a, libvorbis-dev
-* flac : libflac++6v5 and libflac8, libflac++-dev and libflac-dev
+* flac : libflac8, and libflac-dev
 * opusfile : libopusfule0, libopusfile-dev
 * SndFile : libsndfile1, libsndfile1-dev
 * mpg123 : libmpg123-0, libmpg123-dev
