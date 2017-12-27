@@ -62,7 +62,7 @@ If your are using [MinGW-w64](https://mingw-w64.org/doku.php), the easiest way t
 up-to-date binaries for all of the optional and required dependencies above 
 (so you don't need to build each from scratch).  
 
-follow the MSYS2 installation guide and then look for each dependency on MSYS2 package repo and `pacman -S [packagename]`
+Follow the MSYS2 installation guide and then look for each dependency on MSYS2 package repo and `pacman -S [packagename]`
 each package to acquire all dependencies.
 
 After acquiring all dependencies, you will need to make sure that the includes, libraries, and binaries for each file 
@@ -94,7 +94,7 @@ After cmake generation you should have something that looks like the following o
 
 
 Use `make install` to install Alure library in `C:\Program Files (x86)` for it to be available on your system.  
-OOtherwise simply run `make` to build the library and each example you have the dependencies for.  
+Otherwise simply run `make` to build the library and each example you have the dependencies for.  
 Note if you use mingw (or mingw-w64, the name is the same for both) you may need to use  `mingw32-make.exe`
 instead of `make`, and make sure that file is located in your path.  Note you may need to run `make install` as admin.
 
