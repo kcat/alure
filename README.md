@@ -45,7 +45,7 @@ These following dependencies are only needed to *automatically* support the form
 * [ogg](https://xiph.org/ogg/) : ogg playback
 * [vorbis](https://xiph.org/vorbis/) : ogg vorbis playback
 * [flac](https://xiph.org/flac/) : flac playback
-* [opusfile](http://opus-codec.org/release/dev/2017/08/03/opusfile-0_9.html) : opus playback
+* [opusfile](http://opus-codec.org/) : opus playback
 * [SndFile](http://www.mega-nerd.com/libsndfile/) : various multi-format playback
 * [mpg123](https://www.mpg123.de/) : mpeg audio playback
 
