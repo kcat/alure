@@ -56,8 +56,8 @@ Two of the packaged examples require the following dependencies to be built.
 * [PhysFS](https://icculus.org/physfs/) : alure-physfs
 * [dumb](https://github.com/kode54/dumb) : alure-dumb
 
-If any dependency isn't found at build time the relevant target(s) will be
-disabled and skipped during build.
+If any dependency isn't found at build time the relevant decoders or examples
+will be disabled and skipped during build.
 
 #### - Windows -
 
