@@ -30,9 +30,12 @@ class ALBufferStream {
     Vector<ALbyte> mData;
     ALbyte mSilence{0};
 
-    Vector<ALuint> mBufferIds;
-    ALuint mCurrentIdx{0};
+    struct BufferLengthPair { ALuint mId; ALsizei mFrameLength; };
+    Vector<BufferLengthPair> mBuffers;
+    ALuint mWriteIdx{0};
+    ALuint mReadIdx{0};
 
+    size_t mTotalBuffered{0};
     uint64_t mSamplePos{0};
     std::pair<uint64_t,uint64_t> mLoopPts{0,0};
     bool mHasLooped{false};
@@ -44,14 +47,13 @@ public:
     { }
     ~ALBufferStream()
     {
-        if(!mBufferIds.empty())
-        {
-            alDeleteBuffers(static_cast<ALsizei>(mBufferIds.size()), mBufferIds.data());
-            mBufferIds.clear();
-        }
+        for(auto &buflen : mBuffers)
+            alDeleteBuffers(1, &buflen.mId);
+        mBuffers.clear();
     }
 
     uint64_t getPosition() const { return mSamplePos; }
+    size_t getTotalBuffered() const { return mTotalBuffered; }
 
     ALsizei getNumUpdates() const { return mNumUpdates; }
     ALsizei getUpdateLength() const { return mUpdateLen; }
@@ -96,12 +98,37 @@ public:
         else if(type == SampleType::Mulaw) mSilence = 127;
         else mSilence = 0;
 
-        mBufferIds.assign(mNumUpdates, 0);
-        alGenBuffers(mNumUpdates, mBufferIds.data());
+        mBuffers.assign(mNumUpdates, {0,0});
+        for(auto &buflen : mBuffers)
+            alGenBuffers(1, &buflen.mId);
     }
 
     int64_t getLoopStart() const { return mLoopPts.first; }
     int64_t getLoopEnd() const { return mLoopPts.second; }
+
+    ALsizei resetQueue(ALuint srcid, bool looping)
+    {
+        alSourcei(srcid, AL_BUFFER, 0);
+        mTotalBuffered = 0;
+        mReadIdx = mWriteIdx = 0;
+
+        ALsizei queued = 0;
+        for(;queued < mNumUpdates;queued++)
+        {
+            if(!streamMoreData(srcid, looping))
+                break;
+        }
+        return queued;
+    }
+
+    void popBuffer(ALuint srcid)
+    {
+        ALuint bid;
+        alSourceUnqueueBuffers(srcid, 1, &bid);
+
+        mTotalBuffered -= mBuffers[mReadIdx].mFrameLength;
+        mReadIdx = (mReadIdx+1) % mBuffers.size();
+    }
 
     bool hasLooped() const { return mHasLooped; }
     bool hasMoreData() const { return !mDone.load(std::memory_order_acquire); }
@@ -156,15 +183,16 @@ public:
         {
             mDone.store(true, std::memory_order_release);
             if(frames == 0) return false;
-            mSamplePos += mUpdateLen - frames;
-            std::fill(mData.begin() + frames*mFrameSize, mData.end(), mSilence);
         }
 
-        alBufferData(mBufferIds[mCurrentIdx],
-            mFormat, mData.data(), static_cast<ALsizei>(mData.size()), mFrequency
+        alBufferData(mBuffers[mWriteIdx].mId,
+            mFormat, mData.data(), frames * mFrameSize, mFrequency
         );
-        alSourceQueueBuffers(srcid, 1, &mBufferIds[mCurrentIdx]);
-        mCurrentIdx = (mCurrentIdx+1) % mBufferIds.size();
+        alSourceQueueBuffers(srcid, 1, &mBuffers[mWriteIdx].mId);
+        mBuffers[mWriteIdx].mFrameLength = frames;
+        mTotalBuffered += frames;
+
+        mWriteIdx = (mWriteIdx+1) % mBuffers.size();
         return true;
     }
 };
@@ -714,8 +742,7 @@ ALint SourceImpl::refillBufferStream()
     alGetSourcei(mId, AL_BUFFERS_PROCESSED, &processed);
     while(processed > 0)
     {
-        ALuint buf;
-        alSourceUnqueueBuffers(mId, 1, &buf);
+        mStream->popBuffer(mId);
         --processed;
     }
 
@@ -791,8 +818,7 @@ void SourceImpl::setOffset(uint64_t offset)
         if(!mStream->seek(offset))
             throw std::runtime_error("Failed to seek to offset");
         alSourceRewind(mId);
-        alSourcei(mId, AL_BUFFER, 0);
-        ALint queued = refillBufferStream();
+        ALsizei queued = mStream->resetQueue(mId, mLooping);
         if(queued > 0 && !mPaused.load(std::memory_order_acquire))
             alSourcePlay(mId);
     }
@@ -808,9 +834,8 @@ std::pair<uint64_t,std::chrono::nanoseconds> SourceImpl::getSampleOffsetLatency(
     if(mStream)
     {
         std::lock_guard<std::mutex> lock(mMutex);
-        ALint queued = 0, state = -1, srcpos = 0;
+        ALint state = -1, srcpos = 0;
 
-        alGetSourcei(mId, AL_BUFFERS_QUEUED, &queued);
         if(mContext.hasExtension(AL::SOFT_source_latency))
         {
             ALint64SOFT val[2];
@@ -826,7 +851,7 @@ std::pair<uint64_t,std::chrono::nanoseconds> SourceImpl::getSampleOffsetLatency(
         if(state != AL_STOPPED)
         {
             // The amount of samples in the queue waiting to play
-            ALuint inqueue = queued*mStream->getUpdateLength() - srcpos;
+            ALuint inqueue = mStream->getTotalBuffered() - srcpos;
             if(!mStream->hasLooped())
             {
                 // A non-looped stream should never have more samples queued
@@ -870,10 +895,9 @@ std::pair<Seconds,Seconds> SourceImpl::getSecOffsetLatency() const
     if(mStream)
     {
         std::lock_guard<std::mutex> lock(mMutex);
-        ALint queued = 0, state = -1;
         ALdouble srcpos = 0;
+        ALint state = -1;
 
-        alGetSourcei(mId, AL_BUFFERS_QUEUED, &queued);
         if(mContext.hasExtension(AL::SOFT_source_latency))
         {
             ALdouble val[2];
@@ -897,7 +921,7 @@ std::pair<Seconds,Seconds> SourceImpl::getSecOffsetLatency() const
             frac = std::modf(srcpos * mStream->getFrequency(), &ipos);
 
             // The amount of samples in the queue waiting to play
-            ALuint inqueue = queued*mStream->getUpdateLength() - (ALuint)ipos;
+            ALuint inqueue = mStream->getTotalBuffered() - (ALuint)ipos;
             if(!mStream->hasLooped())
             {
                 // A non-looped stream should never have more samples queued
