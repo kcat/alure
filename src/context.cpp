@@ -672,7 +672,7 @@ ContextImpl::ContextImpl(DeviceImpl &device, ArrayView<AttributePair> attrs)
     if(attrs.empty()) /* No explicit attributes. */
         mContext.reset(alcCreateContext(alcdev, nullptr));
     else
-        mContext.reset(alcCreateContext(alcdev, &std::get<0>(attrs.front())));
+        mContext.reset(alcCreateContext(alcdev, &attrs.front().mAttribute));
     if(!mContext) throw alc_error(alcGetError(alcdev), "alcCreateContext failed");
 
     mSourceIds.reserve(256);

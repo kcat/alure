@@ -129,9 +129,12 @@ inline double LinearTodB(double value) { return std::log10(value) * 20.0; }
  * An attribute pair, for passing attributes to Device::createContext and
  * Device::reset.
  */
-using AttributePair = std::pair<ALCint,ALCint>;
+struct AttributePair {
+    ALCint mAttribute;
+    ALCint mValue;
+};
 static_assert(sizeof(AttributePair) == sizeof(ALCint[2]), "Bad AttributePair size");
-inline AttributePair AttributesEnd() noexcept { return std::make_pair(0, 0); }
+inline AttributePair AttributesEnd() noexcept { return AttributePair{0, 0}; }
 
 
 struct FilterParams {

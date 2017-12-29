@@ -216,7 +216,7 @@ void DeviceImpl::reset(ArrayView<AttributePair> attributes)
     {
         auto attr_end = std::find_if(attributes.rbegin(), attributes.rend(),
             [](const AttributePair &attr) -> bool
-            { return std::get<0>(attr) == 0; }
+            { return attr.mAttribute == 0; }
         );
         if(attr_end == attributes.rend())
         {
@@ -227,10 +227,10 @@ void DeviceImpl::reset(ArrayView<AttributePair> attributes)
             attrs.reserve(attributes.size() + 1);
             std::copy(attributes.begin(), attributes.end(), std::back_inserter(attrs));
             attrs.push_back(AttributesEnd());
-            success = alcResetDeviceSOFT(mDevice, &std::get<0>(attrs.front()));
+            success = alcResetDeviceSOFT(mDevice, &attrs.front().mAttribute);
         }
         else
-            success = alcResetDeviceSOFT(mDevice, &std::get<0>(attributes.front()));
+            success = alcResetDeviceSOFT(mDevice, &attributes.front().mAttribute);
     };
     if(!success)
         throw alc_error(alcGetError(mDevice), "alcResetDeviceSOFT failed");
@@ -246,7 +246,7 @@ Context DeviceImpl::createContext(ArrayView<AttributePair> attributes)
     {
         auto attr_end = std::find_if(attributes.rbegin(), attributes.rend(),
             [](const AttributePair &attr) -> bool
-            { return std::get<0>(attr) == 0; }
+            { return attr.mAttribute == 0; }
         );
         if(attr_end == attributes.rend())
         {
