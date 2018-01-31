@@ -159,5 +159,10 @@ dependencies for.
 
 #### - OSX - 
 
-TODO
-
+```
+$ cd <path-to-repo>
+$ mkdir build && cd build
+$ cmake .. # -DCMAKE_INSTAL_PREFIX=<where-to-install-optionally>
+$ cmake --build . -- -j4
+$ make install # to install to specified destination or system default
+```
