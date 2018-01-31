@@ -123,6 +123,10 @@ unset(HAVE_OPUSFILE)
 unset(HAVE_LIBSNDFILE)
 unset(HAVE_MPG123)
 
+option(ALURE_BUILD_SHARED   "Build alure shared library" ON)
+option(ALURE_BUILD_STATIC   "Build alure static library" ON)
+option(ALURE_INSTALL_TARGETS   "Possibly turn off install targets" ON)
+
 option(ALURE_ENABLE_WAVE    "Enables the built-in wave file decoder"     ON)
 option(ALURE_ENABLE_VORBIS  "Enables the built-in libvorbisfile decoder" ON)
 option(ALURE_ENABLE_FLAC    "Enables the built-in FLAC decoder"          ON)
@@ -185,56 +189,63 @@ CONFIGURE_FILE(
     "${alure_SOURCE_DIR}/config.h.in"
     "${alure_BINARY_DIR}/config.h")
 
-
-add_library(alure2 SHARED ${alure_srcs})
-if(EXPORT_DECL)
-    target_compile_definitions(alure2 PRIVATE ALURE_API=${EXPORT_DECL} ALURE_TEMPLATE=template
-                                              NOMINMAX)
+if(ALURE_BUILD_SHARED)
+  add_library(alure2 SHARED ${alure_srcs})
+  if(EXPORT_DECL)
+      target_compile_definitions(alure2 PRIVATE ALURE_API=${EXPORT_DECL} ALURE_TEMPLATE=template
+                                                NOMINMAX)
+  endif()
+  target_include_directories(alure2
+      PUBLIC $<BUILD_INTERFACE:${alure_SOURCE_DIR}/include/AL> ${OPENAL_INCLUDE_DIR}
+      PRIVATE ${alure_SOURCE_DIR}/include ${alure_SOURCE_DIR}/src ${alure_BINARY_DIR}
+              ${decoder_incls}
+  )
+  target_compile_options(alure2 PRIVATE ${CXX_FLAGS} ${VISIBILITY_FLAGS})
+  target_link_libraries(alure2 PUBLIC ${alure_libs} PRIVATE ${LINKER_OPTS})
+  set(ALURE_EXPORT_NAMES ${ALURE_EXPORT_NAMES} alure2)
 endif()
-target_include_directories(alure2
-    PUBLIC $<BUILD_INTERFACE:${alure_SOURCE_DIR}/include/AL> ${OPENAL_INCLUDE_DIR}
-    PRIVATE ${alure_SOURCE_DIR}/include ${alure_SOURCE_DIR}/src ${alure_BINARY_DIR}
-            ${decoder_incls}
-)
-target_compile_options(alure2 PRIVATE ${CXX_FLAGS} ${VISIBILITY_FLAGS})
-target_link_libraries(alure2 PUBLIC ${alure_libs} PRIVATE ${LINKER_OPTS})
 
-add_library(alure2_s STATIC ${alure_srcs})
-target_compile_definitions(alure2_s PUBLIC ALURE_STATIC_LIB PRIVATE NOMINMAX)
-target_include_directories(alure2_s
-    PUBLIC $<BUILD_INTERFACE:${alure_SOURCE_DIR}/include/AL> ${OPENAL_INCLUDE_DIR}
-    PRIVATE ${alure_SOURCE_DIR}/include ${alure_SOURCE_DIR}/src ${alure_BINARY_DIR}
-            ${decoder_incls}
-)
-target_compile_options(alure2_s PRIVATE ${CXX_FLAGS} ${VISIBILITY_FLAGS})
-target_link_libraries(alure2_s PUBLIC ${alure_libs})
+if(ALURE_BUILD_STATIC)
+  add_library(alure2_s STATIC ${alure_srcs})
+  target_compile_definitions(alure2_s PUBLIC ALURE_STATIC_LIB PRIVATE NOMINMAX)
+  target_include_directories(alure2_s
+      PUBLIC $<BUILD_INTERFACE:${alure_SOURCE_DIR}/include/AL> ${OPENAL_INCLUDE_DIR}
+      PRIVATE ${alure_SOURCE_DIR}/include ${alure_SOURCE_DIR}/src ${alure_BINARY_DIR}
+              ${decoder_incls}
+  )
+  target_compile_options(alure2_s PRIVATE ${CXX_FLAGS} ${VISIBILITY_FLAGS})
+  target_link_libraries(alure2_s PUBLIC ${alure_libs})
+  set(ALURE_EXPORT_NAMES ${ALURE_EXPORT_NAMES} alure2_s)
+endif()
 
-install(TARGETS alure2 alure2_s EXPORT alure2
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR} ${CMAKE_INSTALL_INCLUDEDIR}/AL
-)
-export(
-    TARGETS alure2 alure2_s
-    NAMESPACE Alure2::
-    FILE Alure2Config.cmake
-)
-install(
-    EXPORT alure2
-    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/Alure2
-    NAMESPACE Alure2::
-    FILE Alure2Config.cmake
-)
-install(FILES
-    include/AL/alure2.h
-    include/AL/alure2-aliases.h
-    include/AL/alure2-typeviews.h
-    include/AL/alure2-alext.h
-    include/AL/efx.h
-    include/AL/efx-presets.h
-    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/AL
-)
+if(ALURE_INSTALL_TARGETS)
+  install(TARGETS ${ALURE_EXPORT_NAMES} EXPORT alure2
+      RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+      LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+      ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+      INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR} ${CMAKE_INSTALL_INCLUDEDIR}/AL
+  )
+  export(
+      TARGETS ${ALURE_EXPORT_NAMES}
+      NAMESPACE Alure2::
+      FILE Alure2Config.cmake
+  )
+  install(
+      EXPORT alure2
+      DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/Alure2
+      NAMESPACE Alure2::
+      FILE Alure2Config.cmake
+  )
+  install(FILES
+      include/AL/alure2.h
+      include/AL/alure2-aliases.h
+      include/AL/alure2-typeviews.h
+      include/AL/alure2-alext.h
+      include/AL/efx.h
+      include/AL/efx-presets.h
+      DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/AL
+  )
+endif()
 
 
 option(ALURE_BUILD_EXAMPLES "Build example programs" ON)
