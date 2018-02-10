@@ -272,6 +272,8 @@ bool FlacDecoder::open(UniquePtr<std::istream> &file) noexcept
     mFlacFile = FLAC__stream_decoder_new();
     if(mFlacFile)
     {
+        FLAC__stream_decoder_set_metadata_respond(mFlacFile, FLAC__METADATA_TYPE_VORBIS_COMMENT);
+
         mFile = std::move(file);
         if(FLAC__stream_decoder_init_stream(mFlacFile, ReadCallback, SeekCallback, TellCallback, LengthCallback, EofCallback, WriteCallback, MetadataCallback, ErrorCallback, this) == FLAC__STREAM_DECODER_INIT_STATUS_OK)
         {
