@@ -222,10 +222,11 @@ SharedPtr<Decoder> WaveDecoderFactory::createDecoder(UniquePtr<std::istream> &fi
         if(size < 2) return nullptr;
         totalsize -= 8;
 
-        StringView tag(tag_, 4);
-        size = std::min((size+1) & ~1u, totalsize);
-        totalsize -= size;
+        size = std::min(size, totalsize);
+        ALuint padbyte = size & 1u;
+        totalsize -= size+padbyte;
 
+        StringView tag(tag_, 4);
         if(tag == "fmt ")
         {
             /* 'fmt ' tag needs at least 16 bytes. */
@@ -424,6 +425,7 @@ SharedPtr<Decoder> WaveDecoderFactory::createDecoder(UniquePtr<std::istream> &fi
         }
 
     next_chunk:
+        size += padbyte;
         if(size > 0)
             file->ignore(size);
     }
