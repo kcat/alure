@@ -155,7 +155,7 @@ private:
         ALuint mFrames{0};
         Promise<Buffer> mPromise;
 
-        std::atomic<PendingPromise*> mNext;
+        std::atomic<PendingPromise*> mNext{nullptr};
 
         PendingPromise() = default;
         PendingPromise(BufferImpl *buffer, SharedPtr<Decoder> decoder, ALenum format,
