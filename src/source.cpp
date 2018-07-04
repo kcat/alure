@@ -283,10 +283,9 @@ void SourceImpl::resetProperties()
     mPriority = 0;
 }
 
-void SourceImpl::applyProperties(bool looping, ALuint offset) const
+void SourceImpl::applyProperties(bool looping) const
 {
     alSourcei(mId, AL_LOOPING, looping ? AL_TRUE : AL_FALSE);
-    alSourcei(mId, AL_SAMPLE_OFFSET, offset);
     alSourcef(mId, AL_PITCH, mPitch * mGroupPitch);
     alSourcef(mId, AL_GAIN, mGain * mGroupGain * mFadeGain);
     alSourcef(mId, AL_MIN_GAIN, mMinGain);
@@ -363,7 +362,7 @@ void SourceImpl::play(Buffer buffer)
     if(mId == 0)
     {
         mId = mContext.getSourceId(mPriority);
-        applyProperties(mLooping, (ALuint)std::min<uint64_t>(mOffset, std::numeric_limits<ALint>::max()));
+        applyProperties(mLooping);
     }
     else
     {
@@ -372,9 +371,7 @@ void SourceImpl::play(Buffer buffer)
         alSourceRewind(mId);
         alSourcei(mId, AL_BUFFER, 0);
         alSourcei(mId, AL_LOOPING, mLooping ? AL_TRUE : AL_FALSE);
-        alSourcei(mId, AL_SAMPLE_OFFSET, (ALuint)std::min<uint64_t>(mOffset, std::numeric_limits<ALint>::max()));
     }
-    mOffset = 0;
 
     mStream.reset();
     if(mBuffer)
@@ -383,6 +380,9 @@ void SourceImpl::play(Buffer buffer)
     mBuffer->addSource(Source(this));
 
     alSourcei(mId, AL_BUFFER, mBuffer->getId());
+    alSourcei(mId, AL_SAMPLE_OFFSET,
+        (ALuint)std::min<uint64_t>(mOffset, std::numeric_limits<ALint>::max()));
+    mOffset = 0;
     alSourcePlay(mId);
     mPaused.store(false, std::memory_order_release);
     mContext.removePendingSource(this);
@@ -408,7 +408,7 @@ void SourceImpl::play(SharedPtr<Decoder>&& decoder, ALsizei chunk_len, ALsizei q
     if(mId == 0)
     {
         mId = mContext.getSourceId(mPriority);
-        applyProperties(false, 0);
+        applyProperties(false);
     }
     else
     {
@@ -417,7 +417,6 @@ void SourceImpl::play(SharedPtr<Decoder>&& decoder, ALsizei chunk_len, ALsizei q
         alSourceRewind(mId);
         alSourcei(mId, AL_BUFFER, 0);
         alSourcei(mId, AL_LOOPING, AL_FALSE);
-        alSourcei(mId, AL_SAMPLE_OFFSET, 0);
     }
 
     mStream.reset();
@@ -435,6 +434,7 @@ void SourceImpl::play(SharedPtr<Decoder>&& decoder, ALsizei chunk_len, ALsizei q
         if(!mStream->streamMoreData(mId, mLooping))
             break;
     }
+    alSourcei(mId, AL_SAMPLE_OFFSET, 0);
     alSourcePlay(mId);
     mPaused.store(false, std::memory_order_release);
 
@@ -663,21 +663,22 @@ bool SourceImpl::checkPending(SharedFuture<Buffer> &future)
     if(mId == 0)
     {
         mId = mContext.getSourceId(mPriority);
-        applyProperties(mLooping, (ALuint)std::min<uint64_t>(mOffset, std::numeric_limits<ALint>::max()));
+        applyProperties(mLooping);
     }
     else
     {
         alSourceRewind(mId);
         alSourcei(mId, AL_BUFFER, 0);
         alSourcei(mId, AL_LOOPING, mLooping ? AL_TRUE : AL_FALSE);
-        alSourcei(mId, AL_SAMPLE_OFFSET, (ALuint)std::min<uint64_t>(mOffset, std::numeric_limits<ALint>::max()));
     }
-    mOffset = 0;
 
     mBuffer = buffer;
     mBuffer->addSource(Source(this));
 
     alSourcei(mId, AL_BUFFER, mBuffer->getId());
+    alSourcei(mId, AL_SAMPLE_OFFSET,
+        (ALuint)std::min<uint64_t>(mOffset, std::numeric_limits<ALint>::max()));
+    mOffset = 0;
     alSourcePlay(mId);
     mPaused.store(false, std::memory_order_release);
     mContext.addPlayingSource(this, mId);
