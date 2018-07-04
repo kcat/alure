@@ -89,7 +89,7 @@ class SourceImpl {
     ALuint mPriority;
 
     void resetProperties();
-    void applyProperties(bool looping, ALuint offset) const;
+    void applyProperties(bool looping) const;
 
     ALint refillBufferStream();
 
