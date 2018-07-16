@@ -27,7 +27,7 @@ sf_count_t istream_get_filelen(void *user_data)
 
     sf_count_t len = -1;
     std::streampos pos = file->tellg();
-    if(pos != -1 && file->seekg(0, std::ios::end))
+    if(pos != static_cast<std::streampos>(-1) && file->seekg(0, std::ios::end))
     {
         len = file->tellg();
         file->seekg(pos);
