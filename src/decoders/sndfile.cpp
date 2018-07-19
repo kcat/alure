@@ -27,7 +27,7 @@ sf_count_t istream_get_filelen(void *user_data)
 
     sf_count_t len = -1;
     std::streampos pos = file->tellg();
-    if(pos != -1 && file->seekg(0, std::ios::end))
+    if(pos != static_cast<std::streampos>(-1) && file->seekg(0, std::ios::end))
     {
         len = file->tellg();
         file->seekg(pos);
@@ -85,12 +85,13 @@ class SndFileDecoder final : public Decoder {
 
     ChannelConfig mChannelConfig{ChannelConfig::Mono};
     SampleType mSampleType{SampleType::UInt8};
+    std::pair<uint64_t, uint64_t> mLoopPts{0, 0};
 
 public:
     SndFileDecoder(UniquePtr<std::istream> file, SndfilePtr sndfile, const SF_INFO &sndinfo,
-                   ChannelConfig sconfig, SampleType stype) noexcept
+                   ChannelConfig sconfig, SampleType stype, uint64_t loopstart, uint64_t loopend) noexcept
       : mFile(std::move(file)), mSndFile(std::move(sndfile)), mSndInfo(sndinfo)
-      , mChannelConfig(sconfig), mSampleType(stype)
+      , mChannelConfig(sconfig), mSampleType(stype), mLoopPts{loopstart, loopend}
     { }
     ~SndFileDecoder() override { }
 
@@ -122,10 +123,7 @@ bool SndFileDecoder::seek(uint64_t pos) noexcept
     return true;
 }
 
-std::pair<uint64_t,uint64_t> SndFileDecoder::getLoopPoints() const noexcept
-{
-    return std::make_pair(0, std::numeric_limits<uint64_t>::max());
-}
+std::pair<uint64_t, uint64_t> SndFileDecoder::getLoopPoints() const noexcept { return mLoopPts; }
 
 ALuint SndFileDecoder::read(ALvoid *ptr, ALuint count) noexcept
 {
@@ -147,6 +145,36 @@ SharedPtr<Decoder> SndFileDecoderFactory::createDecoder(UniquePtr<std::istream> 
     SF_INFO sndinfo;
     SndfilePtr sndfile(sf_open_virtual(&vio, SFM_READ, &sndinfo, file.get()));
     if(!sndfile) return nullptr;
+
+    std::pair<uint64_t, uint64_t> cue_points{0, std::numeric_limits<uint64_t>::max()};
+    {
+        // Needed for compatibility with older sndfile libraries.
+        struct SNDFILE_CUE_POINT {
+            int32_t indx;
+            uint32_t position;
+            int32_t fcc_chunk;
+            int32_t chunk_start;
+            int32_t block_start;
+            uint32_t sample_offset;
+            char name[256];
+        };
+
+        struct {
+            uint32_t cue_count;
+            SNDFILE_CUE_POINT cue_points[100];
+        } cues;
+
+        enum { SNDFILE_GET_CUE = 0x10CE };
+
+        if(sf_command(sndfile.get(), SNDFILE_GET_CUE, &cues, sizeof(cues)))
+        {
+            cue_points.first = cues.cue_points[0].sample_offset;
+            if(cues.cue_count > 1)
+            {
+                cue_points.second = cues.cue_points[1].sample_offset;
+            }
+        }
+    }
 
     ChannelConfig sconfig;
     Vector<int> chanmap(sndinfo.channels);
@@ -212,7 +240,8 @@ SharedPtr<Decoder> SndFileDecoderFactory::createDecoder(UniquePtr<std::istream> 
             break;
     }
 
-    return MakeShared<SndFileDecoder>(std::move(file), std::move(sndfile), sndinfo, sconfig, stype);
+    return MakeShared<SndFileDecoder>(std::move(file), std::move(sndfile), sndinfo, sconfig, stype,
+        cue_points.first, cue_points.second);
 }
 
 } // namespace alure
