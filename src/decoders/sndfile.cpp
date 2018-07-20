@@ -128,10 +128,21 @@ std::pair<uint64_t, uint64_t> SndFileDecoder::getLoopPoints() const noexcept { r
 ALuint SndFileDecoder::read(ALvoid *ptr, ALuint count) noexcept
 {
     sf_count_t got = 0;
-    if(mSampleType == SampleType::Int16)
-        got = sf_readf_short(mSndFile.get(), static_cast<short*>(ptr), count);
-    else if(mSampleType == SampleType::Float32)
-        got = sf_readf_float(mSndFile.get(), static_cast<float*>(ptr), count);
+    switch (mSampleType)
+    {
+        case SampleType::Mulaw:
+        case SampleType::UInt8:
+            got = sf_read_raw(mSndFile.get(), static_cast<ALubyte *>(ptr),
+                FramesToBytes(count, mChannelConfig, mSampleType));
+            got = BytesToFrames(got, mChannelConfig, mSampleType);
+            break;
+        case SampleType::Int16:
+            got = sf_readf_short(mSndFile.get(), static_cast<short *>(ptr), count);
+            break;
+        case SampleType::Float32:
+            got = sf_readf_float(mSndFile.get(), static_cast<float *>(ptr), count);
+            break;
+    }
     return (ALuint)std::max<sf_count_t>(got, 0);
 }
 
@@ -226,6 +237,15 @@ SharedPtr<Decoder> SndFileDecoderFactory::createDecoder(UniquePtr<std::istream> 
     SampleType stype = SampleType::Int16;
     switch(sndinfo.format&SF_FORMAT_SUBMASK)
     {
+        case SF_FORMAT_PCM_U8:
+          stype = SampleType::UInt8;
+          break;
+        case SF_FORMAT_ULAW:
+            if(Context::GetCurrent().isSupported(sconfig, SampleType::Mulaw))
+            {
+                stype = SampleType::Mulaw;
+            }
+            break;
         case SF_FORMAT_FLOAT:
         case SF_FORMAT_DOUBLE:
         case SF_FORMAT_VORBIS:
