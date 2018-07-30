@@ -238,24 +238,20 @@ SharedPtr<Decoder> SndFileDecoderFactory::createDecoder(UniquePtr<std::istream> 
     switch(sndinfo.format&SF_FORMAT_SUBMASK)
     {
         case SF_FORMAT_PCM_U8:
-          stype = SampleType::UInt8;
-          break;
+            stype = SampleType::UInt8;
+            break;
         case SF_FORMAT_ULAW:
             if(Context::GetCurrent().isSupported(sconfig, SampleType::Mulaw))
-            {
                 stype = SampleType::Mulaw;
-            }
             break;
         case SF_FORMAT_FLOAT:
         case SF_FORMAT_DOUBLE:
         case SF_FORMAT_VORBIS:
             if(Context::GetCurrent().isSupported(sconfig, SampleType::Float32))
-            {
                 stype = SampleType::Float32;
-                break;
-            }
-            /*fall-through*/
+            break;
         default:
+            // For everything else, decode to signed 16-bit
             stype = SampleType::Int16;
             break;
     }
