@@ -232,40 +232,49 @@ ALuint Mp3Decoder::read(ALvoid *ptr, ALuint count) noexcept
     std::lock_guard<std::mutex> _(mMutex);
     while(total < count && mFile->good())
     {
+        ALuint todo = count-total;
+
         if(!mSampleData.empty())
         {
             // Write out whatever samples we have.
-            ALuint todo = mSampleData.size() / mLastFrame.channels;
-            todo = std::min(todo, count-total);
+            todo = std::min<ALuint>(todo, mSampleData.size()/mLastFrame.channels);
 
-            total += todo;
-
-            todo *= mLastFrame.channels;
+            size_t numspl = todo*mLastFrame.channels;
             if(mSampleType == SampleType::Float32)
             {
-                std::copy(mSampleData.begin(), mSampleData.begin()+todo, dst.f);
-                dst.f += todo;
+                std::copy(mSampleData.begin(), mSampleData.begin()+numspl, dst.f);
+                dst.f += numspl;
             }
             else
             {
                 auto sample = mSampleData.begin();
-                auto end = mSampleData.begin()+todo;
+                auto end = mSampleData.begin()+numspl;
                 for(;sample != end;++sample)
                 {
                     float s = std::min(std::max(*sample * 32768.0f, -32768.0f), 32767.0f);
                     *(dst.s++) = (short)s;
                 }
             }
-            mSampleData.erase(mSampleData.begin(), mSampleData.begin()+todo);
+            mSampleData.erase(mSampleData.begin(), mSampleData.begin()+numspl);
 
+            total += todo;
             continue;
         }
 
-        mSampleData.resize(MINIMP3_MAX_SAMPLES_PER_FRAME);
+        // Read directly into the output buffer if it doesn't need conversion
+        // and there's enough guaranteed room.
+        float *samples_ptr;
+        if(mSampleType == SampleType::Float32 &&
+           todo*mLastFrame.channels >= MINIMP3_MAX_SAMPLES_PER_FRAME)
+            samples_ptr = dst.f;
+        else
+        {
+            mSampleData.resize(MINIMP3_MAX_SAMPLES_PER_FRAME);
+            samples_ptr = mSampleData.data();
+        }
 
         mp3dec_frame_info_t frame_info{};
-        int samples_to_get = decodeFrame(*mFile, mMp3, mFileData, mSampleData.data(),
-                                         &frame_info);
+        int samples_to_get = decodeFrame(*mFile, mMp3, mFileData, samples_ptr, &frame_info);
         if(samples_to_get <= 0)
         {
             mSampleData.clear();
@@ -283,8 +292,14 @@ ALuint Mp3Decoder::read(ALvoid *ptr, ALuint count) noexcept
 
         // Remove used file data, update sample storage size with what we got
         mFileData.erase(mFileData.begin(), mFileData.begin()+frame_info.frame_bytes);
-        mSampleData.resize(samples_to_get * frame_info.channels);
         mLastFrame = frame_info;
+        if(!mSampleData.empty())
+            mSampleData.resize(samples_to_get * frame_info.channels);
+        else
+        {
+            dst.f += samples_to_get * frame_info.channels;
+            total += samples_to_get;
+        }
     }
 
     mSamplePos += total;
