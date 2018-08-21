@@ -200,7 +200,13 @@ bool Mp3Decoder::seek(uint64_t pos) noexcept
         }
 
         // Keep going to the next frame
-        file_data.erase(file_data.begin(), file_data.begin()+frame_info.frame_bytes);
+        if(file_data.size() >= (size_t)frame_info.frame_bytes)
+            file_data.erase(file_data.begin(), file_data.begin()+frame_info.frame_bytes);
+        else
+        {
+            mFile->ignore(frame_info.frame_bytes - file_data.size());
+            file_data.clear();
+        }
         curpos += samples_to_get;
     } while(1);
 
