@@ -88,8 +88,8 @@ public:
       : mFile(std::move(file)), mFileData(std::move(initial_data)), mMp3(mp3)
       , mChannels(chans), mSampleType(stype), mSampleRate(srate)
     {
-        auto pos = mFile->tellg();
-        if(pos != -1 && mFile->seekg(0, std::ios::end))
+        std::streamsize pos = mFile->tellg();
+        if(pos >= 0 && mFile->seekg(0, std::ios::end))
         {
             mFileSize = mFile->tellg();
             mFile->seekg(pos);
