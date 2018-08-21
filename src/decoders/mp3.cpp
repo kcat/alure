@@ -42,14 +42,14 @@ class Mp3Decoder final : public Decoder {
     Vector<uint8_t> mFileData;
 
     mp3dec_t mMp3;
-    Vector<short> mSampleData;
+    Vector<float> mSampleData;
 
     ChannelConfig mChannels{ChannelConfig::Mono};
     SampleType mSampleType{SampleType::UInt8};
     int mSampleRate{0};
 
     static int decodeFrame(std::istream &file, mp3dec_t &mp3, Vector<uint8_t> &file_data,
-                           short *sample_data, mp3dec_frame_info_t *frame_info)
+                           float *sample_data, mp3dec_frame_info_t *frame_info)
     {
         if(file_data.size() < MinMp3DataSize)
         {
@@ -131,7 +131,7 @@ bool Mp3Decoder::seek(uint64_t pos) noexcept
         {
             // Desired sample is within this frame, decode the samples and go
             // to the desired offset.
-            Vector<short> sample_data(MINIMP3_MAX_SAMPLES_PER_FRAME);
+            Vector<float> sample_data(MINIMP3_MAX_SAMPLES_PER_FRAME);
             samples_to_get = decodeFrame(*mFile, mp3, file_data, sample_data.data(),
                                          &frame_info);
 
@@ -165,7 +165,11 @@ std::pair<uint64_t,uint64_t> Mp3Decoder::getLoopPoints() const noexcept
 
 ALuint Mp3Decoder::read(ALvoid *ptr, ALuint count) noexcept
 {
-    short *dst = reinterpret_cast<short*>(ptr);
+    union {
+        void *v;
+        float *f;
+        short *s;
+    } dst = { ptr };
     ALuint total = 0;
 
     while(total < count && mFile->good())
@@ -181,8 +185,21 @@ ALuint Mp3Decoder::read(ALvoid *ptr, ALuint count) noexcept
             total += todo;
 
             if(mChannels != ChannelConfig::Mono) todo *= 2;
-            std::copy(mSampleData.begin(), mSampleData.begin()+todo, dst);
-            dst += todo;
+            if(mSampleType == SampleType::Float32)
+            {
+                std::copy(mSampleData.begin(), mSampleData.begin()+todo, dst.f);
+                dst.f += todo;
+            }
+            else
+            {
+                auto sample = mSampleData.begin();
+                auto end = mSampleData.begin()+todo;
+                for(;sample != end;++sample)
+                {
+                    float s = std::min(std::max(*sample * 32768.0f, -32768.0f), 32767.0f);
+                    *(dst.s++) = (short)s;
+                }
+            }
             mSampleData.erase(mSampleData.begin(), mSampleData.begin()+todo);
 
             continue;
@@ -232,6 +249,7 @@ SharedPtr<Decoder> Mp3DecoderFactory::createDecoder(UniquePtr<std::istream> &fil
 
     mp3dec_init(&mp3);
 
+    // Make sure the file is valid and we get some samples.
     if(append_file_data(*file, initial_data, MinMp3DataSize) == 0)
         return nullptr;
 
@@ -261,7 +279,8 @@ SharedPtr<Decoder> Mp3DecoderFactory::createDecoder(UniquePtr<std::istream> &fil
         return nullptr;
 
     SampleType stype = SampleType::Int16;
-    // TODO: Fix MiniMP3 to output proper floats
+    if(ContextImpl::GetCurrent()->isSupported(chans, SampleType::Float32))
+        stype = SampleType::Float32;
 
     return MakeShared<Mp3Decoder>(std::move(file), std::move(initial_data), mp3,
                                   chans, stype, frame_info.hz);
