@@ -51,7 +51,11 @@ class Mp3Decoder final : public Decoder {
 
     mp3dec_t mMp3;
     Vector<float> mSampleData;
+    mp3dec_frame_info_t mLastFrame{};
+    uint64_t mSamplePos{0};
+    mutable std::mutex mMutex;
 
+    std::streamsize mFileSize{-1};
     ChannelConfig mChannels{ChannelConfig::Mono};
     SampleType mSampleType{SampleType::UInt8};
     int mSampleRate{0};
@@ -83,7 +87,14 @@ public:
                const mp3dec_t &mp3, ChannelConfig chans, SampleType stype, int srate) noexcept
       : mFile(std::move(file)), mFileData(std::move(initial_data)), mMp3(mp3)
       , mChannels(chans), mSampleType(stype), mSampleRate(srate)
-    { }
+    {
+        auto pos = mFile->tellg();
+        if(pos != -1 && mFile->seekg(0, std::ios::end))
+        {
+            mFileSize = mFile->tellg();
+            mFile->seekg(pos);
+        }
+    }
     ~Mp3Decoder() override { }
 
     ALuint getFrequency() const noexcept override;
@@ -104,7 +115,23 @@ SampleType Mp3Decoder::getSampleType() const noexcept { return mSampleType; }
 
 uint64_t Mp3Decoder::getLength() const noexcept
 {
-    return 0;
+    std::lock_guard<std::mutex> _(mMutex);
+    uint64_t ret = 0;
+    if(mFileSize > 0 && mLastFrame.bitrate_kbps > 0)
+    {
+        /* For constant bitrate files, estimate the total length using the
+         * current sample offset and the amount of remaining data.
+         */
+        mFile->clear();
+        std::streamsize rembytes = mFileSize - mFile->tellg() + mFileData.size();
+        ret = mSamplePos + mSampleData.size()/mLastFrame.channels;
+        if(rembytes > 0)
+        {
+            double sec_rem = double(rembytes) / double(mLastFrame.bitrate_kbps*1000/8);
+            ret += uint64_t(sec_rem*mSampleRate + 0.5);
+        }
+    }
+    return ret;
 }
 
 bool Mp3Decoder::seek(uint64_t pos) noexcept
@@ -165,6 +192,8 @@ bool Mp3Decoder::seek(uint64_t pos) noexcept
                 file_data.erase(file_data.begin(), file_data.begin()+frame_info.frame_bytes);
                 mSampleData = std::move(sample_data);
                 mFileData = std::move(file_data);
+                mSamplePos = pos;
+                mLastFrame = frame_info;
                 mMp3 = mp3;
                 return true;
             }
@@ -194,19 +223,18 @@ ALuint Mp3Decoder::read(ALvoid *ptr, ALuint count) noexcept
     } dst = { ptr };
     ALuint total = 0;
 
+    std::lock_guard<std::mutex> _(mMutex);
     while(total < count && mFile->good())
     {
         if(!mSampleData.empty())
         {
             // Write out whatever samples we have.
-            ALuint todo = mSampleData.size();
-            if(mChannels != ChannelConfig::Mono)
-                todo /= 2;
+            ALuint todo = mSampleData.size() / mLastFrame.channels;
             todo = std::min(todo, count-total);
 
             total += todo;
 
-            if(mChannels != ChannelConfig::Mono) todo *= 2;
+            todo *= mLastFrame.channels;
             if(mSampleType == SampleType::Float32)
             {
                 std::copy(mSampleData.begin(), mSampleData.begin()+todo, dst.f);
@@ -250,8 +278,10 @@ ALuint Mp3Decoder::read(ALvoid *ptr, ALuint count) noexcept
         // Remove used file data, update sample storage size with what we got
         mFileData.erase(mFileData.begin(), mFileData.begin()+frame_info.frame_bytes);
         mSampleData.resize(samples_to_get * frame_info.channels);
+        mLastFrame = frame_info;
     }
 
+    mSamplePos += total;
     return total;
 }
 
