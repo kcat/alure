@@ -83,9 +83,10 @@ class Mp3Decoder final : public Decoder {
 
 public:
     Mp3Decoder(UniquePtr<std::istream> file, Vector<uint8_t>&& initial_data,
-               const mp3dec_t &mp3, ChannelConfig chans, SampleType stype, int srate) noexcept
+               const mp3dec_t &mp3, const mp3dec_frame_info_t &first_frame,
+               ChannelConfig chans, SampleType stype, int srate) noexcept
       : mFile(std::move(file)), mFileData(std::move(initial_data)), mMp3(mp3)
-      , mChannels(chans), mSampleType(stype), mSampleRate(srate)
+      , mLastFrame(first_frame), mChannels(chans), mSampleType(stype), mSampleRate(srate)
     {
         std::streamsize pos = mFile->tellg();
         if(pos >= 0 && mFile->seekg(0, std::ios::end))
@@ -373,7 +374,7 @@ SharedPtr<Decoder> Mp3DecoderFactory::createDecoder(UniquePtr<std::istream> &fil
         stype = SampleType::Float32;
 
     return MakeShared<Mp3Decoder>(std::move(file), std::move(initial_data), mp3,
-                                  chans, stype, frame_info.hz);
+                                  frame_info, chans, stype, frame_info.hz);
 }
 
 } // namespace alure
