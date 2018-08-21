@@ -129,6 +129,7 @@ option(ALURE_ENABLE_FLAC    "Enables the built-in FLAC decoder"          ON)
 option(ALURE_ENABLE_OPUS    "Enables the built-in libopusfile decoder"   ON)
 option(ALURE_ENABLE_SNDFILE "Enables the built-in libsndfile decoder"    ON)
 option(ALURE_ENABLE_MPG123  "Enables the built-in libmpg123 decoder"     ON)
+option(ALURE_ENABLE_MINIMP3 "Enables the built-in MINIMP3 decoder"       ON)
 
 if(ALURE_ENABLE_WAVE)
     set(alure_srcs ${alure_srcs} src/decoders/wave.cpp)
@@ -178,6 +179,11 @@ if(MPG123_FOUND AND ALURE_ENABLE_MPG123)
     set(alure_libs ${alure_libs} ${MPG123_LIBRARIES})
     set(alure_srcs ${alure_srcs} src/decoders/mpg123.cpp)
     set(HAVE_MPG123 1)
+endif()
+
+if(ALURE_ENABLE_MINIMP3)
+    set(alure_srcs ${alure_srcs} src/decoders/minimp3.h src/decoders/mp3.hpp src/decoders/mp3.cpp)
+    set(HAVE_MINIMP3 1)
 endif()
 
 

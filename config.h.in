@@ -15,3 +15,6 @@
 
 /* Define if we have MPG123 support */
 #cmakedefine HAVE_MPG123
+
+/* Define if we have MINIMP3 support */
+#cmakedefine HAVE_MINIMP3

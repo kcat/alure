@@ -33,6 +33,9 @@
 #ifdef HAVE_MPG123
 #include "decoders/mpg123.hpp"
 #endif
+#ifdef HAVE_MINIMP3
+#include "decoders/mp3.hpp"
+#endif
 
 #include "devicemanager.h"
 #include "device.h"
@@ -244,6 +247,9 @@ const DecoderEntryPair sDefaultDecoders[] = {
 #endif
 #ifdef HAVE_MPG123
     { "_alure_int_mpg123", alure::MakeUnique<alure::Mpg123DecoderFactory>() },
+#endif
+#ifdef HAVE_MINIMP3
+    { "_alure_int_minimp3", alure::MakeUnique<alure::Mp3DecoderFactory>() },
 #endif
 };
 alure::Vector<DecoderEntryPair> sDecoders;
