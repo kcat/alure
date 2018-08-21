@@ -21,7 +21,7 @@
 #ifdef HAVE_VORBISFILE
 #include "decoders/vorbisfile.hpp"
 #endif
-#ifdef HAVE_LIBFLAC
+#ifdef HAVE_FLAC
 #include "decoders/flac.hpp"
 #endif
 #ifdef HAVE_OPUSFILE
@@ -236,7 +236,7 @@ const DecoderEntryPair sDefaultDecoders[] = {
 #ifdef HAVE_VORBISFILE
     { "_alure_int_vorbis", alure::MakeUnique<alure::VorbisFileDecoderFactory>() },
 #endif
-#ifdef HAVE_LIBFLAC
+#ifdef HAVE_FLAC
     { "_alure_int_flac", alure::MakeUnique<alure::FlacDecoderFactory>() },
 #endif
 #ifdef HAVE_OPUSFILE
