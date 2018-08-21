@@ -63,16 +63,15 @@ class Mp3Decoder final : public Decoder {
     static int decodeFrame(std::istream &file, mp3dec_t &mp3, Vector<uint8_t> &file_data,
                            float *sample_data, mp3dec_frame_info_t *frame_info)
     {
-        if(file_data.size() < MinMp3DataSize)
+        if(file_data.size() < MinMp3DataSize && !file.eof())
         {
             size_t todo = MinMp3DataSize - file_data.size();
-            if(append_file_data(file, file_data, todo) == 0)
-                return 0;
+            append_file_data(file, file_data, todo);
         }
 
         int samples_to_get = mp3dec_decode_frame(&mp3, file_data.data(), file_data.size(),
                                                  sample_data, frame_info);
-        while(samples_to_get == 0)
+        while(samples_to_get == 0 && !file.eof())
         {
             if(append_file_data(file, file_data, MinMp3DataSize) == 0)
                 break;
@@ -145,6 +144,7 @@ bool Mp3Decoder::seek(uint64_t pos) noexcept
     // reset back to the beginning.
     // TODO: Obvious optimization: Track the current sample offset and don't
     // rewind if seeking forward.
+    mFile->clear();
     auto oldfpos = mFile->tellg();
     if(!mFile->seekg(0))
         return false;
@@ -211,6 +211,7 @@ bool Mp3Decoder::seek(uint64_t pos) noexcept
     } while(1);
 
     // Seeking failed. Restore original file position.
+    mFile->clear();
     mFile->seekg(oldfpos);
     return false;
 }
@@ -230,7 +231,7 @@ ALuint Mp3Decoder::read(ALvoid *ptr, ALuint count) noexcept
     ALuint total = 0;
 
     std::lock_guard<std::mutex> _(mMutex);
-    while(total < count && mFile->good())
+    while(total < count)
     {
         ALuint todo = count-total;
 
@@ -339,14 +340,13 @@ SharedPtr<Decoder> Mp3DecoderFactory::createDecoder(UniquePtr<std::istream> &fil
             initial_data.clear();
         }
         // Refill initial data buffer after clearing the ID3 chunk.
-        if(append_file_data(*file, initial_data, MinMp3DataSize - initial_data.size()) == 0)
-            return nullptr;
+        append_file_data(*file, initial_data, MinMp3DataSize - initial_data.size());
     }
 
     mp3dec_frame_info_t frame_info{};
     int samples_to_get = mp3dec_decode_frame(&mp3, initial_data.data(), initial_data.size(),
                                              nullptr, &frame_info);
-    while(samples_to_get == 0)
+    while(samples_to_get == 0 && !file->eof())
     {
         if(append_file_data(*file, initial_data, MinMp3DataSize) == 0)
             break;
