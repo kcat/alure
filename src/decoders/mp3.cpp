@@ -31,6 +31,14 @@ size_t append_file_data(std::istream &file, alure::Vector<uint8_t> &data, size_t
     return got;
 }
 
+size_t find_i3dv2(alure::ArrayView<uint8_t> data)
+{
+    if(data.size() > 10 && memcmp(data.data(), "ID3", 3) == 0)
+        return (((data[6]&0x7f) << 21) | ((data[7]&0x7f) << 14) |
+                ((data[8]&0x7f) <<  7) |  (data[9]&0x7f)      ) + 10;
+    return 0;
+}
+
 } // namespace
 
 
@@ -101,6 +109,11 @@ uint64_t Mp3Decoder::getLength() const noexcept
 
 bool Mp3Decoder::seek(uint64_t pos) noexcept
 {
+    // Use temporary local storage to avoid trashing current data in case of
+    // failure.
+    Vector<uint8_t> file_data;
+    mp3dec_t mp3 = mMp3;
+
     // Seeking to somewhere in the file. Backup the current file position and
     // reset back to the beginning.
     // TODO: Obvious optimization: Track the current sample offset and don't
@@ -109,10 +122,19 @@ bool Mp3Decoder::seek(uint64_t pos) noexcept
     if(!mFile->seekg(0))
         return false;
 
-    // Use temporary local storage to avoid trashing current data in case of
-    // failure.
-    Vector<uint8_t> file_data;
-    mp3dec_t mp3 = mMp3;
+    append_file_data(*mFile, file_data, MinMp3DataSize);
+
+    size_t id_size = find_i3dv2(file_data);
+    if(id_size > 0)
+    {
+        if(id_size <= file_data.size())
+            file_data.erase(file_data.begin(), file_data.begin()+id_size);
+        else
+        {
+            mFile->ignore(id_size - file_data.size());
+            file_data.clear();
+        }
+    }
 
     uint64_t curpos = 0;
     do {
@@ -252,6 +274,23 @@ SharedPtr<Decoder> Mp3DecoderFactory::createDecoder(UniquePtr<std::istream> &fil
     // Make sure the file is valid and we get some samples.
     if(append_file_data(*file, initial_data, MinMp3DataSize) == 0)
         return nullptr;
+
+    // If the file contains an ID3v2 tag, skip it.
+    // TODO: Read it? Does it have e.g. sample length or loop points?
+    size_t id_size = find_i3dv2(initial_data);
+    if(id_size > 0)
+    {
+        if(id_size <= initial_data.size())
+            initial_data.erase(initial_data.begin(), initial_data.begin()+id_size);
+        else
+        {
+            file->ignore(id_size - initial_data.size());
+            initial_data.clear();
+        }
+        // Refill initial data buffer after clearing the ID3 chunk.
+        if(append_file_data(*file, initial_data, MinMp3DataSize - initial_data.size()) == 0)
+            return nullptr;
+    }
 
     mp3dec_frame_info_t frame_info{};
     int samples_to_get = mp3dec_decode_frame(&mp3, initial_data.data(), initial_data.size(),
