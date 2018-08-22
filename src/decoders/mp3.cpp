@@ -8,6 +8,7 @@
 #include "context.h"
 
 #define MINIMP3_IMPLEMENTATION
+#define MINIMP3_FLOAT_OUTPUT
 #include "minimp3.h"
 
 namespace {
@@ -249,13 +250,8 @@ ALuint Mp3Decoder::read(ALvoid *ptr, ALuint count) noexcept
             }
             else
             {
-                auto sample = mSampleData.begin();
-                auto end = mSampleData.begin()+numspl;
-                for(;sample != end;++sample)
-                {
-                    float s = std::min(std::max(*sample * 32768.0f, -32768.0f), 32767.0f);
-                    *(dst.s++) = (short)s;
-                }
+                mp3dec_f32_to_s16(mSampleData.data(), dst.s, numspl);
+                dst.s += numspl;
             }
             mSampleData.erase(mSampleData.begin(), mSampleData.begin()+numspl);
 

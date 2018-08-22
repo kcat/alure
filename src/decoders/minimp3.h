@@ -6,6 +6,7 @@
     This software is distributed without any warranty.
     See <http://creativecommons.org/publicdomain/zero/1.0/>.
 */
+#include <stdint.h>
 
 #define MINIMP3_MAX_SAMPLES_PER_FRAME (1152*2)
 
@@ -26,8 +27,13 @@ extern "C" {
 #endif
 
 void mp3dec_init(mp3dec_t *dec);
-int mp3dec_decode_frame(mp3dec_t *dec, const unsigned char *mp3, int mp3_bytes, float *pcm, mp3dec_frame_info_t *info);
-int mp3dec_decode_frame_s16(mp3dec_t *dec, const unsigned char *mp3, int mp3_bytes, short *pcm, mp3dec_frame_info_t *info);
+#ifndef MINIMP3_FLOAT_OUTPUT
+typedef int16_t mp3d_sample_t;
+#else
+typedef float mp3d_sample_t;
+void mp3dec_f32_to_s16(const float *in, int16_t *out, int num_samples);
+#endif
+int mp3dec_decode_frame(mp3dec_t *dec, const uint8_t *mp3, int mp3_bytes, mp3d_sample_t *pcm, mp3dec_frame_info_t *info);
 
 #ifdef __cplusplus
 }
@@ -37,7 +43,6 @@ int mp3dec_decode_frame_s16(mp3dec_t *dec, const unsigned char *mp3, int mp3_byt
 
 #include <stdlib.h>
 #include <string.h>
-#include <stdint.h>
 
 #define MAX_FREE_FORMAT_FRAME_SIZE  2304    /* more than ISO spec's */
 #define MAX_FRAME_SYNC_MATCHES      10
@@ -759,7 +764,7 @@ static void L3_huffman(float *dst, bs_t *bs, const L3_gr_info_t *gr_info, const 
     {
         int tab_num = gr_info->table_select[ireg];
         int sfb_cnt = gr_info->region_count[ireg++];
-        const short *codebook = tabs + tabindex[tab_num];
+        const int16_t *codebook = tabs + tabindex[tab_num];
         int linbits = g_linbits[tab_num];
         do
         {
@@ -1365,12 +1370,23 @@ static void mp3d_DCT_II(float *grbuf, int n)
 #endif
 }
 
+#ifndef MINIMP3_FLOAT_OUTPUT
+static int16_t mp3d_scale_pcm(float sample)
+{
+    if (sample >=  32766.5) return (int16_t) 32767;
+    if (sample <= -32767.5) return (int16_t)-32768;
+    int16_t s = (int16_t)(sample + .5f);
+    s -= (s < 0);   /* away from zero, to be compliant */
+    return s;
+}
+#else
 static float mp3d_scale_pcm(float sample)
 {
-    return sample / 32768.0f;
+    return sample*(1.f/32768.f);
 }
+#endif
 
-static void mp3d_synth_pair(float *pcm, int nch, const float *z)
+static void mp3d_synth_pair(mp3d_sample_t *pcm, int nch, const float *z)
 {
     float a;
     a  = (z[14*64] - z[    0]) * 29;
@@ -1395,11 +1411,11 @@ static void mp3d_synth_pair(float *pcm, int nch, const float *z)
     pcm[16*nch] = mp3d_scale_pcm(a);
 }
 
-static void mp3d_synth(float *xl, float *dstl, int nch, float *lins)
+static void mp3d_synth(float *xl, mp3d_sample_t *dstl, int nch, float *lins)
 {
     int i;
     float *xr = xl + 576*(nch - 1);
-    float *dstr = dstl + (nch - 1);
+    mp3d_sample_t *dstr = dstl + (nch - 1);
 
     static const float g_win[] = {
         -1,26,-31,208,218,401,-519,2063,2000,4788,-5517,7134,5959,35640,-39336,74992,
@@ -1456,10 +1472,41 @@ static void mp3d_synth(float *xl, float *dstl, int nch, float *lins)
         V0(0) V2(1) V1(2) V2(3) V1(4) V2(5) V1(6) V2(7)
 
         {
+#ifndef MINIMP3_FLOAT_OUTPUT
+#if HAVE_SSE
+            static const f4 g_max = { 32767.0f, 32767.0f, 32767.0f, 32767.0f };
+            static const f4 g_min = { -32768.0f, -32768.0f, -32768.0f, -32768.0f };
+            __m128i pcm8 = _mm_packs_epi32(_mm_cvtps_epi32(_mm_max_ps(_mm_min_ps(a, g_max), g_min)),
+                                           _mm_cvtps_epi32(_mm_max_ps(_mm_min_ps(b, g_max), g_min)));
+            dstr[(15 - i)*nch] = _mm_extract_epi16(pcm8, 1);
+            dstr[(17 + i)*nch] = _mm_extract_epi16(pcm8, 5);
+            dstl[(15 - i)*nch] = _mm_extract_epi16(pcm8, 0);
+            dstl[(17 + i)*nch] = _mm_extract_epi16(pcm8, 4);
+            dstr[(47 - i)*nch] = _mm_extract_epi16(pcm8, 3);
+            dstr[(49 + i)*nch] = _mm_extract_epi16(pcm8, 7);
+            dstl[(47 - i)*nch] = _mm_extract_epi16(pcm8, 2);
+            dstl[(49 + i)*nch] = _mm_extract_epi16(pcm8, 6);
+#else
+            int16x4_t pcma, pcmb;
+            a = VADD(a, VSET(0.5f));
+            b = VADD(b, VSET(0.5f));
+            pcma = vqmovn_s32(vqaddq_s32(vcvtq_s32_f32(a), vreinterpretq_s32_u32(vcltq_f32(a, VSET(0)))));
+            pcmb = vqmovn_s32(vqaddq_s32(vcvtq_s32_f32(b), vreinterpretq_s32_u32(vcltq_f32(b, VSET(0)))));
+            vst1_lane_s16(dstr + (15 - i)*nch, pcma, 1);
+            vst1_lane_s16(dstr + (17 + i)*nch, pcmb, 1);
+            vst1_lane_s16(dstl + (15 - i)*nch, pcma, 0);
+            vst1_lane_s16(dstl + (17 + i)*nch, pcmb, 0);
+            vst1_lane_s16(dstr + (47 - i)*nch, pcma, 3);
+            vst1_lane_s16(dstr + (49 + i)*nch, pcmb, 3);
+            vst1_lane_s16(dstl + (47 - i)*nch, pcma, 2);
+            vst1_lane_s16(dstl + (49 + i)*nch, pcmb, 2);
+#endif
+
+#else
+
             static const f4 g_scale = { 1.0f/32768.0f, 1.0f/32768.0f, 1.0f/32768.0f, 1.0f/32768.0f };
             a = VMUL(a, g_scale);
             b = VMUL(b, g_scale);
-
 #if HAVE_SSE
             _mm_store_ss(dstr + (15 - i)*nch, _mm_shuffle_ps(a, a, _MM_SHUFFLE(1, 1, 1, 1)));
             _mm_store_ss(dstr + (17 + i)*nch, _mm_shuffle_ps(b, b, _MM_SHUFFLE(1, 1, 1, 1)));
@@ -1479,6 +1526,7 @@ static void mp3d_synth(float *xl, float *dstl, int nch, float *lins)
             vst1q_lane_f32(dstl + (47 - i)*nch, a, 2);
             vst1q_lane_f32(dstl + (49 + i)*nch, b, 2);
 #endif
+#endif /* MINIMP3_FLOAT_OUTPUT */
         }
     } else
 #endif
@@ -1516,7 +1564,7 @@ static void mp3d_synth(float *xl, float *dstl, int nch, float *lins)
 #endif
 }
 
-static void mp3d_synth_granule(float *qmf_state, float *grbuf, int nbands, int nch, float *pcm, float *lins)
+static void mp3d_synth_granule(float *qmf_state, float *grbuf, int nbands, int nch, mp3d_sample_t *pcm, float *lins)
 {
     int i;
     for (i = 0; i < nch; i++)
@@ -1600,7 +1648,7 @@ void mp3dec_init(mp3dec_t *dec)
     dec->header[0] = 0;
 }
 
-int mp3dec_decode_frame(mp3dec_t *dec, const uint8_t *mp3, int mp3_bytes, float *pcm, mp3dec_frame_info_t *info)
+int mp3dec_decode_frame(mp3dec_t *dec, const uint8_t *mp3, int mp3_bytes, mp3d_sample_t *pcm, mp3dec_frame_info_t *info)
 {
     int i = 0, igr, frame_size = 0, success = 1;
     const uint8_t *hdr;
@@ -1694,42 +1742,67 @@ int mp3dec_decode_frame(mp3dec_t *dec, const uint8_t *mp3, int mp3_bytes, float 
     return success*hdr_frame_samples(dec->header);
 }
 
-int mp3dec_decode_frame_s16(mp3dec_t *dec, const uint8_t *mp3, int mp3_bytes, short *pcm, mp3dec_frame_info_t *info)
+#ifdef MINIMP3_FLOAT_OUTPUT
+void mp3dec_f32_to_s16(const float *in, int16_t *out, int num_samples)
 {
-    if(pcm)
+    if(num_samples > 0)
     {
-        float temps[MINIMP3_MAX_SAMPLES_PER_FRAME];
-        int samples_got;
+        int i = 0;
+#if HAVE_SIMD
+        int aligned_count = num_samples & ~7;
 
-        samples_got = mp3dec_decode_frame(dec, mp3, mp3_bytes, temps, info);
-        if(samples_got > 0)
+        for(;i < aligned_count;i+=8)
         {
-            int todo = samples_got * info->channels;
-            int i;
-
-            for(i = 0;i < todo;i++)
+            static const f4 g_scale = { 32768.0f, 32768.0f, 32768.0f, 32768.0f };
+            f4 a = VMUL(VLD(&in[i  ]), g_scale);
+            f4 b = VMUL(VLD(&in[i+4]), g_scale);
+#if HAVE_SSE
+            static const f4 g_max = { 32767.0f, 32767.0f, 32767.0f, 32767.0f };
+            static const f4 g_min = { -32768.0f, -32768.0f, -32768.0f, -32768.0f };
+            __m128i pcm8 = _mm_packs_epi32(_mm_cvtps_epi32(_mm_max_ps(_mm_min_ps(a, g_max), g_min)),
+                                           _mm_cvtps_epi32(_mm_max_ps(_mm_min_ps(b, g_max), g_min)));
+            out[i  ] = _mm_extract_epi16(pcm8, 0);
+            out[i+1] = _mm_extract_epi16(pcm8, 1);
+            out[i+2] = _mm_extract_epi16(pcm8, 2);
+            out[i+3] = _mm_extract_epi16(pcm8, 3);
+            out[i+4] = _mm_extract_epi16(pcm8, 4);
+            out[i+5] = _mm_extract_epi16(pcm8, 5);
+            out[i+6] = _mm_extract_epi16(pcm8, 6);
+            out[i+7] = _mm_extract_epi16(pcm8, 7);
+#else
+            int16x4_t pcma, pcmb;
+            a = VADD(a, VSET(0.5f));
+            b = VADD(b, VSET(0.5f));
+            pcma = vqmovn_s32(vqaddq_s32(vcvtq_s32_f32(a), vreinterpretq_s32_u32(vcltq_f32(a, VSET(0)))));
+            pcmb = vqmovn_s32(vqaddq_s32(vcvtq_s32_f32(b), vreinterpretq_s32_u32(vcltq_f32(b, VSET(0)))));
+            vst1_lane_s16(out+i  , pcma, 0);
+            vst1_lane_s16(out+i+1, pcma, 1);
+            vst1_lane_s16(out+i+2, pcma, 2);
+            vst1_lane_s16(out+i+3, pcma, 3);
+            vst1_lane_s16(out+i+4, pcmb, 0);
+            vst1_lane_s16(out+i+5, pcmb, 1);
+            vst1_lane_s16(out+i+6, pcmb, 2);
+            vst1_lane_s16(out+i+7, pcmb, 3);
+#endif
+        }
+#endif
+        for(; i < num_samples; i++)
+        {
+            float sample = in[i] * 32768.0f;
+            if (sample >=  32766.5)
+                out[i] = (int16_t) 32767;
+            else if (sample <= -32767.5)
+                out[i] = (int16_t)-32768;
+            else
             {
-                float sample = temps[i]*32768.0f;
-                short s = 0;
-                if(sample <= -32767.5f)
-                    s = -32768;
-                else if(sample >= 32766.5f)
-                    s = 32767;
-                else
-                {
-                    s = (short)(sample + 0.5f);
-                    s += s>>15;
-                }
-
-                *(pcm++) = s;
+                int16_t s = (int16_t)(sample + .5f);
+                s -= (s < 0);   /* away from zero, to be compliant */
+                out[i] = s;
             }
         }
-
-        return samples_got;
     }
-
-    return mp3dec_decode_frame(dec, mp3, mp3_bytes, NULL, info);
 }
+#endif
 
 #endif /*MINIMP3_IMPLEMENTATION*/
 #endif /*MINIMP3_H*/
