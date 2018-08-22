@@ -26,9 +26,10 @@ positioning. Multiple and custom profiles can also be select from to get a
 closer match for different people.
 
 Alure supports decoding audio files using external libraries: VorbisFile,
-OpusFile, libFLAC, libsndfile, and libmpg123. A built-in standard wave file
-reader is also available, supporting basic PCM formats. Application-defined
-decoders are also supported in case the default set are insufficient.
+OpusFile, libsndfile, and libmpg123. A built-in standard wave file reader is
+also available to support basic PCM formats, as well as built-in decoders for
+FLAC (dr_flac) and MP3 (minimp3). Application-defined decoders are also
+supported in case the default set are insufficient.
 
 And much more...
 
@@ -46,7 +47,6 @@ formats they handle;
 
 * [ogg](https://xiph.org/ogg/) : ogg playback
 * [vorbis](https://xiph.org/vorbis/) : ogg vorbis playback
-* [flac](https://xiph.org/flac/) : flac playback
 * [opusfile](http://opus-codec.org/) : opus playback
 * [SndFile](http://www.mega-nerd.com/libsndfile/) : various multi-format playback
 * [mpg123](https://www.mpg123.de/) : mpeg audio playback
@@ -90,7 +90,6 @@ output if you have every single dependency:
     -- Performing Test HAVE_WEXTRA_SWITCH - Success
     -- Found OGG: C:/msys64/mingw64/lib/libogg.dll.a
     -- Found VORBIS: C:/msys64/mingw64/lib/libvorbisfile.dll.a
-    -- Found FLAC: C:/msys64/mingw64/lib/libFLAC.dll.a
     -- Found OPUS: C:/msys64/mingw64/lib/libopusfile.dll.a
     -- Found SndFile: C:/msys64/mingw64/lib/libsndfile.dll.a
     -- Found MPG123: C:/msys64/mingw64/lib/libmpg123.dll.a
@@ -119,7 +118,6 @@ packages that must be installed. The list is in the format:
 * openal-soft : libopenal1, libopenal-dev
 * ogg : libogg0, libogg-dev
 * vorbis : libvorbis0a, libvorbis-dev
-* flac : libflac8, and libflac-dev
 * opusfile : libopusfule0, libopusfile-dev
 * SndFile : libsndfile1, libsndfile1-dev
 * mpg123 : libmpg123-0, libmpg123-dev
@@ -143,7 +141,6 @@ you should get a cmake output that looks something like:
     -- Performing Test HAVE_VISIBILITY_HIDDEN_SWITCH - Success
     -- Found OGG: /usr/lib/x86_64-linux-gnu/libogg.so
     -- Found VORBIS: /usr/lib/x86_64-linux-gnu/libvorbisfile.so
-    -- Found FLAC: /usr/lib/x86_64-linux-gnu/libFLAC.so
     -- Found OPUS: /usr/lib/libopusfile.so
     -- Found SndFile: /usr/lib/x86_64-linux-gnu/libsndfile.so
     -- Found MPG123: /usr/lib/x86_64-linux-gnu/libmpg123.so
