@@ -1470,14 +1470,14 @@ static void mp3d_synth(float *xl, float *dstl, int nch, float *lins)
             _mm_store_ss(dstl + (47 - i)*nch, _mm_shuffle_ps(a, a, _MM_SHUFFLE(2, 2, 2, 2)));
             _mm_store_ss(dstl + (49 + i)*nch, _mm_shuffle_ps(b, b, _MM_SHUFFLE(2, 2, 2, 2)));
 #else
-            vst1_lane_f32(dstr + (15 - i)*nch, a, 1);
-            vst1_lane_f32(dstr + (17 + i)*nch, b, 1);
-            vst1_lane_f32(dstl + (15 - i)*nch, a, 0);
-            vst1_lane_f32(dstl + (17 + i)*nch, b, 0);
-            vst1_lane_f32(dstr + (47 - i)*nch, a, 3);
-            vst1_lane_f32(dstr + (49 + i)*nch, b, 3);
-            vst1_lane_f32(dstl + (47 - i)*nch, a, 2);
-            vst1_lane_f32(dstl + (49 + i)*nch, b, 2);
+            vst1q_lane_f32(dstr + (15 - i)*nch, a, 1);
+            vst1q_lane_f32(dstr + (17 + i)*nch, b, 1);
+            vst1q_lane_f32(dstl + (15 - i)*nch, a, 0);
+            vst1q_lane_f32(dstl + (17 + i)*nch, b, 0);
+            vst1q_lane_f32(dstr + (47 - i)*nch, a, 3);
+            vst1q_lane_f32(dstr + (49 + i)*nch, b, 3);
+            vst1q_lane_f32(dstl + (47 - i)*nch, a, 2);
+            vst1q_lane_f32(dstl + (49 + i)*nch, b, 2);
 #endif
         }
     } else
