@@ -16,6 +16,7 @@ include(CheckCXXSourceCompiles)
 include(GNUInstallDirs)
 
 find_package(OpenAL REQUIRED)
+find_package(Threads)
 
 set(CXX_FLAGS )
 
@@ -124,6 +125,13 @@ unset(HAVE_LIBSNDFILE)
 unset(HAVE_MPG123)
 unset(HAVE_MINIMP3)
 
+option(ALURE_BUILD_SHARED "Build shared library" ON)
+option(ALURE_BUILD_STATIC "Build static library" ON)
+
+if(NOT ALURE_BUILD_SHARED AND NOT ALURE_BUILD_STATIC)
+    message(FATAL_ERROR "Neither shared or static libraries are enabled!")
+endif()
+
 option(ALURE_ENABLE_WAVE    "Enables the built-in wave file decoder"     ON)
 option(ALURE_ENABLE_VORBIS  "Enables the built-in libvorbisfile decoder" ON)
 option(ALURE_ENABLE_FLAC    "Enables the built-in FLAC decoder"          ON)
@@ -190,37 +198,54 @@ CONFIGURE_FILE(
     "${alure_BINARY_DIR}/config.h")
 
 
-add_library(alure2 SHARED ${alure_srcs})
-if(EXPORT_DECL)
-    target_compile_definitions(alure2 PRIVATE ALURE_API=${EXPORT_DECL} ALURE_TEMPLATE=template
-                                              NOMINMAX)
+unset(TARGET_NAMES)
+unset(MAIN_TARGET)
+
+if(ALURE_BUILD_SHARED)
+    add_library(alure2 SHARED ${alure_srcs})
+    if(EXPORT_DECL)
+        target_compile_definitions(alure2 PRIVATE ALURE_API=${EXPORT_DECL} ALURE_TEMPLATE=template
+                                                  NOMINMAX)
+    endif()
+    target_include_directories(alure2
+        PUBLIC $<BUILD_INTERFACE:${alure_SOURCE_DIR}/include/AL> ${OPENAL_INCLUDE_DIR}
+        PRIVATE ${alure_SOURCE_DIR}/include ${alure_SOURCE_DIR}/src ${alure_BINARY_DIR}
+                ${decoder_incls}
+    )
+    target_compile_options(alure2 PRIVATE ${CXX_FLAGS} ${VISIBILITY_FLAGS})
+    target_link_libraries(alure2 PUBLIC ${alure_libs} PRIVATE Threads::Threads ${LINKER_OPTS})
+
+    set(TARGET_NAMES ${TARGET_NAMES} alure2)
+    if(NOT MAIN_TARGET)
+        set(MAIN_TARGET alure2)
+    endif()
 endif()
-target_include_directories(alure2
-    PUBLIC $<BUILD_INTERFACE:${alure_SOURCE_DIR}/include/AL> ${OPENAL_INCLUDE_DIR}
-    PRIVATE ${alure_SOURCE_DIR}/include ${alure_SOURCE_DIR}/src ${alure_BINARY_DIR}
-            ${decoder_incls}
-)
-target_compile_options(alure2 PRIVATE ${CXX_FLAGS} ${VISIBILITY_FLAGS})
-target_link_libraries(alure2 PUBLIC ${alure_libs} PRIVATE ${LINKER_OPTS})
 
-add_library(alure2_s STATIC ${alure_srcs})
-target_compile_definitions(alure2_s PUBLIC ALURE_STATIC_LIB PRIVATE NOMINMAX)
-target_include_directories(alure2_s
-    PUBLIC $<BUILD_INTERFACE:${alure_SOURCE_DIR}/include/AL> ${OPENAL_INCLUDE_DIR}
-    PRIVATE ${alure_SOURCE_DIR}/include ${alure_SOURCE_DIR}/src ${alure_BINARY_DIR}
-            ${decoder_incls}
-)
-target_compile_options(alure2_s PRIVATE ${CXX_FLAGS} ${VISIBILITY_FLAGS})
-target_link_libraries(alure2_s PUBLIC ${alure_libs})
+if(ALURE_BUILD_STATIC)
+    add_library(alure2_s STATIC ${alure_srcs})
+    target_compile_definitions(alure2_s PUBLIC ALURE_STATIC_LIB PRIVATE NOMINMAX)
+    target_include_directories(alure2_s
+        PUBLIC $<BUILD_INTERFACE:${alure_SOURCE_DIR}/include/AL> ${OPENAL_INCLUDE_DIR}
+        PRIVATE ${alure_SOURCE_DIR}/include ${alure_SOURCE_DIR}/src ${alure_BINARY_DIR}
+                ${decoder_incls}
+    )
+    target_compile_options(alure2_s PRIVATE ${CXX_FLAGS} ${VISIBILITY_FLAGS})
+    target_link_libraries(alure2_s PUBLIC ${alure_libs} PRIVATE Threads::Threads)
 
-install(TARGETS alure2 alure2_s EXPORT alure2
+    set(TARGET_NAMES ${TARGET_NAMES} alure2_s)
+    if(NOT MAIN_TARGET)
+        set(MAIN_TARGET alure2_s)
+    endif()
+endif()
+
+install(TARGETS ${TARGET_NAMES} EXPORT alure2
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
     INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR} ${CMAKE_INSTALL_INCLUDEDIR}/AL
 )
 export(
-    TARGETS alure2 alure2_s
+    TARGETS ${TARGET_NAMES}
     NAMESPACE Alure2::
     FILE Alure2Config.cmake
 )
@@ -245,30 +270,30 @@ option(ALURE_BUILD_EXAMPLES "Build example programs" ON)
 if(ALURE_BUILD_EXAMPLES)
     add_executable(alure-enum examples/alure-enum.cpp)
     target_compile_options(alure-enum PRIVATE ${CXX_FLAGS})
-    target_link_libraries(alure-enum PRIVATE alure2 ${LINKER_OPTS})
+    target_link_libraries(alure-enum PRIVATE ${MAIN_TARGET} ${LINKER_OPTS})
 
     add_executable(alure-play examples/alure-play.cpp)
     target_compile_options(alure-play PRIVATE ${CXX_FLAGS})
-    target_link_libraries(alure-play PRIVATE alure2 ${LINKER_OPTS})
+    target_link_libraries(alure-play PRIVATE ${MAIN_TARGET} ${LINKER_OPTS})
 
     add_executable(alure-stream examples/alure-stream.cpp)
     target_compile_options(alure-stream PRIVATE ${CXX_FLAGS})
-    target_link_libraries(alure-stream PRIVATE alure2 ${LINKER_OPTS})
+    target_link_libraries(alure-stream PRIVATE ${MAIN_TARGET} ${LINKER_OPTS})
 
     add_executable(alure-reverb examples/alure-reverb.cpp)
     target_compile_options(alure-reverb PRIVATE ${CXX_FLAGS})
-    target_link_libraries(alure-reverb PRIVATE alure2 ${LINKER_OPTS})
+    target_link_libraries(alure-reverb PRIVATE ${MAIN_TARGET} ${LINKER_OPTS})
 
     add_executable(alure-hrtf examples/alure-hrtf.cpp)
     target_compile_options(alure-hrtf PRIVATE ${CXX_FLAGS})
-    target_link_libraries(alure-hrtf PRIVATE alure2 ${LINKER_OPTS})
+    target_link_libraries(alure-hrtf PRIVATE ${MAIN_TARGET} ${LINKER_OPTS})
 
     find_package(PhysFS)
     if(PHYSFS_FOUND)
         add_executable(alure-physfs examples/alure-physfs.cpp)
         target_include_directories(alure-physfs PRIVATE ${PHYSFS_INCLUDE_DIR})
         target_compile_options(alure-physfs PRIVATE ${CXX_FLAGS})
-        target_link_libraries(alure-physfs PRIVATE alure2 ${PHYSFS_LIBRARY} ${LINKER_OPTS})
+        target_link_libraries(alure-physfs PRIVATE ${MAIN_TARGET} ${PHYSFS_LIBRARY} ${LINKER_OPTS})
     endif()
 
     find_package(DUMB)
@@ -276,6 +301,6 @@ if(ALURE_BUILD_EXAMPLES)
         add_executable(alure-dumb examples/alure-dumb.cpp)
         target_include_directories(alure-dumb PRIVATE ${DUMB_INCLUDE_DIRS})
         target_compile_options(alure-dumb PRIVATE ${CXX_FLAGS})
-        target_link_libraries(alure-dumb PRIVATE alure2 ${DUMB_LIBRARIES} ${LINKER_OPTS})
+        target_link_libraries(alure-dumb PRIVATE ${MAIN_TARGET} ${DUMB_LIBRARIES} ${LINKER_OPTS})
     endif()
 endif()
