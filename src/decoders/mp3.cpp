@@ -40,6 +40,27 @@ size_t find_i3dv2(alure::ArrayView<uint8_t> data)
     return 0;
 }
 
+int decode_frame(std::istream &file, mp3dec_t &mp3, alure::Vector<uint8_t> &file_data,
+                 float *sample_data, mp3dec_frame_info_t *frame_info)
+{
+    if(file_data.size() < MinMp3DataSize && !file.eof())
+    {
+        size_t todo = MinMp3DataSize - file_data.size();
+        append_file_data(file, file_data, todo);
+    }
+
+    int samples_to_get = mp3dec_decode_frame(&mp3, file_data.data(), file_data.size(),
+                                             sample_data, frame_info);
+    while(samples_to_get == 0 && !file.eof())
+    {
+        if(append_file_data(file, file_data, MinMp3DataSize) == 0)
+            break;
+        samples_to_get = mp3dec_decode_frame(&mp3, file_data.data(), file_data.size(),
+                                             sample_data, frame_info);
+    }
+    return samples_to_get;
+}
+
 } // namespace
 
 
@@ -59,27 +80,6 @@ class Mp3Decoder final : public Decoder {
     ChannelConfig mChannels{ChannelConfig::Mono};
     SampleType mSampleType{SampleType::UInt8};
     int mSampleRate{0};
-
-    static int decodeFrame(std::istream &file, mp3dec_t &mp3, Vector<uint8_t> &file_data,
-                           float *sample_data, mp3dec_frame_info_t *frame_info)
-    {
-        if(file_data.size() < MinMp3DataSize && !file.eof())
-        {
-            size_t todo = MinMp3DataSize - file_data.size();
-            append_file_data(file, file_data, todo);
-        }
-
-        int samples_to_get = mp3dec_decode_frame(&mp3, file_data.data(), file_data.size(),
-                                                 sample_data, frame_info);
-        while(samples_to_get == 0 && !file.eof())
-        {
-            if(append_file_data(file, file_data, MinMp3DataSize) == 0)
-                break;
-            samples_to_get = mp3dec_decode_frame(&mp3, file_data.data(), file_data.size(),
-                                                 sample_data, frame_info);
-        }
-        return samples_to_get;
-    }
 
 public:
     Mp3Decoder(UniquePtr<std::istream> file, Vector<uint8_t>&& initial_data,
@@ -144,7 +144,7 @@ uint64_t Mp3Decoder::getLength() const noexcept
     do {
         // Read the next frame.
         mp3dec_frame_info_t frame_info{};
-        int samples_to_get = decodeFrame(*mFile, mp3, file_data, nullptr, &frame_info);
+        int samples_to_get = decode_frame(*mFile, mp3, file_data, nullptr, &frame_info);
         if(samples_to_get <= 0) break;
 
         // Don't continue if the frame changed format
@@ -197,8 +197,8 @@ bool Mp3Decoder::seek(uint64_t pos) noexcept
             file_data.erase(file_data.begin(), file_data.begin()+id_size);
         else
         {
-            mFile->ignore(id_size - file_data.size());
             file_data.clear();
+            mFile->ignore(id_size - file_data.size());
         }
     }
 
@@ -206,7 +206,7 @@ bool Mp3Decoder::seek(uint64_t pos) noexcept
     do {
         // Read the next frame.
         mp3dec_frame_info_t frame_info{};
-        int samples_to_get = decodeFrame(*mFile, mp3, file_data, nullptr, &frame_info);
+        int samples_to_get = decode_frame(*mFile, mp3, file_data, nullptr, &frame_info);
         if(samples_to_get <= 0) break;
 
         // Don't continue if the frame changed format
@@ -220,8 +220,7 @@ bool Mp3Decoder::seek(uint64_t pos) noexcept
             // Desired sample is within this frame, decode the samples and go
             // to the desired offset.
             Vector<float> sample_data(MINIMP3_MAX_SAMPLES_PER_FRAME);
-            samples_to_get = decodeFrame(*mFile, mp3, file_data, sample_data.data(),
-                                         &frame_info);
+            samples_to_get = decode_frame(*mFile, mp3, file_data, sample_data.data(), &frame_info);
 
             if((uint64_t)samples_to_get > pos - curpos)
             {
@@ -242,8 +241,8 @@ bool Mp3Decoder::seek(uint64_t pos) noexcept
             file_data.erase(file_data.begin(), file_data.begin()+frame_info.frame_bytes);
         else
         {
-            mFile->ignore(frame_info.frame_bytes - file_data.size());
             file_data.clear();
+            mFile->ignore(frame_info.frame_bytes - file_data.size());
         }
         curpos += samples_to_get;
     } while(1);
@@ -308,7 +307,7 @@ ALuint Mp3Decoder::read(ALvoid *ptr, ALuint count) noexcept
         }
 
         mp3dec_frame_info_t frame_info{};
-        int samples_to_get = decodeFrame(*mFile, mMp3, mFileData, samples_ptr, &frame_info);
+        int samples_to_get = decode_frame(*mFile, mMp3, mFileData, samples_ptr, &frame_info);
         if(samples_to_get <= 0)
         {
             mSampleData.clear();
@@ -368,25 +367,14 @@ SharedPtr<Decoder> Mp3DecoderFactory::createDecoder(UniquePtr<std::istream> &fil
             initial_data.erase(initial_data.begin(), initial_data.begin()+id_size);
         else
         {
-            file->ignore(id_size - initial_data.size());
             initial_data.clear();
+            file->ignore(id_size - initial_data.size());
         }
-        // Refill initial data buffer after clearing the ID3 chunk.
-        append_file_data(*file, initial_data, MinMp3DataSize - initial_data.size());
     }
 
     mp3dec_frame_info_t frame_info{};
-    int samples_to_get = mp3dec_decode_frame(&mp3, initial_data.data(), initial_data.size(),
-                                             nullptr, &frame_info);
-    while(samples_to_get == 0 && !file->eof())
-    {
-        if(append_file_data(*file, initial_data, MinMp3DataSize) == 0)
-            break;
-        samples_to_get = mp3dec_decode_frame(&mp3, initial_data.data(), initial_data.size(),
-                                             nullptr, &frame_info);
-    }
-    if(!samples_to_get)
-        return nullptr;
+    int samples_to_get = decode_frame(*file, mp3, initial_data, nullptr, &frame_info);
+    if(!samples_to_get) return nullptr;
 
     if(frame_info.hz < 1)
         return nullptr;
