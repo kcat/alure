@@ -26,10 +26,10 @@ positioning. Multiple and custom profiles can also be select from to get a
 closer match for different people.
 
 Alure supports decoding audio files using external libraries: VorbisFile,
-OpusFile, libsndfile, and libmpg123. A built-in standard wave file reader is
-also available to support basic PCM formats, as well as built-in decoders for
-FLAC (dr_flac) and MP3 (minimp3). Application-defined decoders are also
-supported in case the default set are insufficient.
+OpusFile, and libsndfile. A built-in wave file reader is also available to
+support basic PCM formats, as well as built-in decoders for FLAC (dr_flac) and
+MP3 (minimp3). Application-defined decoders are also supported in case the
+default set are insufficient.
 
 And much more...
 
@@ -49,7 +49,6 @@ formats they handle;
 * [vorbis](https://xiph.org/vorbis/) : ogg vorbis playback
 * [opusfile](http://opus-codec.org/) : opus playback
 * [SndFile](http://www.mega-nerd.com/libsndfile/) : various multi-format playback
-* [mpg123](https://www.mpg123.de/) : mpeg audio playback
 
 Two of the packaged examples require the following dependencies to be built.
 
@@ -92,7 +91,6 @@ output if you have every single dependency:
     -- Found VORBIS: C:/msys64/mingw64/lib/libvorbisfile.dll.a
     -- Found OPUS: C:/msys64/mingw64/lib/libopusfile.dll.a
     -- Found SndFile: C:/msys64/mingw64/lib/libsndfile.dll.a
-    -- Found MPG123: C:/msys64/mingw64/lib/libmpg123.dll.a
     -- Found PhysFS: C:/msys64/mingw64/lib/libphysfs.dll.a
     -- Found DUMB: C:/msys64/mingw64/lib/libdumb.dll.a
     -- Configuring done
@@ -120,7 +118,6 @@ packages that must be installed. The list is in the format:
 * vorbis : libvorbis0a, libvorbis-dev
 * opusfile : libopusfule0, libopusfile-dev
 * SndFile : libsndfile1, libsndfile1-dev
-* mpg123 : libmpg123-0, libmpg123-dev
 * physfs : libphysfs1, libphysfs1-dev
 * dumb : libdumb1, libdumb1-dev
 
@@ -143,7 +140,6 @@ you should get a cmake output that looks something like:
     -- Found VORBIS: /usr/lib/x86_64-linux-gnu/libvorbisfile.so
     -- Found OPUS: /usr/lib/libopusfile.so
     -- Found SndFile: /usr/lib/x86_64-linux-gnu/libsndfile.so
-    -- Found MPG123: /usr/lib/x86_64-linux-gnu/libmpg123.so
     -- Found PhysFS: /usr/lib/x86_64-linux-gnu/libphysfs.so
     -- Found DUMB: /usr/lib/x86_64-linux-gnu/libdumb.so
     -- Configuring done
