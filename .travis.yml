@@ -21,15 +21,13 @@ before_install:
 install:
   - >
     if [[ "${TRAVIS_OS_NAME}" == "linux" ]]; then
-      # Install OpenAL, VorbisFile, OpusFile, FLAC, libsndfile, libmpg123,
-      # PhysicsFS, and DUMB dependencies for decoders and examples.
+      # Install OpenAL, VorbisFile, OpusFile, libsndfile, PhysicsFS,
+      # and DUMB dependencies for decoders and examples.
       sudo apt-get install -qq \
         libopenal-dev \
         libvorbis-dev \
         libopusfile-dev \
-        libflac-dev \
         libsndfile1-dev \
-        libmpg123-dev \
         libphysfs-dev \
         libdumb1-dev
     fi
