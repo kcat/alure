@@ -197,8 +197,8 @@ bool Mp3Decoder::seek(uint64_t pos) noexcept
             file_data.erase(file_data.begin(), file_data.begin()+id_size);
         else
         {
-            file_data.clear();
             mFile->ignore(id_size - file_data.size());
+            file_data.clear();
         }
     }
 
@@ -241,8 +241,8 @@ bool Mp3Decoder::seek(uint64_t pos) noexcept
             file_data.erase(file_data.begin(), file_data.begin()+frame_info.frame_bytes);
         else
         {
-            file_data.clear();
             mFile->ignore(frame_info.frame_bytes - file_data.size());
+            file_data.clear();
         }
         curpos += samples_to_get;
     } while(1);
@@ -367,8 +367,8 @@ SharedPtr<Decoder> Mp3DecoderFactory::createDecoder(UniquePtr<std::istream> &fil
             initial_data.erase(initial_data.begin(), initial_data.begin()+id_size);
         else
         {
-            initial_data.clear();
             file->ignore(id_size - initial_data.size());
+            initial_data.clear();
         }
     }
 
