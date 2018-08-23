@@ -30,9 +30,6 @@
 #ifdef HAVE_LIBSNDFILE
 #include "decoders/sndfile.hpp"
 #endif
-#ifdef HAVE_MPG123
-#include "decoders/mpg123.hpp"
-#endif
 #ifdef HAVE_MINIMP3
 #include "decoders/mp3.hpp"
 #endif
@@ -244,9 +241,6 @@ const DecoderEntryPair sDefaultDecoders[] = {
 #endif
 #ifdef HAVE_LIBSNDFILE
     { "_alure_int_sndfile", alure::MakeUnique<alure::SndFileDecoderFactory>() },
-#endif
-#ifdef HAVE_MPG123
-    { "_alure_int_mpg123", alure::MakeUnique<alure::Mpg123DecoderFactory>() },
 #endif
 #ifdef HAVE_MINIMP3
     { "_alure_int_minimp3", alure::MakeUnique<alure::Mp3DecoderFactory>() },
