@@ -36,7 +36,7 @@ size_t find_i3dv2(alure::ArrayView<uint8_t> data)
 {
     if(data.size() > 10 && memcmp(data.data(), "ID3", 3) == 0)
         return (((data[6]&0x7f) << 21) | ((data[7]&0x7f) << 14) |
-                ((data[8]&0x7f) <<  7) |  (data[9]&0x7f)      ) + 10;
+                ((data[8]&0x7f) <<  7) | ((data[9]&0x7f)      )) + 10;
     return 0;
 }
 
@@ -53,10 +53,9 @@ class Mp3Decoder final : public Decoder {
     mp3dec_t mMp3;
     Vector<float> mSampleData;
     mp3dec_frame_info_t mLastFrame{};
-    uint64_t mSamplePos{0};
     mutable std::mutex mMutex;
 
-    std::streamsize mFileSize{-1};
+    mutable std::streamsize mSampleCount{-1};
     ChannelConfig mChannels{ChannelConfig::Mono};
     SampleType mSampleType{SampleType::UInt8};
     int mSampleRate{0};
@@ -88,14 +87,7 @@ public:
                ChannelConfig chans, SampleType stype, int srate) noexcept
       : mFile(std::move(file)), mFileData(std::move(initial_data)), mMp3(mp3)
       , mLastFrame(first_frame), mChannels(chans), mSampleType(stype), mSampleRate(srate)
-    {
-        std::streamsize pos = mFile->tellg();
-        if(pos >= 0 && mFile->seekg(0, std::ios::end))
-        {
-            mFileSize = mFile->tellg();
-            mFile->seekg(pos);
-        }
-    }
+    { }
     ~Mp3Decoder() override { }
 
     ALuint getFrequency() const noexcept override;
@@ -116,23 +108,66 @@ SampleType Mp3Decoder::getSampleType() const noexcept { return mSampleType; }
 
 uint64_t Mp3Decoder::getLength() const noexcept
 {
+    if(LIKELY(mSampleCount >= 0))
+        return mSampleCount;
+
     std::lock_guard<std::mutex> _(mMutex);
-    uint64_t ret = 0;
-    if(mFileSize > 0 && mLastFrame.bitrate_kbps > 0)
+
+    mFile->clear();
+    std::streamsize oldfpos = mFile->tellg();
+    if(oldfpos < 0 || !mFile->seekg(0))
     {
-        /* For constant bitrate files, estimate the total length using the
-         * current sample offset and the amount of remaining data.
-         */
-        mFile->clear();
-        std::streamsize rembytes = mFileSize - mFile->tellg() + mFileData.size();
-        ret = mSamplePos + mSampleData.size()/mLastFrame.channels;
-        if(rembytes > 0)
+        mSampleCount = 0;
+        return mSampleCount;
+    }
+
+    Vector<uint8_t> file_data;
+    mp3dec_t mp3;
+
+    mp3dec_init(&mp3);
+
+    append_file_data(*mFile, file_data, MinMp3DataSize);
+
+    size_t id_size = find_i3dv2(file_data);
+    if(id_size > 0)
+    {
+        if(id_size <= file_data.size())
+            file_data.erase(file_data.begin(), file_data.begin()+id_size);
+        else
         {
-            double sec_rem = double(rembytes) / double(mLastFrame.bitrate_kbps*1000/8);
-            ret += uint64_t(sec_rem*mSampleRate + 0.5);
+            mFile->ignore(id_size - file_data.size());
+            file_data.clear();
         }
     }
-    return ret;
+
+    std::streamsize count = 0;
+    do {
+        // Read the next frame.
+        mp3dec_frame_info_t frame_info{};
+        int samples_to_get = decodeFrame(*mFile, mp3, file_data, nullptr, &frame_info);
+        if(samples_to_get <= 0) break;
+
+        // Don't continue if the frame changed format
+        if((mChannels == ChannelConfig::Mono   && frame_info.channels != 1) ||
+           (mChannels == ChannelConfig::Stereo && frame_info.channels != 2) ||
+           mSampleRate != frame_info.hz)
+            break;
+
+        // Keep going to the next frame
+        if(file_data.size() >= (size_t)frame_info.frame_bytes)
+            file_data.erase(file_data.begin(), file_data.begin()+frame_info.frame_bytes);
+        else
+        {
+            mFile->ignore(frame_info.frame_bytes - file_data.size());
+            file_data.clear();
+        }
+        count += samples_to_get;
+    } while(1);
+    mSampleCount = count;
+
+    mFile->clear();
+    mFile->seekg(oldfpos);
+    return mSampleCount;
 }
 
 bool Mp3Decoder::seek(uint64_t pos) noexcept
@@ -140,15 +175,17 @@ bool Mp3Decoder::seek(uint64_t pos) noexcept
     // Use temporary local storage to avoid trashing current data in case of
     // failure.
     Vector<uint8_t> file_data;
-    mp3dec_t mp3 = mMp3;
+    mp3dec_t mp3;
+
+    mp3dec_init(&mp3);
 
     // Seeking to somewhere in the file. Backup the current file position and
     // reset back to the beginning.
     // TODO: Obvious optimization: Track the current sample offset and don't
     // rewind if seeking forward.
     mFile->clear();
-    auto oldfpos = mFile->tellg();
-    if(!mFile->seekg(0))
+    std::streamsize oldfpos = mFile->tellg();
+    if(oldfpos < 0 || !mFile->seekg(0))
         return false;
 
     append_file_data(*mFile, file_data, MinMp3DataSize);
@@ -194,7 +231,6 @@ bool Mp3Decoder::seek(uint64_t pos) noexcept
                 file_data.erase(file_data.begin(), file_data.begin()+frame_info.frame_bytes);
                 mSampleData = std::move(sample_data);
                 mFileData = std::move(file_data);
-                mSamplePos = pos;
                 mLastFrame = frame_info;
                 mMp3 = mp3;
                 return true;
@@ -300,7 +336,6 @@ ALuint Mp3Decoder::read(ALvoid *ptr, ALuint count) noexcept
         }
     }
 
-    mSamplePos += total;
     return total;
 }
 
@@ -347,7 +382,6 @@ SharedPtr<Decoder> Mp3DecoderFactory::createDecoder(UniquePtr<std::istream> &fil
     {
         if(append_file_data(*file, initial_data, MinMp3DataSize) == 0)
             break;
-
         samples_to_get = mp3dec_decode_frame(&mp3, initial_data.data(), initial_data.size(),
                                              nullptr, &frame_info);
     }
