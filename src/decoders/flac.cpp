@@ -66,7 +66,7 @@ class FlacDecoder final : public Decoder {
             drflac_uint32 comment_len;
             const char *comment_str;
 
-            drflac_init_vorbis_comment_iterator(&iter, vc.commentCount, vc.comments);
+            drflac_init_vorbis_comment_iterator(&iter, vc.commentCount, vc.pComments);
             while((comment_str=drflac_next_vorbis_comment(&iter, &comment_len)) != nullptr)
             {
                 auto seppos = StringView(comment_str, comment_len).find_first_of('=');
