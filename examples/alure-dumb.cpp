@@ -17,7 +17,11 @@
 namespace {
 
 // Some I/O function callback wrappers for DUMB to read from an std::istream
-static int cb_skip(void *user_data, long offset)
+#if DUMB_VERSION >= 2*10000
+int cb_skip(void *user_data, dumb_off_t offset)
+#else
+int cb_skip(void *user_data, long offset)
+#endif
 {
     std::istream *stream = static_cast<std::istream*>(user_data);
     stream->clear();
@@ -27,7 +31,11 @@ static int cb_skip(void *user_data, long offset)
     return 1;
 }
 
-static long cb_read(char *ptr, long size, void *user_data)
+#if DUMB_VERSION >= 2*10000
+dumb_ssize_t cb_read(char *ptr, size_t size, void *user_data)
+#else
+long cb_read(char *ptr, long size, void *user_data)
+#endif
 {
     std::istream *stream = static_cast<std::istream*>(user_data);
     stream->clear();
