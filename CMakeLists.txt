@@ -124,6 +124,7 @@ unset(HAVE_OPUSFILE)
 unset(HAVE_LIBSNDFILE)
 unset(HAVE_MINIMP3)
 
+option(ALURE_INSTALL "Install library and import module" ON)
 option(ALURE_BUILD_SHARED "Build shared library" ON)
 option(ALURE_BUILD_STATIC "Build static library" ON)
 
@@ -228,32 +229,34 @@ if(ALURE_BUILD_STATIC)
     endif()
 endif()
 
-install(TARGETS ${TARGET_NAMES} EXPORT alure2
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR} ${CMAKE_INSTALL_INCLUDEDIR}/AL
-)
 export(
     TARGETS ${TARGET_NAMES}
     NAMESPACE Alure2::
     FILE Alure2Config.cmake
 )
-install(
-    EXPORT alure2
-    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/Alure2
-    NAMESPACE Alure2::
-    FILE Alure2Config.cmake
-)
-install(FILES
-    include/AL/alure2.h
-    include/AL/alure2-aliases.h
-    include/AL/alure2-typeviews.h
-    include/AL/alure2-alext.h
-    include/AL/efx.h
-    include/AL/efx-presets.h
-    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/AL
-)
+if(ALURE_INSTALL)
+    install(TARGETS ${TARGET_NAMES} EXPORT alure2
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR} ${CMAKE_INSTALL_INCLUDEDIR}/AL
+    )
+    install(
+        EXPORT alure2
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/Alure2
+        NAMESPACE Alure2::
+        FILE Alure2Config.cmake
+    )
+    install(FILES
+        include/AL/alure2.h
+        include/AL/alure2-aliases.h
+        include/AL/alure2-typeviews.h
+        include/AL/alure2-alext.h
+        include/AL/efx.h
+        include/AL/efx-presets.h
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/AL
+    )
+endif()
 
 
 option(ALURE_BUILD_EXAMPLES "Build example programs" ON)
