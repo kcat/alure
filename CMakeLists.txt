@@ -269,6 +269,10 @@ if(ALURE_BUILD_EXAMPLES)
     target_compile_options(alure-play PRIVATE ${CXX_FLAGS})
     target_link_libraries(alure-play PRIVATE ${MAIN_TARGET} ${LINKER_OPTS})
 
+    add_executable(alure-play3d examples/alure-play3d.cpp)
+    target_compile_options(alure-play3d PRIVATE ${CXX_FLAGS})
+    target_link_libraries(alure-play3d PRIVATE ${MAIN_TARGET} ${LINKER_OPTS})
+
     add_executable(alure-stream examples/alure-stream.cpp)
     target_compile_options(alure-stream PRIVATE ${CXX_FLAGS})
     target_link_libraries(alure-stream PRIVATE ${MAIN_TARGET} ${LINKER_OPTS})
