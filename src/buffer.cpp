@@ -198,7 +198,7 @@ void BufferImpl::setLoopPoints(ALuint start, ALuint end)
     }
 
     if(UNLIKELY(start >= end || end > length))
-        throw std::out_of_range("Loop points out of range");
+        throw std::domain_error("Loop points out of range");
 
     alGetError();
     ALint pts[2]{(ALint)start, (ALint)end};
@@ -283,7 +283,7 @@ ALURE_API ALuint FramesToBytes(ALuint frames, ChannelConfig chans, SampleType ty
     }
 
     if(UNLIKELY(frames > std::numeric_limits<ALuint>::max()/mult))
-        throw std::out_of_range("Byte size result too large");
+        throw std::domain_error("Byte size result too large");
     return frames * mult;
 }
 

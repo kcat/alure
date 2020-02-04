@@ -125,7 +125,7 @@ DECL_THUNK1(void, SourceGroup, setGain,, ALfloat)
 void SourceGroupImpl::setGain(ALfloat gain)
 {
     if(!(gain >= 0.0f))
-        throw std::out_of_range("Gain out of range");
+        throw std::domain_error("Gain out of range");
     CheckContext(mContext);
     mGain = gain;
     gain *= mParentProps.mGain;
@@ -141,7 +141,7 @@ DECL_THUNK1(void, SourceGroup, setPitch,, ALfloat)
 void SourceGroupImpl::setPitch(ALfloat pitch)
 {
     if(!(pitch > 0.0f))
-        throw std::out_of_range("Pitch out of range");
+        throw std::domain_error("Pitch out of range");
     CheckContext(mContext);
     mPitch = pitch;
     ALfloat gain = mGain * mParentProps.mGain;

@@ -814,7 +814,7 @@ DECL_THUNK1(void, Context, setAsyncWakeInterval,, std::chrono::milliseconds)
 void ContextImpl::setAsyncWakeInterval(std::chrono::milliseconds interval)
 {
     if(interval.count() < 0 || interval > std::chrono::seconds(1))
-        throw std::out_of_range("Async wake interval out of range");
+        throw std::domain_error("Async wake interval out of range");
     mWakeInterval.store(interval);
     mWakeMutex.lock(); mWakeMutex.unlock();
     mWakeThread.notify_all();
@@ -1607,7 +1607,7 @@ DECL_THUNK1(void, Context, setDopplerFactor,, ALfloat)
 void ContextImpl::setDopplerFactor(ALfloat factor)
 {
     if(!(factor >= 0.0f))
-        throw std::out_of_range("Doppler factor out of range");
+        throw std::domain_error("Doppler factor out of range");
     CheckContext(this);
     alDopplerFactor(factor);
 }
@@ -1617,7 +1617,7 @@ DECL_THUNK1(void, Context, setSpeedOfSound,, ALfloat)
 void ContextImpl::setSpeedOfSound(ALfloat speed)
 {
     if(!(speed > 0.0f))
-        throw std::out_of_range("Speed of sound out of range");
+        throw std::domain_error("Speed of sound out of range");
     CheckContext(this);
     alSpeedOfSound(speed);
 }
@@ -1703,7 +1703,7 @@ DECL_THUNK1(void, Listener, setGain,, ALfloat)
 void ListenerImpl::setGain(ALfloat gain)
 {
     if(!(gain >= 0.0f))
-        throw std::out_of_range("Gain out of range");
+        throw std::domain_error("Gain out of range");
     CheckContext(mContext);
     alListenerf(AL_GAIN, gain);
 }
@@ -1774,7 +1774,7 @@ DECL_THUNK1(void, Listener, setMetersPerUnit,, ALfloat)
 void ListenerImpl::setMetersPerUnit(ALfloat m_u)
 {
     if(!(m_u > 0.0f))
-        throw std::out_of_range("Invalid meters per unit");
+        throw std::domain_error("Invalid meters per unit");
     CheckContext(mContext);
     if(mContext->hasExtension(AL::EXT_EFX))
         alListenerf(AL_METERS_PER_UNIT, m_u);

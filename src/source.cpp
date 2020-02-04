@@ -393,9 +393,9 @@ DECL_THUNK3(void, Source, play,, SharedPtr<Decoder>, ALsizei, ALsizei)
 void SourceImpl::play(SharedPtr<Decoder>&& decoder, ALsizei chunk_len, ALsizei queue_size)
 {
     if(chunk_len < 64)
-        throw std::out_of_range("Update length out of range");
+        throw std::domain_error("Update length out of range");
     if(queue_size < 2)
-        throw std::out_of_range("Queue size out of range");
+        throw std::domain_error("Queue size out of range");
     CheckContext(mContext);
 
     auto stream = MakeUnique<ALBufferStream>(decoder, chunk_len, queue_size);
@@ -514,9 +514,9 @@ DECL_THUNK2(void, Source, fadeOutToStop,, ALfloat, std::chrono::milliseconds)
 void SourceImpl::fadeOutToStop(ALfloat gain, std::chrono::milliseconds duration)
 {
     if(!(gain < 1.0f && gain >= 0.0f))
-        throw std::out_of_range("Fade gain target out of range");
+        throw std::domain_error("Fade gain target out of range");
     if(duration.count() <= 0)
-        throw std::out_of_range("Fade duration out of range");
+        throw std::domain_error("Fade duration out of range");
     CheckContext(mContext);
 
     gain = std::max<ALfloat>(gain, 0.0001f);
@@ -808,7 +808,7 @@ void SourceImpl::setOffset(uint64_t offset)
     if(!mStream)
     {
         if(offset >= std::numeric_limits<ALint>::max())
-            throw std::out_of_range("Offset out of range");
+            throw std::domain_error("Offset out of range");
         alGetError();
         alSourcei(mId, AL_SAMPLE_OFFSET, (ALint)offset);
         throw_al_error("Failed to set offset");
@@ -817,7 +817,7 @@ void SourceImpl::setOffset(uint64_t offset)
     {
         std::lock_guard<std::mutex> lock(mMutex);
         if(!mStream->seek(offset))
-            throw std::runtime_error("Failed to seek to offset");
+            throw std::domain_error("Failed to seek to offset");
         alSourceRewind(mId);
         ALsizei queued = mStream->resetQueue(mId, mLooping);
         if(queued > 0 && !mPaused.load(std::memory_order_acquire))
@@ -974,7 +974,7 @@ DECL_THUNK1(void, Source, setPitch,, ALfloat)
 void SourceImpl::setPitch(ALfloat pitch)
 {
     if(!(pitch > 0.0f))
-        throw std::out_of_range("Pitch out of range");
+        throw std::domain_error("Pitch out of range");
     CheckContext(mContext);
     if(mId != 0)
         alSourcef(mId, AL_PITCH, pitch * mGroupPitch);
@@ -986,7 +986,7 @@ DECL_THUNK1(void, Source, setGain,, ALfloat)
 void SourceImpl::setGain(ALfloat gain)
 {
     if(!(gain >= 0.0f))
-        throw std::out_of_range("Gain out of range");
+        throw std::domain_error("Gain out of range");
     CheckContext(mContext);
     if(mId != 0)
         alSourcef(mId, AL_GAIN, gain * mGroupGain * mFadeGain);
@@ -997,7 +997,7 @@ DECL_THUNK2(void, Source, setGainRange,, ALfloat, ALfloat)
 void SourceImpl::setGainRange(ALfloat mingain, ALfloat maxgain)
 {
     if(!(mingain >= 0.0f && maxgain <= 1.0f && maxgain >= mingain))
-        throw std::out_of_range("Gain range out of range");
+        throw std::domain_error("Gain range out of range");
     CheckContext(mContext);
     if(mId != 0)
     {
@@ -1013,7 +1013,7 @@ DECL_THUNK2(void, Source, setDistanceRange,, ALfloat, ALfloat)
 void SourceImpl::setDistanceRange(ALfloat refdist, ALfloat maxdist)
 {
     if(!(refdist >= 0.0f && maxdist <= std::numeric_limits<float>::max() && refdist <= maxdist))
-        throw std::out_of_range("Distance range out of range");
+        throw std::domain_error("Distance range out of range");
     CheckContext(mContext);
     if(mId != 0)
     {
@@ -1178,7 +1178,7 @@ DECL_THUNK2(void, Source, setConeAngles,, ALfloat, ALfloat)
 void SourceImpl::setConeAngles(ALfloat inner, ALfloat outer)
 {
     if(!(inner >= 0.0f && outer <= 360.0f && outer >= inner))
-        throw std::out_of_range("Cone angles out of range");
+        throw std::domain_error("Cone angles out of range");
     CheckContext(mContext);
     if(mId != 0)
     {
@@ -1193,7 +1193,7 @@ DECL_THUNK2(void, Source, setOuterConeGains,, ALfloat, ALfloat)
 void SourceImpl::setOuterConeGains(ALfloat gain, ALfloat gainhf)
 {
     if(!(gain >= 0.0f && gain <= 1.0f && gainhf >= 0.0f && gainhf <= 1.0f))
-        throw std::out_of_range("Outer cone gain out of range");
+        throw std::domain_error("Outer cone gain out of range");
     CheckContext(mContext);
     if(mId != 0)
     {
@@ -1210,7 +1210,7 @@ DECL_THUNK2(void, Source, setRolloffFactors,, ALfloat, ALfloat)
 void SourceImpl::setRolloffFactors(ALfloat factor, ALfloat roomfactor)
 {
     if(!(factor >= 0.0f && roomfactor >= 0.0f))
-        throw std::out_of_range("Rolloff factor out of range");
+        throw std::domain_error("Rolloff factor out of range");
     CheckContext(mContext);
     if(mId != 0)
     {
@@ -1226,7 +1226,7 @@ DECL_THUNK1(void, Source, setDopplerFactor,, ALfloat)
 void SourceImpl::setDopplerFactor(ALfloat factor)
 {
     if(!(factor >= 0.0f && factor <= 1.0f))
-        throw std::out_of_range("Doppler factor out of range");
+        throw std::domain_error("Doppler factor out of range");
     CheckContext(mContext);
     if(mId != 0)
         alSourcef(mId, AL_DOPPLER_FACTOR, factor);
@@ -1246,7 +1246,7 @@ DECL_THUNK1(void, Source, setRadius,, ALfloat)
 void SourceImpl::setRadius(ALfloat radius)
 {
     if(!(mRadius >= 0.0f))
-        throw std::out_of_range("Radius out of range");
+        throw std::domain_error("Radius out of range");
     CheckContext(mContext);
     if(mId != 0 && mContext.hasExtension(AL::EXT_SOURCE_RADIUS))
         alSourcef(mId, AL_SOURCE_RADIUS, radius);
@@ -1279,7 +1279,7 @@ DECL_THUNK1(void, Source, setResamplerIndex,, ALsizei)
 void SourceImpl::setResamplerIndex(ALsizei index)
 {
     if(index < 0)
-        throw std::out_of_range("Resampler index out of range");
+        throw std::domain_error("Resampler index out of range");
     if(mId != 0 && mContext.hasExtension(AL::SOFT_source_resampler))
         alSourcei(mId, AL_SOURCE_RESAMPLER_SOFT,
             std::min(index, static_cast<ALsizei>(mContext.getAvailableResamplers().size()))
@@ -1291,7 +1291,7 @@ DECL_THUNK1(void, Source, setAirAbsorptionFactor,, ALfloat)
 void SourceImpl::setAirAbsorptionFactor(ALfloat factor)
 {
     if(!(factor >= 0.0f && factor <= 10.0f))
-        throw std::out_of_range("Absorption factor out of range");
+        throw std::domain_error("Absorption factor out of range");
     CheckContext(mContext);
     if(mId != 0 && mContext.hasExtension(AL::EXT_EFX))
         alSourcef(mId, AL_AIR_ABSORPTION_FACTOR, factor);
@@ -1371,7 +1371,7 @@ DECL_THUNK1(void, Source, setDirectFilter,, const FilterParams&)
 void SourceImpl::setDirectFilter(const FilterParams &filter)
 {
     if(!(filter.mGain >= 0.0f && filter.mGainHF >= 0.0f && filter.mGainLF >= 0.0f))
-        throw std::out_of_range("Gain value out of range");
+        throw std::domain_error("Gain value out of range");
     CheckContext(mContext);
 
     setFilterParams(mDirectFilter, filter);
@@ -1383,7 +1383,7 @@ DECL_THUNK2(void, Source, setSendFilter,, ALuint, const FilterParams&)
 void SourceImpl::setSendFilter(ALuint send, const FilterParams &filter)
 {
     if(!(filter.mGain >= 0.0f && filter.mGainHF >= 0.0f && filter.mGainLF >= 0.0f))
-        throw std::out_of_range("Gain value out of range");
+        throw std::domain_error("Gain value out of range");
     CheckContext(mContext);
 
     auto siter = std::lower_bound(mEffectSlots.begin(), mEffectSlots.end(), send,
@@ -1445,7 +1445,7 @@ DECL_THUNK3(void, Source, setAuxiliarySendFilter,, AuxiliaryEffectSlot, ALuint, 
 void SourceImpl::setAuxiliarySendFilter(AuxiliaryEffectSlot auxslot, ALuint send, const FilterParams &filter)
 {
     if(!(filter.mGain >= 0.0f && filter.mGainHF >= 0.0f && filter.mGainLF >= 0.0f))
-        throw std::out_of_range("Gain value out of range");
+        throw std::domain_error("Gain value out of range");
     AuxiliaryEffectSlotImpl *slot = auxslot.getHandle();
     if(slot) CheckContexts(mContext, slot->getContext());
     CheckContext(mContext);
