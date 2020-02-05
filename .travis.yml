@@ -32,12 +32,11 @@ install:
         libdumb1-dev
     fi
 script:
-  - >
+  - cd build
+  - cmake ..
+  - |
     if [[ "${TRAVIS_OS_NAME}" == "linux" ]]; then
-      cmake .
+      cmake --build . --parallel `nproc`
+    elif [[ "${TRAVIS_OS_NAME}" == "osx" ]]; then
+      cmake --build .
     fi
-  - >
-    if [[ "${TRAVIS_OS_NAME}" == "osx" ]]; then
-      cmake .
-    fi
-  - make -j2
