@@ -1245,7 +1245,7 @@ void SourceImpl::setRelative(bool relative)
 DECL_THUNK1(void, Source, setRadius,, ALfloat)
 void SourceImpl::setRadius(ALfloat radius)
 {
-    if(!(mRadius >= 0.0f))
+    if(!(radius >= 0.0f))
         throw std::domain_error("Radius out of range");
     CheckContext(mContext);
     if(mId != 0 && mContext.hasExtension(AL::EXT_SOURCE_RADIUS))
