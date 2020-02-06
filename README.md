@@ -42,7 +42,7 @@ Building
 ### Dependencies
 Before even building, Alure requires the OpenAL development files installed,
 for example, through Creative's OpenAL SDK (available from openal.org) or from
-OpenAL Soft. Additionally you will need a C++11 or above compliant compiler to
+OpenAL Soft. Additionally you will need a C++14 or above compliant compiler to
 be able to build Alure.
 
 These following dependencies are only needed to *automatically* support the
@@ -84,8 +84,6 @@ you should have something that looks like the following output
 if you have every single dependency:
 
     -- Found OpenAL: C:/msys64/mingw64/lib/libopenal.dll.a
-    -- Performing Test HAVE_STD_CXX11
-    -- Performing Test HAVE_STD_CXX11 - Success
     -- Performing Test HAVE_WALL_SWITCH
     -- Performing Test HAVE_WALL_SWITCH - Success
     -- Performing Test HAVE_WEXTRA_SWITCH
@@ -120,8 +118,6 @@ Then inside `build`, running `cmake ..` may gives you something similar to
 the following
 
     -- Found OpenAL: /usr/lib/x86_64-linux-gnu/libopenal.so
-    -- Performing Test HAVE_STD_CXX11
-    -- Performing Test HAVE_STD_CXX11 - Success
     -- Performing Test HAVE_WALL_SWITCH
     -- Performing Test HAVE_WALL_SWITCH - Success
     -- Performing Test HAVE_WEXTRA_SWITCH

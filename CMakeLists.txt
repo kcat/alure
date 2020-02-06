@@ -18,8 +18,8 @@ include(GNUInstallDirs)
 find_package(OpenAL REQUIRED)
 find_package(Threads)
 
-# Require C++11
-set(CMAKE_CXX_STANDARD 11)
+# Require C++14
+set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 
 set(CXX_FLAGS )
