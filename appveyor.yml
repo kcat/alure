@@ -1,10 +1,12 @@
 environment:
     matrix:
       - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
-        GEN: "Visual Studio 14 2015 Win64"
+        GEN: "Visual Studio 14 2015"
+        ARCH: x64
         CFG: Release
       - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
-        GEN: "Visual Studio 15 2017 Win64"
+        GEN: "Visual Studio 15 2017"
+        ARCH: x64
         CFG: Release
 
 install:
@@ -18,5 +20,5 @@ install:
 build_script:
 - cmd: |
     cd build
-    cmake -G"%GEN%" ..
+    cmake -G"%GEN%" -A %ARCH% ..
     cmake --build . --config %CFG% --clean-first
