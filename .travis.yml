@@ -1,42 +1,43 @@
 language: cpp
-matrix:
+
+addons:
+  apt:
+    sources:
+      - ubuntu-toolchain-r-test
+    packages:
+      - g++-4.9
+      - libopenal-dev
+      - libvorbis-dev
+      - libopusfile-dev
+      - libsndfile1-dev
+      - libphysfs-dev
+      - libdumb1-dev
+  homebrew:
+    packages:
+      - openal-soft
+      - libvorbis
+      - opusfile
+      - libsndfile
+      - physfs
+      - dumb
+    update: true
+
+git:
+  depth: 1
+
+jobs:
   include:
-    - os: linux
-      addons:
-        apt:
-          sources:
-            - ubuntu-toolchain-r-test
-          packages:
-            - g++-4.9
-      env:
-         - MATRIX_EVAL="CC=gcc-4.9 && CXX=g++-4.9"
     - os: osx
-      osx_image: xcode8
-sudo: required
-before_install:
-  - >
-    if [[ x"${MATRIX_EVAL}" != x"" ]]; then
-      eval "${MATRIX_EVAL}"
-    fi
-install:
-  - >
-    if [[ "${TRAVIS_OS_NAME}" == "linux" ]]; then
-      # Install OpenAL, VorbisFile, OpusFile, libsndfile, PhysicsFS,
-      # and DUMB dependencies for decoders and examples.
-      sudo apt-get install -qq \
-        libopenal-dev \
-        libvorbis-dev \
-        libopusfile-dev \
-        libsndfile1-dev \
-        libphysfs-dev \
-        libdumb1-dev
-    fi
+      script:
+        - cd build
+        - OPENALDIR=`brew --prefix openal-soft` cmake -DCMAKE_FIND_FRAMEWORK=NEVER ..
+        - cmake --build . --parallel `sysctl -n hw.ncpu`
+    - os: osx
+      env: NPROC=`sysctl -n hw.ncpu`
+    - os: linux
+      env: CC=gcc-4.9 CXX=g++-4.9 NPROC=`nproc`
+
 script:
   - cd build
   - cmake ..
-  - |
-    if [[ "${TRAVIS_OS_NAME}" == "linux" ]]; then
-      cmake --build . --parallel `nproc`
-    elif [[ "${TRAVIS_OS_NAME}" == "osx" ]]; then
-      cmake --build .
-    fi
+  - cmake --build . --parallel $NPROC
