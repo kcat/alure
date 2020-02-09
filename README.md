@@ -84,10 +84,7 @@ you should have something that looks like the following output
 if you have every single dependency:
 
     -- Found OpenAL: C:/msys64/mingw64/lib/libopenal.dll.a
-    -- Performing Test HAVE_WALL_SWITCH
-    -- Performing Test HAVE_WALL_SWITCH - Success
-    -- Performing Test HAVE_WEXTRA_SWITCH
-    -- Performing Test HAVE_WEXTRA_SWITCH - Success
+    -- Found Threads: TRUE
     -- Found OGG: C:/msys64/mingw64/lib/libogg.dll.a
     -- Found VORBIS: C:/msys64/mingw64/lib/libvorbisfile.dll.a
     -- Found OPUS: C:/msys64/mingw64/lib/libopusfile.dll.a
@@ -96,7 +93,7 @@ if you have every single dependency:
     -- Found DUMB: C:/msys64/mingw64/lib/libdumb.dll.a
     -- Configuring done
     -- Generating done
-    -- Build files have been written to: .../alure/cmake-build-debug
+    -- Build files have been written to: .../alure/build
 
 Now you may compile the library and examples by running `cmake --build .`.
 Use `cmake --install .`, which probably requires administrative privilege,
@@ -114,18 +111,11 @@ Optional dependencies for examples might be install via
 
 On other distributions, the packages names can be adapted similarly.
 
-Then inside `build`, running `cmake ..` may gives you something similar to
+Then inside `build`, the output of `cmake ..` should contains lines similar to
 the following
 
     -- Found OpenAL: /usr/lib/x86_64-linux-gnu/libopenal.so
-    -- Performing Test HAVE_WALL_SWITCH
-    -- Performing Test HAVE_WALL_SWITCH - Success
-    -- Performing Test HAVE_WEXTRA_SWITCH
-    -- Performing Test HAVE_WEXTRA_SWITCH - Success
-    -- Performing Test HAVE_GCC_DEFAULT_VISIBILITY
-    -- Performing Test HAVE_GCC_DEFAULT_VISIBILITY - Success
-    -- Performing Test HAVE_VISIBILITY_HIDDEN_SWITCH
-    -- Performing Test HAVE_VISIBILITY_HIDDEN_SWITCH - Success
+    -- Found Threads: TRUE
     -- Found OGG: /usr/lib/x86_64-linux-gnu/libogg.so
     -- Found VORBIS: /usr/lib/x86_64-linux-gnu/libvorbisfile.so
     -- Found OPUS: /usr/lib/libopusfile.so
@@ -134,11 +124,46 @@ the following
     -- Found DUMB: /usr/lib/x86_64-linux-gnu/libdumb.so
     -- Configuring done
     -- Generating done
-    -- Build files have been written to: .../alure/cmake-build-debug
+    -- Build files have been written to: .../alure/build
 
 To build the library and each example you have the dependencies for,
 run `cmake --build . --parallel $(nproc)`.  Use `sudo cmake --install .`
 to install Alure library on your system.
 
 ### On macOS
-TODO
+OpenAL is provided by Apple via [Core Audio], while optional codecs and
+examples' dependencies are available on [Homebrew](https://brew.sh/):
+
+    brew install libvorbis opusfile libsndfile
+    brew install phyfs dumb
+
+Then inside `build`, the output of `cmake ..` should contains lines similar to
+the following
+
+    -- Found OpenAL: /System/Library/Frameworks/OpenAL.framework
+    -- Found Threads: TRUE
+    -- Found OGG: /usr/local/lib/libogg.dylib
+    -- Found VORBIS: /usr/local/lib/libvorbisfile.dylib
+    -- Found OPUS: /usr/local/lib/libopusfile.dylib
+    -- Found SndFile: /usr/local/lib/libsndfile.dylib
+    -- Found PhysFS: /usr/local/lib/libphysfs.dylib
+    -- Found DUMB: /usr/local/lib/libdumb.a
+    -- Configuring done
+    -- Generating done
+    -- Build files have been written to: .../alure/build
+
+If OpenAL Soft is preferred, one may install it from Homebrew and specify
+CMake prefix path accordingly
+
+    brew install openal-soft
+    OPENALDIR=`brew --prefix openal-soft` cmake -DCMAKE_FIND_FRAMEWORK=NEVER ..
+
+and get
+
+    -- Found OpenAL: /usr/local/opt/openal-soft/lib/libopenal.dylib
+
+To build the library and each example you have the dependencies for,
+run `cmake --build . --parallel $(sysctl -n hw.ncpu)`.
+Use `sudo cmake --install .` to install Alure library on your system.
+
+[Core Audio]: https://developer.apple.com/library/archive/documentation/MusicAudio/Conceptual/CoreAudioOverview/WhatsinCoreAudio/WhatsinCoreAudio.html
