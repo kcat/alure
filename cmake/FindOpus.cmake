@@ -3,12 +3,12 @@
 #
 # OPUS_INCLUDE_DIRS - where to find opus/opus.h, etc.
 # OPUS_LIBRARIES - List of libraries when using libopus(file).
-# OPUS_FOUND - True if libopus found.
+# Opus_FOUND - True if libopus found.
 
 if(OPUS_INCLUDE_DIR AND OPUS_LIBRARY AND OPUSFILE_LIBRARY)
     # Already in cache, be silent
     set(OPUS_FIND_QUIETLY TRUE)
-endif(OPUS_INCLUDE_DIR AND OPUS_LIBRARY AND OPUSFILE_LIBRARY)
+endif()
 
 find_path(OPUS_INCLUDE_DIR
     NAMES opusfile.h
@@ -27,11 +27,11 @@ find_library(OPUSFILE_LIBRARY
 # Handle the QUIETLY and REQUIRED arguments and set OPUS_FOUND
 # to TRUE if all listed variables are TRUE.
 include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(OPUS DEFAULT_MSG
+find_package_handle_standard_args(Opus DEFAULT_MSG
     OPUSFILE_LIBRARY OPUS_LIBRARY OPUS_INCLUDE_DIR
 )
 
-if(OPUS_FOUND)
+if(Opus_FOUND)
     set(OPUS_LIBRARIES ${OPUSFILE_LIBRARY} ${OPUS_LIBRARY})
     set(OPUS_INCLUDE_DIRS ${OPUS_INCLUDE_DIR})
-endif(OPUS_FOUND)
+endif()

@@ -3,12 +3,12 @@
 #
 # VORBIS_INCLUDE_DIRS - where to find vorbis/vorbis.h, etc.
 # VORBIS_LIBRARIES - List of libraries when using vorbis(file).
-# VORBIS_FOUND - True if vorbis found.
+# Vobis_FOUND - True if vorbis found.
 
 if(VORBIS_INCLUDE_DIR AND VORBIS_LIBRARY AND VORBISFILE_LIBRARY)
     # Already in cache, be silent
     set(VORBIS_FIND_QUIETLY TRUE)
-endif(VORBIS_INCLUDE_DIR AND VORBIS_LIBRARY AND VORBISFILE_LIBRARY)
+endif()
 
 find_path(VORBIS_INCLUDE_DIR vorbis/vorbisfile.h)
 
@@ -24,11 +24,11 @@ find_library(VORBISFILE_LIBRARY
 # Handle the QUIETLY and REQUIRED arguments and set VORBIS_FOUND
 # to TRUE if all listed variables are TRUE.
 include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(VORBIS DEFAULT_MSG
+find_package_handle_standard_args(Vorbis DEFAULT_MSG
     VORBISFILE_LIBRARY VORBIS_LIBRARY VORBIS_INCLUDE_DIR
 )
 
-if(VORBIS_FOUND)
+if(Vorbis_FOUND)
     set(VORBIS_LIBRARIES ${VORBISFILE_LIBRARY} ${VORBIS_LIBRARY})
     set(VORBIS_INCLUDE_DIRS ${VORBIS_INCLUDE_DIR})
-endif(VORBIS_FOUND)
+endif()
