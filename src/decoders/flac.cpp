@@ -116,9 +116,18 @@ class FlacDecoder final : public Decoder {
         std::istream *stream = static_cast<FlacDecoder*>(client_data)->mFile.get();
         stream->clear();
 
-        if(!stream->seekg(offset, (origin==drflac_seek_origin_current) ? std::ios_base::cur
-                                                                       : std::ios_base::beg))
+        if(!stream->seekg(offset, (origin==DRFLAC_SEEK_CUR) ? std::ios_base::cur
+                                  : (origin==DRFLAC_SEEK_END) ? std::ios_base::end
+                                  : std::ios_base::beg))
             return DRFLAC_FALSE;
+        return DRFLAC_TRUE;
+    }
+    static drflac_bool32 TellCallback(void *client_data, drflac_int64 *cursor)
+    {
+        std::istream *stream = static_cast<FlacDecoder*>(client_data)->mFile.get();
+        stream->clear();
+
+        *cursor = stream->tellg();
         return DRFLAC_TRUE;
     }
 
@@ -144,7 +153,8 @@ public:
 bool FlacDecoder::open(UniquePtr<std::istream> &file) noexcept
 {
     mFile = std::move(file);
-    mFlacFile = FlacFilePtr(drflac_open_with_metadata(ReadCallback, SeekCallback, MetadataCallback, this));
+    mFlacFile = FlacFilePtr{drflac_open_with_metadata(ReadCallback, SeekCallback, TellCallback,
+        MetadataCallback, this, nullptr)};
     if(mFlacFile)
     {
         if(mFrequency != 0)
@@ -176,17 +186,14 @@ SampleType FlacDecoder::getSampleType() const noexcept
 
 uint64_t FlacDecoder::getLength() const noexcept
 {
-    // For some silly reason, dr_flac tracks sample counts as individual
-    // samples rather than sample frames (e.g. doubled for stereo).
-    return mFlacFile->totalSampleCount / mFlacFile->channels;
+    return mFlacFile->totalPCMFrameCount;
 }
 
 bool FlacDecoder::seek(uint64_t pos) noexcept
 {
-    pos *= mFlacFile->channels;
-    if(pos >= mFlacFile->totalSampleCount)
+    if(pos >= mFlacFile->totalPCMFrameCount)
         return false;
-    return drflac_seek_to_sample(mFlacFile.get(), pos);
+    return drflac_seek_to_pcm_frame(mFlacFile.get(), pos) != DRFLAC_FALSE;
 }
 
 std::pair<uint64_t,uint64_t> FlacDecoder::getLoopPoints() const noexcept
@@ -196,14 +203,13 @@ std::pair<uint64_t,uint64_t> FlacDecoder::getLoopPoints() const noexcept
 
 ALuint FlacDecoder::read(ALvoid *ptr, ALuint count) noexcept
 {
-    count *= mFlacFile->channels;
     if(mSampleType == SampleType::Float32)
-        count = drflac_read_f32(mFlacFile.get(), count, (float*)ptr);
+        count = drflac_read_pcm_frames_f32(mFlacFile.get(), count, (float*)ptr);
     else if(mSampleType == SampleType::Int16)
-        count = drflac_read_s16(mFlacFile.get(), count, (short*)ptr);
+        count = drflac_read_pcm_frames_s16(mFlacFile.get(), count, (short*)ptr);
     else
         count = 0;
-    return count / mFlacFile->channels;
+    return count;
 }
 
 
